@@ -2,15 +2,7 @@
 
 :: ----------------------
 :: KUDU Deployment Script
-:: Version: 1.0.13
-::
-:: This script will deploy the app by copying the artifacts to the
-:: deployment directory and building Javascript files from TypeScript
-:: sources, it will also install dependencies.
-::
-:: The result will be a directory structure like the following:
-:: https://github.com/MicrosoftDocs/azure-docs/blob/master/includes/functions-folder-structure.md
-:: 
+:: Version: 1.0.15
 :: ----------------------
 
 :: Prerequisites
@@ -62,24 +54,80 @@ IF NOT DEFINED KUDU_SYNC_CMD (
 
 echo Handling function App deployment.
 
+if "%SCM_USE_FUNCPACK%" == "1" (
+  call :DeployWithFuncPack
+) else (
+  call :DeployWithoutFuncPack
+)
+
+goto end
+
+:DeployWithFuncPack
+setlocal
+
+echo Using funcpack to optimize cold start
+
+:: 1. Copy to local storage
+echo Copying repository files to local storage
+xcopy "%DEPLOYMENT_SOURCE%" "%DEPLOYMENT_TEMP%" /seyiq
+IF !ERRORLEVEL! NEQ 0 goto error
+
+:: 2. Restore npm
+call :RestoreNpmPackages "%DEPLOYMENT_TEMP%"
+
+:: 3. FuncPack
+pushd "%DEPLOYMENT_TEMP%"
+call funcpack pack .
+IF !ERRORLEVEL! NEQ 0 goto error
+popd
+
+:: 4. KuduSync
+call :ExecuteCmd "%KUDU_SYNC_CMD%" -v 50 -f "%DEPLOYMENT_TEMP%" -t "%DEPLOYMENT_TARGET%" -n "%NEXT_MANIFEST_PATH%" -p "%PREVIOUS_MANIFEST_PATH%" -i ".git;.hg;.deployment;deploy.cmd;node_modules"
+IF !ERRORLEVEL! NEQ 0 goto error
+
+exit /b %ERRORLEVEL%
+
+
+:DeployWithoutFuncPack
+setlocal
+
+echo Not using funcpack because SCM_USE_FUNCPACK is not set to 1
+
 :: 1. KuduSync
 IF /I "%IN_PLACE_DEPLOYMENT%" NEQ "1" (
   call :ExecuteCmd "%KUDU_SYNC_CMD%" -v 50 -f "%DEPLOYMENT_SOURCE%" -t "%DEPLOYMENT_TARGET%" -n "%NEXT_MANIFEST_PATH%" -p "%PREVIOUS_MANIFEST_PATH%" -i ".git;.hg;.deployment;deploy.cmd"
   IF !ERRORLEVEL! NEQ 0 goto error
 )
 
-:: 2. Restore npm in each function and run typescript
-npm install -g yarn
-FOR /F "tokens=*" %%i IN ('DIR /B %DEPLOYMENT_TARGET% /A:D') DO (
-  IF EXIST "%DEPLOYMENT_TARGET%\%%i\package.json" (
-    pushd "%DEPLOYMENT_TARGET%\%%i"
-    :: npm install --production
-    yarn link --production
-    yarn run build
+:: 2. Restore npm
+call :RestoreNpmPackages "%DEPLOYMENT_TARGET%"
+
+exit /b %ERRORLEVEL%
+
+
+:RestoreNpmPackages
+setlocal
+
+echo Restoring npm packages in %1
+
+IF EXIST "%1\package.json" (
+  pushd "%1"
+  call npm install --production
+  IF !ERRORLEVEL! NEQ 0 goto error
+  popd
+)
+
+FOR /F "tokens=*" %%i IN ('DIR /B %1 /A:D') DO (
+  IF EXIST "%1\%%i\package.json" (
+    pushd "%1\%%i"
+    call npm install --production
+    call npm run build
     IF !ERRORLEVEL! NEQ 0 goto error
     popd
   )
 )
+
+exit /b %ERRORLEVEL%
 
 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 goto end
