@@ -1,0 +1,43 @@
+{
+  "name": "dc-users-api",
+  "version": "0.1.0",
+  "description": "Implementation of the Users API, part of the Digital Citizenship platform",
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:teamdigitale/cittadinanza-digitale.git"
+  },
+  "author": "Team per la Trasformazione Digitale, AgID",
+  "license": "MIT",
+  "scripts": {
+    "build": "tsc",
+    "lint": "tslint -c tslint.json '**/*.{ts}'",
+    "pretest": "npm run lint",
+    "test": "jest"
+  },
+  "dependencies": {
+    "@types/node": "^6.0.0",
+    "typescript": "^2.4.2"
+  },
+  "devDependencies": {
+    "@types/jest": "^20.0.5",
+    "jest": "^20.0.4",
+    "ts-jest": "^20.0.7",
+    "tslint": "^5.5.0"
+  },
+  "jest": {
+    "moduleFileExtensions": [
+      "ts",
+      "js"
+    ],
+    "transform": {
+      "^.+\\.(ts|tsx)$": "<rootDir>/node_modules/ts-jest/preprocessor.js"
+    },
+    "transformIgnorePatterns": [
+      "<rootDir>/node_modules/(?!azure-functions-types)"
+    ],
+    "testMatch": [
+      "**/*.test.ts"
+    ]
+  }
+}

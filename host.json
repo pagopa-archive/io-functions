@@ -1,0 +1,16 @@
+{
+  "functionTimeout": "00:00:30",
+  "http": {
+    "routePrefix": "api",
+    "maxOutstandingRequests": 20,
+    "maxConcurrentRequests": 50,
+    "dynamicThrottlesEnabled": false
+  },
+  "functions": [
+    "UsersApi"
+  ],
+  "tracing": {
+    "consoleLevel": "verbose",
+    "fileLoggingMode": "debugOnly"
+  }
+}
