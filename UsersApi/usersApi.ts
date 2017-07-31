@@ -4,19 +4,21 @@ import { FunctionRequest, FunctionResponse, HttpContext, HttpStatusCodes } from 
  * An HTTP endpoint that responds to GET requests with "PONG"
  */
 export function usersApi(context: HttpContext, req: FunctionRequest) {
-  context.log("Admin Ping HTTP trigger function processed a request.");
+  context.log.verbose("Admin Ping HTTP trigger function processed a request.");
+
+  let res: FunctionResponse | null = null;
 
   if (req.method === "GET") {
-    context.res = {
+    res = {
       body: "PONG",
       status: HttpStatusCodes.OK,
     };
   } else {
-    context.res = {
+    res = {
       status: HttpStatusCodes.MethodNotAllowed,
     };
 
   }
 
-  context.done(null, { });
+  context.done(null, res);
 }
