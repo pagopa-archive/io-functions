@@ -1,7 +1,7 @@
 {
   "functionTimeout": "00:00:30",
   "http": {
-    "routePrefix": "api",
+    "routePrefix": "",
     "maxOutstandingRequests": 20,
     "maxConcurrentRequests": 50,
     "dynamicThrottlesEnabled": false
