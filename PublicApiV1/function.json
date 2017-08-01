@@ -7,7 +7,7 @@
     "direction" : "in",
     "name"      : "req",
     "methods"   : [ "get", "post" ],
-    "route"     : "api/{*segments}"
+    "route"     : "api/v1/{*segments}"
   }, {
     "type"      : "http",
     "direction" : "out",

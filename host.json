@@ -7,7 +7,7 @@
     "dynamicThrottlesEnabled": false
   },
   "functions": [
-    "UsersApi"
+    "PublicApiV1"
   ],
   "tracing": {
     "consoleLevel": "verbose",
