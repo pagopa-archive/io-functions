@@ -6,7 +6,7 @@
     "type"      : "httpTrigger",
     "direction" : "in",
     "name"      : "req",
-    "route"     : "{*segments}"
+    "route"     : "/api/{*segments}"
   }, {
     "type"      : "http",
     "direction" : "out",
