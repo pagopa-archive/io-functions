@@ -3,12 +3,11 @@ import * as express from "express";
 
 const app = express();
 
-app.get("/api/debug", (req, res) => {
+app.get("/api/debug", (req, res) =>
   res.json({
     env: process.env,
     headers: req.headers,
-  });
-});
+  }));
 
 app.get("/api/:foo/:bar", (req, res) => res.json({ foo: req.params.foo, bar: req.params.bar }));
 
