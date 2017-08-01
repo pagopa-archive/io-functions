@@ -7,13 +7,10 @@ import * as express from "express";
 
 const app = express();
 
-app.get("/api/v1/debug", (req, res) =>
-  res.json({
-    env: process.env,
-    headers: req.headers,
-  }));
+import debugHandler from "./debugHandler";
+app.get("/api/v1/debug", debugHandler);
 
-app.get("/api/v1/:foo/:bar", (req, res) => res.json({ foo: req.params.foo, bar: req.params.bar }));
+// app.get("/api/v1/users/:fiscalcode", getUserHandler);
 
 // Binds the express app to an Azure Function handler
 module.exports = createAzureFunctionHandler(app);
