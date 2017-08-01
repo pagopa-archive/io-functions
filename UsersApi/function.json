@@ -2,7 +2,7 @@
   "scriptFile": "index.js",
   "disabled": false,
   "bindings": [{
-    "authLevel" : "anonymous",
+    "authLevel" : "function",
     "type"      : "httpTrigger",
     "direction" : "in",
     "name"      : "req",
