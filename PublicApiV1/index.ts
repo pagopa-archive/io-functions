@@ -28,7 +28,10 @@ const User = connection.model<IUserModel>("User", userSchema);
 */
 
 import debugHandler from "./debugHandler";
-app.get("/api/v1/debug", debugHandler);
+app.get("/api/v1/debug", (req, res) => res.json({
+    env: process.env,
+    headers: req.headers,
+  }));
 
 /*
 import { getUserHandler, updateUserHandler } from "./usersApi";
