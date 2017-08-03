@@ -1,24 +1,22 @@
-import { FunctionRequest, FunctionResponse, HttpContext, HttpStatusCodes } from "./azure-functions-types";
+import * as express from "express";
+import * as mongoose from "mongoose";
 
-/**
- * An HTTP endpoint that responds to GET requests with "PONG"
- */
-export function usersApi(context: HttpContext, req: FunctionRequest) {
-  context.log.verbose("Admin Ping HTTP trigger function processed a request.");
+import { IUserModel } from "./models/user";
 
-  let res: FunctionResponse | null = null;
+export function getUserHandler(User: mongoose.Model<IUserModel>): express.RequestHandler {
+  return (req: express.Request, res: express.Response) => {
+    res.json({
+      OK: true,
+      fiscal_code: req.params.fiscalcode,
+    });
+  };
+}
 
-  if (req.method === "GET") {
-    res = {
-      body: "PONG",
-      status: HttpStatusCodes.OK,
-    };
-  } else {
-    res = {
-      status: HttpStatusCodes.MethodNotAllowed,
-    };
-
-  }
-
-  context.done(null, res);
+export function updateUserHandler(User: mongoose.Model<IUserModel>): express.RequestHandler {
+  return (req: express.Request, res: express.Response) => {
+    res.json({
+      OK: true,
+      fiscal_code: req.params.fiscalcode,
+    });
+  };
 }
