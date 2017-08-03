@@ -526,6 +526,10 @@ code-point-at@^1.0.0:
   version "1.1.0"
   resolved "https://registry.yarnpkg.com/code-point-at/-/code-point-at-1.1.0.tgz#0d070b4d043a5bea33a2f1a40e2edb3d9a4ccf77"
 
+codice-fiscale-italiano@^1.0.1:
+  version "1.0.1"
+  resolved "https://registry.yarnpkg.com/codice-fiscale-italiano/-/codice-fiscale-italiano-1.0.1.tgz#4af5b68fef240bd74bba71984a70c198f5f7831f"
+
 color-convert@^1.0.0:
   version "1.9.0"
   resolved "https://registry.yarnpkg.com/color-convert/-/color-convert-1.9.0.tgz#1accf97dd739b983bf994d56fec8f95853641b7a"

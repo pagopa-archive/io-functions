@@ -3,10 +3,17 @@
  */
 
 import { Schema } from "mongoose";
+import { validateFiscalCode } from "../utils/fiscalcode";
 
 export const userSchema: Schema = new Schema({
-  fiscalCode: String,
-  version: { type: Number, default: 0 },
+  fiscalCode: {
+    required: true,
+    type: String,
+    validate: {
+      message: "{VALUE} is not a valid fiscal code.",
+      validator: validateFiscalCode,
+    },
+  },
 }, {
   bufferCommands: false, // fail fast, see http://mongoosejs.com/docs/guide.html#bufferCommands
   collection: "users",
