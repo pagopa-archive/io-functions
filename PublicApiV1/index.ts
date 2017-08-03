@@ -26,8 +26,9 @@ const User = connection.model<IUserModel>("User", userSchema);
 import debugHandler from "./debugHandler";
 app.get("/api/v1/debug", debugHandler);
 
-import { getUserHandler } from "./usersApi";
+import { getUserHandler, updateUserHandler } from "./usersApi";
 app.get("/api/v1/users/:fiscalcode", getUserHandler);
+app.post("/api/v1/users/:fiscalcode", updateUserHandler);
 
 // Binds the express app to an Azure Function handler
 module.exports = createAzureFunctionHandler(app);
