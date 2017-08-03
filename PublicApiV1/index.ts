@@ -7,10 +7,12 @@ import * as express from "express";
 
 const app = express();
 
+/*
 import * as mongoose from "mongoose";
 import { IUser } from "./interfaces/user";
 import { IUserModel } from "./models/user";
 import { userSchema } from "./schemas/user";
+*/
 
 /*
 const MONGODB_CONNECTION: string = process.env.CUSTOMCONNSTR_mongo;
