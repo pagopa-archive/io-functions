@@ -30,8 +30,8 @@ app.get("/api/v1/debug", (req, res) => res.json({
   }));
 
 import { getUserHandler, updateUserHandler } from "./usersApi";
-app.get("/api/v1/users/:fiscalcode", getUserHandler);
-app.post("/api/v1/users/:fiscalcode", updateUserHandler);
+app.get("/api/v1/users/:fiscalcode", getUserHandler(User));
+app.post("/api/v1/users/:fiscalcode", updateUserHandler(User));
 
 // Binds the express app to an Azure Function handler
 module.exports = createAzureFunctionHandler(app);
