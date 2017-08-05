@@ -44,7 +44,7 @@ export function updateProfileHandler(Profile: ProfileModel): express.RequestHand
     const fiscalCode: string = request.params.fiscalcode;
     if (isFiscalCode(fiscalCode)) {
       const profile: IProfile = {
-        email: request.params.email,
+        email: request.body.email,
         fiscalCode,
       };
       Profile.createOrUpdateProfile(profile).then((result) => {
