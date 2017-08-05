@@ -11,8 +11,8 @@ import * as mongoose from "mongoose";
 import { IProfileModel, ProfileModel } from "./models/profile";
 import { profileSchema } from "./schemas/profile";
 
-import debugHandler from "./debugHandler";
-import { getProfileHandler, updateProfileHandler } from "./profilesApi";
+import debugHandler from "./controllers/debugController";
+import { getProfileController, updateProfileController } from "./controllers/profilesController";
 
 // Use native promises
 ( mongoose as any ).Promise = global.Promise;
@@ -32,8 +32,8 @@ const profileModel = new ProfileModel(connection.model<IProfileModel>("Profile",
 app.get("/api/v1/debug", debugHandler);
 app.post("/api/v1/debug", debugHandler);
 
-app.get("/api/v1/profiles/:fiscalcode", getProfileHandler(profileModel));
-app.post("/api/v1/profiles/:fiscalcode", updateProfileHandler(profileModel));
+app.get("/api/v1/profiles/:fiscalcode", getProfileController(profileModel));
+app.post("/api/v1/profiles/:fiscalcode", updateProfileController(profileModel));
 
 // Binds the express app to an Azure Function handler
 module.exports = createAzureFunctionHandler(app);

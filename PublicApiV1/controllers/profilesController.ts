@@ -1,18 +1,18 @@
 import * as express from "express";
 
-import { isFiscalCode } from "./utils/fiscalcode";
+import { isFiscalCode } from "../utils/fiscalcode";
 
-import { IProfile } from "./interfaces/profile";
-import { ProfileModel } from "./models/profile";
+import { IProfile } from "../interfaces/profile";
+import { ProfileModel } from "../models/profile";
 
 /**
  * Returns a getProfile handler
  *
  * @param Profile The Profile model.
  *
- * TODO only return public visible preferences
+ * TODO only return public visible attributes
  */
-export function getProfileHandler(Profile: ProfileModel): express.RequestHandler {
+export function getProfileController(Profile: ProfileModel): express.RequestHandler {
   return (request: express.Request, response: express.Response) => {
     const fiscalCode: string = request.params.fiscalcode;
     if (isFiscalCode(fiscalCode)) {
@@ -35,11 +35,13 @@ export function getProfileHandler(Profile: ProfileModel): express.RequestHandler
 }
 
 /**
- * Returns an updateProfile handler
+ * Returns an updateProfile controller
  *
  * @param Profile The Profile model.
+ *
+ * TODO only return public visible attributes
  */
-export function updateProfileHandler(Profile: ProfileModel): express.RequestHandler {
+export function updateProfileController(Profile: ProfileModel): express.RequestHandler {
   return (request: express.Request, response: express.Response) => {
     const fiscalCode: string = request.params.fiscalcode;
     if (isFiscalCode(fiscalCode)) {
