@@ -8,11 +8,16 @@ import * as express from "express";
 const app = express();
 
 import * as mongoose from "mongoose";
-import { IUser } from "./interfaces/user";
-import { IUserModel } from "./models/user";
-import { userSchema } from "./schemas/user";
+import { IProfileModel, ProfileModel } from "./models/profile";
+import { profileSchema } from "./schemas/profile";
 
-const MONGODB_CONNECTION: string = process.env.CUSTOMCONNSTR_mongo;
+import debugHandler from "./debugHandler";
+import { getProfileHandler } from "./profilesApi";
+
+// Use native promises
+( mongoose as any ).Promise = global.Promise;
+
+const MONGODB_CONNECTION: string = process.env.CUSTOMCONNSTR_development;
 const connection: mongoose.Connection = mongoose.createConnection(
   MONGODB_CONNECTION,
   {
@@ -21,17 +26,13 @@ const connection: mongoose.Connection = mongoose.createConnection(
     },
   },
 );
-const User = connection.model<IUserModel>("User", userSchema);
 
-import debugHandler from "./debugHandler";
-app.get("/api/v1/debug", (req, res) => res.json({
-    env: process.env,
-    headers: req.headers,
-  }));
+const profileModel = new ProfileModel(connection.model<IProfileModel>("Profile", profileSchema));
 
-import { getUserHandler, updateUserHandler } from "./usersApi";
-app.get("/api/v1/users/:fiscalcode", getUserHandler(User));
-app.post("/api/v1/users/:fiscalcode", updateUserHandler(User));
+app.get("/api/v1/debug", debugHandler);
+
+app.get("/api/v1/users/:fiscalcode", getProfileHandler(profileModel));
+// app.post("/api/v1/users/:fiscalcode", updateProfileHandler(profileModel));
 
 // Binds the express app to an Azure Function handler
 module.exports = createAzureFunctionHandler(app);

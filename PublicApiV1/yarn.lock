@@ -2500,6 +2500,10 @@ ts-jest@^20.0.7:
     source-map-support "^0.4.4"
     yargs "^8.0.1"
 
+ts-option@^1.1.4:
+  version "1.1.4"
+  resolved "https://registry.yarnpkg.com/ts-option/-/ts-option-1.1.4.tgz#87fe2e2b32c23a6a0d42bcb30bb53e8794580d64"
+
 tslib@^1.7.1:
   version "1.7.1"
   resolved "https://registry.yarnpkg.com/tslib/-/tslib-1.7.1.tgz#bc8004164691923a79fe8378bbeb3da2017538ec"
