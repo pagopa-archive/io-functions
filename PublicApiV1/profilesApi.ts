@@ -2,6 +2,7 @@ import * as express from "express";
 
 import { isFiscalCode } from "./utils/fiscalcode";
 
+import { IProfile } from "./interfaces/profile";
 import { ProfileModel } from "./models/profile";
 
 /**
@@ -15,7 +16,7 @@ export function getProfileHandler(Profile: ProfileModel): express.RequestHandler
   return (request: express.Request, response: express.Response) => {
     const fiscalCode: string = request.params.fiscalcode;
     if (isFiscalCode(fiscalCode)) {
-      Profile.getProfileByFiscalCode(fiscalCode).then((result) => {
+      Profile.findOneProfileByFiscalCode(fiscalCode).then((result) => {
         if (result != null) {
           response.json(result);
         } else {
@@ -42,11 +43,15 @@ export function updateProfileHandler(Profile: ProfileModel): express.RequestHand
   return (request: express.Request, response: express.Response) => {
     const fiscalCode: string = request.params.fiscalcode;
     if (isFiscalCode(fiscalCode)) {
-      Profile.getProfileByFiscalCode(fiscalCode).then((result) => {
+      const profile: IProfile = {
+        email: request.params.email,
+        fiscalCode,
+      };
+      Profile.createOrUpdateProfile(profile).then((result) => {
         if (result != null) {
           response.json(result);
         } else {
-          response.status(404).send("Not found");
+          response.status(500).send("Did not create");
         }
       },
       (error) => {

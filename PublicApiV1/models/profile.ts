@@ -12,10 +12,21 @@ export class ProfileModel {
     this.profileModel = profileModel;
   }
 
-  public getProfileByFiscalCode(fiscalCode: FiscalCode): Promise<this> {
-    return this.profileModel.collection.findOne({
-      fiscalCode,
-    });
+  /**
+   * Searches for one profile associated to the provided fiscal code
+   *
+   * @param fiscalCode
+   */
+  public findOneProfileByFiscalCode(fiscalCode: FiscalCode): Promise<IProfileModel | null> {
+    return this.profileModel.collection.findOne({ fiscalCode });
+  }
+
+  public createOrUpdateProfile(profile: IProfile): Promise<IProfileModel | null> {
+    return this.profileModel.findOneAndUpdate(
+      { fiscalCode: profile.fiscalCode },
+      profile,
+      { upsert: true, new: true, runValidators: true },
+    ).exec();
   }
 
 }
