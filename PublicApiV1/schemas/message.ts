@@ -1,12 +1,12 @@
 /**
- * Defines the database schema for a Profile
+ * Defines the database schema for a Message
  */
 
 import { Schema } from "mongoose";
 import { isFiscalCode } from "../utils/fiscalcode";
 
-export const profileSchema: Schema = new Schema({
-  email: String,
+export const messageSchema: Schema = new Schema({
+  body_short: String,
   fiscalCode: {
     required: true,
     type: String,

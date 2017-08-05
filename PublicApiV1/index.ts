@@ -8,10 +8,13 @@ import * as express from "express";
 const app = express();
 
 import * as mongoose from "mongoose";
+import { IMessageModel, MessageModel } from "./models/message";
 import { IProfileModel, ProfileModel } from "./models/profile";
+import { messageSchema } from "./schemas/message";
 import { profileSchema } from "./schemas/profile";
 
 import debugHandler from "./controllers/debugController";
+import { createMessageController } from "./controllers/messagesController";
 import { getProfileController, updateProfileController } from "./controllers/profilesController";
 
 // Use native promises
@@ -28,12 +31,15 @@ const connection: mongoose.Connection = mongoose.createConnection(
 );
 
 const profileModel = new ProfileModel(connection.model<IProfileModel>("Profile", profileSchema));
+const messageModel = new MessageModel(connection.model<IMessageModel>("Message", messageSchema));
 
 app.get("/api/v1/debug", debugHandler);
 app.post("/api/v1/debug", debugHandler);
 
 app.get("/api/v1/profiles/:fiscalcode", getProfileController(profileModel));
 app.post("/api/v1/profiles/:fiscalcode", updateProfileController(profileModel));
+
+app.post("/api/v1/messages/:fiscalcode", createMessageController(messageModel));
 
 // Binds the express app to an Azure Function handler
 module.exports = createAzureFunctionHandler(app);
