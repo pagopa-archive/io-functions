@@ -6,7 +6,7 @@ import { Schema } from "mongoose";
 import { isFiscalCode } from "../utils/fiscalcode";
 
 export const messageSchema: Schema = new Schema({
-  body_short: String,
+  bodyShort: String,
   fiscalCode: {
     required: true,
     type: String,

@@ -5,5 +5,5 @@ import { FiscalCode } from "../utils/fiscalcode";
  */
 export interface IMessage {
   fiscalCode: FiscalCode;
-  body_short: string;
+  bodyShort: string;
 }

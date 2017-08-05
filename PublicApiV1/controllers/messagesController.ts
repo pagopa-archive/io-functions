@@ -15,7 +15,7 @@ export function createMessageController(Message: MessageModel): express.RequestH
     const fiscalCode: string = request.params.fiscalcode;
     if (isFiscalCode(fiscalCode)) {
       const message: IMessage = {
-        body_short: request.body.body_short,
+        bodyShort: request.body.body_short,
         fiscalCode,
       };
       Message.createMessage(message).then((result) => {
