@@ -31,7 +31,7 @@ const profileModel = new ProfileModel(connection.model<IProfileModel>("Profile",
 
 app.get("/api/v1/debug", debugHandler);
 
-app.get("/api/v1/users/:fiscalcode", getProfileHandler(profileModel));
+app.get("/api/v1/profiles/:fiscalcode", getProfileHandler(profileModel));
 // app.post("/api/v1/users/:fiscalcode", updateProfileHandler(profileModel));
 
 // Binds the express app to an Azure Function handler

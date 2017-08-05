@@ -14,7 +14,11 @@ export function getProfileHandler(Profile: ProfileModel): express.RequestHandler
     const fiscalCode: string = request.params.fiscalcode;
     if (isFiscalCode(fiscalCode)) {
       Profile.getProfileByFiscalCode(fiscalCode).then((result) => {
-        response.json(result);
+        if (result != null) {
+          response.json(result);
+        } else {
+          response.status(404).send("Not found");
+        }
       },
       (error) => {
         response.json({
