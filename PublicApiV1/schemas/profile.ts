@@ -6,6 +6,7 @@ import { Schema } from "mongoose";
 import { isFiscalCode } from "../utils/fiscalcode";
 
 export const profileSchema: Schema = new Schema({
+  email: String,
   fiscalCode: {
     required: true,
     type: String,
