@@ -12,7 +12,7 @@ import { IProfileModel, ProfileModel } from "./models/profile";
 import { profileSchema } from "./schemas/profile";
 
 import debugHandler from "./debugHandler";
-import { getProfileHandler } from "./profilesApi";
+import { getProfileHandler, updateProfileHandler } from "./profilesApi";
 
 // Use native promises
 ( mongoose as any ).Promise = global.Promise;
@@ -33,7 +33,7 @@ app.get("/api/v1/debug", debugHandler);
 app.post("/api/v1/debug", debugHandler);
 
 app.get("/api/v1/profiles/:fiscalcode", getProfileHandler(profileModel));
-// app.post("/api/v1/users/:fiscalcode", updateProfileHandler(profileModel));
+app.post("/api/v1/users/:fiscalcode", updateProfileHandler(profileModel));
 
 // Binds the express app to an Azure Function handler
 module.exports = createAzureFunctionHandler(app);
