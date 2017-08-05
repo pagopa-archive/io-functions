@@ -30,6 +30,7 @@ const connection: mongoose.Connection = mongoose.createConnection(
 const profileModel = new ProfileModel(connection.model<IProfileModel>("Profile", profileSchema));
 
 app.get("/api/v1/debug", debugHandler);
+app.post("/api/v1/debug", debugHandler);
 
 app.get("/api/v1/profiles/:fiscalcode", getProfileHandler(profileModel));
 // app.post("/api/v1/users/:fiscalcode", updateProfileHandler(profileModel));
