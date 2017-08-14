@@ -13,5 +13,9 @@
   "tracing": {
     "consoleLevel": "verbose",
     "fileLoggingMode": "debugOnly"
-  }
+  },
+  "watchDirectories": [ 
+    "node_modules", 
+    "lib"
+  ]
 }
