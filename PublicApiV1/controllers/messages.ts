@@ -18,7 +18,7 @@ import { MessageModel } from "../models/message";
  */
 export function CreateMessage(
   Message: MessageModel,
-  queueService: azure.QueueService,
+  queueService: () => azure.QueueService,
   queueName: string,
 ): express.RequestHandler {
   return withValidFiscalCode((request: express.Request, response: express.Response, fiscalCode: FiscalCode) => {
@@ -34,7 +34,7 @@ export function CreateMessage(
       const createdMessage = {
         messageId: `${result._id}`,
       };
-      queueService.createMessage(queueName, JSON.stringify(createdMessage), {}, (error) => {
+      queueService().createMessage(queueName, JSON.stringify(createdMessage), {}, (error) => {
         _log(`>> notification queued [${result._id}]`);
         // TODO: handle queue error
         response.json({

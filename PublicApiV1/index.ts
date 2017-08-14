@@ -17,6 +17,8 @@ import debugHandler from "./controllers/debug";
 import { CreateMessage, GetMessage, GetMessages } from "./controllers/messages";
 import { GetProfile, UpdateProfile } from "./controllers/profiles";
 
+import { memoize } from "./utils/memoize";
+
 // Setup Express
 
 const app = express();
@@ -43,7 +45,7 @@ const messageModel = new MessageModel(connection.model<IMessageModel>("Message",
 const CREATED_MESSAGES_QUEUE_CONNECTION: string = process.env.APPSETTING_QueueStorageConnection;
 const CREATED_MESSAGES_QUEUE_NAME = "createdmessages";
 
-const queueService = azure.createQueueService(CREATED_MESSAGES_QUEUE_CONNECTION);
+const queueService = memoize(() => azure.createQueueService(CREATED_MESSAGES_QUEUE_CONNECTION));
 
 // Setup handlers
 
