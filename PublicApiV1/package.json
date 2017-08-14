@@ -21,6 +21,7 @@
     "@types/mongoose": "^4.7.19",
     "@types/node": "^6.0.0",
     "azure-function-express": "^1.2.2",
+    "azure-storage": "^2.2.2",
     "codice-fiscale-italiano": "^1.0.1",
     "express": "^4.15.3",
     "mongoose": "^4.11.5",

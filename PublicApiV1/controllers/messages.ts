@@ -1,5 +1,7 @@
 import * as express from "express";
 
+import * as azure from "azure-storage";
+
 import { FiscalCode } from "../utils/fiscalcode";
 import { withValidFiscalCode } from "../utils/request_validators";
 
@@ -14,15 +16,35 @@ import { MessageModel } from "../models/message";
  *
  * @param Message The Message model.
  */
-export function CreateMessage(Message: MessageModel): express.RequestHandler {
+export function CreateMessage(
+  Message: MessageModel,
+  queueService: azure.QueueService,
+  queueName: string,
+): express.RequestHandler {
   return withValidFiscalCode((request: express.Request, response: express.Response, fiscalCode: FiscalCode) => {
     const message: IMessage = {
       bodyShort: request.body.body_short,
       fiscalCode,
     };
+
     Message.createMessage(message).then((result) => {
-      response.json(result);
+      queueService.createMessage(queueName, result._id as string, {}, (error) => {
+        if (error) {
+          // TODO: handle error
+          response.json({
+            notification: false,
+            result,
+          });
+        } else {
+          response.json({
+            notification: true,
+            result,
+          });
+        }
+      });
+
     }, handleErrorAndRespond(response));
+
   });
 }
 
