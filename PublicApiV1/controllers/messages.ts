@@ -55,7 +55,7 @@ export function CreateMessage(
  */
 export function GetMessage(Message: MessageModel): express.RequestHandler {
   return withValidFiscalCode((request: express.Request, response: express.Response, fiscalCode: FiscalCode) => {
-    Message.findMessage(fiscalCode, request.params.id).then((result) => {
+    Message.findMessageForRecipient(fiscalCode, request.params.id).then((result) => {
       if (result != null) {
         response.json(result);
       } else {

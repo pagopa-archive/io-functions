@@ -1,3 +1,25 @@
+import * as mongoose from "mongoose";
+
+import { IMessageModel, MessageModel } from "../lib/models/message";
+
+import { messageSchema } from "../lib/schemas/message";
+
+// Setup Mongoose
+
+( mongoose as any ).Promise = global.Promise;
+
+const MONGODB_CONNECTION: string = process.env.CUSTOMCONNSTR_development;
+const connection: mongoose.Connection = mongoose.createConnection(
+  MONGODB_CONNECTION,
+  {
+    config: {
+      autoIndex: false, // do not autoIndex on connect, see http://mongoosejs.com/docs/guide.html#autoIndex
+    },
+  },
+);
+
+const messageModel = new MessageModel(connection.model<IMessageModel>("Message", messageSchema));
+
 interface IContext {
   bindingData: {
     queueTrigger?: string;
@@ -25,8 +47,23 @@ interface IMessagePayload {
 export function index(context: IContextWithBindings) {
   if (context.bindings.createdMessage != null) {
     const message: IMessagePayload = context.bindings.createdMessage;
-    context.log(`Dequeued message [${message.messageId}]`);
-    context.done();
+    if (message.messageId != null) {
+      context.log(`Dequeued message [${message.messageId}]`);
+      messageModel.findMessage(message.messageId).then((storedMessage) => {
+        if (storedMessage != null) {
+          context.log(`Message [${message.messageId}] recipient is [${storedMessage.fiscalCode}].`);
+        } else {
+          context.log(`Message [${message.messageId}] not found.`);
+        }
+        context.done();
+      },
+      (error) => {
+        // in case of error, fail to trigger a retry
+        throw(error);
+      });
+    } else {
+      context.log(`Message ID is null`);
+    }
   } else {
     context.log(`Fatal! no message found in bindings.`);
     context.done();

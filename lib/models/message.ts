@@ -31,12 +31,21 @@ export class MessageModel {
   }
 
   /**
+   * Returns the message associated to the provided message ID
+   *
+   * @param messageId The ID of the message
+   */
+  public async findMessage(messageId: string): Promise<IMessageModel | null> {
+    return this.messageModel.findById(messageId).exec();
+  }
+
+  /**
    * Returns the message for the provided fiscal code and message ID
    *
    * @param fiscalCode The fiscal code of the recipient
    * @param messageId The ID of the message
    */
-  public async findMessage(fiscalCode: FiscalCode, messageId: string): Promise<IMessageModel | null> {
+  public async findMessageForRecipient(fiscalCode: FiscalCode, messageId: string): Promise<IMessageModel | null> {
     const message = await this.messageModel.findById(messageId).exec();
     if (message != null && message.fiscalCode === fiscalCode) {
       return message;
