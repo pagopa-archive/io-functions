@@ -13,7 +13,7 @@ import { ProfileModel } from "../models/profile";
  *
  * TODO only return public visible attributes
  */
-export function getProfileController(Profile: ProfileModel): express.RequestHandler {
+export function GetProfile(Profile: ProfileModel): express.RequestHandler {
   return withValidFiscalCode((_: express.Request, response: express.Response, fiscalCode: FiscalCode) => {
     Profile.findOneProfileByFiscalCode(fiscalCode).then((result) => {
       if (result != null) {
@@ -37,7 +37,7 @@ export function getProfileController(Profile: ProfileModel): express.RequestHand
  *
  * TODO only return public visible attributes
  */
-export function updateProfileController(Profile: ProfileModel): express.RequestHandler {
+export function UpdateProfile(Profile: ProfileModel): express.RequestHandler {
   return withValidFiscalCode((request: express.Request, response: express.Response, fiscalCode: FiscalCode) => {
     const profile: IProfile = {
       email: request.body.email,

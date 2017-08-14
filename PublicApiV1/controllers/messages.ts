@@ -12,7 +12,7 @@ import { MessageModel } from "../models/message";
  *
  * @param Message The Message model.
  */
-export function createMessageController(Message: MessageModel): express.RequestHandler {
+export function CreateMessage(Message: MessageModel): express.RequestHandler {
   return withValidFiscalCode((request: express.Request, response: express.Response, fiscalCode: FiscalCode) => {
     const message: IMessage = {
       bodyShort: request.body.body_short,

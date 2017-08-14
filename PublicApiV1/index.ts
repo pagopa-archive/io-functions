@@ -13,11 +13,11 @@ import { IProfileModel, ProfileModel } from "./models/profile";
 import { messageSchema } from "./schemas/message";
 import { profileSchema } from "./schemas/profile";
 
-import debugHandler from "./controllers/debugController";
-import { createMessageController } from "./controllers/messagesController";
-import { getProfileController, updateProfileController } from "./controllers/profilesController";
+import debugHandler from "./controllers/debug";
+import { CreateMessage } from "./controllers/messages";
+import { GetProfile, UpdateProfile } from "./controllers/profiles";
 
-// Use native promises
+// Use native promises for Mongoose
 ( mongoose as any ).Promise = global.Promise;
 
 const MONGODB_CONNECTION: string = process.env.CUSTOMCONNSTR_development;
@@ -36,10 +36,10 @@ const messageModel = new MessageModel(connection.model<IMessageModel>("Message",
 app.get("/api/v1/debug", debugHandler);
 app.post("/api/v1/debug", debugHandler);
 
-app.get("/api/v1/profiles/:fiscalcode", getProfileController(profileModel));
-app.post("/api/v1/profiles/:fiscalcode", updateProfileController(profileModel));
+app.get("/api/v1/profiles/:fiscalcode", GetProfile(profileModel));
+app.post("/api/v1/profiles/:fiscalcode", UpdateProfile(profileModel));
 
-app.post("/api/v1/messages/:fiscalcode", createMessageController(messageModel));
+app.post("/api/v1/messages/:fiscalcode", CreateMessage(messageModel));
 
 // Binds the express app to an Azure Function handler
 module.exports = createAzureFunctionHandler(app);
