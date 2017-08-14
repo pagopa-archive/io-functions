@@ -1,12 +1,12 @@
 import * as express from "express";
 
-import { FiscalCode } from "../utils/fiscalcode";
-import { withValidFiscalCode } from "../utils/request_validators";
+import { FiscalCode } from "../../lib/utils/fiscalcode";
+import { withValidFiscalCode } from "../../lib/utils/request_validators";
 
-import { handleErrorAndRespond } from "../utils/error_handler";
+import { handleErrorAndRespond } from "../../lib/utils/error_handler";
 
-import { IProfile } from "../interfaces/profile";
-import { ProfileModel } from "../models/profile";
+import { IProfile } from "../../lib/interfaces/profile";
+import { ProfileModel } from "../../lib/models/profile";
 
 /**
  * Returns a getProfile handler

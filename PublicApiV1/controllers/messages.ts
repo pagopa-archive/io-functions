@@ -2,13 +2,13 @@ import * as express from "express";
 
 import * as azure from "azure-storage";
 
-import { FiscalCode } from "../utils/fiscalcode";
-import { withValidFiscalCode } from "../utils/request_validators";
+import { FiscalCode } from "../../lib/utils/fiscalcode";
+import { withValidFiscalCode } from "../../lib/utils/request_validators";
 
-import { handleErrorAndRespond } from "../utils/error_handler";
+import { handleErrorAndRespond } from "../../lib/utils/error_handler";
 
-import { IMessage } from "../interfaces/message";
-import { MessageModel } from "../models/message";
+import { IMessage } from "../../lib/interfaces/message";
+import { MessageModel } from "../../lib/models/message";
 
 /**
  * Returns a controller that will handle requests

@@ -113,6 +113,7 @@ echo Restoring npm packages in %1
 IF EXIST "%1\package.json" (
   pushd "%1"
   call npm install --production
+  call npm run build
   IF !ERRORLEVEL! NEQ 0 goto error
   popd
 )
@@ -121,7 +122,6 @@ FOR /F "tokens=*" %%i IN ('DIR /B %1 /A:D') DO (
   IF EXIST "%1\%%i\package.json" (
     pushd "%1\%%i"
     call npm install --production
-    call npm run build
     IF !ERRORLEVEL! NEQ 0 goto error
     popd
   )

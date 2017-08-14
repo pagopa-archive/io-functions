@@ -8,16 +8,14 @@ import * as mongoose from "mongoose";
 
 import { createAzureFunctionHandler } from "azure-function-express";
 
-import { IMessageModel, MessageModel } from "./models/message";
-import { IProfileModel, ProfileModel } from "./models/profile";
-import { messageSchema } from "./schemas/message";
-import { profileSchema } from "./schemas/profile";
+import { IMessageModel, MessageModel } from "../lib/models/message";
+import { IProfileModel, ProfileModel } from "../lib/models/profile";
+import { messageSchema } from "../lib/schemas/message";
+import { profileSchema } from "../lib/schemas/profile";
 
 import debugHandler from "./controllers/debug";
 import { CreateMessage, GetMessage, GetMessages } from "./controllers/messages";
 import { GetProfile, UpdateProfile } from "./controllers/profiles";
-
-import { memoize } from "./utils/memoize";
 
 // Setup Express
 

@@ -1,13 +1,3 @@
-interface IBindingData {
-  queueTrigger?: string;
-  expirationTime?: Date;
-  insertionTime?: Date;
-  nextVisibleTime?: Date;
-  id: string;
-  popReceipt: string;
-  dequeueCount: number;
-}
-
 interface IContext {
   bindingData: {
     queueTrigger?: string;
