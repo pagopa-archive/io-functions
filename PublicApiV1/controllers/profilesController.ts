@@ -1,6 +1,7 @@
 import * as express from "express";
 
-import { isFiscalCode } from "../utils/fiscalcode";
+import { FiscalCode } from "../utils/fiscalcode";
+import { withValidFiscalCode } from "../utils/request_validators";
 
 import { IProfile } from "../interfaces/profile";
 import { ProfileModel } from "../models/profile";
@@ -13,25 +14,20 @@ import { ProfileModel } from "../models/profile";
  * TODO only return public visible attributes
  */
 export function getProfileController(Profile: ProfileModel): express.RequestHandler {
-  return (request: express.Request, response: express.Response) => {
-    const fiscalCode: string = request.params.fiscalcode;
-    if (isFiscalCode(fiscalCode)) {
-      Profile.findOneProfileByFiscalCode(fiscalCode).then((result) => {
-        if (result != null) {
-          response.json(result);
-        } else {
-          response.status(404).send("Not found");
-        }
-      },
-      (error) => {
-        response.status(500).json({
-          error,
-        });
+  return withValidFiscalCode((_: express.Request, response: express.Response, fiscalCode: FiscalCode) => {
+    Profile.findOneProfileByFiscalCode(fiscalCode).then((result) => {
+      if (result != null) {
+        response.json(result);
+      } else {
+        response.status(404).send("Not found");
+      }
+    },
+    (error) => {
+      response.status(500).json({
+        error,
       });
-    } else {
-      response.status(404).send("Not found");
-    }
-  };
+    });
+  });
 }
 
 /**
@@ -42,27 +38,22 @@ export function getProfileController(Profile: ProfileModel): express.RequestHand
  * TODO only return public visible attributes
  */
 export function updateProfileController(Profile: ProfileModel): express.RequestHandler {
-  return (request: express.Request, response: express.Response) => {
-    const fiscalCode: string = request.params.fiscalcode;
-    if (isFiscalCode(fiscalCode)) {
-      const profile: IProfile = {
-        email: request.body.email,
-        fiscalCode,
-      };
-      Profile.createOrUpdateProfile(profile).then((result) => {
-        if (result != null) {
-          response.json(result);
-        } else {
-          response.status(500).send("Did not create");
-        }
-      },
-      (error) => {
-        response.status(500).json({
-          error,
-        });
+  return withValidFiscalCode((request: express.Request, response: express.Response, fiscalCode: FiscalCode) => {
+    const profile: IProfile = {
+      email: request.body.email,
+      fiscalCode,
+    };
+    Profile.createOrUpdateProfile(profile).then((result) => {
+      if (result != null) {
+        response.json(result);
+      } else {
+        response.status(500).send("Did not create");
+      }
+    },
+    (error) => {
+      response.status(500).json({
+        error,
       });
-    } else {
-      response.status(404).send("Not found");
-    }
-  };
+    });
+  });
 }
