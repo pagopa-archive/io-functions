@@ -48,24 +48,28 @@ export function index(context: IContextWithBindings) {
   if (context.bindings.createdMessage != null) {
     const message: IMessagePayload = context.bindings.createdMessage;
     if (message.messageId != null) {
-      context.log(`Dequeued message [${message.messageId}]`);
-      messageModel.findMessage(message.messageId).then((storedMessage) => {
-        if (storedMessage != null) {
-          context.log(`Message [${message.messageId}] recipient is [${storedMessage.fiscalCode}].`);
-        } else {
-          context.log(`Message [${message.messageId}] not found.`);
-        }
-        context.done();
-      },
-      (error) => {
-        // in case of error, fail to trigger a retry
-        throw(error);
-      });
+      context.log(`Dequeued message [${message.messageId}].`);
+      messageModel.findMessage(message.messageId).then(
+        (storedMessage) => {
+          if (storedMessage != null) {
+            context.log(`Message [${message.messageId}] recipient is [${storedMessage.fiscalCode}].`);
+          } else {
+            context.log(`Message [${message.messageId}] not found.`);
+          }
+          context.done();
+        },
+        (error) => {
+          context.log(`Error while querying message [${message.messageId}].`);
+          // in case of error, fail to trigger a retry
+          throw(error);
+        },
+      );
     } else {
-      context.log(`Message ID is null`);
+      context.log(`Fatal! Message ID is null.`);
+      context.done();
     }
   } else {
-    context.log(`Fatal! no message found in bindings.`);
+    context.log(`Fatal! No message found in bindings.`);
     context.done();
   }
 }
