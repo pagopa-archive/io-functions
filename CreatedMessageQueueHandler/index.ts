@@ -24,7 +24,7 @@ interface IContext {
 
 interface IContextWithBindings extends IContext {
   bindings: {
-    createdMessage?: string;
+    createdMessage?: IMessagePayload;
   };
 }
 
@@ -34,7 +34,7 @@ interface IMessagePayload {
 
 export function index(context: IContextWithBindings) {
   if (context.bindings.createdMessage != null) {
-    const message: IMessagePayload = JSON.parse(context.bindings.createdMessage);
+    const message: IMessagePayload = context.bindings.createdMessage;
     context.log(`Dequeued message [${message.messageId}]`);
   } else {
     context.log(`Fatal! no message found in bindings.`);
