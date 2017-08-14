@@ -28,30 +28,21 @@ export function CreateMessage(
       bodyShort: request.body.body_short,
       fiscalCode,
     };
-    _log(">> creating message");
-    const msg = `test-message-${Date.now()}`;
-    
-    _log(`Queing [${msg}] to [${queueName}]`);
-    queueService.createMessage(queueName, msg, {}, (error) => {
-      _log(`>> message queued [${error}]`);
-      response.json({
-        notification: error == null,
-        msg,
-      });
-    });
-    
-    /*
+
     Message.createMessage(message).then((result) => {
-      _log(`>> message created [${result._id}]`);
-      queueService.createMessage(queueName, `${result._id}`, {}, (error) => {
-        _log(`>> message queued [${error}]`);
+      _log(`>> message stored [${result._id}]`);
+      const createdMessage = {
+        messageId: `${result._id}`,
+      };
+      queueService.createMessage(queueName, JSON.stringify(createdMessage), {}, (error) => {
+        _log(`>> notification queued [${result._id}]`);
+        // TODO: handle queue error
         response.json({
           notification: error == null,
           result,
         });
       });
     }, handleErrorAndRespond(response));
-    */
 
   });
 }
