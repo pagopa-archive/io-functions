@@ -2,10 +2,6 @@
 # yarn lockfile v1
 
 
-"@ksjogo/azure-functions-typescript@^1.1.4":
-  version "1.1.4"
-  resolved "https://registry.yarnpkg.com/@ksjogo/azure-functions-typescript/-/azure-functions-typescript-1.1.4.tgz#0aff2877681c0e7d7a5a8ae56796f5c4adf13b0c"
-
 "@types/bson@*":
   version "1.0.3"
   resolved "https://registry.yarnpkg.com/@types/bson/-/bson-1.0.3.tgz#6c26f0876bf9d8cbb06edd4019e29354bf3a03e0"
