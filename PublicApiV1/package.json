@@ -1,11 +1,11 @@
 {
-  "name": "dc-users-api",
+  "name": "dc-functions-publicapiv1",
   "version": "0.1.0",
-  "description": "Implementation of the Users API, part of the Digital Citizenship platform",
+  "description": "Implementation of the Public API V1, part of the Digital Citizenship platform",
   "main": "index.js",
   "repository": {
     "type": "git",
-    "url": "git@github.com:teamdigitale/cittadinanza-digitale.git"
+    "url": "git@github.com:teamdigitale/digital-citizenship-functions.git"
   },
   "author": "Team per la Trasformazione Digitale, AgID",
   "license": "MIT",
