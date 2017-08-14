@@ -36,11 +36,10 @@ export function CreateMessage(
         if (error) {
           // TODO: handle error
         }
-      });
-
-      response.json({
-        notification: true,
-        result,
+        response.json({
+          notification: true,
+          result,
+        });
       });
     }, handleErrorAndRespond(response));
 
