@@ -22,27 +22,26 @@ export function CreateMessage(
   queueName: string,
 ): express.RequestHandler {
   return withValidFiscalCode((request: express.Request, response: express.Response, fiscalCode: FiscalCode) => {
+    const _log: (text: any) => any = (request as any).context.log;
+
     const message: IMessage = {
       bodyShort: request.body.body_short,
       fiscalCode,
     };
-
+    _log(">> creating message");
     Message.createMessage(message).then((result) => {
+      _log(`>> message created [${result._id}]`);
       queueService.createMessage(queueName, result._id as string, {}, (error) => {
+        _log(`>> message queued [${error}]`);
         if (error) {
           // TODO: handle error
-          response.json({
-            notification: false,
-            result,
-          });
-        } else {
-          response.json({
-            notification: true,
-            result,
-          });
         }
       });
 
+      response.json({
+        notification: true,
+        result,
+      });
     }, handleErrorAndRespond(response));
 
   });
