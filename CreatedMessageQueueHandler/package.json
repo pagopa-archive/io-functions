@@ -1,0 +1,48 @@
+{
+  "name": "dc-functions-createdmessagesqueuehandler",
+  "version": "0.1.0",
+  "description": "Implementation of CreateMessagesQueueHandler, part of the Digital Citizenship platform",
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:teamdigitale/digital-citizenship-functions.git"
+  },
+  "author": "Team per la Trasformazione Digitale, AgID",
+  "license": "MIT",
+  "scripts": {
+    "build": "tsc",
+    "lint": "tslint -c tslint.json '**/*.{ts}'",
+    "pretest": "npm run lint",
+    "test": "jest"
+  },
+  "dependencies": {
+    "@ksjogo/azure-functions-typescript": "^1.1.4",
+    "@types/mongodb": "^2.2.9",
+    "@types/mongoose": "^4.7.19",
+    "@types/node": "^6.0.0",
+    "mongoose": "^4.11.5",
+    "ts-option": "^1.1.4",
+    "typescript": "^2.4.2"
+  },
+  "devDependencies": {
+    "@types/jest": "^20.0.5",
+    "jest": "^20.0.4",
+    "ts-jest": "^20.0.7",
+    "tslint": "^5.5.0"
+  },
+  "jest": {
+    "moduleFileExtensions": [
+      "ts",
+      "js"
+    ],
+    "transform": {
+      "^.+\\.(ts|tsx)$": "<rootDir>/node_modules/ts-jest/preprocessor.js"
+    },
+    "transformIgnorePatterns": [
+      "<rootDir>/node_modules/(?!azure-functions-types)"
+    ],
+    "testMatch": [
+      "**/*.test.ts"
+    ]
+  }
+}

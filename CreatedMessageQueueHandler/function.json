@@ -1,0 +1,11 @@
+{
+  "scriptFile": "index.js",
+  "disabled": false,
+  "bindings": [{
+    "type": "queueTrigger",
+    "direction": "in",
+    "name": "createdMessage",
+    "queueName": "createdmessages",
+    "connection": "CUSTOMCONNSTR_createdmessages"
+  }]
+}
