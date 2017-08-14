@@ -36,6 +36,7 @@ export function index(context: IContextWithBindings) {
   if (context.bindings.createdMessage != null) {
     const message: IMessagePayload = context.bindings.createdMessage;
     context.log(`Dequeued message [${message.messageId}]`);
+    context.done();
   } else {
     context.log(`Fatal! no message found in bindings.`);
     context.done();
