@@ -3,6 +3,8 @@ import * as express from "express";
 import { FiscalCode } from "../utils/fiscalcode";
 import { withValidFiscalCode } from "../utils/request_validators";
 
+import { handleErrorAndRespond } from "../utils/error_handler";
+
 import { IProfile } from "../interfaces/profile";
 import { ProfileModel } from "../models/profile";
 
@@ -21,12 +23,7 @@ export function GetProfile(Profile: ProfileModel): express.RequestHandler {
       } else {
         response.status(404).send("Not found");
       }
-    },
-    (error) => {
-      response.status(500).json({
-        error,
-      });
-    });
+    }, handleErrorAndRespond(response));
   });
 }
 
@@ -49,11 +46,6 @@ export function UpdateProfile(Profile: ProfileModel): express.RequestHandler {
       } else {
         response.status(500).send("Did not create");
       }
-    },
-    (error) => {
-      response.status(500).json({
-        error,
-      });
-    });
+    }, handleErrorAndRespond(response));
   });
 }
