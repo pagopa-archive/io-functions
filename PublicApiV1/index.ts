@@ -46,6 +46,9 @@ const CREATED_MESSAGES_QUEUE_CONNECTION: string = process.env.APPSETTING_QueueSt
 const CREATED_MESSAGES_QUEUE_NAME = "createdmessages";
 
 const queueService = azure.createQueueService(CREATED_MESSAGES_QUEUE_CONNECTION);
+// encode messages in base64 to make them readable by consuming functions
+// see https://github.com/Azure/azure-storage-node/issues/176
+queueService.messageEncoder = new azure.QueueMessageEncoder.TextBase64QueueMessageEncoder();
 
 // Setup handlers
 
