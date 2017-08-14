@@ -6,6 +6,6 @@
     "direction": "in",
     "name": "createdMessage",
     "queueName": "createdmessages",
-    "connection": "AzureWebJobsStorage"
+    "connection": "QueueStorageConnection"
   }]
 }

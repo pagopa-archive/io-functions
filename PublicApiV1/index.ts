@@ -40,7 +40,7 @@ const messageModel = new MessageModel(connection.model<IMessageModel>("Message",
 
 // Setup queues
 
-const CREATED_MESSAGES_QUEUE_CONNECTION: string = process.env.APPSETTING_AzureWebJobsStorage;
+const CREATED_MESSAGES_QUEUE_CONNECTION: string = process.env.APPSETTING_QueueStorageConnection;
 const CREATED_MESSAGES_QUEUE_NAME = "createdmessages";
 
 const queueService = azure.createQueueService(CREATED_MESSAGES_QUEUE_CONNECTION);
