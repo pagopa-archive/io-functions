@@ -33,7 +33,7 @@ export class MessageModel {
   /**
    * Returns the message for the provided fiscal code and message ID
    *
-   * @param fiscalCode The fiscal code of the destination user
+   * @param fiscalCode The fiscal code of the recipient
    * @param messageId The ID of the message
    */
   public async findMessage(fiscalCode: FiscalCode, messageId: string): Promise<IMessageModel | null> {
@@ -43,6 +43,17 @@ export class MessageModel {
     } else {
       return null;
     }
+  }
+
+  /**
+   * Returns the messages for the provided fiscal code
+   *
+   * @param fiscalCode The fiscal code of the recipient
+   */
+  public async findMessages(fiscalCode: FiscalCode): Promise<IMessageModel[]> {
+    return this.messageModel.find({ fiscalCode })
+      .sort({ createdAt: "descending" })
+      .exec();
   }
 
 }

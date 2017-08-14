@@ -19,11 +19,7 @@ export function CreateMessage(Message: MessageModel): express.RequestHandler {
       fiscalCode,
     };
     Message.createMessage(message).then((result) => {
-      if (result != null) {
-        response.json(result);
-      } else {
-        response.status(500).send("Did not create");
-      }
+      response.json(result);
     },
     (error) => {
       response.status(500).json({
@@ -41,6 +37,19 @@ export function GetMessage(Message: MessageModel): express.RequestHandler {
       } else {
         response.status(404).send("Message not found");
       }
+    },
+    (error) => {
+      response.status(500).json({
+        error,
+      });
+    });
+  });
+}
+
+export function GetMessages(Message: MessageModel): express.RequestHandler {
+  return withValidFiscalCode((_: express.Request, response: express.Response, fiscalCode: FiscalCode) => {
+    Message.findMessages(fiscalCode).then((result) => {
+      response.json(result);
     },
     (error) => {
       response.status(500).json({
