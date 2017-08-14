@@ -14,7 +14,7 @@ import { messageSchema } from "./schemas/message";
 import { profileSchema } from "./schemas/profile";
 
 import debugHandler from "./controllers/debug";
-import { CreateMessage } from "./controllers/messages";
+import { CreateMessage, GetMessage } from "./controllers/messages";
 import { GetProfile, UpdateProfile } from "./controllers/profiles";
 
 // Use native promises for Mongoose
@@ -39,6 +39,7 @@ app.post("/api/v1/debug", debugHandler);
 app.get("/api/v1/profiles/:fiscalcode", GetProfile(profileModel));
 app.post("/api/v1/profiles/:fiscalcode", UpdateProfile(profileModel));
 
+app.get("/api/v1/messages/:fiscalcode/:id", GetMessage(messageModel));
 app.post("/api/v1/messages/:fiscalcode", CreateMessage(messageModel));
 
 // Binds the express app to an Azure Function handler

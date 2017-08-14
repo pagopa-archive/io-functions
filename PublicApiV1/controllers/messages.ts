@@ -32,3 +32,20 @@ export function CreateMessage(Message: MessageModel): express.RequestHandler {
     });
   });
 }
+
+export function GetMessage(Message: MessageModel): express.RequestHandler {
+  return withValidFiscalCode((request: express.Request, response: express.Response, fiscalCode: FiscalCode) => {
+    Message.findMessage(fiscalCode, request.params.id).then((result) => {
+      if (result != null) {
+        response.json(result);
+      } else {
+        response.status(404).send("Message not found");
+      }
+    },
+    (error) => {
+      response.status(500).json({
+        error,
+      });
+    });
+  });
+}
