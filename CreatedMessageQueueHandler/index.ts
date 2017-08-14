@@ -1,7 +1,7 @@
 import { IContext } from "@ksjogo/azure-functions-typescript";
 
 export function index(context: IContext) {
-  context.log("Node.js queue trigger function processed work item", context.bindings.createdMessage);
+  context.log("Node.js queue trigger function processed work item", (context.bindings as any).createdMessage);
   context.log("queueTrigger =", context.bindingData.queueTrigger);
   context.log("expirationTime =", context.bindingData.expirationTime);
   context.log("insertionTime =", context.bindingData.insertionTime);
