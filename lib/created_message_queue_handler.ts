@@ -8,23 +8,39 @@
 import { IContext } from "./azure-functions-types";
 
 import { DocumentClient as DocumentDBClient } from "documentdb";
+import * as NodeMailer from "nodemailer";
+import * as sparkPostTransport from "nodemailer-sparkpost-transport";
 
 import * as documentDbUtils from "./utils/documentdb";
 
 import { ICreatedMessageEvent } from "./models/created_message_event";
 import { MessageModel } from "./models/message";
+import { ProfileModel } from "./models/profile";
 
 // Setup DocumentDB
 
 const COSMOSDB_URI: string = process.env.CUSTOMCONNSTR_COSMOSDB_URI;
 const COSMOSDB_KEY: string = process.env.CUSTOMCONNSTR_COSMOSDB_KEY;
 
+// TODO: read from env vars
 const documentDbDatabaseUrl = documentDbUtils.getDatabaseUrl("development");
 const messagesCollectionUrl = documentDbUtils.getCollectionUrl(documentDbDatabaseUrl, "messages");
+const profilesCollectionUrl = documentDbUtils.getCollectionUrl(documentDbDatabaseUrl, "profiles");
 
 const documentClient = new DocumentDBClient(COSMOSDB_URI, { masterKey: COSMOSDB_KEY });
 
 const messageModel = new MessageModel(documentClient, messagesCollectionUrl);
+const profileModel = new ProfileModel(documentClient, profilesCollectionUrl);
+
+//
+// setup NodeMailer
+//
+
+const SPARKPOST_KEY: string = process.env.CUSTOMCONNSTR_SPARKPOST_KEY;
+
+const mailerTransporter = NodeMailer.createTransport(sparkPostTransport({
+  sparkPostApiKey: SPARKPOST_KEY,
+}));
 
 //
 // Main function
@@ -41,27 +57,51 @@ export function index(context: IContextWithBindings) {
     const message: ICreatedMessageEvent = context.bindings.createdMessage;
     if (message.messageId != null && message.fiscalCode != null) {
       context.log(`Dequeued message [${message.messageId}].`);
-      messageModel.findMessage(message.fiscalCode, message.messageId).then(
-        (storedMessage) => {
-          if (storedMessage != null) {
-            context.log(`Message [${message.messageId}] recipient is [${storedMessage.fiscalCode}].`);
+
+      const messagePromise = messageModel.findMessage(message.fiscalCode, message.messageId);
+      const profilePromise = profileModel.findOneProfileByFiscalCode(message.fiscalCode);
+
+      Promise.all([profilePromise, messagePromise]).then(
+        ([retrievedProfile, retrievedMessage]) => {
+          if (retrievedProfile != null && retrievedMessage != null) {
+            // TODO: emit to all channels
+            if (retrievedProfile.email != null) {
+              mailerTransporter.sendMail({
+                from: "sandbox@sparkpostbox.com",
+                html: retrievedMessage.bodyShort,
+                subject: "Very important stuff",
+                text: retrievedMessage.bodyShort,
+                to: retrievedProfile.email,
+              }, (err, info) => {
+                if (err) {
+                  context.log.error(`Error sending email|${err}`);
+                  context.done(err);
+                } else {
+                  context.log.verbose(`Email sent|${info}`);
+                  context.done();
+                }
+              });
+            } else {
+              context.log.warn(`Profile is missing email address|${message.messageId}|${message.fiscalCode}`);
+              context.done();
+            }
           } else {
-            context.log(`Message [${message.messageId}] not found.`);
+            context.log.warn(`Message or profile not found|${message.messageId}|${message.fiscalCode}`);
+            context.done();
           }
-          context.done();
         },
         (error) => {
-          context.log(`Error while querying message [${message.messageId}].`);
+          context.log.error(`Error while querying message, retrying|${message.messageId}|${error}`);
           // in case of error, fail to trigger a retry
           context.done(error);
         },
       );
     } else {
-      context.log(`Fatal! Message ID is null.`);
+      context.log.error(`Fatal! Message ID is null.`);
       context.done();
     }
   } else {
-    context.log(`Fatal! No message found in bindings.`);
+    context.log.error(`Fatal! No message found in bindings.`);
     context.done();
   }
 }
