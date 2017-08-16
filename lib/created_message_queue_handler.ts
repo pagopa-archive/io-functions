@@ -39,7 +39,9 @@ const profileModel = new ProfileModel(documentClient, profilesCollectionUrl);
 const SPARKPOST_KEY: string = process.env.CUSTOMCONNSTR_SPARKPOST_KEY;
 
 const mailerTransporter = NodeMailer.createTransport(sparkPostTransport({
-  sandbox: true,
+  options: {
+    sandbox: true,
+  },
   sparkPostApiKey: SPARKPOST_KEY,
 }));
 
