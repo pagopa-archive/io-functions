@@ -2,7 +2,7 @@ import { DocumentClient as DocumentDBClient } from "documentdb";
 
 import * as documentDbUtils from "./utils/documentdb";
 
-import { FiscalCode } from "./utils/fiscalcode";
+import { ICreatedMessageEvent } from "./models/created_message_event";
 
 import { MessageModel } from "./models/message";
 
@@ -34,18 +34,13 @@ interface IContext {
 
 interface IContextWithBindings extends IContext {
   bindings: {
-    createdMessage?: IMessagePayload;
+    createdMessage?: ICreatedMessageEvent;
   };
-}
-
-interface IMessagePayload {
-  fiscalCode?: FiscalCode;
-  messageId?: string;
 }
 
 export function index(context: IContextWithBindings) {
   if (context.bindings.createdMessage != null) {
-    const message: IMessagePayload = context.bindings.createdMessage;
+    const message: ICreatedMessageEvent = context.bindings.createdMessage;
     if (message.messageId != null && message.fiscalCode != null) {
       context.log(`Dequeued message [${message.messageId}].`);
       messageModel.findMessage(message.fiscalCode, message.messageId).then(

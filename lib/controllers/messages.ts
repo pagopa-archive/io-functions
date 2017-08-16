@@ -9,6 +9,7 @@ import { withValidFiscalCode } from "../../lib/utils/request_validators";
 
 import { handleErrorAndRespond } from "../../lib/utils/error_handler";
 
+import { ICreatedMessageEvent } from "../models/created_message_event";
 import { INewMessage, MessageModel } from "../models/message";
 
 /**
@@ -33,7 +34,7 @@ export function CreateMessage(
 
     Message.createMessage(message).then((result) => {
       _log(`>> message stored [${result.id}]`);
-      const createdMessage = {
+      const createdMessage: ICreatedMessageEvent = {
         fiscalCode,
         messageId: `${result.id}`,
       };
