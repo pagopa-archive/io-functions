@@ -32,12 +32,12 @@ export function CreateMessage(
     };
 
     Message.createMessage(message).then((result) => {
-      _log(`>> message stored [${result._id}]`);
+      _log(`>> message stored [${result.id}]`);
       const createdMessage = {
-        messageId: `${result._id}`,
+        messageId: `${result.id}`,
       };
       queueService.createMessage(queueName, JSON.stringify(createdMessage), {}, (error) => {
-        _log(`>> notification queued [${result._id}]`);
+        _log(`>> notification queued [${result.id}]`);
         // TODO: handle queue error
         response.json({
           notification: error == null,
