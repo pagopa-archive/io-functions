@@ -31,7 +31,7 @@ interface IContext {
     dequeueCount: number;
   };
   log: (msg: any, params?: any) => any;
-  done: () => void;
+  done: (err?: any, props?: any) => void;
 }
 
 interface IContextWithBindings extends IContext {
@@ -61,7 +61,7 @@ export function index(context: IContextWithBindings) {
         (error) => {
           context.log(`Error while querying message [${message.messageId}].`);
           // in case of error, fail to trigger a retry
-          throw(error);
+          context.done(error);
         },
       );
     } else {
