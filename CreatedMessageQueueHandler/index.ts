@@ -1,3 +1,3 @@
-import * as azureFunction from "../lib/created_messages_queue_handler";
+import * as azureFunction from "../lib/created_message_queue_handler";
 
 module.exports = azureFunction;
