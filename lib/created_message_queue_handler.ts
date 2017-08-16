@@ -1,9 +1,17 @@
+/*
+ * This function will process events triggered by newly created messages.
+ * For each new input message, the delivery preferences associated to the
+ * recipient of the message gets retrieved and a notification gets delivered
+ * to each configured channel.
+ */
+
+import { IContext } from "./azure-functions-types";
+
 import { DocumentClient as DocumentDBClient } from "documentdb";
 
 import * as documentDbUtils from "./utils/documentdb";
 
 import { ICreatedMessageEvent } from "./models/created_message_event";
-
 import { MessageModel } from "./models/message";
 
 // Setup DocumentDB
@@ -18,19 +26,9 @@ const documentClient = new DocumentDBClient(COSMOSDB_URI, { masterKey: COSMOSDB_
 
 const messageModel = new MessageModel(documentClient, messagesCollectionUrl);
 
-interface IContext {
-  bindingData: {
-    queueTrigger?: string;
-    expirationTime?: Date;
-    insertionTime?: Date;
-    nextVisibleTime?: Date;
-    id: string;
-    popReceipt: string;
-    dequeueCount: number;
-  };
-  log: (msg: any, params?: any) => any;
-  done: (err?: any, props?: any) => void;
-}
+//
+// Main function
+//
 
 interface IContextWithBindings extends IContext {
   bindings: {

@@ -1,41 +1,41 @@
-import { Context } from './context'
+import { IContext } from "./context";
 
 export type HttpMethod =
-  | 'GET'
-  | 'POST'
-  | 'PUT'
-  | 'DELETE'
-  | 'HEAD'
-  | 'OPTIONS'
-  | 'TRACE'
-  | 'CONNECT'
-  | 'PATCH'
+  | "GET"
+  | "POST"
+  | "PUT"
+  | "DELETE"
+  | "HEAD"
+  | "OPTIONS"
+  | "TRACE"
+  | "CONNECT"
+  | "PATCH";
 
-export type FunctionRequest = {
-  originalUrl: string
-  method: HttpMethod
-  query: { [key: string]: string }
-  headers: { [name: string]: string }
-  body: any
-  rawbody: any
+export interface IFunctionRequest {
+  originalUrl: string;
+  method: HttpMethod;
+  query: { [key: string]: string };
+  headers: { [name: string]: string };
+  body: any;
+  rawbody: any;
 }
 
-export type FunctionResponse = {
-  body?: any
-  status?: number
+export interface IFunctionResponse {
+  body?: any;
+  status?: number;
   headers?: {
-    'content-type'?: string
-    'content-length'?: HttpStatusCodes | number
-    'content-disposition'?: string
-    'content-encoding'?: string
-    'content-language'?: string
-    'content-range'?: string
-    'content-location'?: string
-    'content-md5'?: Buffer
-    'expires'?: Date
-    'last-modified'?: Date
-    [name: string]: any
-  }
+    "content-type"?: string;
+    "content-length"?: HttpStatusCodes | number;
+    "content-disposition"?: string;
+    "content-encoding"?: string;
+    "content-language"?: string;
+    "content-range"?: string;
+    "content-location"?: string;
+    "content-md5"?: Buffer;
+    "expires"?: Date;
+    "last-modified"?: Date;
+    [name: string]: any;
+  };
 }
 
 export enum HttpStatusCodes {
@@ -132,9 +132,9 @@ export enum HttpStatusCodes {
   ATimeoutOccurred = 524,
   SSLHandshakeFailed = 525,
   InvalidSSLCertificate = 526,
-  SiteIsFrozen = 530
+  SiteIsFrozen = 530,
 }
 
-export type HttpContext = Context & {
-  res: FunctionResponse
-}
+export type HttpContext = IContext & {
+  res: IFunctionResponse,
+};
