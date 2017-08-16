@@ -33,16 +33,6 @@ const messageModel = new MessageModel(documentClient, messagesCollectionUrl);
 const profileModel = new ProfileModel(documentClient, profilesCollectionUrl);
 
 //
-// setup NodeMailer
-//
-
-const SPARKPOST_KEY: string = process.env.CUSTOMCONNSTR_SPARKPOST_KEY;
-
-const mailerTransporter = NodeMailer.createTransport(sparkPostTransport({
-  sparkPostApiKey: SPARKPOST_KEY,
-}));
-
-//
 // Main function
 //
 
@@ -65,6 +55,14 @@ export function index(context: IContextWithBindings) {
         ([retrievedProfile, retrievedMessage]) => {
           if (retrievedProfile != null && retrievedMessage != null) {
             // TODO: emit to all channels
+
+            const SPARKPOST_KEY: string = process.env.CUSTOMCONNSTR_SPARKPOST_KEY;
+
+            const mailerTransporter = NodeMailer.createTransport(sparkPostTransport({
+              sparkPostApiKey: SPARKPOST_KEY,
+            }));
+
+            context.log.verbose(`Sending email|${SPARKPOST_KEY}|${retrievedProfile.email}|${retrievedMessage.bodyShort}`);
             if (retrievedProfile.email != null) {
               mailerTransporter.sendMail({
                 from: "sandbox@sparkpostbox.com",
