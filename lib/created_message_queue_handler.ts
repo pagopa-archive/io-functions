@@ -1,24 +1,20 @@
-import * as mongoose from "mongoose";
+import { DocumentClient as DocumentDBClient } from "documentdb";
 
-import { IMessageModel, MessageModel } from "./models/message";
+import * as documentDbUtils from "./utils/documentdb";
 
-import { messageSchema } from "./schemas/message";
+import { MessageModel } from "./models/message";
 
-// Setup Mongoose
+// Setup DocumentDB
 
-( mongoose as any ).Promise = global.Promise;
+const COSMOSDB_URI: string = process.env.CUSTOMCONNSTR_COSMOSDB_URI;
+const COSMOSDB_KEY: string = process.env.CUSTOMCONNSTR_COSMOSDB_KEY;
 
-const MONGODB_CONNECTION: string = process.env.CUSTOMCONNSTR_development;
-const connection: mongoose.Connection = mongoose.createConnection(
-  MONGODB_CONNECTION,
-  {
-    config: {
-      autoIndex: false, // do not autoIndex on connect, see http://mongoosejs.com/docs/guide.html#autoIndex
-    },
-  },
-);
+const documentDbDatabaseUrl = documentDbUtils.getDatabaseUrl("development");
+const messagesCollectionUrl = documentDbUtils.getCollectionUrl(documentDbDatabaseUrl, "messages");
 
-const messageModel = new MessageModel(connection.model<IMessageModel>("Message", messageSchema));
+const documentClient = new DocumentDBClient(COSMOSDB_URI, { masterKey: COSMOSDB_KEY });
+
+const messageModel = new MessageModel(documentClient, messagesCollectionUrl);
 
 interface IContext {
   bindingData: {

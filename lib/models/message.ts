@@ -1,24 +1,42 @@
-import * as mongoose from "mongoose";
-
-import { IMessage } from "../interfaces/message";
+import * as DocumentDb from "documentdb";
+import * as DocumentDbUtils from "../utils/documentdb";
 
 import { FiscalCode } from "../utils/fiscalcode";
 
-export interface IMessageModel extends IMessage, mongoose.Document { }
+/**
+ * Base interface for Message objects
+ */
+export interface IMessage {
+  fiscalCode: FiscalCode;
+  bodyShort: string;
+}
+
+/**
+ * Interface for new Message objects
+ */
+export interface INewMessage extends IMessage, DocumentDb.NewDocument { }
+
+/**
+ * Interface for retrieved Message objects
+ */
+export interface IRetrievedMessage extends IMessage, DocumentDb.RetrievedDocument { }
 
 /**
  * A model for handling Messages
  */
 export class MessageModel {
-  private messageModel: mongoose.Model<IMessageModel>;
+  private dbClient: DocumentDb.DocumentClient;
+  private collectionUrl: DocumentDbUtils.DocumentDbCollectionUrl;
 
   /**
-   * Creates a new MessageModel
+   * Creates a new Message model
    *
-   * @param messageModel A Mongoose model for Messages
+   * @param dbClient the DocumentDB client
+   * @param collectionUrl the collection URL
    */
-  constructor(messageModel: mongoose.Model<IMessageModel>) {
-    this.messageModel = messageModel;
+  constructor(dbClient: DocumentDb.DocumentClient, collectionUrl: DocumentDbUtils.DocumentDbCollectionUrl) {
+    this.dbClient = dbClient;
+    this.collectionUrl = collectionUrl;
   }
 
   /**
@@ -26,8 +44,13 @@ export class MessageModel {
    *
    * @param message The new Message
    */
-  public createMessage(message: IMessage): Promise<IMessageModel> {
-    return this.messageModel.create(message);
+  public async createMessage(message: INewMessage): Promise<IRetrievedMessage> {
+    const createdDocument = await DocumentDbUtils.createDocument(
+      this.dbClient,
+      this.collectionUrl,
+      message,
+    );
+    return createdDocument;
   }
 
   /**
@@ -35,8 +58,30 @@ export class MessageModel {
    *
    * @param messageId The ID of the message
    */
-  public async findMessage(messageId: string): Promise<IMessageModel | null> {
-    return this.messageModel.findById(messageId).exec();
+  public findMessage(messageId: string): Promise<IRetrievedMessage | null> {
+    const documentUrl = DocumentDbUtils.getDocumentUrl(
+      this.collectionUrl,
+      messageId,
+    );
+    return new Promise((resolve, reject) => {
+      // To properly handle "not found" case vs other errors
+      // we need to handle the Promise returned by readDocument
+      // to be able to catch the 404 error in case the document
+      // does not exist and resolve the outer Promise to null.
+      DocumentDbUtils.readDocument<IMessage>(
+        this.dbClient,
+        documentUrl,
+      ).then(
+        (document) => resolve(document),
+        (error: DocumentDb.QueryError) => {
+          if (error.code === 404) {
+            resolve(null);
+          } else {
+            reject(error);
+          }
+        },
+      );
+    });
   }
 
   /**
@@ -45,8 +90,8 @@ export class MessageModel {
    * @param fiscalCode The fiscal code of the recipient
    * @param messageId The ID of the message
    */
-  public async findMessageForRecipient(fiscalCode: FiscalCode, messageId: string): Promise<IMessageModel | null> {
-    const message = await this.messageModel.findById(messageId).exec();
+  public async findMessageForRecipient(fiscalCode: FiscalCode, messageId: string): Promise<IRetrievedMessage | null> {
+    const message = await this.findMessage(messageId);
     if (message != null && message.fiscalCode === fiscalCode) {
       return message;
     } else {
@@ -59,10 +104,18 @@ export class MessageModel {
    *
    * @param fiscalCode The fiscal code of the recipient
    */
-  public async findMessages(fiscalCode: FiscalCode): Promise<IMessageModel[]> {
-    return this.messageModel.find({ fiscalCode })
-      .sort({ createdAt: "descending" })
-      .exec();
+  public findMessages(fiscalCode: FiscalCode): DocumentDbUtils.IResultIterator<IRetrievedMessage[]> {
+    return DocumentDbUtils.queryDocuments(
+      this.dbClient,
+      this.collectionUrl,
+      {
+        parameters: [{
+          name: "fiscalCode",
+          value: fiscalCode,
+        }],
+        query: "SELECT * FROM messages m WHERE (m.fiscalCode = @fiscalCode)",
+      },
+    );
   }
 
 }

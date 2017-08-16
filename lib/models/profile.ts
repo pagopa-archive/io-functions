@@ -1,15 +1,40 @@
-import * as mongoose from "mongoose";
+import * as DocumentDb from "documentdb";
+import * as DocumentDbUtils from "../utils/documentdb";
 
-import { IProfile } from "../interfaces/profile";
 import { FiscalCode } from "../utils/fiscalcode";
 
-export interface IProfileModel extends IProfile, mongoose.Document { }
+/**
+ * Base interface for Profile objects
+ */
+interface IProfile {
+  fiscalCode: FiscalCode;
+  email?: string;
+  // version: number;
+}
+
+/**
+ * Interface for new Profile objects
+ */
+export interface INewProfile extends IProfile, DocumentDb.NewDocument { }
+
+/**
+ * Interface for retrieved Profile objects
+ */
+export interface IRetrievedProfile extends IProfile, DocumentDb.RetrievedDocument { }
 
 export class ProfileModel {
-  private profileModel: mongoose.Model<IProfileModel>;
+  private dbClient: DocumentDb.DocumentClient;
+  private collectionUrl: DocumentDbUtils.DocumentDbCollectionUrl;
 
-  constructor(profileModel: mongoose.Model<IProfileModel>) {
-    this.profileModel = profileModel;
+  /**
+   * Creates a new Profile model
+   *
+   * @param dbClient the DocumentDB client
+   * @param collectionUrl the collection URL
+   */
+  constructor(dbClient: DocumentDb.DocumentClient, collectionUrl: DocumentDbUtils.DocumentDbCollectionUrl) {
+    this.dbClient = dbClient;
+    this.collectionUrl = collectionUrl;
   }
 
   /**
@@ -17,16 +42,38 @@ export class ProfileModel {
    *
    * @param fiscalCode
    */
-  public findOneProfileByFiscalCode(fiscalCode: FiscalCode): Promise<IProfileModel | null> {
-    return this.profileModel.collection.findOne({ fiscalCode });
+  public findOneProfileByFiscalCode(fiscalCode: FiscalCode): Promise<IRetrievedProfile | null> {
+    return DocumentDbUtils.queryOneDocument(
+      this.dbClient,
+      this.collectionUrl,
+      {
+        parameters: [{
+          name: "fiscalCode",
+          value: fiscalCode,
+        }],
+        query: "SELECT * FROM profiles WHERE (fiscalCode = @fiscalCode)",
+      },
+    );
   }
 
-  public createOrUpdateProfile(profile: IProfile): Promise<IProfileModel | null> {
-    return this.profileModel.findOneAndUpdate(
-      { fiscalCode: profile.fiscalCode },
-      profile,
-      { upsert: true, new: true, runValidators: true },
-    ).exec();
+  /**
+   * Upserts a Profile
+   *
+   * TODO: add versioning
+   *
+   * @param profile The new Profile object
+   */
+  public createOrUpdateProfile(profile: INewProfile): Promise<IRetrievedProfile | null> {
+    return new Promise((resolve, reject) => {
+      DocumentDbUtils.createDocument(
+        this.dbClient,
+        this.collectionUrl,
+        profile,
+      ).then(
+        (result) => resolve(result),
+        (error) => reject(error),
+      );
+    });
   }
 
 }

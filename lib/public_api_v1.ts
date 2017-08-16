@@ -4,14 +4,15 @@
 
 import * as azure from "azure-storage";
 import * as express from "express";
-import * as mongoose from "mongoose";
+
+import { DocumentClient as DocumentDBClient } from "documentdb";
+
+import * as documentDbUtils from "./utils/documentdb";
 
 import { createAzureFunctionHandler } from "azure-function-express";
 
-import { IMessageModel, MessageModel } from "./models/message";
-import { IProfileModel, ProfileModel } from "./models/profile";
-import { messageSchema } from "./schemas/message";
-import { profileSchema } from "./schemas/profile";
+import { MessageModel } from "./models/message";
+import { ProfileModel } from "./models/profile";
 
 import debugHandler from "./controllers/debug";
 import { CreateMessage, GetMessage, GetMessages } from "./controllers/messages";
@@ -21,22 +22,19 @@ import { GetProfile, UpdateProfile } from "./controllers/profiles";
 
 const app = express();
 
-// Setup Mongoose
+// Setup DocumentDB
 
-( mongoose as any ).Promise = global.Promise;
+const COSMOSDB_URI: string = process.env.CUSTOMCONNSTR_COSMOSDB_URI;
+const COSMOSDB_KEY: string = process.env.CUSTOMCONNSTR_COSMOSDB_KEY;
 
-const MONGODB_CONNECTION: string = process.env.CUSTOMCONNSTR_development;
-const connection: mongoose.Connection = mongoose.createConnection(
-  MONGODB_CONNECTION,
-  {
-    config: {
-      autoIndex: false, // do not autoIndex on connect, see http://mongoosejs.com/docs/guide.html#autoIndex
-    },
-  },
-);
+const documentDbDatabaseUrl = documentDbUtils.getDatabaseUrl("development");
+const messagesCollectionUrl = documentDbUtils.getCollectionUrl(documentDbDatabaseUrl, "messages");
+const profilesCollectionUrl = documentDbUtils.getCollectionUrl(documentDbDatabaseUrl, "profiles");
 
-const profileModel = new ProfileModel(connection.model<IProfileModel>("Profile", profileSchema));
-const messageModel = new MessageModel(connection.model<IMessageModel>("Message", messageSchema));
+const documentClient = new DocumentDBClient(COSMOSDB_URI, { masterKey: COSMOSDB_KEY });
+
+const profileModel = new ProfileModel(documentClient, profilesCollectionUrl);
+const messageModel = new MessageModel(documentClient, messagesCollectionUrl);
 
 // Setup queues
 

@@ -5,8 +5,7 @@ import { withValidFiscalCode } from "../../lib/utils/request_validators";
 
 import { handleErrorAndRespond } from "../../lib/utils/error_handler";
 
-import { IProfile } from "../../lib/interfaces/profile";
-import { ProfileModel } from "../../lib/models/profile";
+import { INewProfile, ProfileModel } from "../models/profile";
 
 /**
  * Returns a getProfile handler
@@ -32,13 +31,14 @@ export function GetProfile(Profile: ProfileModel): express.RequestHandler {
  *
  * @param Profile The Profile model.
  *
- * TODO only return public visible attributes
+ * TODO: only return public visible attributes
  */
 export function UpdateProfile(Profile: ProfileModel): express.RequestHandler {
   return withValidFiscalCode((request: express.Request, response: express.Response, fiscalCode: FiscalCode) => {
-    const profile: IProfile = {
+    const profile: INewProfile = {
       email: request.body.email,
       fiscalCode,
+      id: fiscalCode,
     };
     Profile.createOrUpdateProfile(profile).then((result) => {
       if (result != null) {

@@ -2,13 +2,14 @@ import * as express from "express";
 
 import * as azure from "azure-storage";
 
+import * as ulid from "ulid";
+
 import { FiscalCode } from "../../lib/utils/fiscalcode";
 import { withValidFiscalCode } from "../../lib/utils/request_validators";
 
 import { handleErrorAndRespond } from "../../lib/utils/error_handler";
 
-import { IMessage } from "../../lib/interfaces/message";
-import { MessageModel } from "../../lib/models/message";
+import { INewMessage, MessageModel } from "../models/message";
 
 /**
  * Returns a controller that will handle requests
@@ -24,9 +25,10 @@ export function CreateMessage(
   return withValidFiscalCode((request: express.Request, response: express.Response, fiscalCode: FiscalCode) => {
     const _log: (text: any) => any = (request as any).context.log;
 
-    const message: IMessage = {
+    const message: INewMessage = {
       bodyShort: request.body.body_short,
       fiscalCode,
+      id: ulid(),
     };
 
     Message.createMessage(message).then((result) => {
@@ -73,7 +75,8 @@ export function GetMessage(Message: MessageModel): express.RequestHandler {
  */
 export function GetMessages(Message: MessageModel): express.RequestHandler {
   return withValidFiscalCode((_: express.Request, response: express.Response, fiscalCode: FiscalCode) => {
-    Message.findMessages(fiscalCode).then((result) => {
+    const iterator = Message.findMessages(fiscalCode);
+    iterator.executeNext().then((result) => {
       response.json(result);
     }, handleErrorAndRespond(response));
   });

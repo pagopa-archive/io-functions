@@ -16,17 +16,17 @@
     "test": "jest"
   },
   "dependencies": {
+    "@types/documentdb": "^1.10.2",
     "@types/express": "^4.0.36",
-    "@types/mongodb": "^2.2.9",
-    "@types/mongoose": "^4.7.19",
     "@types/node": "^6.0.0",
     "azure-function-express": "^1.2.2",
     "azure-storage": "^2.2.2",
     "codice-fiscale-italiano": "^1.0.1",
+    "documentdb": "^1.12.2",
     "express": "^4.15.3",
-    "mongoose": "^4.11.5",
     "ts-option": "^1.1.4",
-    "typescript": "^2.4.2"
+    "typescript": "^2.4.2",
+    "ulid": "^0.2.0"
   },
   "devDependencies": {
     "@types/jest": "^20.0.5",
