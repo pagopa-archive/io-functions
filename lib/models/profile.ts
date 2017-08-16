@@ -48,10 +48,10 @@ export class ProfileModel {
       this.collectionUrl,
       {
         parameters: [{
-          name: "fiscalCode",
+          name: "@fiscalCode",
           value: fiscalCode,
         }],
-        query: "SELECT * FROM profiles WHERE (fiscalCode = @fiscalCode)",
+        query: "SELECT * FROM profiles p WHERE (p.fiscalCode = @fiscalCode)",
       },
     );
   }

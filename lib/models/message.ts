@@ -110,7 +110,7 @@ export class MessageModel {
       this.collectionUrl,
       {
         parameters: [{
-          name: "fiscalCode",
+          name: "@fiscalCode",
           value: fiscalCode,
         }],
         query: "SELECT * FROM messages m WHERE (m.fiscalCode = @fiscalCode)",
