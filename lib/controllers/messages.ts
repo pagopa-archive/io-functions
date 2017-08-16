@@ -34,6 +34,7 @@ export function CreateMessage(
     Message.createMessage(message).then((result) => {
       _log(`>> message stored [${result.id}]`);
       const createdMessage = {
+        fiscalCode,
         messageId: `${result.id}`,
       };
       queueService.createMessage(queueName, JSON.stringify(createdMessage), {}, (error) => {

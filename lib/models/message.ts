@@ -58,7 +58,7 @@ export class MessageModel {
    *
    * @param messageId The ID of the message
    */
-  public findMessage(messageId: string): Promise<IRetrievedMessage | null> {
+  public findMessage(fiscalCode: FiscalCode, messageId: string): Promise<IRetrievedMessage | null> {
     const documentUrl = DocumentDbUtils.getDocumentUrl(
       this.collectionUrl,
       messageId,
@@ -71,6 +71,7 @@ export class MessageModel {
       DocumentDbUtils.readDocument<IMessage>(
         this.dbClient,
         documentUrl,
+        fiscalCode,
       ).then(
         (document) => resolve(document),
         (error: DocumentDb.QueryError) => {
@@ -91,7 +92,7 @@ export class MessageModel {
    * @param messageId The ID of the message
    */
   public async findMessageForRecipient(fiscalCode: FiscalCode, messageId: string): Promise<IRetrievedMessage | null> {
-    const message = await this.findMessage(messageId);
+    const message = await this.findMessage(fiscalCode, messageId);
     if (message != null && message.fiscalCode === fiscalCode) {
       return message;
     } else {

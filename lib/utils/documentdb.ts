@@ -145,9 +145,12 @@ export function createDocument<T>(
 export function readDocument<T>(
   client: DocumentDb.DocumentClient,
   documentUrl: DocumentDbDocumentUrl,
+  partitionKey: string | string[],
 ): Promise<T & DocumentDb.RetrievedDocument> {
   return new Promise((resolve, reject) => {
-    client.readDocument(documentUrl, (err, result) => {
+    client.readDocument(documentUrl, {
+      partitionKey,
+    }, (err, result) => {
       if (err) {
         reject(err);
       } else {

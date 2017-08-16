@@ -2,6 +2,8 @@ import { DocumentClient as DocumentDBClient } from "documentdb";
 
 import * as documentDbUtils from "./utils/documentdb";
 
+import { FiscalCode } from "./utils/fiscalcode";
+
 import { MessageModel } from "./models/message";
 
 // Setup DocumentDB
@@ -37,15 +39,16 @@ interface IContextWithBindings extends IContext {
 }
 
 interface IMessagePayload {
+  fiscalCode?: FiscalCode;
   messageId?: string;
 }
 
 export function index(context: IContextWithBindings) {
   if (context.bindings.createdMessage != null) {
     const message: IMessagePayload = context.bindings.createdMessage;
-    if (message.messageId != null) {
+    if (message.messageId != null && message.fiscalCode != null) {
       context.log(`Dequeued message [${message.messageId}].`);
-      messageModel.findMessage(message.messageId).then(
+      messageModel.findMessage(message.fiscalCode, message.messageId).then(
         (storedMessage) => {
           if (storedMessage != null) {
             context.log(`Message [${message.messageId}] recipient is [${storedMessage.fiscalCode}].`);
