@@ -8,7 +8,7 @@ import { DocumentClient as DocumentDBClient } from "documentdb";
 
 import * as documentDbUtils from "./utils/documentdb";
 
-import { createAzureFunctionHandler } from "azure-function-express";
+import { createAzureFunctionHandler } from "azure-function-express-cloudify";
 
 import { MessageModel } from "./models/message";
 import { ProfileModel } from "./models/profile";
