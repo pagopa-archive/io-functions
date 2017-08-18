@@ -50,7 +50,7 @@
       "<rootDir>/node_modules/(?!azure-functions-types)"
     ],
     "testMatch": [
-      "**/*.test.ts"
+      "**/__tests__/*.ts"
     ]
   }
 }
