@@ -24,7 +24,7 @@ export function CreateMessage(
   queueName: string,
 ): express.RequestHandler {
   return withValidFiscalCode((request: express.Request, response: express.Response, fiscalCode: FiscalCode) => {
-    const _log: (text: any) => any = (request as any).context.log;
+    const log: (text: any) => any = (request as any).context.log;
 
     const message: INewMessage = {
       bodyShort: request.body.body_short,
@@ -33,12 +33,12 @@ export function CreateMessage(
     };
 
     Message.createMessage(message).then((result) => {
-      _log(`>> message stored [${result.id}]`);
+      log(`>> message stored [${result.id}]`);
       const createdMessage: ICreatedMessageEvent = {
         message: result,
       };
       queueService.createMessage(queueName, JSON.stringify(createdMessage), {}, (error) => {
-        _log(`>> notification queued [${result.id}]`);
+        log(`>> notification queued [${result.id}]`);
         // TODO: handle queue error
         response.json({
           notification: error == null,
