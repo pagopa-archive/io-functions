@@ -13,8 +13,7 @@ import * as sparkPostTransport from "nodemailer-sparkpost-transport";
 
 import * as documentDbUtils from "./utils/documentdb";
 
-import { ICreatedMessageEvent } from "./models/created_message_event";
-import { MessageModel } from "./models/message";
+import { ICreatedMessageEvent, isICreatedMessageEvent } from "./models/created_message_event";
 import { ProfileModel } from "./models/profile";
 
 // Setup DocumentDB
@@ -24,12 +23,10 @@ const COSMOSDB_KEY: string = process.env.CUSTOMCONNSTR_COSMOSDB_KEY;
 
 // TODO: read from env vars
 const documentDbDatabaseUrl = documentDbUtils.getDatabaseUrl("development");
-const messagesCollectionUrl = documentDbUtils.getCollectionUrl(documentDbDatabaseUrl, "messages");
 const profilesCollectionUrl = documentDbUtils.getCollectionUrl(documentDbDatabaseUrl, "profiles");
 
 const documentClient = new DocumentDBClient(COSMOSDB_URI, { masterKey: COSMOSDB_KEY });
 
-const messageModel = new MessageModel(documentClient, messagesCollectionUrl);
 const profileModel = new ProfileModel(documentClient, profilesCollectionUrl);
 
 //
@@ -56,56 +53,53 @@ interface IContextWithBindings extends IContext {
 }
 
 export function index(context: IContextWithBindings) {
-  if (context.bindings.createdMessage != null) {
-    const message: ICreatedMessageEvent = context.bindings.createdMessage;
-    if (message.messageId != null && message.fiscalCode != null) {
-      context.log(`Dequeued message [${message.messageId}].`);
+  if (context.bindings.createdMessage != null && isICreatedMessageEvent(context.bindings.createdMessage)) {
+    const createdMessageEvent = context.bindings.createdMessage;
+    context.log(`Dequeued message|${createdMessageEvent.message.fiscalCode}`);
 
-      const messagePromise = messageModel.findMessage(message.fiscalCode, message.messageId);
-      const profilePromise = profileModel.findOneProfileByFiscalCode(message.fiscalCode);
+    const retrievedMessage = createdMessageEvent.message;
+    const profilePromise = profileModel.findOneProfileByFiscalCode(retrievedMessage.fiscalCode);
 
-      Promise.all([profilePromise, messagePromise]).then(
-        ([retrievedProfile, retrievedMessage]) => {
-          if (retrievedProfile != null && retrievedMessage != null) {
-            // TODO: emit to all channels
-            context.log.verbose(`Sending email|${retrievedProfile.email}|${retrievedMessage.bodyShort}`);
-            if (retrievedProfile.email != null) {
-              mailerTransporter.sendMail({
-                from: "sandbox@sparkpostbox.com",
-                html: retrievedMessage.bodyShort,
-                subject: "Very important stuff",
-                text: retrievedMessage.bodyShort,
-                to: retrievedProfile.email,
-              }, (err, info) => {
-                if (err) {
-                  context.log.error(`Error sending email|${err}`);
-                  context.done(err);
-                } else {
-                  context.log.verbose(`Email sent|${info}`);
-                  context.done();
-                }
-              });
-            } else {
-              context.log.warn(`Profile is missing email address|${message.messageId}|${message.fiscalCode}`);
-              context.done();
-            }
+    profilePromise.then(
+      (retrievedProfile) => {
+        if (retrievedProfile != null) {
+          // TODO: emit to all channels
+          context.log.verbose(`Sending email|${retrievedProfile.email}|${retrievedMessage.bodyShort}`);
+          if (retrievedProfile.email != null) {
+            mailerTransporter.sendMail({
+              from: "sandbox@sparkpostbox.com",
+              html: retrievedMessage.bodyShort,
+              subject: "Very important stuff",
+              text: retrievedMessage.bodyShort,
+              to: retrievedProfile.email,
+            }, (err, info) => {
+              if (err) {
+                context.log.error(`Error sending email|${err}`);
+                context.done(err);
+              } else {
+                context.log.verbose(`Email sent|${info}`);
+                context.done();
+              }
+            });
           } else {
-            context.log.warn(`Message or profile not found|${message.messageId}|${message.fiscalCode}`);
+            context.log.warn(
+              `Profile is missing email address|${retrievedMessage.fiscalCode}`,
+            );
             context.done();
           }
-        },
-        (error) => {
-          context.log.error(`Error while querying message, retrying|${message.messageId}|${error}`);
-          // in case of error, fail to trigger a retry
-          context.done(error);
-        },
-      );
-    } else {
-      context.log.error(`Fatal! Message ID is null.`);
-      context.done();
-    }
+        } else {
+          context.log.warn(`Message or profile not found|${retrievedMessage.fiscalCode}`);
+          context.done();
+        }
+      },
+      (error) => {
+        context.log.error(`Error while querying profile, retrying|${retrievedMessage.fiscalCode}|${error}`);
+        // in case of error, fail to trigger a retry
+        context.done(error);
+      },
+    );
   } else {
-    context.log.error(`Fatal! No message found in bindings.`);
+    context.log.error(`Fatal! No valid message found in bindings.`);
     context.done();
   }
 }

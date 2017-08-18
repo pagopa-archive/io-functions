@@ -1,7 +1,7 @@
 import * as DocumentDb from "documentdb";
 import * as DocumentDbUtils from "../utils/documentdb";
 
-import { FiscalCode } from "../utils/fiscalcode";
+import { FiscalCode, isFiscalCode } from "../utils/fiscalcode";
 
 /**
  * Base interface for Message objects
@@ -12,6 +12,13 @@ export interface IMessage {
 }
 
 /**
+ * Type guard for IMessage objects
+ */
+export function isIMessage(arg: any): arg is IMessage {
+  return isFiscalCode(arg.fiscalCode) && (typeof arg.bodyShort === "string");
+}
+
+/**
  * Interface for new Message objects
  */
 export interface INewMessage extends IMessage, DocumentDb.NewDocument { }
@@ -19,7 +26,22 @@ export interface INewMessage extends IMessage, DocumentDb.NewDocument { }
 /**
  * Interface for retrieved Message objects
  */
-export interface IRetrievedMessage extends IMessage, DocumentDb.RetrievedDocument { }
+interface IRetrievedMessageRW extends IMessage, DocumentDb.RetrievedDocument { }
+
+/**
+ * Read-only interface for retrieved Message objects
+ */
+export type IRetrievedMessage = Readonly<IRetrievedMessageRW>;
+
+/**
+ * Type guard for IRetrievedMessage objects
+ */
+export function isIRetrievedMessage(arg: any): arg is IRetrievedMessage {
+  return (typeof arg.id === "string") &&
+    (typeof arg._self === "string") &&
+    (typeof arg._ts === "number") &&
+    isIMessage(arg);
+}
 
 /**
  * A model for handling Messages

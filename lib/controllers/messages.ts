@@ -35,8 +35,7 @@ export function CreateMessage(
     Message.createMessage(message).then((result) => {
       _log(`>> message stored [${result.id}]`);
       const createdMessage: ICreatedMessageEvent = {
-        fiscalCode,
-        messageId: `${result.id}`,
+        message: result,
       };
       queueService.createMessage(queueName, JSON.stringify(createdMessage), {}, (error) => {
         _log(`>> notification queued [${result.id}]`);

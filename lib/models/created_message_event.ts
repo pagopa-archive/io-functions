@@ -1,4 +1,4 @@
-import { FiscalCode } from "../utils/fiscalcode";
+import { IRetrievedMessage, isIRetrievedMessage } from "./message";
 
 /**
  * Payload of a created message event.
@@ -7,6 +7,12 @@ import { FiscalCode } from "../utils/fiscalcode";
  * Messages API.
  */
 export interface ICreatedMessageEvent {
-  fiscalCode?: FiscalCode;
-  messageId?: string;
+  readonly message: IRetrievedMessage;
+}
+
+/**
+ * Type guard for ICreatedMessageEvent objects
+ */
+export function isICreatedMessageEvent(arg: any): arg is ICreatedMessageEvent {
+  return isIRetrievedMessage(arg.message);
 }
