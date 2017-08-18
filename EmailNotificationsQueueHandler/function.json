@@ -5,13 +5,6 @@
     {
       "type": "queueTrigger",
       "direction": "in",
-      "name": "createdMessage",
-      "queueName": "createdmessages",
-      "connection": "QueueStorageConnection"
-    },
-    {
-      "type": "queue",
-      "direction": "out",
       "name": "emailNotification",
       "queueName": "emailnotifications",
       "connection": "QueueStorageConnection"
