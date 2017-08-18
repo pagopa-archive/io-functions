@@ -11,7 +11,8 @@
   "license": "MIT",
   "scripts": {
     "build": "tsc",
-    "lint": "tslint -c tslint.json '**/*.{ts}'",
+    "build-noemit": "tsc -p . --noEmit",
+    "lint": "tslint -p . -c tslint.json",
     "pretest": "npm run lint",
     "test": "jest"
   },
@@ -35,7 +36,7 @@
     "@types/jest": "^20.0.5",
     "jest": "^20.0.4",
     "ts-jest": "^20.0.7",
-    "tslint": "^5.5.0"
+    "tslint": "^5.6.0"
   },
   "jest": {
     "moduleFileExtensions": [
