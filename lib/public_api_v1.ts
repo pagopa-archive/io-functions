@@ -2,7 +2,6 @@
  * Main entrypoint for the public APIs handlers
  */
 
-import * as azure from "azure-storage";
 import * as express from "express";
 
 import { DocumentClient as DocumentDBClient } from "documentdb";
@@ -36,16 +35,6 @@ const documentClient = new DocumentDBClient(COSMOSDB_URI, { masterKey: COSMOSDB_
 const profileModel = new ProfileModel(documentClient, profilesCollectionUrl);
 const messageModel = new MessageModel(documentClient, messagesCollectionUrl);
 
-// Setup queues
-
-const CREATED_MESSAGES_QUEUE_CONNECTION: string = process.env.APPSETTING_QueueStorageConnection;
-const CREATED_MESSAGES_QUEUE_NAME = "createdmessages";
-
-const queueService = azure.createQueueService(CREATED_MESSAGES_QUEUE_CONNECTION);
-// encode messages in base64 to make them readable by consuming functions
-// see https://github.com/Azure/azure-storage-node/issues/176
-queueService.messageEncoder = new azure.QueueMessageEncoder.TextBase64QueueMessageEncoder();
-
 // Setup handlers
 
 app.get("/api/v1/debug", debugHandler);
@@ -56,7 +45,7 @@ app.post("/api/v1/profiles/:fiscalcode", UpdateProfile(profileModel));
 
 app.get("/api/v1/messages/:fiscalcode/:id", GetMessage(messageModel));
 app.get("/api/v1/messages/:fiscalcode", GetMessages(messageModel));
-app.post("/api/v1/messages/:fiscalcode", CreateMessage(messageModel, queueService, CREATED_MESSAGES_QUEUE_NAME));
+app.post("/api/v1/messages/:fiscalcode", CreateMessage(messageModel));
 
 // Binds the express app to an Azure Function handler
 module.exports = createAzureFunctionHandler(app);

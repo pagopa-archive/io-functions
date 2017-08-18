@@ -1,16 +1,25 @@
 {
   "scriptFile": "index.js",
   "disabled": false,
-  "bindings": [{
-    "authLevel" : "function",
-    "type"      : "httpTrigger",
-    "direction" : "in",
-    "name"      : "req",
-    "methods"   : [ "get", "post" ],
-    "route"     : "api/v1/{*segments}"
-  }, {
-    "type"      : "http",
-    "direction" : "out",
-    "name"      : "res"
-  }]
+  "bindings": [
+    {
+      "authLevel" : "function",
+      "type"      : "httpTrigger",
+      "direction" : "in",
+      "name"      : "req",
+      "methods"   : [ "get", "post" ],
+      "route"     : "api/v1/{*segments}"
+    }, {
+      "type"      : "http",
+      "direction" : "out",
+      "name"      : "res"
+    },
+    {
+      "type": "queue",
+      "direction": "out",
+      "name": "createdMessage",
+      "queueName": "createdmessages",
+      "connection": "QueueStorageConnection"
+    }
+  ]
 }

@@ -1,7 +1,5 @@
 import * as express from "express";
 
-import * as azure from "azure-storage";
-
 import * as ulid from "ulid";
 
 import { FiscalCode } from "../../lib/utils/fiscalcode";
@@ -9,8 +7,20 @@ import { withValidFiscalCode } from "../../lib/utils/request_validators";
 
 import { handleErrorAndRespond } from "../../lib/utils/error_handler";
 
+import { IContext } from "../azure-functions-types";
+
 import { ICreatedMessageEvent } from "../models/created_message_event";
 import { INewMessage, MessageModel } from "../models/message";
+
+/**
+ * Input and output bindings for this function
+ * see CreatedMessageQueueHandler/function.json
+ */
+interface IContextWithBindings extends IContext {
+  bindings: {
+    createdMessage?: ICreatedMessageEvent;
+  };
+}
 
 /**
  * Returns a controller that will handle requests
@@ -20,8 +30,6 @@ import { INewMessage, MessageModel } from "../models/message";
  */
 export function CreateMessage(
   Message: MessageModel,
-  queueService: azure.QueueService,
-  queueName: string,
 ): express.RequestHandler {
   return withValidFiscalCode((request: express.Request, response: express.Response, fiscalCode: FiscalCode) => {
     const log: (text: any) => any = (request as any).context.log;
@@ -34,17 +42,18 @@ export function CreateMessage(
 
     Message.createMessage(message).then((result) => {
       log(`>> message stored [${result.id}]`);
+
       const createdMessage: ICreatedMessageEvent = {
         message: result,
       };
-      queueService.createMessage(queueName, JSON.stringify(createdMessage), {}, (error) => {
-        log(`>> notification queued [${result.id}]`);
-        // TODO: handle queue error
-        response.json({
-          notification: error == null,
-          result,
-        });
-      });
+
+      // queue the message to the created messages queue by setting
+      // the message to the output binding of this function
+      ((request as any).context as IContextWithBindings).bindings.createdMessage = createdMessage;
+
+      // TODO: this will return all internal attrs, only return "public" attributes
+      response.json(result);
+
     }, handleErrorAndRespond(response));
 
   });
