@@ -9,7 +9,7 @@ import { IContext } from "./azure-functions-types";
 
 import { DocumentClient as DocumentDBClient } from "documentdb";
 import * as NodeMailer from "nodemailer";
-import * as sparkPostTransport from "nodemailer-sparkpost-transport";
+import * as sendGridTransport from "nodemailer-sendgrid-transport";
 
 import * as documentDbUtils from "./utils/documentdb";
 
@@ -33,13 +33,12 @@ const profileModel = new ProfileModel(documentClient, profilesCollectionUrl);
 // setup NodeMailer
 //
 
-const SPARKPOST_KEY: string = process.env.CUSTOMCONNSTR_SPARKPOST_KEY;
+const SENDGRID_KEY: string = process.env.CUSTOMCONNSTR_SENDGRID_KEY;
 
-const mailerTransporter = NodeMailer.createTransport(sparkPostTransport({
-  options: {
-    sandbox: true,
+const mailerTransporter = NodeMailer.createTransport(sendGridTransport({
+  auth: {
+    api_key: SENDGRID_KEY,
   },
-  sparkPostApiKey: SPARKPOST_KEY,
 }));
 
 //
@@ -67,7 +66,7 @@ export function index(context: IContextWithBindings) {
           context.log.verbose(`Sending email|${retrievedProfile.email}|${retrievedMessage.bodyShort}`);
           if (retrievedProfile.email != null) {
             mailerTransporter.sendMail({
-              from: "sandbox@sparkpostbox.com",
+              // from: "sandbox@sparkpostbox.com",
               html: retrievedMessage.bodyShort,
               subject: "Very important stuff",
               text: retrievedMessage.bodyShort,
