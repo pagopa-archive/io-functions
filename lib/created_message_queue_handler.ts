@@ -66,7 +66,7 @@ export function index(context: IContextWithBindings) {
           context.log.verbose(`Sending email|${retrievedProfile.email}|${retrievedMessage.bodyShort}`);
           if (retrievedProfile.email != null) {
             mailerTransporter.sendMail({
-              // from: "sandbox@sparkpostbox.com",
+              from: "no-reply@italia.it",
               html: retrievedMessage.bodyShort,
               subject: "Very important stuff",
               text: retrievedMessage.bodyShort,
