@@ -230,9 +230,9 @@ aws4@^1.2.1:
   version "1.6.0"
   resolved "https://registry.yarnpkg.com/aws4/-/aws4-1.6.0.tgz#83ef5ca860b2b32e4a0deedee8c771b9db57471e"
 
-azure-function-express@cloudify/azure-function-express#2c05ba1:
+azure-function-express-cloudify@^1.2.2-1:
   version "1.2.2"
-  resolved "https://codeload.github.com/cloudify/azure-function-express/tar.gz/2c05ba1"
+  resolved "https://registry.yarnpkg.com/azure-function-express-cloudify/-/azure-function-express-cloudify-1.2.2.tgz#daf7053f686ad71e7f8272e85c9b7fc57f758e1a"
 
 azure-storage@^2.2.2:
   version "2.2.2"
