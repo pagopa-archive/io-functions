@@ -14,7 +14,7 @@
     "build-noemit": "tsc -p . --noEmit",
     "lint": "tslint -p . -c tslint.json",
     "pretest": "npm run lint",
-    "test": "jest"
+    "test": "jest --coverage"
   },
   "dependencies": {
     "@types/documentdb": "^1.10.2",
@@ -51,6 +51,7 @@
     ],
     "testMatch": [
       "**/__tests__/*.ts"
-    ]
+    ],
+    "mapCoverage": true
   }
 }
