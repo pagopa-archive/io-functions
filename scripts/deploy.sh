@@ -1,5 +1,5 @@
 #!/bin/bash
-set -x
+
 source ./variables.sh
 
 # Create a resource group if not exists
@@ -88,28 +88,28 @@ az functionapp create -g $resourceGroupName -p $appService -n $functionsName -s 
 # When prompted for password, use the value of $password that you specified
 
 az webapp config appsettings set \
-  --name $functionsName
-  --resource-group $resourceGroupName
-  --settings "QueueStorageConnection=$storageConnectionString"
+  --name $functionsName \
+  --resource-group $resourceGroupName \
+  --settings "QueueStorageConnection=$storageConnectionString" \
   --slot-settings
 
 #  {ApiHub, Custom, DocDb, EventHub, MySql, NotificationHub, PostgreSQL, RedisCache, SQLAzure, SQLServer, ServiceBus}
 #   [--slot]
 #   [--slot-settings]
 az webapp config connection-string set \
-  --connection-string-type Custom
-  --name $functionsName
-  --resource-group $resourceGroupName
+  --connection-string-type Custom \
+  --name $functionsName \
+  --resource-group $resourceGroupName \
   --settings "COSMOSDB_URI=$_cosmosDbUri"
 
 az webapp config connection-string set \
-  --connection-string-type Custom
-  --name $functionsName
-  --resource-group $resourceGroupName
+  --connection-string-type Custom \
+  --name $functionsName \
+  --resource-group $resourceGroupName \
   --settings "COSMOSDB_KEY=$_cosmosDbKey"
 
 az webapp config connection-string set \
-  --connection-string-type Custom
-  --name $functionsName
-  --resource-group $resourceGroupName
+  --connection-string-type Custom \
+  --name $functionsName \
+  --resource-group $resourceGroupName \
   --settings "SENDGRID_KEY=$sendGridKey"

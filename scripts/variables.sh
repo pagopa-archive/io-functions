@@ -21,7 +21,7 @@ if [ -z $sendGridKey ]; then
   exit 1
 fi
 
-cosmosname="${prefix}-cosmosdb"
+cosmosName="${prefix}-cosmosdb"
 
 databaseName="${prefix}-db"
 
