@@ -42,20 +42,23 @@ done
 ########## DOCUMENTDB
 
 az cosmosdb create \
-        --name $cosmosname \
+        --name $cosmosName \
         --kind GlobalDocumentDB \
         --resource-group $resourceGroupName \
         --max-interval 10 \
         --max-staleness-prefix 200
 
+_cosmosDbUri=$(az cosmosdb show -g $resourceGroupName -n $cosmosName --query documentEndpoint -o tsv)
+_cosmosDbKey=$(az cosmosdb list-keys -g $resourceGroupName -n $cosmosName --query primaryMasterKey -o tsv)
+
 az cosmosdb database create \
-        --name $cosmosname \
+        --name $cosmosName \
         --db-name $databaseName \
         --resource-group $resourceGroupName
 
 az cosmosdb collection create \
         --collection-name $collectionName \
-        --name $cosmosname \
+        --name $cosmosName \
         --db-name $databaseName \
         --resource-group $resourceGroupName
 
@@ -83,3 +86,30 @@ az functionapp create -g $resourceGroupName -p $appService -n $functionsName -s 
 # git push azure master
 
 # When prompted for password, use the value of $password that you specified
+
+az webapp config appsettings set \
+  --name $functionsName
+  --resource-group $resourceGroupName
+  --settings "QueueStorageConnection=$storageConnectionString"
+  --slot-settings
+
+#  {ApiHub, Custom, DocDb, EventHub, MySql, NotificationHub, PostgreSQL, RedisCache, SQLAzure, SQLServer, ServiceBus}
+#   [--slot]
+#   [--slot-settings]
+az webapp config connection-string set \
+  --connection-string-type Custom
+  --name $functionsName
+  --resource-group $resourceGroupName
+  --settings "COSMOSDB_URI=$_cosmosDbUri"
+
+az webapp config connection-string set \
+  --connection-string-type Custom
+  --name $functionsName
+  --resource-group $resourceGroupName
+  --settings "COSMOSDB_KEY=$_cosmosDbKey"
+
+az webapp config connection-string set \
+  --connection-string-type Custom
+  --name $functionsName
+  --resource-group $resourceGroupName
+  --settings "SENDGRID_KEY=$sendGridKey"

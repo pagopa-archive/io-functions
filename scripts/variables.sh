@@ -15,6 +15,12 @@ appServiceSku="S1"
 # Premium_LRS, Standard_GRS, Standard_LRS, Standard_RAGRS, Standard_ZRS
 storageSku="Standard_GRS"
 
+sendGridKey="$SEND_GRID_KEY"
+if [ -z $sendGridKey ]; then
+  echo "Please provide a value for SEND_GRID_KEY"
+  exit 1
+fi
+
 cosmosname="${prefix}-cosmosdb"
 
 databaseName="${prefix}-db"
