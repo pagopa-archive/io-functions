@@ -1,5 +1,5 @@
 #!/bin/bash
-
+set -x
 source ./variables.sh
 
 # Create a resource group if not exists
