@@ -17,7 +17,7 @@ location="westeurope"
 appServiceSku="S1"
 
 # Premium_LRS, Standard_GRS, Standard_LRS, Standard_RAGRS, Standard_ZRS
-storageSku="Standard_GRS"
+storageSku="Standard_LRS"
 
 sendGridKey="$SEND_GRID_KEY"
 if [ -z $sendGridKey ]; then

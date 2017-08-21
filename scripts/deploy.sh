@@ -44,9 +44,7 @@ done
 az cosmosdb create \
         --name $cosmosName \
         --kind GlobalDocumentDB \
-        --resource-group $resourceGroupName \
-        --max-interval 10 \
-        --max-staleness-prefix 200
+        --resource-group $resourceGroupName
 
 _cosmosDbUri=$(az cosmosdb show -g $resourceGroupName -n $cosmosName --query documentEndpoint -o tsv)
 _cosmosDbKey=$(az cosmosdb list-keys -g $resourceGroupName -n $cosmosName --query primaryMasterKey -o tsv)
@@ -80,7 +78,7 @@ az functionapp create -g $resourceGroupName -p $appService -n $functionsName -s 
 
 # You may choose --settings instead of --slot-settings
 
-az functionapp config appsettings set \
+az webapp config appsettings set \
   --name $functionsName \
   --resource-group $resourceGroupName \
   --slot-settings "QueueStorageConnection=$storageConnectionString"
