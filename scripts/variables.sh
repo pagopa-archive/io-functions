@@ -1,6 +1,6 @@
 #!/bin/bash
 
-if [ -f "local.variables.sh"]; then
+if [ -f "local.variables.sh" ]; then
   source ./local.variables.sh
 fi
 
@@ -35,7 +35,7 @@ cosmosName="${prefix}-cosmosdb"
 
 databaseName="${prefix}-db"
 
-collectionName="${prefix}-dbc"
+collectionNames=("profiles" "messages")
 
 appService="${prefix}-apps"
 
