@@ -1,5 +1,9 @@
 #!/bin/bash
 
+if [ -f "local.variables.sh"]; then
+  source ./local.variables.sh
+fi
+
 prefix="001"
 
 resourceGroupName="teamdigitale"
@@ -20,6 +24,12 @@ if [ -z $sendGridKey ]; then
   echo "Please provide a value for SEND_GRID_KEY"
   exit 1
 fi
+
+# Git variables are optional,
+# leave them blank if you don't want git integration
+gitRepoUrl="$GIT_REPO_URL"
+gitRepoBranch="$GIT_REPO_BRANCH"
+gitRepoToken="$GIT_REPO_TOKEN"
 
 cosmosName="${prefix}-cosmosdb"
 

@@ -77,6 +77,15 @@ az functionapp create -g $resourceGroupName -p $appService -n $functionsName -s 
 
 # az functionapp deployment user set --user-name $username --password $password
 
+if [ -n $gitRepoUrl ]: then
+  az functionapp deployment source config \
+    --name $functionsName \
+    --repo-url $gitRepoUrl \
+    --branch $gitRepoBranch \
+    --git-token $gitRepoToken \
+    --resource-group $resourceGroupName
+fi
+
 # Configure local Git and get deployment URL
 # url=$(az functionapp deployment source config-local-git --name $functionsName \
 # --resource-group $resourceGroupName --query url --output tsv)
@@ -87,29 +96,31 @@ az functionapp create -g $resourceGroupName -p $appService -n $functionsName -s 
 
 # When prompted for password, use the value of $password that you specified
 
+########## FUNCTIONS (appsettings)
+
+# You may choose --settings instead of --slot-settings
+
 az webapp config appsettings set \
   --name $functionsName \
   --resource-group $resourceGroupName \
-  --settings "QueueStorageConnection=$storageConnectionString" \
-  --slot-settings
+  --slot-settings "QueueStorageConnection=$storageConnectionString" \
 
-#  {ApiHub, Custom, DocDb, EventHub, MySql, NotificationHub, PostgreSQL, RedisCache, SQLAzure, SQLServer, ServiceBus}
-#   [--slot]
-#   [--slot-settings]
+#  Types: {ApiHub, Custom, DocDb, EventHub, MySql, NotificationHub, PostgreSQL, 
+#           RedisCache, SQLAzure, SQLServer, ServiceBus}
 az webapp config connection-string set \
   --connection-string-type Custom \
   --name $functionsName \
   --resource-group $resourceGroupName \
-  --settings "COSMOSDB_URI=$_cosmosDbUri"
+  --slot-settings "COSMOSDB_URI=$_cosmosDbUri"
 
 az webapp config connection-string set \
   --connection-string-type Custom \
   --name $functionsName \
   --resource-group $resourceGroupName \
-  --settings "COSMOSDB_KEY=$_cosmosDbKey"
+  --slot-settings "COSMOSDB_KEY=$_cosmosDbKey"
 
 az webapp config connection-string set \
   --connection-string-type Custom \
   --name $functionsName \
   --resource-group $resourceGroupName \
-  --settings "SENDGRID_KEY=$sendGridKey"
+  --slot-settings "SENDGRID_KEY=$sendGridKey"
