@@ -83,6 +83,11 @@ az webapp config appsettings set \
   --resource-group $resourceGroupName \
   --slot-settings "QueueStorageConnection=$storageConnectionString"
 
+az webapp config appsettings set \
+  --name $functionsName \
+  --resource-group $resourceGroupName \
+  --slot-settings "COSMOSDB_NAME=$databaseName"
+
 #  Types: {ApiHub, Custom, DocDb, EventHub, MySql, NotificationHub, PostgreSQL, 
 #           RedisCache, SQLAzure, SQLServer, ServiceBus}
 az webapp config connection-string set \
