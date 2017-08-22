@@ -1,5 +1,6 @@
 **/node_modules
 **/coverage
 **/*.js
+!scripts/*.js
 **/*.log
 **/local.*
