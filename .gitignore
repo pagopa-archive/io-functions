@@ -2,5 +2,4 @@
 **/coverage
 **/*.js
 **/*.log
-local.settings.json
-
+**/local.*
