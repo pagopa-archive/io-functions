@@ -1,12 +1,19 @@
-const $ = require('shelljs')
-const program = require('commander')
-const CONF = require('./local.config')()
+const shell = require("shelljs")
+const program = require("commander")
+const CONF = require("./local.config")()
 
 // die on first error
-$.config.fatal = true
+shell.config.fatal = true
 
 // VERBOSE=1 node deploy.js
-$.config.verbose = !!process.env.VERBOSE || false
+shell.config.verbose = process.env.VERBOSE === "1"
+
+if (!shell.which("az")) {
+  shell.echo(
+    "Sorry, this script requires the Azure management cli to be installed"
+  )
+  shell.exit(1)
+}
 
 // Create a resource group if not exists
 // az group create \
@@ -16,7 +23,7 @@ $.config.verbose = !!process.env.VERBOSE || false
 //////////////////// STORAGE ACCOUNT
 
 const deploy_storageAccount = () =>
-  $.exec(`az storage account create \
+  shell.exec(`az storage account create \
     --location ${CONF.location} \
     --name ${CONF.storageName} \
     --resource-group ${CONF.resourceGroupName} \
@@ -30,7 +37,7 @@ const deploy_storageAccount = () =>
 const _getStorageAccountConnectionString = () => {
   this.storageAccountConnectionString =
     this.storageAccountConnectionString ||
-    $.exec(
+    shell.exec(
       `az storage account show-connection-string \
     --name ${CONF.storageName} \
     --resource-group ${CONF.resourceGroupName} \
@@ -42,7 +49,7 @@ const _getStorageAccountConnectionString = () => {
 
 const deploy_storageContainer = () => {
   const _storageConnectionString = _getStorageAccountConnectionString()
-  $.exec(`az storage container create \
+  shell.exec(`az storage container create \
     --name ${CONF.containerName} \
     --connection-string ${_storageConnectionString}`)
 }
@@ -52,7 +59,7 @@ const deploy_storageContainer = () => {
 const deploy_storageQueues = () => {
   const _storageConnectionString = _getStorageAccountConnectionString()
   for (let _queueName of CONF.queueNames) {
-    $.exec(`az storage queue create \
+    shell.exec(`az storage queue create \
       --name ${_queueName} \
       --connection-string '${_storageConnectionString}'`)
   }
@@ -61,7 +68,7 @@ const deploy_storageQueues = () => {
 //////////////////// DOCUMENTDB
 
 const deploy_comosdb = () =>
-  $.exec(`az cosmosdb create \
+  shell.exec(`az cosmosdb create \
           --name ${CONF.cosmosName} \
           --kind GlobalDocumentDB \
           --resource-group ${CONF.resourceGroupName}`)
@@ -69,7 +76,7 @@ const deploy_comosdb = () =>
 const _getCosmosDbUri = () => {
   this.cosmosDbUri =
     this.cosmosDbUri ||
-    $.exec(
+    shell.exec(
       `az cosmosdb show -g ${CONF.resourceGroupName} -n ${CONF.cosmosName} --query documentEndpoint -o tsv`
     )
   return this.cosmosDbUri
@@ -78,21 +85,21 @@ const _getCosmosDbUri = () => {
 const _getCosmosDbKey = () => {
   this.cosmosDbKey =
     this.cosmosDbKey ||
-    $.exec(
+    shell.exec(
       `az cosmosdb list-keys -g ${CONF.resourceGroupName} -n ${CONF.cosmosName} --query primaryMasterKey -o tsv`
     )
   return this.cosmosDbKey
 }
 
 const deploy_comosdbDatabase = () =>
-  $.exec(`az cosmosdb database create \
+  shell.exec(`az cosmosdb database create \
           --name ${CONF.cosmosName} \
           --db-name ${CONF.databaseName} \
           --resource-group ${CONF.resourceGroupName}`)
 
 const deploy_comosdbCollections = () => {
   for (let _collectionName of CONF.collectionNames) {
-    $.exec(`az cosmosdb collection create \
+    shell.exec(`az cosmosdb collection create \
             --collection-name ${_collectionName} \
             --name ${CONF.cosmosName} \
             --db-name ${CONF.databaseName} \
@@ -104,7 +111,7 @@ const deploy_comosdbCollections = () => {
 //////////////////// APP SERVICE PLAN
 
 const deploy_appServicePlan = () =>
-  $.exec(`az appservice plan create \
+  shell.exec(`az appservice plan create \
     --name ${CONF.appService} \
     --resource-group ${CONF.resourceGroupName} \
     --sku ${CONF.appServiceSku}`)
@@ -112,7 +119,7 @@ const deploy_appServicePlan = () =>
 //////////////////// FUNCTIONS
 
 const deploy_functions = () =>
-  $.exec(`az functionapp create -g ${CONF.resourceGroupName} -p ${CONF.appService} \
+  shell.exec(`az functionapp create -g ${CONF.resourceGroupName} -p ${CONF.appService} \
     -n ${CONF.functionsName} -s ${CONF.storageName}`)
 
 //////////////////// FUNCTIONS (appsettings)
@@ -124,31 +131,31 @@ const deploy_functionSettings = () => {
   const _cosmosDbUri = _getCosmosDbUri()
   const _cosmosDbKey = _getCosmosDbKey()
 
-  $.exec(`az webapp config appsettings set \
+  shell.exec(`az webapp config appsettings set \
     --name ${CONF.functionsName} \
     --resource-group ${CONF.resourceGroupName} \
     --slot-settings "QueueStorageConnection=${_storageConnectionString}"`)
 
-  $.exec(`az webapp config appsettings set \
+  shell.exec(`az webapp config appsettings set \
     --name ${CONF.functionsName} \
     --resource-group ${CONF.resourceGroupName} \
     --slot-settings "COSMOSDB_NAME=${CONF.databaseName}"`)
 
   //  Types: {ApiHub, Custom, DocDb, EventHub, MySql, NotificationHub, PostgreSQL,
   //           RedisCache, SQLAzure, SQLServer, ServiceBus}
-  $.exec(`az webapp config connection-string set \
+  shell.exec(`az webapp config connection-string set \
     --connection-string-type Custom \
     --name ${CONF.functionsName} \
     --resource-group ${CONF.resourceGroupName} \
     --slot-settings "COSMOSDB_URI=${_cosmosDbUri}"`)
 
-  $.exec(`az webapp config connection-string set \
+  shell.exec(`az webapp config connection-string set \
     --connection-string-type Custom \
     --name ${CONF.functionsName} \
     --resource-group ${CONF.resourceGroupName} \
     --slot-settings "COSMOSDB_KEY=${_cosmosDbKey}"`)
 
-  $.exec(`az webapp config connection-string set \
+  shell.exec(`az webapp config connection-string set \
     --connection-string-type Custom \
     --name ${CONF.functionsName} \
     --resource-group ${CONF.resourceGroupName} \
@@ -160,8 +167,8 @@ const deploy_functionSettings = () => {
 // az functionapp deployment user set --user-name $username --password $password
 
 const deploy_functionDeployementSource = () => {
-  if (CONF.gitRepoUrl !== '') {
-    $.exec(`az functionapp deployment source config \
+  if (CONF.gitRepoUrl) {
+    shell.exec(`az functionapp deployment source config \
       --name ${CONF.functionsName} \
       --repo-url ${CONF.gitRepoUrl} \
       --branch ${CONF.gitRepoBranch} \
@@ -183,115 +190,115 @@ const deploy_functionDeployementSource = () => {
 /// CLEANUP
 
 const delete_functions = () =>
-  $.exec(
+  shell.exec(
     `az functionapp delete -g ${CONF.resourceGroupName} -n ${CONF.functionsName}`
   )
 
 const delete_appService = () =>
-  $.exec(
+  shell.exec(
     `az appservice plan delete -y --name ${CONF.appService} --resource-group ${CONF.resourceGroupName}`
   )
 
 const delete_storageAccount = () =>
-  $.exec(
+  shell.exec(
     `az storage account delete -y --name ${CONF.storageName} --resource-group ${CONF.resourceGroupName}`
   )
 
 const delete_cosmosdb = () =>
-  $.exec(
+  shell.exec(
     `az cosmosdb delete --name ${CONF.cosmosName} --resource-group ${CONF.resourceGroupName}`
   )
 
 ///////// PROGRAM
 
 program
-  .version('0.1.0')
-  .option('--deploy-account', 'Deploy storage account')
-  .option('--deploy-container', 'Deploy storage container')
-  .option('--deploy-queues', 'Deploy storage queues')
-  .option('--deploy-cosmosdb', 'Deploy CosmosDB container')
-  .option('--deploy-database', 'Deploy CosmosDB database')
-  .option('--deploy-collections', 'Deploy CosmosDB collections')
-  .option('--deploy-appservice', 'Deploy App Service Plan')
-  .option('--deploy-functions', 'Deploy Functions')
-  .option('--deploy-settings', 'Deploy Functions settings')
-  .option('--deploy-git', 'Deploy Git integration')
-  .option('--deploy-all', 'Deploy everything')
-  .option('--delete-functions', 'Remove Functions')
-  .option('--delete-appservice', 'Remove App Service Plan')
-  .option('--delete-account', 'Remove storage account')
-  .option('--delete-cosmosdb', 'Remove CosmosDB')
-  .option('--delete-all', 'Remove everything')
+  .version("0.1.0")
+  .option("--deploy-account", "Deploy storage account")
+  .option("--deploy-container", "Deploy storage container")
+  .option("--deploy-queues", "Deploy storage queues")
+  .option("--deploy-cosmosdb", "Deploy CosmosDB container")
+  .option("--deploy-database", "Deploy CosmosDB database")
+  .option("--deploy-collections", "Deploy CosmosDB collections")
+  .option("--deploy-appservice", "Deploy App Service Plan")
+  .option("--deploy-functions", "Deploy Functions")
+  .option("--deploy-settings", "Deploy Functions settings")
+  .option("--deploy-git", "Deploy Git integration")
+  .option("--deploy-all", "Deploy everything")
+  .option("--delete-functions", "Remove Functions")
+  .option("--delete-appservice", "Remove App Service Plan")
+  .option("--delete-account", "Remove storage account")
+  .option("--delete-cosmosdb", "Remove CosmosDB")
+  .option("--delete-all", "Remove everything")
   .parse(process.argv)
 
 if (program.deployAccount || program.deployAll) {
-  console.log('Deploying storage account')
+  console.log("Deploying storage account")
   deploy_storageAccount()
 }
 
 if (program.deployContainer || program.deployAll) {
-  console.log('Deploying storage container')
+  console.log("Deploying storage container")
   deploy_storageContainer()
 }
 
 if (program.deployQueues || program.deployAll) {
-  console.log('Deploying storage queues')
+  console.log("Deploying storage queues")
   deploy_storageQueues()
 }
 
 if (program.deployCosmosdb || program.deployAll) {
-  console.log('Deploying CosmosDB')
+  console.log("Deploying CosmosDB")
   deploy_comosdb()
 }
 
 if (program.deployDatabase || program.deployAll) {
-  console.log('Deploying CosmosDB database')
+  console.log("Deploying CosmosDB database")
   deploy_comosdbDatabase()
 }
 
 if (program.deployCollections || program.deployAll) {
-  console.log('Deploying CosmosDB collections')
+  console.log("Deploying CosmosDB collections")
   deploy_comosdbCollections()
 }
 
 if (program.deployAppservice || program.deployAll) {
-  console.log('Deploying App service plan')
+  console.log("Deploying App service plan")
   deploy_appServicePlan()
 }
 
 if (program.deployFunctions || program.deployAll) {
-  console.log('Deploying Functions')
+  console.log("Deploying Functions")
   deploy_functions()
 }
 
 if (program.deploySettings || program.deployAll) {
-  console.log('Deploying Functions settings')
+  console.log("Deploying Functions settings")
   deploy_functionSettings()
 }
 
 if (program.deployGit || program.deployAll) {
-  console.log('Deploying Git integration')
+  console.log("Deploying Git integration")
   deploy_functionDeployementSource()
 }
 
 /// CLEANUP
 
 if (program.deleteFunctions || program.deleteAll) {
-  console.log('Delete Functions')  
+  console.log("Delete Functions")
   delete_functions()
 }
 
 if (program.deleteAppservice || program.deleteAll) {
-  console.log('Delete App service plan')
+  console.log("Delete App service plan")
   delete_appService()
 }
 
 if (program.deleteCosmosdb || program.deleteAll) {
-  console.log('Delete CosmosDB')  
+  console.log("Delete CosmosDB")
   delete_cosmosdb()
 }
 
 if (program.deleteAccount || program.deleteAll) {
-  console.log('Delete App service plan')  
+  console.log("Delete App service plan")
   delete_storageAccount()
 }

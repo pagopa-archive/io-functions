@@ -62,7 +62,7 @@ If you have a GitHub account you can set up a [continuos deployment flow](https:
 
 1. Fork the GitHub repository into your account.
 
-2. Edit scripts/local.config.js and write up your GitHub settings:
+2. Edit `scripts/local.config.js` and write up your GitHub settings:
 
 ```
   gitRepoUrl: 'https://github.com/<your account>/digital-citizenship-functions',
