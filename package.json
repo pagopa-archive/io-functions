@@ -26,9 +26,12 @@
     "codice-fiscale-italiano": "^1.0.1",
     "documentdb": "^1.12.2",
     "express": "^4.15.3",
+    "js-yaml": "^3.9.1",
+    "json-refs": "^3.0.0",
     "nodemailer": "^4.0.1",
     "nodemailer-sendgrid-transport": "^0.2.0",
     "shelljs": "^0.7.8",
+    "swagger-express-mw": "^0.7.0",
     "ts-option": "^1.1.4",
     "typescript": "^2.4.2",
     "ulid": "^0.2.0"
