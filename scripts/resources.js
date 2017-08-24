@@ -1,5 +1,5 @@
 /**
- * This NodeJS script, when runned from the command line, will deploy 
+ * This NodeJS script, when run from the command line, will deploy 
  * all required resources (ie. database, queues, ...) to the Azure cloud.
  * 
  * Prerequisites:
