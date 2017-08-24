@@ -1,3 +1,27 @@
+/**
+ * This NodeJS script, when runned from the command line, will deploy 
+ * all required resources (ie. database, queues, ...) to the Azure cloud.
+ * 
+ * Prerequisites:
+ *  - an Azure account (get one on https://azure.microsoft.com/en-us/free/)
+ *  - the azure-cli installed (https://docs.microsoft.com/it-it/cli/azure/install-azure-cli)
+ *  - a SendGrid API-key (https://sendgrid.com/)
+ *  - a Resource group already deployed to your Azure account
+ * 
+ * Usage:
+ * 
+ *  cp example.config.js local.config.js
+ *  <edit local.config.js with your settings>
+ *
+ *  az login
+ *  node resources.js --deploy-all
+ * 
+ * It's possible to remove all deployed resources:
+ *  node resources.js --delete-all
+ *  
+ * To print usage instructions:
+ *  node resources.js --help
+ */
 const shell = require("shelljs")
 const program = require("commander")
 const CONF = require("./local.config")()
