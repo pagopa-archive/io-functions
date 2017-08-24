@@ -26,7 +26,7 @@ const app = express();
 const COSMOSDB_URI: string = process.env.CUSTOMCONNSTR_COSMOSDB_URI;
 const COSMOSDB_KEY: string = process.env.CUSTOMCONNSTR_COSMOSDB_KEY;
 
-const documentDbDatabaseUrl = documentDbUtils.getDatabaseUrl("development");
+const documentDbDatabaseUrl = documentDbUtils.getDatabaseUrl(process.env.COSMOSDB_NAME || "development");
 const messagesCollectionUrl = documentDbUtils.getCollectionUrl(documentDbDatabaseUrl, "messages");
 const profilesCollectionUrl = documentDbUtils.getCollectionUrl(documentDbDatabaseUrl, "profiles");
 
