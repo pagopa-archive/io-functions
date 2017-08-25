@@ -15,7 +15,7 @@ import { ProfileModel } from "./models/profile";
 
 import debugHandler from "./controllers/debug";
 import { CreateMessage, GetMessage, GetMessages } from "./controllers/messages";
-import { GetProfile, UpdateProfile } from "./controllers/profiles";
+import { GetProfile, UpsertProfile } from "./controllers/profiles";
 import { IContext } from "./types/context";
 
 // Setup Express

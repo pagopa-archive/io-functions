@@ -5,7 +5,7 @@
  * to each configured channel.
  */
 
-import { IContext } from "./azure-functions-types";
+import { IContext } from "./types/context";
 
 import * as NodeMailer from "nodemailer";
 import * as sendGridTransport from "nodemailer-sendgrid-transport";
