@@ -14,6 +14,7 @@ export interface IMessage {
 /**
  * Type guard for IMessage objects
  */
+// tslint:disable-next-line:no-any
 export function isIMessage(arg: any): arg is IMessage {
   return isFiscalCode(arg.fiscalCode) && (typeof arg.bodyShort === "string");
 }
@@ -36,6 +37,7 @@ export type IRetrievedMessage = Readonly<IRetrievedMessageRW>;
 /**
  * Type guard for IRetrievedMessage objects
  */
+// tslint:disable-next-line:no-any
 export function isIRetrievedMessage(arg: any): arg is IRetrievedMessage {
   return (typeof arg.id === "string") &&
     (typeof arg._self === "string") &&

@@ -1,0 +1,20 @@
+engines:
+  nodesecurity:
+    enabled: true
+  markdownlint:
+    enabled: true
+  git-legal:
+    enabled: true
+  tslint:
+    enabled: true
+    channel: beta
+    config: tslint.json
+ratings:
+  paths:
+  - "**.ts"
+  - "**.js"
+  - "**.md"
+  - "package.json"
+  - "yarn.lock"
+exclude_paths:
+- "**/__tests__/**/*"
