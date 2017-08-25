@@ -1,3 +1,5 @@
+// tslint:disable:no-any
+
 import { response as MockResponse } from "jest-mock-express";
 
 import { IRetrievedProfile } from "../../models/profile";

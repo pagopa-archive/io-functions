@@ -5,7 +5,8 @@
 /**
  * Default logger
  */
-type Logger = (text: any, params?: any) => void;
+// tslint:disable-next-line:no-any
+type Logger = (text: string, params?: any) => void;
 
 /**
  * Level-specific loggers
@@ -33,5 +34,5 @@ export interface IContext {
   };
 
   log: IContextLogger;
-  done: (err?: any, output?: object) => void;
+  done: (err?: string | object, output?: object) => void;
 }
