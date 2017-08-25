@@ -9,12 +9,15 @@ import { handleErrorAndRespond } from "../../lib/utils/error_handler";
 
 import { ICreatedMessageEvent } from "../models/created_message_event";
 import { INewMessage, MessageModel } from "../models/message";
-import { IContext } from "../types/context";
+import { IContextWithBindings } from "../types/context";
 
 /**
  * Input and output bindings for this function
  * see CreatedMessageQueueHandler/function.json
  */
+interface IBindings {
+  createdMessage?: ICreatedMessageEvent;
+}
 
 /**
  * Returns a controller that will handle requests
@@ -29,8 +32,9 @@ export function CreateMessage(Message: MessageModel): express.RequestHandler {
       response: express.Response,
       fiscalCode: FiscalCode,
     ) => {
-      const context: IContext = request.app.get("context");
-      const log = context.log;
+      const context: IContextWithBindings<IBindings> = request.app.get(
+        "context",
+      );
 
       const message: INewMessage = {
         bodyShort: request.body.body_short,
@@ -39,7 +43,7 @@ export function CreateMessage(Message: MessageModel): express.RequestHandler {
       };
 
       Message.createMessage(message).then((result) => {
-        log(`>> message stored [${result.id}]`);
+        context.log(`>> message stored [${result.id}]`);
 
         const createdMessage: ICreatedMessageEvent = {
           message: result,
