@@ -13,6 +13,7 @@ export interface IEmailNotificationEvent {
 /**
  * Type guard for IEmailNotificationEvent objects
  */
+// tslint:disable-next-line:no-any
 export function isIEmailNotificationEvent(arg: any): arg is IEmailNotificationEvent {
   return isIMessage(arg.message) &&
     Array.isArray(arg.recipients);

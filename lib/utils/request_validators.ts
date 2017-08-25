@@ -5,7 +5,11 @@ import { FiscalCode, isFiscalCode } from "./fiscalcode";
 /**
  * A Request handler that expects a validated fiscal code parameter.
  */
-export type RequestWithFiscalCodeHandler = (req: express.Request, res: express.Response, fiscalcode: FiscalCode) => any;
+export type RequestWithFiscalCodeHandler = (
+  req: express.Request,
+  res: express.Response,
+  fiscalcode: FiscalCode,
+) => void;
 
 /**
  * Adds validation for fiscal codes to a RequestWithFiscalCodeHandler.

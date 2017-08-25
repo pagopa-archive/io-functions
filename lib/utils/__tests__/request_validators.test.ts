@@ -1,3 +1,5 @@
+// tslint:disable:no-any
+
 import * as express from "express";
 
 import { withValidFiscalCode } from "../request_validators";

@@ -2,9 +2,11 @@ import * as express from "express";
 
 import * as ulid from "ulid";
 
-import { handleErrorAndRespond } from "../../lib/utils/error_handler";
 import { FiscalCode } from "../../lib/utils/fiscalcode";
 import { withValidFiscalCode } from "../../lib/utils/request_validators";
+
+import { handleErrorAndRespond } from "../../lib/utils/error_handler";
+
 import { ICreatedMessageEvent } from "../models/created_message_event";
 import { INewMessage, MessageModel } from "../models/message";
 import { IContext } from "../types/context";

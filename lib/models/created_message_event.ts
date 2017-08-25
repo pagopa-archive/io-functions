@@ -13,6 +13,7 @@ export interface ICreatedMessageEvent {
 /**
  * Type guard for ICreatedMessageEvent objects
  */
+// tslint:disable-next-line:no-any
 export function isICreatedMessageEvent(arg: any): arg is ICreatedMessageEvent {
   return isIRetrievedMessage(arg.message);
 }
