@@ -32,8 +32,12 @@ jobs:
             - node_modules
           key: v1-dependencies-{{ checksum "package.json" }}
 
+
+      # setup codeclimate
+      - run: curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
+      - run: chmod +x ./cc-test-reporter
+
       # run tests!
+      - run: ./cc-test-reporter before-build
       - run: yarn test
-
-
-
+      - run: ./cc-test-reporter after-build -t lcov --exit-code $? < ./coverage/lcov.info
