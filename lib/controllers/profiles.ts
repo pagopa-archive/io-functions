@@ -3,9 +3,9 @@ import * as express from "express";
 import { FiscalCode } from "../../lib/utils/fiscalcode";
 import { withValidFiscalCode } from "../../lib/utils/request_validators";
 
-import { handleErrorAndRespond } from "../../lib/utils/error_handler";
+import { handleErrorAndRespond, handleNullableResultAndRespond } from "../../lib/utils/error_handler";
 
-import { INewProfile, ProfileModel } from "../models/profile";
+import { IProfile, ProfileModel } from "../models/profile";
 
 /**
  * Returns a getProfile handler
@@ -16,36 +16,51 @@ import { INewProfile, ProfileModel } from "../models/profile";
  */
 export function GetProfile(Profile: ProfileModel): express.RequestHandler {
   return withValidFiscalCode((_: express.Request, response: express.Response, fiscalCode: FiscalCode) => {
-    Profile.findOneProfileByFiscalCode(fiscalCode).then((result) => {
-      if (result != null) {
-        response.json(result);
-      } else {
-        response.status(404).send("Not found");
-      }
-    }, handleErrorAndRespond(response));
+    return Profile.findOneProfileByFiscalCode(fiscalCode).then(
+      handleNullableResultAndRespond(response, 404, "Not found"),
+      handleErrorAndRespond(response),
+    );
   });
 }
 
 /**
- * Returns an updateProfile controller
+ * Returns an UpsertProfile controller.
+ *
+ * This controller will receive attributes for a profile and create a
+ * profile with those attributes if the profile does not yet exist or
+ * update the profile with it already exist.
  *
  * @param Profile The Profile model.
  *
  * TODO: only return public visible attributes
+ * TODO: validate incoming object
  */
-export function UpdateProfile(Profile: ProfileModel): express.RequestHandler {
+export function UpsertProfile(Profile: ProfileModel): express.RequestHandler {
   return withValidFiscalCode((request: express.Request, response: express.Response, fiscalCode: FiscalCode) => {
-    const profile: INewProfile = {
-      email: request.body.email,
-      fiscalCode,
-      id: fiscalCode,
-    };
-    Profile.createOrUpdateProfile(profile).then((result) => {
-      if (result != null) {
-        response.json(result);
+    const existingProfilePromise = Profile.findOneProfileByFiscalCode(fiscalCode);
+    existingProfilePromise.then((queryProfileResult) => {
+      if (queryProfileResult == null) {
+        // create a new profile
+        const profile: IProfile = {
+          email: typeof request.body.email === "string" ? request.body.email : null,
+          fiscalCode,
+        };
+        Profile.createProfile(profile).then(
+          handleNullableResultAndRespond(response, 500, "Error while creating a new profile"),
+          handleErrorAndRespond(response),
+        );
       } else {
-        response.status(500).send("Did not create");
+        // update existing profile
+        const profile = {
+          ...queryProfileResult,
+          email: typeof request.body.email === "string" ? request.body.email : queryProfileResult.email,
+        };
+        Profile.updateProfile(profile).then(
+          handleNullableResultAndRespond(response, 500, "Error while updating the profile"),
+          handleErrorAndRespond(response),
+        );
       }
     }, handleErrorAndRespond(response));
+
   });
 }

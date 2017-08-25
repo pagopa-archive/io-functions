@@ -15,7 +15,7 @@ import { ProfileModel } from "./models/profile";
 
 import debugHandler from "./controllers/debug";
 import { CreateMessage, GetMessage, GetMessages } from "./controllers/messages";
-import { GetProfile, UpdateProfile } from "./controllers/profiles";
+import { GetProfile, UpsertProfile } from "./controllers/profiles";
 
 // Setup Express
 
@@ -41,7 +41,7 @@ app.get("/api/v1/debug", debugHandler);
 app.post("/api/v1/debug", debugHandler);
 
 app.get("/api/v1/profiles/:fiscalcode", GetProfile(profileModel));
-app.post("/api/v1/profiles/:fiscalcode", UpdateProfile(profileModel));
+app.post("/api/v1/profiles/:fiscalcode", UpsertProfile(profileModel));
 
 app.get("/api/v1/messages/:fiscalcode/:id", GetMessage(messageModel));
 app.get("/api/v1/messages/:fiscalcode", GetMessages(messageModel));

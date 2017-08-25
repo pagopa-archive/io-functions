@@ -117,6 +117,8 @@ export function readCollection(
 /**
  * Creates a new document in a collection
  *
+ * TODO: add partitionKey
+ *
  * @param client The DocumentDB client
  * @param collectionUrl The collection URL
  */
