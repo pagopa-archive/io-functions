@@ -1,3 +1,5 @@
+// tslint:disable:no-any
+
 import * as DocumentDb from "documentdb";
 
 import * as Utils from "../documentdb";

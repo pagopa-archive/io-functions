@@ -16,12 +16,12 @@ export interface IFunctionRequest {
   method: HttpMethod;
   query: { [key: string]: string };
   headers: { [name: string]: string };
-  body: any;
-  rawbody: any;
+  body: object;
+  rawbody: string;
 }
 
 export interface IFunctionResponse {
-  body?: any;
+  body?: object;
   status?: number;
   headers?: {
     "content-type"?: string;
@@ -34,7 +34,7 @@ export interface IFunctionResponse {
     "content-md5"?: Buffer;
     "expires"?: Date;
     "last-modified"?: Date;
-    [name: string]: any;
+    [name: string]: undefined | number | string | Date | Buffer | HttpStatusCodes;
   };
 }
 

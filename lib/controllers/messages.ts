@@ -7,7 +7,7 @@ import { withValidFiscalCode } from "../../lib/utils/request_validators";
 
 import { handleErrorAndRespond } from "../../lib/utils/error_handler";
 
-import { IContext } from "../azure-functions-types";
+import { IRequestWithContext } from "azure-function-express-cloudify";
 
 import { ICreatedMessageEvent } from "../models/created_message_event";
 import { INewMessage, MessageModel } from "../models/message";
@@ -16,10 +16,8 @@ import { INewMessage, MessageModel } from "../models/message";
  * Input and output bindings for this function
  * see CreatedMessageQueueHandler/function.json
  */
-interface IContextWithBindings extends IContext {
-  bindings: {
-    createdMessage?: ICreatedMessageEvent;
-  };
+interface IBindings {
+  createdMessage?: ICreatedMessageEvent;
 }
 
 /**
@@ -31,8 +29,8 @@ interface IContextWithBindings extends IContext {
 export function CreateMessage(
   Message: MessageModel,
 ): express.RequestHandler {
-  return withValidFiscalCode((request: express.Request, response: express.Response, fiscalCode: FiscalCode) => {
-    const log: (text: any) => any = (request as any).context.log;
+  return withValidFiscalCode(
+    (request: IRequestWithContext<IBindings>, response: express.Response, fiscalCode: FiscalCode) => {
 
     const message: INewMessage = {
       bodyShort: request.body.body_short,
@@ -41,7 +39,7 @@ export function CreateMessage(
     };
 
     Message.createMessage(message).then((result) => {
-      log(`>> message stored [${result.id}]`);
+      request.context.log(`>> message stored [${result.id}]`);
 
       const createdMessage: ICreatedMessageEvent = {
         message: result,
@@ -49,7 +47,7 @@ export function CreateMessage(
 
       // queue the message to the created messages queue by setting
       // the message to the output binding of this function
-      ((request as any).context as IContextWithBindings).bindings.createdMessage = createdMessage;
+      request.context.bindings.createdMessage = createdMessage;
 
       // TODO: this will return all internal attrs, only return "public" attributes
       response.json(result);
