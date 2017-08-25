@@ -8,8 +8,6 @@ type Loggers = {
   error: Logger;
 };
 
-  }
-
 export interface IContext extends FunctionsTypes.Context {
   log: Logger & Loggers;
 }
