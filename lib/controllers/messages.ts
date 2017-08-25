@@ -2,25 +2,17 @@ import * as express from "express";
 
 import * as ulid from "ulid";
 
+import { handleErrorAndRespond } from "../../lib/utils/error_handler";
 import { FiscalCode } from "../../lib/utils/fiscalcode";
 import { withValidFiscalCode } from "../../lib/utils/request_validators";
-
-import { handleErrorAndRespond } from "../../lib/utils/error_handler";
-
-import { IContext } from "../azure-functions-types";
-
 import { ICreatedMessageEvent } from "../models/created_message_event";
 import { INewMessage, MessageModel } from "../models/message";
+import { IContext } from "../types/context";
 
 /**
  * Input and output bindings for this function
  * see CreatedMessageQueueHandler/function.json
  */
-interface IContextWithBindings extends IContext {
-  bindings: {
-    createdMessage?: ICreatedMessageEvent;
-  };
-}
 
 /**
  * Returns a controller that will handle requests
@@ -28,35 +20,38 @@ interface IContextWithBindings extends IContext {
  *
  * @param Message The Message model.
  */
-export function CreateMessage(
-  Message: MessageModel,
-): express.RequestHandler {
-  return withValidFiscalCode((request: express.Request, response: express.Response, fiscalCode: FiscalCode) => {
-    const log: (text: any) => any = (request as any).context.log;
+export function CreateMessage(Message: MessageModel): express.RequestHandler {
+  return withValidFiscalCode(
+    (
+      request: express.Request,
+      response: express.Response,
+      fiscalCode: FiscalCode,
+    ) => {
+      const context: IContext = request.app.get("context");
+      const log = context.log;
 
-    const message: INewMessage = {
-      bodyShort: request.body.body_short,
-      fiscalCode,
-      id: ulid(),
-    };
-
-    Message.createMessage(message).then((result) => {
-      log(`>> message stored [${result.id}]`);
-
-      const createdMessage: ICreatedMessageEvent = {
-        message: result,
+      const message: INewMessage = {
+        bodyShort: request.body.body_short,
+        fiscalCode,
+        id: ulid(),
       };
 
-      // queue the message to the created messages queue by setting
-      // the message to the output binding of this function
-      ((request as any).context as IContextWithBindings).bindings.createdMessage = createdMessage;
+      Message.createMessage(message).then((result) => {
+        log(`>> message stored [${result.id}]`);
 
-      // TODO: this will return all internal attrs, only return "public" attributes
-      response.json(result);
+        const createdMessage: ICreatedMessageEvent = {
+          message: result,
+        };
 
-    }, handleErrorAndRespond(response));
+        // queue the message to the created messages queue by setting
+        // the message to the output binding of this function
+        context.bindings.createdMessage = createdMessage;
 
-  });
+        // TODO: this will return all internal attrs, only return "public" attributes
+        response.json(result);
+      }, handleErrorAndRespond(response));
+    },
+  );
 }
 
 /**
@@ -66,15 +61,24 @@ export function CreateMessage(
  * @param Message The Message model
  */
 export function GetMessage(Message: MessageModel): express.RequestHandler {
-  return withValidFiscalCode((request: express.Request, response: express.Response, fiscalCode: FiscalCode) => {
-    Message.findMessageForRecipient(fiscalCode, request.params.id).then((result) => {
-      if (result != null) {
-        response.json(result);
-      } else {
-        response.status(404).send("Message not found");
-      }
-    }, handleErrorAndRespond(response));
-  });
+  return withValidFiscalCode(
+    (
+      request: express.Request,
+      response: express.Response,
+      fiscalCode: FiscalCode,
+    ) => {
+      Message.findMessageForRecipient(
+        fiscalCode,
+        request.params.id,
+      ).then((result) => {
+        if (result != null) {
+          response.json(result);
+        } else {
+          response.status(404).send("Message not found");
+        }
+      }, handleErrorAndRespond(response));
+    },
+  );
 }
 
 /**
@@ -84,10 +88,16 @@ export function GetMessage(Message: MessageModel): express.RequestHandler {
  * @param Message The Message model
  */
 export function GetMessages(Message: MessageModel): express.RequestHandler {
-  return withValidFiscalCode((_: express.Request, response: express.Response, fiscalCode: FiscalCode) => {
-    const iterator = Message.findMessages(fiscalCode);
-    iterator.executeNext().then((result) => {
-      response.json(result);
-    }, handleErrorAndRespond(response));
-  });
+  return withValidFiscalCode(
+    (
+      _: express.Request,
+      response: express.Response,
+      fiscalCode: FiscalCode,
+    ) => {
+      const iterator = Message.findMessages(fiscalCode);
+      iterator.executeNext().then((result) => {
+        response.json(result);
+      }, handleErrorAndRespond(response));
+    },
+  );
 }
