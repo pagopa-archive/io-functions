@@ -1,13 +1,12 @@
 import * as express from "express";
-
 import * as ulid from "ulid";
 
-import { FiscalCode } from "../../lib/utils/fiscalcode";
-import { withValidFiscalCode } from "../../lib/utils/request_validators";
+import { FiscalCodeMiddleware } from "../utils/fiscalcode_middleware";
+import { ContextMiddleware } from "../utils/middlewares/context_middleware";
+import { RequiredIdParamMiddleware } from "../utils/middlewares/required_id_param";
+import { IRequestMiddleware, withRequestMiddlewares } from "../utils/request_middleware";
 
-import { handleErrorAndRespond } from "../../lib/utils/error_handler";
-
-import { IRequestWithContext } from "azure-function-express-cloudify";
+import { handleErrorAndRespond } from "../utils/error_handler";
 
 import { ICreatedMessageEvent } from "../models/created_message_event";
 import { INewMessage, MessageModel } from "../models/message";
@@ -20,6 +19,22 @@ interface IBindings {
   createdMessage?: ICreatedMessageEvent;
 }
 
+interface IMessagePayload {
+  body_short: string;
+}
+
+export const MessagePayloadMiddleware: IRequestMiddleware<IMessagePayload> =
+  (request, response) => {
+    if (typeof request.body.body_short === "string") {
+      return Promise.resolve({
+        body_short: request.body.body_short,
+      });
+    } else {
+      response.send(400).json({ error: "body_short is required" });
+      return Promise.reject(null);
+    }
+  };
+
 /**
  * Returns a controller that will handle requests
  * for creating new messages.
@@ -29,17 +44,17 @@ interface IBindings {
 export function CreateMessage(
   Message: MessageModel,
 ): express.RequestHandler {
-  return withValidFiscalCode(
-    (request: IRequestWithContext<IBindings>, response: express.Response, fiscalCode: FiscalCode) => {
+  return withRequestMiddlewares(ContextMiddleware<IBindings>(), FiscalCodeMiddleware, MessagePayloadMiddleware)(
+    (response, context, fiscalCode, messagePayload) => {
 
     const message: INewMessage = {
-      bodyShort: request.body.body_short,
+      bodyShort: messagePayload.body_short,
       fiscalCode,
       id: ulid(),
     };
 
     Message.createMessage(message).then((result) => {
-      request.context.log(`>> message stored [${result.id}]`);
+      context.log(`>> message stored [${result.id}]`);
 
       const createdMessage: ICreatedMessageEvent = {
         message: result,
@@ -47,7 +62,7 @@ export function CreateMessage(
 
       // queue the message to the created messages queue by setting
       // the message to the output binding of this function
-      request.context.bindings.createdMessage = createdMessage;
+      context.bindings.createdMessage = createdMessage;
 
       // TODO: this will return all internal attrs, only return "public" attributes
       response.json(result);
@@ -64,8 +79,8 @@ export function CreateMessage(
  * @param Message The Message model
  */
 export function GetMessage(Message: MessageModel): express.RequestHandler {
-  return withValidFiscalCode((request: express.Request, response: express.Response, fiscalCode: FiscalCode) => {
-    Message.findMessageForRecipient(fiscalCode, request.params.id).then((result) => {
+  return withRequestMiddlewares(FiscalCodeMiddleware, RequiredIdParamMiddleware)((response, fiscalCode, messageId) => {
+    Message.findMessageForRecipient(fiscalCode, messageId).then((result) => {
       if (result != null) {
         response.json(result);
       } else {
@@ -82,7 +97,7 @@ export function GetMessage(Message: MessageModel): express.RequestHandler {
  * @param Message The Message model
  */
 export function GetMessages(Message: MessageModel): express.RequestHandler {
-  return withValidFiscalCode((_: express.Request, response: express.Response, fiscalCode: FiscalCode) => {
+  return withRequestMiddlewares(FiscalCodeMiddleware)((response, fiscalCode) => {
     const iterator = Message.findMessages(fiscalCode);
     iterator.executeNext().then((result) => {
       response.json(result);

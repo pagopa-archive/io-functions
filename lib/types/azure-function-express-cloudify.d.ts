@@ -5,14 +5,14 @@ declare module "azure-function-express-cloudify" {
 
   export function createAzureFunctionHandler(requestListener: express.Express): any;
 
-  interface Context<T> {
+  export interface IContext<T> {
     log: (text: string, ...params: any[]) => void,
     invocationId: string,
     bindings: T,
   }
 
   export interface IRequestWithContext<T> extends express.Request {
-    context: Context<T>,
+    context: IContext<T>;
   }
 
 }
