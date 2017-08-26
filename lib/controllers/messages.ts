@@ -32,9 +32,7 @@ export function CreateMessage(Message: MessageModel): express.RequestHandler {
       response: express.Response,
       fiscalCode: FiscalCode,
     ) => {
-      const context: IContextWithBindings<IBindings> = request.app.get(
-        "context",
-      );
+      const context: IContextWithBindings<IBindings> = request.context;
 
       const message: INewMessage = {
         bodyShort: request.body.body_short,
