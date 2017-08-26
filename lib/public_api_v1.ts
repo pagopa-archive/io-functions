@@ -62,7 +62,7 @@ const handler = createAzureFunctionHandler(app);
 // Binds the express app to an Azure Function handler
 module.exports = (context: IContext) => {
   // export context for bindings
-  context.req.context = context;
+  app.set("context", context);
   // useful when debugging locally
   console.log = context.log;
   return handler(context);

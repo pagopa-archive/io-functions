@@ -1,4 +1,3 @@
-import * as express from "express";
 import * as FunctionsTypes from "azure-functions-types";
 
 type Logger = (...args: any[]) => void;
@@ -10,8 +9,6 @@ type Loggers = {
 };
 
 export interface IContext extends FunctionsTypes.Context {
-  req: express.Request & { context: IContext };
-  res: express.Response;
   log: Logger & Loggers;
 }
 
