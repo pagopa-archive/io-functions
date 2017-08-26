@@ -68,7 +68,7 @@ describe("GetProfile", () => {
 
     getProfile(mockRequest as any, mockResponse, null as any);
 
-    return Promise.resolve().then(() => {
+    return flushPromises().then(() => {
       expect(profileModelMock.findOneProfileByFiscalCode).toHaveBeenCalledWith(mockRequest.params.fiscalcode);
       expect(mockResponse.status).toHaveBeenCalledWith(200);
       expect(mockResponse.json).toHaveBeenCalledWith(aProfile);
@@ -96,7 +96,7 @@ describe("GetProfile", () => {
 
     getProfile(mockRequest as any, mockResponse, null as any);
 
-    return Promise.resolve().then(() => {
+    return flushPromises().then(() => {
       expect(profileModelMock.findOneProfileByFiscalCode).toHaveBeenCalledWith(mockRequest.params.fiscalcode);
       expect(mockResponse.status).toHaveBeenCalledWith(404);
     });
@@ -123,7 +123,7 @@ describe("GetProfile", () => {
 
     getProfile(mockRequest as any, mockResponse, null as any);
 
-    return Promise.resolve().then(() => {
+    return flushPromises().then(() => {
       expect(profileModelMock.findOneProfileByFiscalCode).toHaveBeenCalledWith(mockRequest.params.fiscalcode);
       expect(mockResponse.status).toHaveBeenCalledWith(500);
     });
