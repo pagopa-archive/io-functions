@@ -8,7 +8,7 @@ import { DocumentClient as DocumentDBClient } from "documentdb";
 
 import * as documentDbUtils from "./utils/documentdb";
 
-import { createAzureFunctionHandler } from "azure-function-express-cloudify";
+import { createAzureFunctionHandler } from "azure-function-express";
 
 import { MessageModel } from "./models/message";
 import { ProfileModel } from "./models/profile";
@@ -16,6 +16,7 @@ import { ProfileModel } from "./models/profile";
 import debugHandler from "./controllers/debug";
 import { CreateMessage, GetMessage, GetMessages } from "./controllers/messages";
 import { GetProfile, UpsertProfile } from "./controllers/profiles";
+import { IContext } from "./types/context";
 
 // Setup Express
 
@@ -27,10 +28,18 @@ const COSMOSDB_URI: string = process.env.CUSTOMCONNSTR_COSMOSDB_URI;
 const COSMOSDB_KEY: string = process.env.CUSTOMCONNSTR_COSMOSDB_KEY;
 
 const documentDbDatabaseUrl = documentDbUtils.getDatabaseUrl("development");
-const messagesCollectionUrl = documentDbUtils.getCollectionUrl(documentDbDatabaseUrl, "messages");
-const profilesCollectionUrl = documentDbUtils.getCollectionUrl(documentDbDatabaseUrl, "profiles");
+const messagesCollectionUrl = documentDbUtils.getCollectionUrl(
+  documentDbDatabaseUrl,
+  "messages",
+);
+const profilesCollectionUrl = documentDbUtils.getCollectionUrl(
+  documentDbDatabaseUrl,
+  "profiles",
+);
 
-const documentClient = new DocumentDBClient(COSMOSDB_URI, { masterKey: COSMOSDB_KEY });
+const documentClient = new DocumentDBClient(COSMOSDB_URI, {
+  masterKey: COSMOSDB_KEY,
+});
 
 const profileModel = new ProfileModel(documentClient, profilesCollectionUrl);
 const messageModel = new MessageModel(documentClient, messagesCollectionUrl);
@@ -48,4 +57,13 @@ app.get("/api/v1/messages/:fiscalcode", GetMessages(messageModel));
 app.post("/api/v1/messages/:fiscalcode", CreateMessage(messageModel));
 
 // Binds the express app to an Azure Function handler
-module.exports = createAzureFunctionHandler(app);
+const handler = createAzureFunctionHandler(app);
+
+// Binds the express app to an Azure Function handler
+module.exports = (context: IContext) => {
+  // export context for bindings
+  app.set("context", context);
+  // useful when debugging locally
+  console.log = context.log;
+  return handler(context);
+};
