@@ -1,4 +1,7 @@
+import { right } from "../either";
+
 import { IRequestMiddleware } from "../request_middleware";
+// import { IResponse } from "../response";
 
 import { IContext, IRequestWithContext } from "azure-function-express-cloudify";
 
@@ -8,8 +11,8 @@ import { IContext, IRequestWithContext } from "azure-function-express-cloudify";
  *
  * @param T The type of the bindings found in the context.
  */
-export function ContextMiddleware<T>(): IRequestMiddleware<IContext<T>> {
-  return (request: IRequestWithContext<T>, __) => {
-    return Promise.resolve(request.context);
+export function ContextMiddleware<T>(): IRequestMiddleware<never, IContext<T>> {
+  return (request: IRequestWithContext<T>) => {
+    return Promise.resolve(right(request.context));
   };
 }

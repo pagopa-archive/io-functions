@@ -1,16 +1,13 @@
-import { none, some } from "ts-option";
+import { left, right } from "../either";
 
 import { RequiredParamMiddleware } from "./required_param";
 
 export const RequiredIdParamMiddleware = RequiredParamMiddleware<string>(
-  (params, response) => {
-    if (typeof params.id === "string" && params.id.length > 0) {
-      return some(params.id);
+  (params) => {
+    if (typeof params.id === "string" && (params.id as string).length > 0) {
+      return right(params.id as string);
     } else {
-      response.status(400).send({
-        error: "The ID is required",
-      });
-      return none;
+      return left("The ID parameter is required");
     }
   },
 );
