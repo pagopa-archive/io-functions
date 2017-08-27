@@ -1,3 +1,7 @@
+/*
+ * Implements the API handlers for the Profile resource.
+ */
+
 import * as express from "express";
 
 import { right } from "../utils/either";
@@ -19,11 +23,39 @@ import {
 
 import { IProfile, IRetrievedProfile, ProfileModel } from "../models/profile";
 
+/**
+ * Type of a GetProfile handler.
+ *
+ * GetProfile expects a FiscalCode as input and returns a Profile or
+ * a Not Found error.
+ *
+ * TODO: only return public fields
+ */
 type IGetProfileHandler = (fiscalCode: FiscalCode) => Promise<
   IResponseSuccessJson<IRetrievedProfile> |
   IResponseErrorNotFound
 >;
 
+/**
+ * Type of an UpsertProfile handler.
+ *
+ * UpsertProfile expects a FiscalCode and a Profile as input and
+ * returns a Profile or a Validation or a Generic error.
+ *
+ * TODO: only return public fields
+ */
+type IUpsertProfileHandler = (
+  fiscalCode: FiscalCode,
+  profileModelPayload: IProfilePayload,
+) => Promise<
+  IResponseSuccessJson<IRetrievedProfile> |
+  IResponseErrorValidation |
+  IResponseErrorGeneric
+>;
+
+/**
+ * Return a type safe GetProfile handler.
+ */
 export function GetProfileHandler(Profile: ProfileModel): IGetProfileHandler {
   return (fiscalCode) => new Promise((resolve, reject) => {
     Profile.findOneProfileByFiscalCode(fiscalCode).then(
@@ -40,11 +72,7 @@ export function GetProfileHandler(Profile: ProfileModel): IGetProfileHandler {
 }
 
 /**
- * Returns a getProfile handler
- *
- * @param Profile The Profile model.
- *
- * TODO: only return public visible attributes
+ * Wraps a GetProfile handler inside an Express request handler.
  */
 export function GetProfile(
   handler: IGetProfileHandler,
@@ -53,12 +81,19 @@ export function GetProfile(
   return wrapRequestHandler(middlewaresWrap(handler));
 }
 
+/**
+ * A new profile payload.
+ *
+ * TODO: generate from a schema.
+ */
 interface IProfilePayload {
   email?: string;
 }
 
 /**
  * A middleware that extracts a Profile payload from a request.
+ *
+ * TODO: validate the payload against a schema.
  */
 export const ProfilePayloadMiddleware: IRequestMiddleware<never, IProfilePayload> =
   (request) => {
@@ -67,15 +102,13 @@ export const ProfilePayloadMiddleware: IRequestMiddleware<never, IProfilePayload
     }));
   };
 
-type IUpsertProfileHandler = (
-  fiscalCode: FiscalCode,
-  profileModelPayload: IProfilePayload,
-) => Promise<
-  IResponseSuccessJson<IRetrievedProfile> |
-  IResponseErrorValidation |
-  IResponseErrorGeneric
->;
-
+/**
+ * This handler will receive attributes for a profile and create a
+ * profile with those attributes if the profile does not yet exist or
+ * update the profile with it already exist.
+ *
+ * TODO: only return public visible attributes
+ */
 export function UpsertProfileHandler(Profile: ProfileModel): IUpsertProfileHandler {
   return (fiscalCode, profileModelPayload) => new Promise((resolve, reject) => {
     const existingProfilePromise = Profile.findOneProfileByFiscalCode(fiscalCode);
@@ -106,16 +139,7 @@ export function UpsertProfileHandler(Profile: ProfileModel): IUpsertProfileHandl
 }
 
 /**
- * Returns an UpsertProfile controller.
- *
- * This controller will receive attributes for a profile and create a
- * profile with those attributes if the profile does not yet exist or
- * update the profile with it already exist.
- *
- * @param Profile The Profile model.
- *
- * TODO: only return public visible attributes
- * TODO: validate incoming object
+ * Wraps an UpsertProfile handler inside an Express request handler.
  */
 export function UpsertProfile(
   handler: IUpsertProfileHandler,

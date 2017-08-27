@@ -1,3 +1,7 @@
+/*
+ * Implements the API handlers for the Message resource.
+ */
+
 import * as express from "express";
 import * as ulid from "ulid";
 
@@ -30,12 +34,19 @@ interface IBindings {
   createdMessage?: ICreatedMessageEvent;
 }
 
+/**
+ * A new Message payload.
+ *
+ * TODO: generate from a schema.
+ */
 interface IMessagePayload {
   body_short: string;
 }
 
 /**
  * A request middleware that validates the Message payload.
+ *
+ * TODO: generate from the OpenAPI specs.
  */
 export const MessagePayloadMiddleware: IRequestMiddleware<IResponseErrorValidation, IMessagePayload> =
   (request) => {
@@ -49,12 +60,59 @@ export const MessagePayloadMiddleware: IRequestMiddleware<IResponseErrorValidati
     }
   };
 
+/**
+ * Type of a CreateMessage handler.
+ *
+ * CreateMessage expects an Azure Function Context and FiscalCode as input
+ * and returns the created Message as output.
+ * The Context is needed to output the created Message to a queue for
+ * further processing.
+ *
+ * TODO: only return public fields
+ */
 type ICreateMessageHandler = (
   context: IContext<IBindings>,
   fiscalCode: FiscalCode,
   messagePayload: IMessagePayload,
 ) => Promise<IResponseSuccessJson<IRetrievedMessage>>;
 
+/**
+ * Type of a GetMessage handler.
+ *
+ * GetMessage expects a FiscalCode and a Message ID as input
+ * and returns a Message as output or a Not Found or Validation
+ * errors.
+ *
+ * TODO: only return public fields
+ */
+type IGetMessageHandler = (
+  fiscalCode: FiscalCode,
+  messageId: string,
+) => Promise<
+  IResponseSuccessJson<IRetrievedMessage> |
+  IResponseErrorNotFound |
+  IResponseErrorValidation
+>;
+
+/**
+ * Type of a GetMessages handler.
+ *
+ * GetMessages expects a FiscalCode as input and returns the Messages
+ * as output or a Validation error.
+ *
+ * TODO: only return public fields
+ * TODO: add full results and paging
+ */
+type IGetMessagesHandler = (
+  fiscalCode: FiscalCode,
+) => Promise<
+  IResponseSuccessJson<IRetrievedMessage[]> |
+  IResponseErrorValidation
+>;
+
+/**
+ * Returns a type safe CreateMessage handler.
+ */
 export function CreateMessageHandler(Message: MessageModel): ICreateMessageHandler {
   return (context, fiscalCode, messagePayload) =>
     new Promise((resolve, reject) => {
@@ -76,17 +134,13 @@ export function CreateMessageHandler(Message: MessageModel): ICreateMessageHandl
       // the message to the output binding of this function
       context.bindings.createdMessage = createdMessage;
 
-      // TODO: this will return all internal attrs, only return "public" attributes
       resolve(ResponseSuccessJson(result));
     }, reject);
   });
 }
 
 /**
- * Returns a controller that will handle requests
- * for creating new messages.
- *
- * @param Message The Message model.
+ * Wraps a CreateMessage handler inside an Express request handler.
  */
 export function CreateMessage(
   handler: ICreateMessageHandler,
@@ -99,15 +153,9 @@ export function CreateMessage(
   return wrapRequestHandler(middlewaresWrap(handler));
 }
 
-type IGetMessageHandler = (
-  fiscalCode: FiscalCode,
-  messageId: string,
-) => Promise<
-  IResponseSuccessJson<IRetrievedMessage> |
-  IResponseErrorNotFound |
-  IResponseErrorValidation
->;
-
+/**
+ * Handles requests for getting a single message for a recipient.
+ */
 export function GetMessageHandler(Message: MessageModel): IGetMessageHandler {
   return (fiscalCode, messageId) => new Promise((resolve, reject) => {
     Message.findMessageForRecipient(fiscalCode, messageId).then((result) => {
@@ -121,10 +169,7 @@ export function GetMessageHandler(Message: MessageModel): IGetMessageHandler {
 }
 
 /**
- * Returns a controller that will handle requests
- * for getting a single message for a recipient.
- *
- * @param Message The Message model
+ * Wraps a GetMessage handler inside an Express request handler.
  */
 export function GetMessage(
   handler: IGetMessageHandler,
@@ -136,13 +181,9 @@ export function GetMessage(
   return wrapRequestHandler(middlewaresWrap(handler));
 }
 
-type IGetMessagesHandler = (
-  fiscalCode: FiscalCode,
-) => Promise<
-  IResponseSuccessJson<IRetrievedMessage[]> |
-  IResponseErrorValidation
->;
-
+/**
+ * Handles requests for getting all message for a recipient.
+ */
 export function GetMessagesHandler(Message: MessageModel): IGetMessagesHandler {
   return (fiscalCode) => new Promise((resolve, reject) => {
     const iterator = Message.findMessages(fiscalCode);
@@ -153,10 +194,7 @@ export function GetMessagesHandler(Message: MessageModel): IGetMessagesHandler {
 }
 
 /**
- * Returns a controller that will handle requests
- * for getting all messages for a recipient.
- *
- * @param Message The Message model
+ * Wraps a GetMessages handler inside an Express request handler.
  */
 export function GetMessages(
   handler: IGetMessagesHandler,
