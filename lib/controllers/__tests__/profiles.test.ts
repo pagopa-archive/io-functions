@@ -3,7 +3,7 @@
 import { response as MockResponse } from "jest-mock-express";
 
 import { IRetrievedProfile } from "../../models/profile";
-import { GetProfile, UpsertProfile } from "../profiles";
+import { GetProfile, GetProfileHandler, UpsertProfile, UpsertProfileHandler } from "../profiles";
 
 import { toFiscalCode } from "../../utils/fiscalcode";
 import { toNonNegativeNumber } from "../../utils/numbers";
@@ -26,11 +26,8 @@ function flushPromises() {
 describe("GetProfile", () => {
 
   it("should validate the provided fiscal code", () => {
-    const profileModelMock = {
-      findOneProfileByFiscalCode: jest.fn(),
-    };
-
-    const getProfile = GetProfile(profileModelMock as any);
+    const getProfileHandler = jest.fn();
+    const getProfile = GetProfile(getProfileHandler);
 
     const mockRequest = {
       params: {
@@ -42,8 +39,8 @@ describe("GetProfile", () => {
 
     getProfile(mockRequest as any, mockResponse, null as any);
 
-    return Promise.resolve().then(() => {
-      expect(profileModelMock.findOneProfileByFiscalCode).not.toHaveBeenCalled();
+    return flushPromises().then(() => {
+      expect(getProfileHandler).not.toHaveBeenCalled();
       expect(mockResponse.status).toHaveBeenCalledWith(400);
     });
   });
@@ -56,7 +53,8 @@ describe("GetProfile", () => {
       }),
     };
 
-    const getProfile = GetProfile(profileModelMock as any);
+    const getProfileHandler = GetProfileHandler(profileModelMock as any);
+    const getProfile = GetProfile(getProfileHandler as any);
 
     const mockRequest = {
       params: {
@@ -84,7 +82,8 @@ describe("GetProfile", () => {
       }),
     };
 
-    const getProfile = GetProfile(profileModelMock as any);
+    const getProfileHandler = GetProfileHandler(profileModelMock as any);
+    const getProfile = GetProfile(getProfileHandler as any);
 
     const mockRequest = {
       params: {
@@ -111,7 +110,8 @@ describe("GetProfile", () => {
       }),
     };
 
-    const getProfile = GetProfile(profileModelMock as any);
+    const getProfileHandler = GetProfileHandler(profileModelMock as any);
+    const getProfile = GetProfile(getProfileHandler as any);
 
     const mockRequest = {
       params: {
@@ -135,11 +135,9 @@ describe("GetProfile", () => {
 describe("UpsertProfile", () => {
 
   it("should validate the provided fiscal code", () => {
-    const profileModelMock = {
-      findOneProfileByFiscalCode: jest.fn(),
-    };
 
-    const upsertProfile = UpsertProfile(profileModelMock as any);
+    const upsertProfileHandler = jest.fn();
+    const upsertProfile = UpsertProfile(upsertProfileHandler);
 
     const mockRequest = {
       params: {
@@ -151,8 +149,8 @@ describe("UpsertProfile", () => {
 
     upsertProfile(mockRequest as any, mockResponse, null as any);
 
-    return Promise.resolve().then(() => {
-      expect(profileModelMock.findOneProfileByFiscalCode).not.toHaveBeenCalled();
+    return flushPromises().then(() => {
+      expect(upsertProfileHandler).not.toHaveBeenCalled();
       expect(mockResponse.status).toHaveBeenCalledWith(400);
     });
   });
@@ -168,7 +166,8 @@ describe("UpsertProfile", () => {
       }),
     };
 
-    const upsertProfile = UpsertProfile(profileModelMock as any);
+    const upsertProfileHandler = UpsertProfileHandler(profileModelMock as any);
+    const upsertProfile = UpsertProfile(upsertProfileHandler);
 
     const mockRequest = {
       body: {
@@ -209,7 +208,8 @@ it("should update an existing profile", () => {
     }),
   };
 
-  const upsertProfile = UpsertProfile(profileModelMock as any);
+  const upsertProfileHandler = UpsertProfileHandler(profileModelMock as any);
+  const upsertProfile = UpsertProfile(upsertProfileHandler);
 
   const mockRequest = {
     body: {

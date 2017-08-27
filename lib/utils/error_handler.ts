@@ -1,33 +1,33 @@
-import * as express from "express";
+import {
+  IResponseErrorGeneric,
+  IResponseSuccessJson,
+  ResponseErrorGeneric,
+  ResponseSuccessJson,
+} from "./response";
 
 /**
  * Returns an error handler that responds to the current HTTP request.
  *
  * @param response The Express Response for the current request
  */
-export function handleErrorAndRespond<T>(response: express.Response): (reason: T) => express.Response {
+export function handleErrorAndRespond<T>(): (reason: T) => IResponseErrorGeneric {
   return (reason: T) => {
-    return response.status(500).json({
-      error: reason,
-    });
+    return ResponseErrorGeneric(`Generic error: ${reason}`);
   };
 }
 
 /**
  * Returns an error handler that responds to the current HTTP request.
- *
- * @param response The Express Response for the current request
  */
-export function handleNullableResultAndRespond<T, E>(
-  response: express.Response,
-  errorStatus: number,
-  nullError: E,
-): (result: T | null) => express.Response {
-  return (result: T | null) => {
+export function handleNullableResultAndRespond<T>(
+  resolve: (value: IResponseSuccessJson<T> | IResponseErrorGeneric) => void,
+  nullErrorMessage: string,
+): ((result: T | null) => void) {
+  return (result) => {
     if (result !== null) {
-      return response.status(200).json(result);
+      resolve(ResponseSuccessJson(result));
     } else {
-      return response.status(errorStatus).json(nullError);
+      resolve(ResponseErrorGeneric(nullErrorMessage));
     }
   };
 }

@@ -1,16 +1,28 @@
 // tslint:disable:no-any
 
+// import * as express from "express";
+
 import { response as MockResponse } from "jest-mock-express";
 
-import { IRequestMiddleware, withRequestMiddlewares } from "../request_middleware";
+import {
+  IRequestMiddleware,
+  withRequestMiddlewares,
+  wrapRequestHandler,
+} from "../request_middleware";
+import {
+  IResponse,
+  IResponseErrorValidation,
+  ResponseErrorValidation,
+} from "../response";
 
-const ResolvingMiddleware: IRequestMiddleware<string> = (req, _) => {
-  return Promise.resolve(req.params.dummy);
+import { left, right } from "../either";
+
+const ResolvingMiddleware: IRequestMiddleware<never, string> = (req) => {
+  return Promise.resolve(right(req.params.dummy));
 };
 
-const RejectingMiddleware: IRequestMiddleware<string> = (req, res) => {
-  res.send(req.params.dummy);
-  return Promise.reject(null);
+const RejectingMiddleware: IRequestMiddleware<IResponseErrorValidation, string> = (_) => {
+  return Promise.resolve(left(ResponseErrorValidation("NOK")));
 };
 
 function flushPromises() {
@@ -23,83 +35,58 @@ const request = {
   },
 };
 
+const response = {} as IResponse;
+
 describe("withRequestMiddlewares", () => {
 
   it("should process a request with a resolving middleware (1)", () => {
-    const mockHandler = jest.fn();
+    const mockHandler = jest.fn(() => Promise.resolve(response));
+    const handler = withRequestMiddlewares(ResolvingMiddleware)(mockHandler);
 
-    const response = MockResponse();
-
-    withRequestMiddlewares(ResolvingMiddleware)
-      (mockHandler)
-      (request as any, response, null as any);
-
-    return flushPromises().then(() => {
-      expect(mockHandler).toHaveBeenCalledWith(response, "dummy");
+    return handler(request as any).then((r) => {
+      expect(mockHandler).toHaveBeenCalledWith("dummy");
+      expect(r).toEqual(response);
     });
-
   });
 
   it("should process a request with a resolving middleware (2)", () => {
-    const mockHandler = jest.fn();
+    const mockHandler = jest.fn(() => Promise.resolve(response));
+    const handler = withRequestMiddlewares(ResolvingMiddleware, ResolvingMiddleware)(mockHandler);
 
-    const response = MockResponse();
-
-    withRequestMiddlewares(ResolvingMiddleware, ResolvingMiddleware)
-      (mockHandler)
-      (request as any, response, null as any);
-
-    return flushPromises().then(() => {
-      expect(mockHandler).toHaveBeenCalledWith(response, "dummy", "dummy");
+    return handler(request as any).then((r) => {
+      expect(mockHandler).toHaveBeenCalledWith("dummy", "dummy");
+      expect(r).toEqual(response);
     });
-
   });
 
   it("should process a request with a resolving middleware (3)", () => {
-    const mockHandler = jest.fn();
+    const mockHandler = jest.fn(() => Promise.resolve(response));
+    const handler = withRequestMiddlewares(ResolvingMiddleware, ResolvingMiddleware, ResolvingMiddleware)(mockHandler);
 
-    const response = MockResponse();
-
-    withRequestMiddlewares(ResolvingMiddleware, ResolvingMiddleware, ResolvingMiddleware)
-      (mockHandler)
-      (request as any, response, null as any);
-
-    return flushPromises().then(() => {
-      expect(mockHandler).toHaveBeenCalledWith(response, "dummy", "dummy", "dummy");
+    return handler(request as any).then((r) => {
+      expect(mockHandler).toHaveBeenCalledWith("dummy", "dummy", "dummy");
+      expect(r).toEqual(response);
     });
-
   });
 
   it("should process a request with a rejecting middleware", () => {
-    const mockHandler = jest.fn();
+    const mockHandler = jest.fn(() => Promise.resolve(response));
+    const handler = withRequestMiddlewares(RejectingMiddleware)(mockHandler);
 
-    const response = MockResponse();
-
-    withRequestMiddlewares(RejectingMiddleware)
-      (mockHandler)
-      (request as any, response, null as any);
-
-    return flushPromises().then(() => {
+    return handler(request as any).then((r) => {
       expect(mockHandler).not.toHaveBeenCalled();
-      expect(response.send).toHaveBeenCalledWith("dummy");
+      expect(r.kind).toBe("IResponseErrorValidation");
     });
-
   });
 
   it("should stop processing middlewares after a rejecting middleware", () => {
-    const mockHandler = jest.fn();
+    const mockHandler = jest.fn(() => Promise.resolve(response));
+    const handler = withRequestMiddlewares(RejectingMiddleware, ResolvingMiddleware)(mockHandler);
 
-    const response = MockResponse();
-
-    withRequestMiddlewares(RejectingMiddleware, ResolvingMiddleware)
-      (mockHandler)
-      (request as any, response, null as any);
-
-    return flushPromises().then(() => {
+    return handler(request as any).then((r) => {
       expect(mockHandler).not.toHaveBeenCalled();
-      expect(response.send).toHaveBeenCalledWith("dummy");
+      expect(r.kind).toBe("IResponseErrorValidation");
     });
-
   });
 
 });
