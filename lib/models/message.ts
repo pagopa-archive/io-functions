@@ -89,6 +89,7 @@ export class MessageModel {
       this.dbClient,
       this.collectionUrl,
       message,
+      message.fiscalCode,
     );
     return {
       ...createdDocument,

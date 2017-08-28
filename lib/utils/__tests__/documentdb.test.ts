@@ -77,12 +77,13 @@ describe("createDocument", () => {
 
   it("should resolve a promise with the created document", () => {
     const clientMock = {
-      createDocument: jest.fn((__, ___, cb) => cb(null, documentFixture)),
+      createDocument: jest.fn((_, __, ___, cb) => cb(null, documentFixture)),
     };
     const promise = Utils.createDocument(
       (clientMock as any) as DocumentDb.DocumentClient,
       collectionUrlFixture,
       documentFixture,
+      "fiscalCode",
     );
     expect(clientMock.createDocument.mock.calls.length).toEqual(1);
     return expect(promise).resolves.toEqual(documentFixture);
@@ -90,12 +91,13 @@ describe("createDocument", () => {
 
   it("should reject a promise with the error", () => {
     const clientMock = {
-      createDocument: jest.fn((__, ___, cb) => cb("error")),
+      createDocument: jest.fn((_, __, ___, cb) => cb("error")),
     };
     const promise = Utils.createDocument(
       (clientMock as any) as DocumentDb.DocumentClient,
       collectionUrlFixture,
       documentFixture,
+      "fiscalCode",
     );
     expect(clientMock.createDocument.mock.calls.length).toEqual(1);
     return expect(promise).rejects.toEqual("error");

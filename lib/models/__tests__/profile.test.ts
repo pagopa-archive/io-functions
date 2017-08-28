@@ -52,7 +52,7 @@ describe("createProfile", () => {
 
   it("should create a new profile", async () => {
     const clientMock: any = {
-      createDocument: jest.fn((_, newDocument, cb) => {
+      createDocument: jest.fn((_, newDocument, __, cb) => {
         cb(null, {
           ...newDocument,
         });
@@ -68,7 +68,7 @@ describe("createProfile", () => {
     const result = await model.createProfile(newProfile);
 
     expect(clientMock.createDocument).toHaveBeenCalledTimes(1);
-
+    expect(clientMock.createDocument.mock.calls[0][2]).toHaveProperty("partitionKey", aFiscalCode);
     expect(result.fiscalCode).toEqual(newProfile.fiscalCode);
     expect(result.id).toEqual(`${aFiscalCode}-${"0".repeat(16)}`);
     expect(result.version).toEqual(0);
@@ -76,7 +76,7 @@ describe("createProfile", () => {
 
   it("should reject the promise in case of error", () => {
     const clientMock: any = {
-      createDocument: jest.fn((_, __, cb) => {
+      createDocument: jest.fn((_, __, ___, cb) => {
         cb("error");
       }),
     };
@@ -100,7 +100,7 @@ describe("updateProfile", () => {
 
   it("should update an existing profile", async () => {
     const clientMock: any = {
-      createDocument: jest.fn((_, newDocument, cb) => {
+      createDocument: jest.fn((_, newDocument, __, cb) => {
         cb(null, {
           ...newDocument,
         });
@@ -121,7 +121,7 @@ describe("updateProfile", () => {
     const result = await model.updateProfile(pendingProfile);
 
     expect(clientMock.createDocument).toHaveBeenCalledTimes(1);
-
+    expect(clientMock.createDocument.mock.calls[0][2]).toHaveProperty("partitionKey", aFiscalCode);
     expect(result.fiscalCode).toEqual(pendingProfile.fiscalCode);
     expect(result.id).toEqual(`${aFiscalCode}-${"0".repeat(15)}1`);
     expect(result.version).toEqual(1);
@@ -129,7 +129,7 @@ describe("updateProfile", () => {
 
   it("should reject the promise in case of error", () => {
     const clientMock: any = {
-      createDocument: jest.fn((_, __, cb) => {
+      createDocument: jest.fn((_, __, ___, cb) => {
         cb("error");
       }),
     };
