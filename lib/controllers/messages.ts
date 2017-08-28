@@ -24,7 +24,12 @@ import {
 } from "../utils/response";
 
 import { ICreatedMessageEvent } from "../models/created_message_event";
-import { INewMessage, IRetrievedMessage, MessageModel } from "../models/message";
+import {
+  asPublicExtendedMessage,
+  INewMessage,
+  IPublicExtendedMessage,
+  MessageModel,
+} from "../models/message";
 
 /**
  * Input and output bindings for this function
@@ -67,14 +72,12 @@ export const MessagePayloadMiddleware: IRequestMiddleware<IResponseErrorValidati
  * and returns the created Message as output.
  * The Context is needed to output the created Message to a queue for
  * further processing.
- *
- * TODO: only return public fields
  */
 type ICreateMessageHandler = (
   context: IContext<IBindings>,
   fiscalCode: FiscalCode,
   messagePayload: IMessagePayload,
-) => Promise<IResponseSuccessJson<IRetrievedMessage>>;
+) => Promise<IResponseSuccessJson<IPublicExtendedMessage>>;
 
 /**
  * Type of a GetMessage handler.
@@ -82,14 +85,12 @@ type ICreateMessageHandler = (
  * GetMessage expects a FiscalCode and a Message ID as input
  * and returns a Message as output or a Not Found or Validation
  * errors.
- *
- * TODO: only return public fields
  */
 type IGetMessageHandler = (
   fiscalCode: FiscalCode,
   messageId: string,
 ) => Promise<
-  IResponseSuccessJson<IRetrievedMessage> |
+  IResponseSuccessJson<IPublicExtendedMessage> |
   IResponseErrorNotFound |
   IResponseErrorValidation
 >;
@@ -100,13 +101,12 @@ type IGetMessageHandler = (
  * GetMessages expects a FiscalCode as input and returns the Messages
  * as output or a Validation error.
  *
- * TODO: only return public fields
  * TODO: add full results and paging
  */
 type IGetMessagesHandler = (
   fiscalCode: FiscalCode,
 ) => Promise<
-  IResponseSuccessJson<IRetrievedMessage[]> |
+  IResponseSuccessJson<IPublicExtendedMessage[]> |
   IResponseErrorValidation
 >;
 
@@ -121,20 +121,22 @@ export function CreateMessageHandler(Message: MessageModel): ICreateMessageHandl
       bodyShort: messagePayload.body_short,
       fiscalCode,
       id: ulid(),
+      kind: "INewMessage",
     };
 
-    Message.createMessage(message).then((result) => {
-      context.log(`>> message stored [${result.id}]`);
+    Message.createMessage(message).then((retrievedMessage) => {
+      context.log(`>> message stored [${retrievedMessage.id}]`);
 
       const createdMessage: ICreatedMessageEvent = {
-        message: result,
+        message: retrievedMessage,
       };
 
       // queue the message to the created messages queue by setting
       // the message to the output binding of this function
       context.bindings.createdMessage = createdMessage;
 
-      resolve(ResponseSuccessJson(result));
+      const publicMessage = asPublicExtendedMessage(retrievedMessage);
+      resolve(ResponseSuccessJson(publicMessage));
     }, reject);
   });
 }
@@ -158,9 +160,10 @@ export function CreateMessage(
  */
 export function GetMessageHandler(Message: MessageModel): IGetMessageHandler {
   return (fiscalCode, messageId) => new Promise((resolve, reject) => {
-    Message.findMessageForRecipient(fiscalCode, messageId).then((result) => {
-      if (result != null) {
-        resolve(ResponseSuccessJson(result));
+    Message.findMessageForRecipient(fiscalCode, messageId).then((retrievedMessage) => {
+      if (retrievedMessage != null) {
+        const publicMessage = asPublicExtendedMessage(retrievedMessage);
+        resolve(ResponseSuccessJson(publicMessage));
       } else {
         resolve(ResponseErrorNotFound("Message not found"));
       }
@@ -187,8 +190,9 @@ export function GetMessage(
 export function GetMessagesHandler(Message: MessageModel): IGetMessagesHandler {
   return (fiscalCode) => new Promise((resolve, reject) => {
     const iterator = Message.findMessages(fiscalCode);
-    iterator.executeNext().then((result) => {
-      resolve(ResponseSuccessJson(result));
+    iterator.executeNext().then((retrievedMessages) => {
+      const publicMessages = retrievedMessages.map(asPublicExtendedMessage);
+      resolve(ResponseSuccessJson(publicMessages));
     }, reject);
   });
 }
