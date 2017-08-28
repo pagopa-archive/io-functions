@@ -76,6 +76,7 @@ export function index(context: IContextWithBindings) {
       } else {
         // TODO: store the message ID for handling bounces and delivery updates
         // see https://nodemailer.com/usage/#sending-mail
+        // see #150597597
         context.log.verbose(`Email sent|${info}`);
         context.done();
       }
