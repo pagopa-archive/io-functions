@@ -2,8 +2,9 @@ import * as DocumentDb from "documentdb";
 import * as DocumentDbUtils from "../utils/documentdb";
 
 import { FiscalCode } from "../utils/fiscalcode";
-import { NonNegativeNumber, toNonNegativeNumber } from "../utils/numbers";
+import { toNonNegativeNumber } from "../utils/numbers";
 import { LimitedFields } from "../utils/types";
+import { generateVersionedModelId, IVersionedModel } from "../utils/versioned_model";
 
 /**
  * Base interface for Profile objects
@@ -25,9 +26,8 @@ export interface INewProfile extends IProfile, DocumentDb.NewDocument {
  *
  * Existing profile records have a version number.
  */
-export interface IRetrievedProfile extends IProfile, DocumentDb.RetrievedDocument {
+export interface IRetrievedProfile extends IProfile, DocumentDb.RetrievedDocument, IVersionedModel {
   readonly kind: "IRetrievedProfile";
-  readonly version: NonNegativeNumber;
 }
 
 /**
@@ -73,22 +73,6 @@ export function asPublicLimitedProfile<T extends IProfile>(profile: T): IPublicL
     fiscalCode,
     kind: "IPublicLimitedProfile",
   };
-}
-
-/**
- * Returns a string with a composite id that has the format:
- * PROFILE_ID-VERSION
- *
- * PROFILE_ID is the base profile ID (i.e. the fiscal code)
- * VERSION is the zero-padded version of the profile
- *
- * @param profileId The base profile ID
- * @param version The version of the profile
- */
-function generateVersionedProfileId(profileId: string, version: number): string {
-  const paddingLength = 16; // length of Number.MAX_SAFE_INTEGER == 9007199254740991
-  const paddedVersion = ("0".repeat(paddingLength) + version).slice(-paddingLength);
-  return `${profileId}-${paddedVersion}`;
 }
 
 /**
@@ -140,7 +124,7 @@ export class ProfileModel {
       // the ID of each profile version is composed of the profile ID and its version
       // this makes it possible to detect conflicting updates (concurrent creation of
       // profiles with the same profile ID and version)
-      const profileId = generateVersionedProfileId(profile.fiscalCode, initialVersion);
+      const profileId = generateVersionedModelId(profile.fiscalCode, initialVersion);
       DocumentDbUtils.createDocument(
         this.dbClient,
         this.collectionUrl,
@@ -167,7 +151,7 @@ export class ProfileModel {
   public updateProfile(profile: IRetrievedProfile): Promise<IRetrievedProfile> {
     return new Promise((resolve, reject) => {
       const newVersion = toNonNegativeNumber(profile.version + 1).get;
-      const profileId = generateVersionedProfileId(profile.fiscalCode, newVersion);
+      const profileId = generateVersionedModelId(profile.fiscalCode, newVersion);
       DocumentDbUtils.createDocument(
         this.dbClient,
         this.collectionUrl,
