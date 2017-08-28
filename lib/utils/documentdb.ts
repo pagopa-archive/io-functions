@@ -117,8 +117,6 @@ export function readCollection(
 /**
  * Creates a new document in a collection
  *
- * TODO: add partitionKey
- *
  * @param client The DocumentDB client
  * @param collectionUrl The collection URL
  */
@@ -126,9 +124,12 @@ export function createDocument<T>(
   client: DocumentDb.DocumentClient,
   collectionUrl: DocumentDbCollectionUrl,
   document: T & DocumentDb.NewDocument,
+  partitionKey: string | string[],
 ): Promise<T & DocumentDb.RetrievedDocument> {
   return new Promise((resolve, reject) => {
-    client.createDocument(collectionUrl, document, (err, created) => {
+    client.createDocument(collectionUrl, document, {
+      partitionKey,
+    }, (err, created) => {
       if (err) {
         reject(err);
       } else {

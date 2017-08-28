@@ -133,6 +133,7 @@ export class ProfileModel {
           id: profileId,
           version: initialVersion,
         },
+        profile.fiscalCode,
       ).then(
         (result) => resolve({
           ...result,
@@ -160,6 +161,7 @@ export class ProfileModel {
           id: profileId,
           version: newVersion,
         },
+        profile.fiscalCode,
       ).then(
         (result) => resolve(result),
         (error) => reject(error),
