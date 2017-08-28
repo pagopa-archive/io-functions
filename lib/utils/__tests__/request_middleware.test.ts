@@ -1,13 +1,8 @@
 // tslint:disable:no-any
 
-// import * as express from "express";
-
-import { response as MockResponse } from "jest-mock-express";
-
 import {
   IRequestMiddleware,
   withRequestMiddlewares,
-  wrapRequestHandler,
 } from "../request_middleware";
 import {
   IResponse,
@@ -24,10 +19,6 @@ const ResolvingMiddleware: IRequestMiddleware<never, string> = (req) => {
 const RejectingMiddleware: IRequestMiddleware<IResponseErrorValidation, string> = (_) => {
   return Promise.resolve(left(ResponseErrorValidation("NOK")));
 };
-
-function flushPromises() {
-  return new Promise((resolve) => setImmediate(resolve));
-}
 
 const request = {
   params: {
