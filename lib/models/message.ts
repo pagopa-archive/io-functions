@@ -2,6 +2,7 @@ import * as DocumentDb from "documentdb";
 import * as DocumentDbUtils from "../utils/documentdb";
 
 import { FiscalCode, isFiscalCode } from "../utils/fiscalcode";
+import { LimitedFields } from "../utils/types";
 
 /**
  * Base interface for Message objects
@@ -22,17 +23,32 @@ export function isIMessage(arg: any): arg is IMessage {
 /**
  * Interface for new Message objects
  */
-export interface INewMessage extends IMessage, DocumentDb.NewDocument { }
-
-/**
- * Interface for retrieved Message objects
- */
-interface IRetrievedMessageRW extends IMessage, DocumentDb.RetrievedDocument { }
+export interface INewMessage extends IMessage, DocumentDb.NewDocument {
+  readonly kind: "INewMessage";
+}
 
 /**
  * Read-only interface for retrieved Message objects
  */
-export type IRetrievedMessage = Readonly<IRetrievedMessageRW>;
+export interface IRetrievedMessage extends Readonly<IMessage>, Readonly<DocumentDb.RetrievedDocument> {
+  readonly kind: "IRetrievedMessage";
+}
+
+export interface IPublicExtendedMessage extends LimitedFields<IRetrievedMessage, "fiscalCode" | "bodyShort"> {
+  readonly kind: "IPublicExtendedMessage";
+}
+
+export function asPublicExtendedMessage<T extends IRetrievedMessage>(message: T): IPublicExtendedMessage {
+  const {
+    fiscalCode,
+    bodyShort,
+  } = message;
+  return {
+    bodyShort,
+    fiscalCode,
+    kind: "IPublicExtendedMessage",
+  };
+}
 
 /**
  * Type guard for IRetrievedMessage objects
@@ -74,7 +90,10 @@ export class MessageModel {
       this.collectionUrl,
       message,
     );
-    return createdDocument;
+    return {
+      ...createdDocument,
+      kind: "IRetrievedMessage",
+    };
   }
 
   /**
@@ -97,7 +116,10 @@ export class MessageModel {
         documentUrl,
         fiscalCode,
       ).then(
-        (document) => resolve(document),
+        (document) => resolve({
+          ...document,
+          kind: "IRetrievedMessage",
+        }),
         (error: DocumentDb.QueryError) => {
           if (error.code === 404) {
             resolve(null);
