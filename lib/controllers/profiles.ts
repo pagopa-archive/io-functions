@@ -21,18 +21,24 @@ import {
   ResponseSuccessJson,
 } from "../utils/response";
 
-import { IProfile, IRetrievedProfile, ProfileModel } from "../models/profile";
+import {
+  asPublicExtendedProfile,
+  asPublicLimitedProfile,
+  IProfile,
+  IPublicExtendedProfile,
+  IPublicLimitedProfile,
+  ProfileModel,
+} from "../models/profile";
 
 /**
  * Type of a GetProfile handler.
  *
  * GetProfile expects a FiscalCode as input and returns a Profile or
  * a Not Found error.
- *
- * TODO: only return public fields
  */
 type IGetProfileHandler = (fiscalCode: FiscalCode) => Promise<
-  IResponseSuccessJson<IRetrievedProfile> |
+  IResponseSuccessJson<IPublicLimitedProfile> |
+  IResponseSuccessJson<IPublicExtendedProfile> |
   IResponseErrorNotFound
 >;
 
@@ -41,27 +47,28 @@ type IGetProfileHandler = (fiscalCode: FiscalCode) => Promise<
  *
  * UpsertProfile expects a FiscalCode and a Profile as input and
  * returns a Profile or a Validation or a Generic error.
- *
- * TODO: only return public fields
  */
 type IUpsertProfileHandler = (
   fiscalCode: FiscalCode,
   profileModelPayload: IProfilePayload,
 ) => Promise<
-  IResponseSuccessJson<IRetrievedProfile> |
+  IResponseSuccessJson<IPublicExtendedProfile> |
   IResponseErrorValidation |
   IResponseErrorGeneric
 >;
 
 /**
  * Return a type safe GetProfile handler.
+ *
+ * TODO: return extended profile if client is trusted
  */
 export function GetProfileHandler(Profile: ProfileModel): IGetProfileHandler {
   return (fiscalCode) => new Promise((resolve, reject) => {
     Profile.findOneProfileByFiscalCode(fiscalCode).then(
       (profile) => {
         if (profile !== null) {
-          resolve(ResponseSuccessJson(profile));
+          const publicProfile = asPublicLimitedProfile(profile);
+          resolve(ResponseSuccessJson(publicProfile));
         } else {
           resolve(ResponseErrorNotFound("Profile not found"));
         }
@@ -106,8 +113,6 @@ export const ProfilePayloadMiddleware: IRequestMiddleware<never, IProfilePayload
  * This handler will receive attributes for a profile and create a
  * profile with those attributes if the profile does not yet exist or
  * update the profile with it already exist.
- *
- * TODO: only return public visible attributes
  */
 export function UpsertProfileHandler(Profile: ProfileModel): IUpsertProfileHandler {
   return (fiscalCode, profileModelPayload) => new Promise((resolve, reject) => {
@@ -120,6 +125,9 @@ export function UpsertProfileHandler(Profile: ProfileModel): IUpsertProfileHandl
           fiscalCode,
         };
         Profile.createProfile(profile).then(
+          (p) => p !== null ? asPublicExtendedProfile(p) : null,
+          reject,
+        ).then(
           handleNullableResultAndRespond(resolve, "Error while creating a new profile"),
           reject,
         );
@@ -130,6 +138,9 @@ export function UpsertProfileHandler(Profile: ProfileModel): IUpsertProfileHandl
           email: profileModelPayload.email,
         };
         Profile.updateProfile(profile).then(
+          (p) => p !== null ? asPublicExtendedProfile(p) : null,
+          reject,
+        ).then(
           handleNullableResultAndRespond(resolve, "Error while updating the profile"),
           reject,
         );

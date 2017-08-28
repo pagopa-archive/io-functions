@@ -114,6 +114,7 @@ describe("updateProfile", () => {
       _ts: "xyz",
       fiscalCode: aFiscalCode,
       id: "xyz",
+      kind: "IRetrievedProfile",
       version: toNonNegativeNumber(0).get,
     };
 
@@ -140,6 +141,7 @@ describe("updateProfile", () => {
       _ts: "xyz",
       fiscalCode: aFiscalCode,
       id: "xyz",
+      kind: "IRetrievedProfile",
       version: toNonNegativeNumber(0).get,
     };
 

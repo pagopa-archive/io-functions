@@ -3,6 +3,7 @@ import * as DocumentDbUtils from "../utils/documentdb";
 
 import { FiscalCode } from "../utils/fiscalcode";
 import { NonNegativeNumber, toNonNegativeNumber } from "../utils/numbers";
+import { LimitedFields } from "../utils/types";
 
 /**
  * Base interface for Profile objects
@@ -15,7 +16,9 @@ export interface IProfile {
 /**
  * Interface for new Profile objects
  */
-export interface INewProfile extends IProfile, DocumentDb.NewDocument { }
+export interface INewProfile extends IProfile, DocumentDb.NewDocument {
+  readonly kind: "INewProfile";
+}
 
 /**
  * Interface for retrieved Profile objects
@@ -23,7 +26,53 @@ export interface INewProfile extends IProfile, DocumentDb.NewDocument { }
  * Existing profile records have a version number.
  */
 export interface IRetrievedProfile extends IProfile, DocumentDb.RetrievedDocument {
+  readonly kind: "IRetrievedProfile";
   readonly version: NonNegativeNumber;
+}
+
+/**
+ * A profile that can be shared with user apps.
+ */
+export interface IPublicExtendedProfile extends
+  Readonly<LimitedFields<IRetrievedProfile, "fiscalCode" | "email" | "version">> {
+    readonly kind: "IPublicExtendedProfile";
+}
+
+/**
+ * Converts a Profile to a PublicExtendedProfile
+ */
+export function asPublicExtendedProfile<T extends IRetrievedProfile>(profile: T): IPublicExtendedProfile {
+  const {
+    email,
+    fiscalCode,
+    version,
+  } = profile;
+  return {
+    email,
+    fiscalCode,
+    kind: "IPublicExtendedProfile",
+    version,
+  };
+}
+
+/**
+ * A profile that can be shared with 3rd parties.
+ */
+export interface IPublicLimitedProfile extends LimitedFields<IPublicExtendedProfile, "fiscalCode"> {
+  readonly kind: "IPublicLimitedProfile";
+}
+
+/**
+ * Converts a Profile to a PublicLimitedProfile
+ */
+export function asPublicLimitedProfile<T extends IProfile>(profile: T): IPublicLimitedProfile {
+  const {
+    fiscalCode,
+  } = profile;
+  return {
+    fiscalCode,
+    kind: "IPublicLimitedProfile",
+  };
 }
 
 /**
@@ -42,6 +91,9 @@ function generateVersionedProfileId(profileId: string, version: number): string 
   return `${profileId}-${paddedVersion}`;
 }
 
+/**
+ * A model for handling Profiles
+ */
 export class ProfileModel {
   private dbClient: DocumentDb.DocumentClient;
   private collectionUrl: DocumentDbUtils.DocumentDbCollectionUrl;
@@ -98,7 +150,10 @@ export class ProfileModel {
           version: initialVersion,
         },
       ).then(
-        (result) => resolve(result),
+        (result) => resolve({
+          ...result,
+          kind: "IRetrievedProfile",
+        }),
         (error) => reject(error),
       );
     });

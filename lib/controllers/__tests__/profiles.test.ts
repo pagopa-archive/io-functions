@@ -2,7 +2,7 @@
 
 import { response as MockResponse } from "jest-mock-express";
 
-import { IRetrievedProfile } from "../../models/profile";
+import { IPublicExtendedProfile, IPublicLimitedProfile, IRetrievedProfile } from "../../models/profile";
 import { GetProfile, GetProfileHandler, UpsertProfile, UpsertProfileHandler } from "../profiles";
 
 import { toFiscalCode } from "../../utils/fiscalcode";
@@ -10,13 +10,26 @@ import { toNonNegativeNumber } from "../../utils/numbers";
 
 const aFiscalCode = toFiscalCode("FRLFRC74E04B157I").get;
 
-const aProfile: IRetrievedProfile = {
+const aRetrievedProfile: IRetrievedProfile = {
   _self: "123",
   _ts: "123",
   email: "x&example.com",
   fiscalCode: aFiscalCode,
   id: "123",
+  kind: "IRetrievedProfile",
   version: toNonNegativeNumber(1).get,
+};
+
+const aPublicExtendedProfile: IPublicExtendedProfile = {
+  email: aRetrievedProfile.email,
+  fiscalCode: aRetrievedProfile.fiscalCode,
+  kind: "IPublicExtendedProfile",
+  version: aRetrievedProfile.version,
+};
+
+const aPublicLimitedProfile: IPublicLimitedProfile = {
+  fiscalCode: aPublicExtendedProfile.fiscalCode,
+  kind: "IPublicLimitedProfile",
 };
 
 function flushPromises() {
@@ -49,7 +62,7 @@ describe("GetProfile", () => {
 
     const profileModelMock = {
       findOneProfileByFiscalCode: jest.fn(() => {
-        return Promise.resolve(aProfile);
+        return Promise.resolve(aRetrievedProfile);
       }),
     };
 
@@ -58,7 +71,7 @@ describe("GetProfile", () => {
 
     const mockRequest = {
       params: {
-        fiscalcode: aProfile.fiscalCode,
+        fiscalcode: aRetrievedProfile.fiscalCode,
       },
     };
 
@@ -69,7 +82,7 @@ describe("GetProfile", () => {
     return flushPromises().then(() => {
       expect(profileModelMock.findOneProfileByFiscalCode).toHaveBeenCalledWith(mockRequest.params.fiscalcode);
       expect(mockResponse.status).toHaveBeenCalledWith(200);
-      expect(mockResponse.json).toHaveBeenCalledWith(aProfile);
+      expect(mockResponse.json).toHaveBeenCalledWith(aPublicLimitedProfile);
     });
 
   });
@@ -87,7 +100,7 @@ describe("GetProfile", () => {
 
     const mockRequest = {
       params: {
-        fiscalcode: aProfile.fiscalCode,
+        fiscalcode: aRetrievedProfile.fiscalCode,
       },
     };
 
@@ -115,7 +128,7 @@ describe("GetProfile", () => {
 
     const mockRequest = {
       params: {
-        fiscalcode: aProfile.fiscalCode,
+        fiscalcode: aRetrievedProfile.fiscalCode,
       },
     };
 
@@ -159,7 +172,7 @@ describe("UpsertProfile", () => {
 
     const profileModelMock = {
       createProfile: jest.fn(() => {
-        return Promise.resolve(aProfile);
+        return Promise.resolve(aRetrievedProfile);
       }),
       findOneProfileByFiscalCode: jest.fn(() => {
         return Promise.resolve(null);
@@ -174,7 +187,7 @@ describe("UpsertProfile", () => {
         email: "x@example.com",
       },
       params: {
-        fiscalcode: aProfile.fiscalCode,
+        fiscalcode: aRetrievedProfile.fiscalCode,
       },
     };
 
@@ -183,13 +196,13 @@ describe("UpsertProfile", () => {
     upsertProfile(mockRequest as any, mockResponse, null as any);
 
     return flushPromises().then((_) => {
-      expect(profileModelMock.findOneProfileByFiscalCode).toHaveBeenCalledWith(aProfile.fiscalCode);
+      expect(profileModelMock.findOneProfileByFiscalCode).toHaveBeenCalledWith(aRetrievedProfile.fiscalCode);
       expect(profileModelMock.createProfile).toHaveBeenCalledWith({
         email: "x@example.com",
-        fiscalCode: aProfile.fiscalCode,
+        fiscalCode: aRetrievedProfile.fiscalCode,
       });
       expect(mockResponse.status).toHaveBeenCalledWith(200);
-      expect(mockResponse.json).toHaveBeenCalledWith(aProfile);
+      expect(mockResponse.json).toHaveBeenCalledWith(aPublicExtendedProfile);
     });
 
   });
@@ -201,10 +214,10 @@ it("should update an existing profile", () => {
   const profileModelMock = {
     createProfile: jest.fn(),
     findOneProfileByFiscalCode: jest.fn(() => {
-      return Promise.resolve(aProfile);
+      return Promise.resolve(aRetrievedProfile);
     }),
     updateProfile: jest.fn(() => {
-      return Promise.resolve(aProfile);
+      return Promise.resolve(aRetrievedProfile);
     }),
   };
 
@@ -216,7 +229,7 @@ it("should update an existing profile", () => {
       email: "y@example.com",
     },
     params: {
-      fiscalcode: aProfile.fiscalCode,
+      fiscalcode: aRetrievedProfile.fiscalCode,
     },
   };
 
@@ -225,14 +238,14 @@ it("should update an existing profile", () => {
   upsertProfile(mockRequest as any, mockResponse, null as any);
 
   return flushPromises().then((_) => {
-    expect(profileModelMock.findOneProfileByFiscalCode).toHaveBeenCalledWith(aProfile.fiscalCode);
+    expect(profileModelMock.findOneProfileByFiscalCode).toHaveBeenCalledWith(aRetrievedProfile.fiscalCode);
     expect(profileModelMock.createProfile).not.toHaveBeenCalled();
     expect(profileModelMock.updateProfile).toHaveBeenCalledWith({
-      ...aProfile,
+      ...aRetrievedProfile,
       email: "y@example.com",
     });
     expect(mockResponse.status).toHaveBeenCalledWith(200);
-    expect(mockResponse.json).toHaveBeenCalledWith(aProfile);
+    expect(mockResponse.json).toHaveBeenCalledWith(aPublicExtendedProfile);
   });
 
 });
