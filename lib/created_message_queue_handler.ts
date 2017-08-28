@@ -93,7 +93,7 @@ export function index(context: IContextWithBindings) {
       (error) => {
         context.log.error(`Error while querying profile, retrying|${retrievedMessage.fiscalCode}|${error}`);
         // in case of error, we return a failure to trigger a retry (up to the configured max retries)
-        // TODO: schedule next retry with exponential backoff
+        // TODO: schedule next retry with exponential backoff, see #150597257
         context.done(error);
       },
     );
