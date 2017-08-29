@@ -19,6 +19,7 @@
   "dependencies": {
     "@types/documentdb": "^1.10.2",
     "@types/express": "^4.0.36",
+    "@types/js-yaml": "^3.9.1",
     "@types/node": "^6.0.0",
     "@types/nodemailer": "^3.1.1",
     "azure-function-express-cloudify": "^1.2.2-1",
@@ -26,6 +27,7 @@
     "codice-fiscale-italiano": "^1.0.1",
     "documentdb": "^1.12.2",
     "express": "^4.15.3",
+    "js-yaml": "^3.9.1",
     "nodemailer": "^4.0.1",
     "nodemailer-sendgrid-transport": "^0.2.0",
     "ts-option": "^1.1.4",

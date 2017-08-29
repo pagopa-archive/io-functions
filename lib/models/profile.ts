@@ -1,6 +1,7 @@
 import * as DocumentDb from "documentdb";
 import * as DocumentDbUtils from "../utils/documentdb";
 
+import { fiscalCodeToModelId } from "../utils/conversions";
 import { FiscalCode } from "../utils/fiscalcode";
 import { toNonNegativeNumber } from "../utils/numbers";
 import { LimitedFields } from "../utils/types";
@@ -124,7 +125,7 @@ export class ProfileModel {
       // the ID of each profile version is composed of the profile ID and its version
       // this makes it possible to detect conflicting updates (concurrent creation of
       // profiles with the same profile ID and version)
-      const profileId = generateVersionedModelId(profile.fiscalCode, initialVersion);
+      const profileId = generateVersionedModelId(fiscalCodeToModelId(profile.fiscalCode), initialVersion);
       DocumentDbUtils.createDocument(
         this.dbClient,
         this.collectionUrl,
@@ -152,7 +153,7 @@ export class ProfileModel {
   public updateProfile(profile: IRetrievedProfile): Promise<IRetrievedProfile> {
     return new Promise((resolve, reject) => {
       const newVersion = toNonNegativeNumber(profile.version + 1).get;
-      const profileId = generateVersionedModelId(profile.fiscalCode, newVersion);
+      const profileId = generateVersionedModelId(fiscalCodeToModelId(profile.fiscalCode), newVersion);
       DocumentDbUtils.createDocument(
         this.dbClient,
         this.collectionUrl,

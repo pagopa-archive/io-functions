@@ -5,7 +5,7 @@
 import { none, Option, some } from "ts-option";
 
 declare class NonNegativeNumberTag {
-  private dummy: boolean;
+  private kind: "NonNegativeNumberTag";
 }
 
 export type NonNegativeNumber = number & NonNegativeNumberTag;

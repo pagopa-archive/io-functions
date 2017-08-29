@@ -3,7 +3,7 @@ import { none, Option, some } from "ts-option";
 import * as codiceFiscaleItaliano from "codice-fiscale-italiano";
 
 declare class FiscalCodeTag {
-  private dummy: boolean;
+  private kind: "FiscalCodeTag";
 }
 
 export type FiscalCode = string & FiscalCodeTag;
