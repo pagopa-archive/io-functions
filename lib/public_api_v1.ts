@@ -11,9 +11,10 @@ import * as documentDbUtils from "./utils/documentdb";
 import { createAzureFunctionHandler } from "azure-function-express-cloudify";
 
 import { MessageModel } from "./models/message";
+import { OrganizationModel } from "./models/organization";
 import { ProfileModel } from "./models/profile";
 
-import debugHandler from "./controllers/debug";
+import { GetDebug } from "./controllers/debug";
 import {
   CreateMessage,
   CreateMessageHandler,
@@ -41,14 +42,17 @@ const COSMOSDB_KEY: string = process.env.CUSTOMCONNSTR_COSMOSDB_KEY;
 const documentDbDatabaseUrl = documentDbUtils.getDatabaseUrl("development");
 const messagesCollectionUrl = documentDbUtils.getCollectionUrl(documentDbDatabaseUrl, "messages");
 const profilesCollectionUrl = documentDbUtils.getCollectionUrl(documentDbDatabaseUrl, "profiles");
+const organizationsCollectionUrl = documentDbUtils.getCollectionUrl(documentDbDatabaseUrl, "organizations");
 
 const documentClient = new DocumentDBClient(COSMOSDB_URI, { masterKey: COSMOSDB_KEY });
 
 const profileModel = new ProfileModel(documentClient, profilesCollectionUrl);
 const messageModel = new MessageModel(documentClient, messagesCollectionUrl);
+const organizationModel = new OrganizationModel(documentClient, organizationsCollectionUrl);
 
 // Setup handlers
 
+const debugHandler = GetDebug(organizationModel);
 app.get("/api/v1/debug", debugHandler);
 app.post("/api/v1/debug", debugHandler);
 

@@ -73,6 +73,27 @@ export function ResponseErrorValidation(message: string): IResponseErrorValidati
 }
 
 /**
+ * Interface for a response describing an authorization error.
+ */
+export interface IResponseErrorForbidden extends IResponse {
+  kind: "IResponseErrorForbidden";
+}
+
+/**
+ * Returns a response describing an authorization error.
+ *
+ * @param message The error message
+ */
+export function ResponseErrorForbidden(message: string): IResponseErrorForbidden {
+  return {
+    apply: (res) => res.status(403).json({
+      error: message,
+    }),
+    kind: "IResponseErrorForbidden",
+  };
+}
+
+/**
  * Interface for a response describing a generic server error.
  */
 export interface IResponseErrorGeneric extends IResponse {
