@@ -10,7 +10,12 @@ import { left, right } from "../either";
 
 import { IRetrievedOrganization, OrganizationModel } from "../../models/organization";
 import { IRequestMiddleware } from "../request_middleware";
-import { IResponseErrorForbidden, ResponseErrorForbidden } from "../response";
+import {
+  IResponseErrorForbidden,
+  IResponseErrorGeneric,
+  ResponseErrorForbidden,
+  ResponseErrorGeneric,
+} from "../response";
 import { isModelId, ModelId } from "../versioned_model";
 
 interface IUserAttributes {
@@ -82,8 +87,8 @@ function getUserOrganization(
  */
 export function AzureApiAuthMiddleware(
   organizationModel: OrganizationModel,
-): IRequestMiddleware<IResponseErrorForbidden, IAzureApiAuthorization> {
-  return (request) => new Promise((resolve, reject) => {
+): IRequestMiddleware<IResponseErrorForbidden | IResponseErrorGeneric, IAzureApiAuthorization> {
+  return (request) => new Promise((resolve) => {
     // to correctly process the request, we must associate the correct
     // authorizations to the user that made the request; to do so, we
     // need to extract the groups associated to the authenticated user
@@ -136,7 +141,7 @@ export function AzureApiAuthMiddleware(
           };
 
           resolve(right(authInfo));
-        }, reject);
+        }, (error) => resolve(left(ResponseErrorGeneric(`Error while fetching organization details|${error}`))));
       }).getOrElse(() => {
         // or else no valid groups
         resolve(left(ResponseErrorForbidden("User has no associated groups.")));

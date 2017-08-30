@@ -182,4 +182,30 @@ describe("AzureApiAuthMiddleware", () => {
     });
   });
 
+  it("should fail in case of error when fetching the user organization", () => {
+    const orgModel = {
+      findLastVersionById: jest.fn(() => Promise.reject("error")),
+    };
+
+    const headers: any = {
+      "x-user-groups": "a",
+      "x-user-note": "organizationId: agid",
+    };
+
+    const mockRequest = {
+      header: jest.fn((h) => headers[h]),
+    };
+
+    const middleware = AzureApiAuthMiddleware(orgModel as any);
+
+    return middleware(mockRequest as any).then((result) => {
+      expect(mockRequest.header).toHaveBeenCalledWith("x-user-note");
+      expect(orgModel.findLastVersionById).toHaveBeenCalledWith("agid");
+      expect(result.isLeft);
+      if (result.isLeft) {
+        expect(result.left.kind).toEqual("IResponseErrorGeneric");
+      }
+    });
+  });
+
 });
