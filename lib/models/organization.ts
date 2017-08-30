@@ -61,7 +61,7 @@ export class OrganizationModel {
           name: "@organizationId",
           value: organizationId,
         }],
-        query: "SELECT * FROM organizations p WHERE (p.organizationId = @organizationId) ORDER BY version DESC",
+        query: "SELECT * FROM organizations o WHERE (o.organizationId = @organizationId) ORDER BY o.version DESC",
       },
     );
   }

@@ -108,7 +108,7 @@ export class ProfileModel {
           name: "@fiscalCode",
           value: fiscalCode,
         }],
-        query: "SELECT * FROM profiles p WHERE (p.fiscalCode = @fiscalCode) ORDER BY version DESC",
+        query: "SELECT * FROM profiles p WHERE (p.fiscalCode = @fiscalCode) ORDER BY p.version DESC",
       },
     );
   }
