@@ -11,6 +11,11 @@ import { left, right } from "../utils/either";
 
 import { FiscalCode } from "../utils/fiscalcode";
 import { FiscalCodeMiddleware } from "../utils/fiscalcode_middleware";
+import {
+  AzureApiAuthMiddleware,
+  IAzureApiAuthorization,
+  UserGroup,
+} from "../utils/middlewares/azure_api_auth";
 import { ContextMiddleware } from "../utils/middlewares/context_middleware";
 import { RequiredIdParamMiddleware } from "../utils/middlewares/required_id_param";
 import { IRequestMiddleware, withRequestMiddlewares, wrapRequestHandler } from "../utils/request_middleware";
@@ -24,6 +29,7 @@ import {
 } from "../utils/response";
 
 import { ICreatedMessageEvent } from "../models/created_message_event";
+
 import {
   asPublicExtendedMessage,
   INewMessage,
@@ -75,6 +81,7 @@ export const MessagePayloadMiddleware: IRequestMiddleware<IResponseErrorValidati
  */
 type ICreateMessageHandler = (
   context: IContext<IBindings>,
+  auth: IAzureApiAuthorization,
   fiscalCode: FiscalCode,
   messagePayload: IMessagePayload,
 ) => Promise<IResponseSuccessJson<IPublicExtendedMessage>>;
@@ -87,6 +94,7 @@ type ICreateMessageHandler = (
  * errors.
  */
 type IGetMessageHandler = (
+  auth: IAzureApiAuthorization,
   fiscalCode: FiscalCode,
   messageId: string,
 ) => Promise<
@@ -104,6 +112,7 @@ type IGetMessageHandler = (
  * TODO: add full results and paging
  */
 type IGetMessagesHandler = (
+  auth: IAzureApiAuthorization,
   fiscalCode: FiscalCode,
 ) => Promise<
   IResponseSuccessJson<IPublicExtendedMessage[]> |
@@ -113,8 +122,8 @@ type IGetMessagesHandler = (
 /**
  * Returns a type safe CreateMessage handler.
  */
-export function CreateMessageHandler(Message: MessageModel): ICreateMessageHandler {
-  return (context, fiscalCode, messagePayload) =>
+export function CreateMessageHandler(messageModel: MessageModel): ICreateMessageHandler {
+  return (context, _, fiscalCode, messagePayload) =>
     new Promise((resolve, reject) => {
 
     const message: INewMessage = {
@@ -124,7 +133,7 @@ export function CreateMessageHandler(Message: MessageModel): ICreateMessageHandl
       kind: "INewMessage",
     };
 
-    Message.createMessage(message).then((retrievedMessage) => {
+    messageModel.createMessage(message).then((retrievedMessage) => {
       context.log(`>> message stored [${retrievedMessage.id}]`);
 
       const createdMessage: ICreatedMessageEvent = {
@@ -145,10 +154,12 @@ export function CreateMessageHandler(Message: MessageModel): ICreateMessageHandl
  * Wraps a CreateMessage handler inside an Express request handler.
  */
 export function CreateMessage(
-  handler: ICreateMessageHandler,
+  messageModel: MessageModel,
 ): express.RequestHandler {
+  const handler = CreateMessageHandler(messageModel);
   const middlewaresWrap = withRequestMiddlewares(
     ContextMiddleware<IBindings>(),
+    AzureApiAuthMiddleware(new Set([UserGroup.Developers])),
     FiscalCodeMiddleware,
     MessagePayloadMiddleware,
   );
@@ -158,9 +169,9 @@ export function CreateMessage(
 /**
  * Handles requests for getting a single message for a recipient.
  */
-export function GetMessageHandler(Message: MessageModel): IGetMessageHandler {
-  return (fiscalCode, messageId) => new Promise((resolve, reject) => {
-    Message.findMessageForRecipient(fiscalCode, messageId).then((retrievedMessage) => {
+export function GetMessageHandler(messageModel: MessageModel): IGetMessageHandler {
+  return (_, fiscalCode, messageId) => new Promise((resolve, reject) => {
+    messageModel.findMessageForRecipient(fiscalCode, messageId).then((retrievedMessage) => {
       if (retrievedMessage != null) {
         const publicMessage = asPublicExtendedMessage(retrievedMessage);
         resolve(ResponseSuccessJson(publicMessage));
@@ -175,9 +186,11 @@ export function GetMessageHandler(Message: MessageModel): IGetMessageHandler {
  * Wraps a GetMessage handler inside an Express request handler.
  */
 export function GetMessage(
-  handler: IGetMessageHandler,
+  messageModel: MessageModel,
 ): express.RequestHandler {
+  const handler = GetMessageHandler(messageModel);
   const middlewaresWrap = withRequestMiddlewares(
+    AzureApiAuthMiddleware(new Set([UserGroup.TrustedApp])),
     FiscalCodeMiddleware,
     RequiredIdParamMiddleware,
   );
@@ -187,9 +200,9 @@ export function GetMessage(
 /**
  * Handles requests for getting all message for a recipient.
  */
-export function GetMessagesHandler(Message: MessageModel): IGetMessagesHandler {
-  return (fiscalCode) => new Promise((resolve, reject) => {
-    const iterator = Message.findMessages(fiscalCode);
+export function GetMessagesHandler(messageModel: MessageModel): IGetMessagesHandler {
+  return (_, fiscalCode) => new Promise((resolve, reject) => {
+    const iterator = messageModel.findMessages(fiscalCode);
     iterator.executeNext().then((retrievedMessages) => {
       const publicMessages = retrievedMessages.map(asPublicExtendedMessage);
       resolve(ResponseSuccessJson(publicMessages));
@@ -201,9 +214,11 @@ export function GetMessagesHandler(Message: MessageModel): IGetMessagesHandler {
  * Wraps a GetMessages handler inside an Express request handler.
  */
 export function GetMessages(
-  handler: IGetMessagesHandler,
+  messageModel: MessageModel,
 ): express.RequestHandler {
+  const handler = GetMessagesHandler(messageModel);
   const middlewaresWrap = withRequestMiddlewares(
+    AzureApiAuthMiddleware(new Set([UserGroup.TrustedApp])),
     FiscalCodeMiddleware,
   );
   return wrapRequestHandler(middlewaresWrap(handler));

@@ -8,7 +8,16 @@ import { right } from "../utils/either";
 
 import { IRequestMiddleware, withRequestMiddlewares, wrapRequestHandler } from "../utils/request_middleware";
 
-import { AzureApiAuthMiddleware, IAzureApiAuthorization } from "../utils/middlewares/azure_api_auth";
+import {
+  AzureApiAuthMiddleware,
+  IAzureApiAuthorization,
+  UserGroup,
+} from "../utils/middlewares/azure_api_auth";
+
+import {
+  AzureUserAttributesMiddleware,
+  IAzureUserAttributes,
+} from "../utils/middlewares/azure_user_attributes";
 
 import { OrganizationModel } from "../models/organization";
 
@@ -25,21 +34,28 @@ const ExpressRequestMiddleware: IRequestMiddleware<never, express.Request> =
 type GetDebug = (
   request: express.Request,
   auth: IAzureApiAuthorization,
+  attributes: IAzureUserAttributes,
 ) => Promise<IResponseSuccessJson<object>>;
 
-const getDebugHandler: GetDebug = (request, auth) => {
+const getDebugHandler: GetDebug = (request, auth, userAttributes) => {
   return new Promise((resolve, _) => {
     resolve(ResponseSuccessJson({
       auth,
       body: request.body,
       headers: request.headers,
       params: request.params,
+      user: userAttributes,
     }));
   });
 };
 
 export function GetDebug(organizationModel: OrganizationModel): express.RequestHandler {
-  const azureApiMiddleware = AzureApiAuthMiddleware(organizationModel);
-  const middlewaresWrap = withRequestMiddlewares(ExpressRequestMiddleware, azureApiMiddleware);
+  const azureApiMiddleware = AzureApiAuthMiddleware(new Set([UserGroup.Developers]));
+  const azureUserAttributesMiddleware = AzureUserAttributesMiddleware(organizationModel);
+  const middlewaresWrap = withRequestMiddlewares(
+    ExpressRequestMiddleware,
+    azureApiMiddleware,
+    azureUserAttributesMiddleware,
+  );
   return wrapRequestHandler(middlewaresWrap(getDebugHandler));
 }

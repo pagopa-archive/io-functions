@@ -1,9 +1,9 @@
-import { FiscalCode, isFiscalCode } from "./fiscalcode";
+import { FiscalCode, isFiscalCode } from "../fiscalcode";
 
-import { left, right } from "./either";
+import { left, right } from "../either";
 
-import { IRequestMiddleware } from "./request_middleware";
-import { IResponseErrorValidation, ResponseErrorValidation } from "./response";
+import { IRequestMiddleware } from "../request_middleware";
+import { IResponseErrorValidation, ResponseErrorValidation } from "../response";
 
 /**
  * A request middleware that validates the presence of a valid `fiscalcode` parameter
