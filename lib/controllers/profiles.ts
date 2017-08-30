@@ -6,9 +6,19 @@ import * as express from "express";
 
 import { right } from "../utils/either";
 
-import { FiscalCodeMiddleware } from "../../lib/utils/fiscalcode_middleware";
 import { FiscalCode } from "../utils/fiscalcode";
-import { IRequestMiddleware, withRequestMiddlewares, wrapRequestHandler } from "../utils/request_middleware";
+import {
+  AzureApiAuthMiddleware,
+  IAzureApiAuthorization,
+  UserGroup,
+} from "../utils/middlewares/azure_api_auth";
+import { FiscalCodeMiddleware } from "../utils/middlewares/fiscalcode";
+
+import {
+  IRequestMiddleware,
+  withRequestMiddlewares,
+  wrapRequestHandler,
+} from "../utils/request_middleware";
 
 import { handleNullableResultAndRespond } from "../../lib/utils/error_handler";
 
@@ -36,7 +46,10 @@ import {
  * GetProfile expects a FiscalCode as input and returns a Profile or
  * a Not Found error.
  */
-type IGetProfileHandler = (fiscalCode: FiscalCode) => Promise<
+type IGetProfileHandler = (
+  auth: IAzureApiAuthorization,
+  fiscalCode: FiscalCode,
+) => Promise<
   IResponseSuccessJson<IPublicLimitedProfile> |
   IResponseSuccessJson<IPublicExtendedProfile> |
   IResponseErrorNotFound
@@ -49,6 +62,7 @@ type IGetProfileHandler = (fiscalCode: FiscalCode) => Promise<
  * returns a Profile or a Validation or a Generic error.
  */
 type IUpsertProfileHandler = (
+  auth: IAzureApiAuthorization,
   fiscalCode: FiscalCode,
   profileModelPayload: IProfilePayload,
 ) => Promise<
@@ -62,9 +76,9 @@ type IUpsertProfileHandler = (
  *
  * TODO: return extended profile if client is trusted
  */
-export function GetProfileHandler(Profile: ProfileModel): IGetProfileHandler {
-  return (fiscalCode) => new Promise((resolve, reject) => {
-    Profile.findOneProfileByFiscalCode(fiscalCode).then(
+export function GetProfileHandler(profileModel: ProfileModel): IGetProfileHandler {
+  return (_, fiscalCode) => new Promise((resolve, reject) => {
+    profileModel.findOneProfileByFiscalCode(fiscalCode).then(
       (profile) => {
         if (profile !== null) {
           const publicProfile = asPublicLimitedProfile(profile);
@@ -82,9 +96,13 @@ export function GetProfileHandler(Profile: ProfileModel): IGetProfileHandler {
  * Wraps a GetProfile handler inside an Express request handler.
  */
 export function GetProfile(
-  handler: IGetProfileHandler,
+  profileModel: ProfileModel,
 ): express.RequestHandler {
-  const middlewaresWrap = withRequestMiddlewares(FiscalCodeMiddleware);
+  const handler = GetProfileHandler(profileModel);
+  const middlewaresWrap = withRequestMiddlewares(
+    AzureApiAuthMiddleware(new Set([UserGroup.Developers])),
+    FiscalCodeMiddleware,
+  );
   return wrapRequestHandler(middlewaresWrap(handler));
 }
 
@@ -114,9 +132,9 @@ export const ProfilePayloadMiddleware: IRequestMiddleware<never, IProfilePayload
  * profile with those attributes if the profile does not yet exist or
  * update the profile with it already exist.
  */
-export function UpsertProfileHandler(Profile: ProfileModel): IUpsertProfileHandler {
-  return (fiscalCode, profileModelPayload) => new Promise((resolve, reject) => {
-    const existingProfilePromise = Profile.findOneProfileByFiscalCode(fiscalCode);
+export function UpsertProfileHandler(profileModel: ProfileModel): IUpsertProfileHandler {
+  return (_, fiscalCode, profileModelPayload) => new Promise((resolve, reject) => {
+    const existingProfilePromise = profileModel.findOneProfileByFiscalCode(fiscalCode);
     existingProfilePromise.then((queryProfileResult) => {
       if (queryProfileResult == null) {
         // create a new profile
@@ -124,7 +142,7 @@ export function UpsertProfileHandler(Profile: ProfileModel): IUpsertProfileHandl
           email: profileModelPayload.email,
           fiscalCode,
         };
-        Profile.createProfile(profile).then(
+        profileModel.createProfile(profile).then(
           (p) => p !== null ? asPublicExtendedProfile(p) : null,
           reject,
         ).then(
@@ -137,7 +155,7 @@ export function UpsertProfileHandler(Profile: ProfileModel): IUpsertProfileHandl
           ...queryProfileResult,
           email: profileModelPayload.email,
         };
-        Profile.updateProfile(profile).then(
+        profileModel.updateProfile(profile).then(
           (p) => p !== null ? asPublicExtendedProfile(p) : null,
           reject,
         ).then(
@@ -153,9 +171,11 @@ export function UpsertProfileHandler(Profile: ProfileModel): IUpsertProfileHandl
  * Wraps an UpsertProfile handler inside an Express request handler.
  */
 export function UpsertProfile(
-  handler: IUpsertProfileHandler,
+  profileModel: ProfileModel,
 ): express.RequestHandler {
+  const handler = UpsertProfileHandler(profileModel);
   const middlewaresWrap = withRequestMiddlewares(
+    AzureApiAuthMiddleware(new Set([UserGroup.TrustedApp])),
     FiscalCodeMiddleware,
     ProfilePayloadMiddleware,
   );

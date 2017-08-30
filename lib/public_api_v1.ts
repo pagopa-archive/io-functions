@@ -17,17 +17,12 @@ import { ProfileModel } from "./models/profile";
 import { GetDebug } from "./controllers/debug";
 import {
   CreateMessage,
-  CreateMessageHandler,
   GetMessage,
-  GetMessageHandler,
   GetMessages,
-  GetMessagesHandler,
 } from "./controllers/messages";
 import {
   GetProfile,
-  GetProfileHandler,
   UpsertProfile,
-  UpsertProfileHandler,
 } from "./controllers/profiles";
 
 // Setup Express
@@ -56,12 +51,12 @@ const debugHandler = GetDebug(organizationModel);
 app.get("/api/v1/debug", debugHandler);
 app.post("/api/v1/debug", debugHandler);
 
-app.get("/api/v1/profiles/:fiscalcode", GetProfile(GetProfileHandler(profileModel)));
-app.post("/api/v1/profiles/:fiscalcode", UpsertProfile(UpsertProfileHandler(profileModel)));
+app.get("/api/v1/profiles/:fiscalcode", GetProfile(profileModel));
+app.post("/api/v1/profiles/:fiscalcode", UpsertProfile(profileModel));
 
-app.get("/api/v1/messages/:fiscalcode/:id", GetMessage(GetMessageHandler(messageModel)));
-app.get("/api/v1/messages/:fiscalcode", GetMessages(GetMessagesHandler(messageModel)));
-app.post("/api/v1/messages/:fiscalcode", CreateMessage(CreateMessageHandler(messageModel)));
+app.get("/api/v1/messages/:fiscalcode/:id", GetMessage(messageModel));
+app.get("/api/v1/messages/:fiscalcode", GetMessages(messageModel));
+app.post("/api/v1/messages/:fiscalcode", CreateMessage(messageModel));
 
 // Binds the express app to an Azure Function handler
 module.exports = createAzureFunctionHandler(app);

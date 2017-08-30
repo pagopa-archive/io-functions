@@ -2,13 +2,27 @@
 
 import { response as MockResponse } from "jest-mock-express";
 
-import { IPublicExtendedProfile, IPublicLimitedProfile, IRetrievedProfile } from "../../models/profile";
-import { GetProfile, GetProfileHandler, UpsertProfile, UpsertProfileHandler } from "../profiles";
+import {
+  IPublicExtendedProfile,
+  IPublicLimitedProfile,
+  IRetrievedProfile,
+} from "../../models/profile";
+import { IAzureApiAuthorization, UserGroup } from "../../utils/middlewares/azure_api_auth";
+import { GetProfileHandler, UpsertProfileHandler } from "../profiles";
 
 import { toFiscalCode } from "../../utils/fiscalcode";
 import { toNonNegativeNumber } from "../../utils/numbers";
 
+const anAzureAuthorization: IAzureApiAuthorization = {
+  groups: new Set([UserGroup.Developers]),
+  kind: "IAzureApiAuthorization",
+};
+
 const aFiscalCode = toFiscalCode("FRLFRC74E04B157I").get;
+
+const aProfilePayloadMock = {
+  email: "x@example.com",
+};
 
 const aRetrievedProfile: IRetrievedProfile = {
   _self: "123",
@@ -36,27 +50,7 @@ function flushPromises() {
   return new Promise((resolve) => setImmediate(resolve));
 }
 
-describe("GetProfile", () => {
-
-  it("should validate the provided fiscal code", () => {
-    const getProfileHandler = jest.fn();
-    const getProfile = GetProfile(getProfileHandler);
-
-    const mockRequest = {
-      params: {
-        fiscalcode: "not valid",
-      },
-    };
-
-    const mockResponse = MockResponse();
-
-    getProfile(mockRequest as any, mockResponse, null as any);
-
-    return flushPromises().then(() => {
-      expect(getProfileHandler).not.toHaveBeenCalled();
-      expect(mockResponse.status).toHaveBeenCalledWith(400);
-    });
-  });
+describe("GetProfileHandler", () => {
 
   it("should find an existing profile", () => {
 
@@ -67,27 +61,21 @@ describe("GetProfile", () => {
     };
 
     const getProfileHandler = GetProfileHandler(profileModelMock as any);
-    const getProfile = GetProfile(getProfileHandler as any);
 
-    const mockRequest = {
-      params: {
-        fiscalcode: aRetrievedProfile.fiscalCode,
-      },
-    };
-
-    const mockResponse = MockResponse();
-
-    getProfile(mockRequest as any, mockResponse, null as any);
-
-    return flushPromises().then(() => {
-      expect(profileModelMock.findOneProfileByFiscalCode).toHaveBeenCalledWith(mockRequest.params.fiscalcode);
-      expect(mockResponse.status).toHaveBeenCalledWith(200);
-      expect(mockResponse.json).toHaveBeenCalledWith(aPublicLimitedProfile);
+    return getProfileHandler(
+      anAzureAuthorization,
+      aFiscalCode,
+    ).then((response) => {
+      expect(profileModelMock.findOneProfileByFiscalCode).toHaveBeenCalledWith(aFiscalCode);
+      expect(response.kind).toBe("IResponseSuccessJson");
+      if (response.kind === "IResponseSuccessJson") {
+        expect(response.value).toEqual(aPublicLimitedProfile);
+      }
     });
 
   });
 
-  it("should respond with 404 if profile does not exist", () => {
+  it("should respond with NotFound if profile does not exist", () => {
 
     const profileModelMock = {
       findOneProfileByFiscalCode: jest.fn(() => {
@@ -96,26 +84,18 @@ describe("GetProfile", () => {
     };
 
     const getProfileHandler = GetProfileHandler(profileModelMock as any);
-    const getProfile = GetProfile(getProfileHandler as any);
 
-    const mockRequest = {
-      params: {
-        fiscalcode: aRetrievedProfile.fiscalCode,
-      },
-    };
-
-    const mockResponse = MockResponse();
-
-    getProfile(mockRequest as any, mockResponse, null as any);
-
-    return flushPromises().then(() => {
-      expect(profileModelMock.findOneProfileByFiscalCode).toHaveBeenCalledWith(mockRequest.params.fiscalcode);
-      expect(mockResponse.status).toHaveBeenCalledWith(404);
+    getProfileHandler(
+      anAzureAuthorization,
+      aFiscalCode,
+    ).then((response) => {
+      expect(profileModelMock.findOneProfileByFiscalCode).toHaveBeenCalledWith(aFiscalCode);
+      expect(response.kind).toBe("IResponseNotFound");
     });
 
   });
 
-  it("should return errors", () => {
+  it("should reject the promise in case of errors", () => {
 
     const profileModelMock = {
       findOneProfileByFiscalCode: jest.fn(() => {
@@ -124,49 +104,19 @@ describe("GetProfile", () => {
     };
 
     const getProfileHandler = GetProfileHandler(profileModelMock as any);
-    const getProfile = GetProfile(getProfileHandler as any);
 
-    const mockRequest = {
-      params: {
-        fiscalcode: aRetrievedProfile.fiscalCode,
-      },
-    };
+    const promise = getProfileHandler(
+      anAzureAuthorization,
+      aFiscalCode,
+    );
 
-    const mockResponse = MockResponse();
-
-    getProfile(mockRequest as any, mockResponse, null as any);
-
-    return flushPromises().then(() => {
-      expect(profileModelMock.findOneProfileByFiscalCode).toHaveBeenCalledWith(mockRequest.params.fiscalcode);
-      expect(mockResponse.status).toHaveBeenCalledWith(500);
-    });
+    expect(promise).rejects.toBe("error");
 
   });
 
 });
 
 describe("UpsertProfile", () => {
-
-  it("should validate the provided fiscal code", () => {
-
-    const upsertProfileHandler = jest.fn();
-    const upsertProfile = UpsertProfile(upsertProfileHandler);
-
-    const mockRequest = {
-      params: {
-        fiscalcode: "not valid",
-      },
-    };
-
-    const mockResponse = MockResponse();
-
-    upsertProfile(mockRequest as any, mockResponse, null as any);
-
-    return flushPromises().then(() => {
-      expect(upsertProfileHandler).not.toHaveBeenCalled();
-      expect(mockResponse.status).toHaveBeenCalledWith(400);
-    });
-  });
 
   it("should create a new profile", () => {
 
@@ -180,29 +130,21 @@ describe("UpsertProfile", () => {
     };
 
     const upsertProfileHandler = UpsertProfileHandler(profileModelMock as any);
-    const upsertProfile = UpsertProfile(upsertProfileHandler);
 
-    const mockRequest = {
-      body: {
-        email: "x@example.com",
-      },
-      params: {
-        fiscalcode: aRetrievedProfile.fiscalCode,
-      },
-    };
-
-    const mockResponse = MockResponse();
-
-    upsertProfile(mockRequest as any, mockResponse, null as any);
-
-    return flushPromises().then((_) => {
+    upsertProfileHandler(
+      anAzureAuthorization,
+      aFiscalCode,
+      aProfilePayloadMock as any,
+    ).then((response) => {
       expect(profileModelMock.findOneProfileByFiscalCode).toHaveBeenCalledWith(aRetrievedProfile.fiscalCode);
       expect(profileModelMock.createProfile).toHaveBeenCalledWith({
         email: "x@example.com",
         fiscalCode: aRetrievedProfile.fiscalCode,
       });
-      expect(mockResponse.status).toHaveBeenCalledWith(200);
-      expect(mockResponse.json).toHaveBeenCalledWith(aPublicExtendedProfile);
+      expect(response.kind).toBe("IResponseSuccessJson");
+      if (response.kind === "IResponseSuccessJson") {
+        expect(response.value).toHaveBeenCalledWith(aPublicExtendedProfile);
+      }
     });
 
   });
@@ -222,30 +164,26 @@ it("should update an existing profile", () => {
   };
 
   const upsertProfileHandler = UpsertProfileHandler(profileModelMock as any);
-  const upsertProfile = UpsertProfile(upsertProfileHandler);
 
-  const mockRequest = {
-    body: {
-      email: "y@example.com",
-    },
-    params: {
-      fiscalcode: aRetrievedProfile.fiscalCode,
-    },
+  const profilePayloadMock = {
+    email: "y@example.com",
   };
 
-  const mockResponse = MockResponse();
-
-  upsertProfile(mockRequest as any, mockResponse, null as any);
-
-  return flushPromises().then((_) => {
+  upsertProfileHandler(
+    anAzureAuthorization,
+    aFiscalCode,
+    profilePayloadMock,
+  ).then((response) => {
     expect(profileModelMock.findOneProfileByFiscalCode).toHaveBeenCalledWith(aRetrievedProfile.fiscalCode);
     expect(profileModelMock.createProfile).not.toHaveBeenCalled();
     expect(profileModelMock.updateProfile).toHaveBeenCalledWith({
       ...aRetrievedProfile,
       email: "y@example.com",
     });
-    expect(mockResponse.status).toHaveBeenCalledWith(200);
-    expect(mockResponse.json).toHaveBeenCalledWith(aPublicExtendedProfile);
+    expect(response.kind).toBe("IResponseSuccessJson");
+    if (response.kind === "IResponseSuccessJson") {
+      expect(response.value).toHaveBeenCalledWith(aPublicExtendedProfile);
+    }
   });
 
 });

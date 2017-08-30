@@ -45,7 +45,8 @@ export function withRequestMiddlewares<
   R2 extends IResponse,
   T1, T2
 >(
-  v1: IRequestMiddleware<R1, T1>, v2: IRequestMiddleware<R2, T2>,
+  v1: IRequestMiddleware<R1, T1>,
+  v2: IRequestMiddleware<R2, T2>,
 ): (handler: (v1: T1, v2: T2) => Promise<RH>) => RequestHandler<RH | R1 | R2>;
 
 export function withRequestMiddlewares<
@@ -55,8 +56,24 @@ export function withRequestMiddlewares<
   R3 extends IResponse,
   T1, T2, T3
 >(
-  v1: IRequestMiddleware<R1, T1>, v2: IRequestMiddleware<R2, T2>, v3: IRequestMiddleware<R3, T3>,
+  v1: IRequestMiddleware<R1, T1>,
+  v2: IRequestMiddleware<R2, T2>,
+  v3: IRequestMiddleware<R3, T3>,
 ): (handler: (v1: T1, v2: T2, v3: T3) => Promise<RH>) => RequestHandler<RH | R1 | R2 | R3>;
+
+export function withRequestMiddlewares<
+  RH extends IResponse,
+  R1 extends IResponse,
+  R2 extends IResponse,
+  R3 extends IResponse,
+  R4 extends IResponse,
+  T1, T2, T3, T4
+>(
+  v1: IRequestMiddleware<R1, T1>,
+  v2: IRequestMiddleware<R2, T2>,
+  v3: IRequestMiddleware<R3, T3>,
+  v4: IRequestMiddleware<R4, T4>,
+): (handler: (v1: T1, v2: T2, v3: T3, v4: T4) => Promise<RH>) => RequestHandler<RH | R1 | R2 | R3 | R4>;
 
 /**
  * Returns a request handler wrapped with the provided middlewares.
@@ -74,15 +91,17 @@ export function withRequestMiddlewares<
   R1 extends IResponse,
   R2 extends IResponse,
   R3 extends IResponse,
-  T1, T2, T3
+  R4 extends IResponse,
+  T1, T2, T3, T4
 >(
   v1: IRequestMiddleware<R1, T1>,
   v2?: IRequestMiddleware<R2, T2>,
   v3?: IRequestMiddleware<R3, T3>,
-): (handler: (v1: T1, v2?: T2, v3?: T3) => Promise<RH>) => RequestHandler<R1 | R2 | R3 | RH> {
+  v4?: IRequestMiddleware<R4, T4>,
+): (handler: (v1: T1, v2?: T2, v3?: T3, v4?: T4) => Promise<RH>) => RequestHandler<R1 | R2 | R3 | R4 | RH> {
   return (handler) => {
 
-    return (request) => new Promise<R1 | R2 | R3 | RH>((resolve, reject) => {
+    return (request) => new Promise<R1 | R2 | R3 | R4 | RH>((resolve, reject) => {
 
       v1(request).then((r1) => {
         if (r1.isLeft) {
@@ -104,6 +123,16 @@ export function withRequestMiddlewares<
                   // 3rd middleware returned a response
                   // stop processing the middlewares
                   resolve(r3.left);
+                } else if (v4 !== undefined) {
+                  v4(request).then((r4) => {
+                    if (r4.isLeft) {
+                      resolve(r4.left);
+                    } else {
+                      // 4th middleware returned a value
+                      // run handler
+                      handler(r1.right, r2.right, r3.right, r4.right).then(resolve, reject);
+                    }
+                  });
                 } else {
                   // 3rd middleware returned a value
                   // run handler
