@@ -62,7 +62,7 @@ describe("AzureApiAuthMiddleware", () => {
     const orgModel = jest.fn();
 
     const mockRequest = {
-      header: jest.fn(() => "a,b"),
+      header: jest.fn(() => "Developers,trusted-apps"),
     };
 
     const middleware = AzureApiAuthMiddleware(orgModel as any);
@@ -71,7 +71,7 @@ describe("AzureApiAuthMiddleware", () => {
       expect(mockRequest.header).toHaveBeenCalledWith("x-user-groups");
       expect(result.isRight).toBeTruthy();
       if (result.isRight) {
-        expect(result.right.groups).toEqual(["a", "b"]);
+        expect(result.right.groups).toEqual(["Developers", "trusted-apps"]);
       }
     });
   });

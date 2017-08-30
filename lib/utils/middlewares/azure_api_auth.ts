@@ -30,7 +30,7 @@ export interface IAzureApiAuthorization {
  */
 function getGroupsFromHeader(groupsHeader: string): string[] {
   return groupsHeader.split(",")
-    .filter((g) => g.match(/^[0-9a-zA-Z-_]$/));
+    .filter((g) => g.match(/^[0-9a-zA-Z-_]+$/));
 }
 
 /**
