@@ -7,7 +7,7 @@ import { IMessage, isIMessage } from "./message";
  */
 export interface IEmailNotificationEvent {
   readonly message: IMessage;
-  readonly recipients: string[];
+  readonly recipients: ReadonlyArray<string>;
 }
 
 /**

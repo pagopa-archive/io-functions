@@ -37,8 +37,9 @@ const profileModel = new ProfileModel(documentClient, profilesCollectionUrl);
  * see CreatedMessageQueueHandler/function.json
  */
 interface IContextWithBindings extends IContext {
-  bindings: {
-    createdMessage?: ICreatedMessageEvent;
+  readonly bindings: {
+    readonly createdMessage?: ICreatedMessageEvent;
+    // tslint:disable-next-line:readonly-keyword
     emailNotification?: IEmailNotificationEvent;
   };
 }
@@ -46,7 +47,7 @@ interface IContextWithBindings extends IContext {
 /**
  * Function handler
  */
-export function index(context: IContextWithBindings) {
+export function index(context: IContextWithBindings): void {
   // since this function gets triggered by a queued message that gets
   // deserialized from a json object, we must first check that what we
   // got is what we expect.
@@ -72,6 +73,7 @@ export function index(context: IContextWithBindings) {
           // trigger an email notification event
           context.log.verbose(`Queing email notification|${retrievedProfile.email}|${retrievedMessage.bodyShort}`);
           if (retrievedProfile.email != null) {
+            // tslint:disable-next-line:no-object-mutation
             context.bindings.emailNotification = {
               message: retrievedMessage,
               recipients: [ retrievedProfile.email ],

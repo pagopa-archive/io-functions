@@ -11,8 +11,8 @@ import { generateVersionedModelId, IVersionedModel } from "../utils/versioned_mo
  * Base interface for Profile objects
  */
 export interface IProfile {
-  fiscalCode: FiscalCode;
-  email?: string;
+  readonly fiscalCode: FiscalCode;
+  readonly email?: string;
 }
 
 /**
@@ -90,7 +90,9 @@ export class ProfileModel {
    * @param collectionUrl the collection URL
    */
   constructor(dbClient: DocumentDb.DocumentClient, collectionUrl: DocumentDbUtils.DocumentDbCollectionUrl) {
+    // tslint:disable-next-line:no-object-mutation
     this.dbClient = dbClient;
+    // tslint:disable-next-line:no-object-mutation
     this.collectionUrl = collectionUrl;
   }
 

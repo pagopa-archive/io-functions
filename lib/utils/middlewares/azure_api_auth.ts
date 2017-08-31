@@ -36,8 +36,8 @@ function toUserGroup(name: string): Option<UserGroup> {
  * Azure authorization info
  */
 export interface IAzureApiAuthorization {
-  kind: "IAzureApiAuthorization";
-  groups: Set<UserGroup>;
+  readonly kind: "IAzureApiAuthorization";
+  readonly groups: Set<UserGroup>;
 }
 
 /**

@@ -8,8 +8,8 @@ import { LimitedFields } from "../utils/types";
  * Base interface for Message objects
  */
 export interface IMessage {
-  fiscalCode: FiscalCode;
-  bodyShort: string;
+  readonly fiscalCode: FiscalCode;
+  readonly bodyShort: string;
 }
 
 /**
@@ -75,7 +75,9 @@ export class MessageModel {
    * @param collectionUrl the collection URL
    */
   constructor(dbClient: DocumentDb.DocumentClient, collectionUrl: DocumentDbUtils.DocumentDbCollectionUrl) {
+    // tslint:disable-next-line:no-object-mutation
     this.dbClient = dbClient;
+    // tslint:disable-next-line:no-object-mutation
     this.collectionUrl = collectionUrl;
   }
 
@@ -152,7 +154,7 @@ export class MessageModel {
    *
    * @param fiscalCode The fiscal code of the recipient
    */
-  public findMessages(fiscalCode: FiscalCode): DocumentDbUtils.IResultIterator<IRetrievedMessage[]> {
+  public findMessages(fiscalCode: FiscalCode): DocumentDbUtils.IResultIterator<ReadonlyArray<IRetrievedMessage>> {
     return DocumentDbUtils.queryDocuments(
       this.dbClient,
       this.collectionUrl,

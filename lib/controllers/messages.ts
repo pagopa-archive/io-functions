@@ -10,13 +10,13 @@ import { IContext } from "azure-function-express-cloudify";
 import { left, right } from "../utils/either";
 
 import { FiscalCode } from "../utils/fiscalcode";
-import { FiscalCodeMiddleware } from "../utils/fiscalcode_middleware";
 import {
   AzureApiAuthMiddleware,
   IAzureApiAuthorization,
   UserGroup,
 } from "../utils/middlewares/azure_api_auth";
 import { ContextMiddleware } from "../utils/middlewares/context_middleware";
+import { FiscalCodeMiddleware } from "../utils/middlewares/fiscalcode";
 import { RequiredIdParamMiddleware } from "../utils/middlewares/required_id_param";
 import { IRequestMiddleware, withRequestMiddlewares, wrapRequestHandler } from "../utils/request_middleware";
 import {
@@ -42,6 +42,7 @@ import {
  * see CreatedMessageQueueHandler/function.json
  */
 interface IBindings {
+  // tslint:disable-next-line:readonly-keyword
   createdMessage?: ICreatedMessageEvent;
 }
 
@@ -51,7 +52,7 @@ interface IBindings {
  * TODO: generate from a schema.
  */
 interface IMessagePayload {
-  body_short: string;
+  readonly body_short: string;
 }
 
 /**
@@ -115,7 +116,7 @@ type IGetMessagesHandler = (
   auth: IAzureApiAuthorization,
   fiscalCode: FiscalCode,
 ) => Promise<
-  IResponseSuccessJson<IPublicExtendedMessage[]> |
+  IResponseSuccessJson<ReadonlyArray<IPublicExtendedMessage>> |
   IResponseErrorValidation
 >;
 
@@ -142,6 +143,7 @@ export function CreateMessageHandler(messageModel: MessageModel): ICreateMessage
 
       // queue the message to the created messages queue by setting
       // the message to the output binding of this function
+      // tslint:disable-next-line:no-object-mutation
       context.bindings.createdMessage = createdMessage;
 
       const publicMessage = asPublicExtendedMessage(retrievedMessage);

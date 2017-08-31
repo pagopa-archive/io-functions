@@ -112,7 +112,7 @@ export function GetProfile(
  * TODO: generate from a schema.
  */
 interface IProfilePayload {
-  email?: string;
+  readonly email?: string;
 }
 
 /**

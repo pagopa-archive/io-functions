@@ -46,7 +46,7 @@ const aPublicLimitedProfile: IPublicLimitedProfile = {
   kind: "IPublicLimitedProfile",
 };
 
-function flushPromises() {
+function flushPromises<T>(): Promise<T> {
   return new Promise((resolve) => setImmediate(resolve));
 }
 
