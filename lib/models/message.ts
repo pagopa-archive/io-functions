@@ -154,7 +154,7 @@ export class MessageModel {
    *
    * @param fiscalCode The fiscal code of the recipient
    */
-  public findMessages(fiscalCode: FiscalCode): DocumentDbUtils.IResultIterator<ReadonlyArray<IRetrievedMessage>> {
+  public findMessages(fiscalCode: FiscalCode): DocumentDbUtils.IResultIterator<IRetrievedMessage> {
     return DocumentDbUtils.queryDocuments(
       this.dbClient,
       this.collectionUrl,

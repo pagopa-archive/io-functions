@@ -35,8 +35,15 @@ declare class DocumentDbDocumentUrlTag {
 
 export type DocumentDbDocumentUrl = string & DocumentDbDocumentUrlTag;
 
+/**
+ * Result of DocumentDb queries.
+ *
+ * This is a wrapper around the executeNext method provided by QueryIterator.
+ *
+ * See http://azure.github.io/azure-documentdb-node/QueryIterator.html
+ */
 export interface IResultIterator<T> {
-  readonly executeNext: () => Promise<T>;
+  readonly executeNext: () => Promise<ReadonlyArray<T> | undefined>;
 }
 
 //
@@ -176,9 +183,9 @@ export function queryDocuments<T>(
   client: DocumentDb.DocumentClient,
   collectionUrl: DocumentDbCollectionUrl,
   query: DocumentDb.DocumentQuery,
-): IResultIterator<ReadonlyArray<T & DocumentDb.RetrievedDocument>> {
+): IResultIterator<T & DocumentDb.RetrievedDocument> {
   const documentIterator = client.queryDocuments(collectionUrl, query);
-  const resultIterator: IResultIterator<ReadonlyArray<T & DocumentDb.RetrievedDocument>> = {
+  const resultIterator: IResultIterator<T & DocumentDb.RetrievedDocument> = {
     executeNext: () => {
       return new Promise((resolve, reject) => {
         documentIterator.executeNext((error, documents, _) => {
@@ -220,4 +227,20 @@ export function queryOneDocument<T>(
       (error) => reject(error),
     );
   });
+}
+
+/**
+ * Maps a result iterator
+ */
+export function mapResultIterator<A, B>(i: IResultIterator<A>, f: (a: A) => B): IResultIterator<B> {
+  return {
+    executeNext: () => new Promise((resolve, reject) => i.executeNext().then(
+      (result) => {
+        if (result !== undefined) {
+          resolve(result.map(f));
+        } else {
+          resolve(undefined);
+        }
+      }, reject)),
+  };
 }
