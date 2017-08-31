@@ -75,6 +75,34 @@ describe("GetProfileHandler", () => {
 
   });
 
+  it("should return an extended profile to trusted applications", () => {
+
+    const profileModelMock = {
+      findOneProfileByFiscalCode: jest.fn(() => {
+        return Promise.resolve(aRetrievedProfile);
+      }),
+    };
+
+    const getProfileHandler = GetProfileHandler(profileModelMock as any);
+
+    const trustedAuth = {
+      ...anAzureAuthorization,
+      groups: new Set([UserGroup.TrustedApplications]),
+    };
+
+    return getProfileHandler(
+      trustedAuth,
+      aFiscalCode,
+    ).then((response) => {
+      expect(profileModelMock.findOneProfileByFiscalCode).toHaveBeenCalledWith(aFiscalCode);
+      expect(response.kind).toBe("IResponseSuccessJson");
+      if (response.kind === "IResponseSuccessJson") {
+        expect(response.value).toEqual(aPublicExtendedProfile);
+      }
+    });
+
+  });
+
   it("should respond with NotFound if profile does not exist", () => {
 
     const profileModelMock = {
