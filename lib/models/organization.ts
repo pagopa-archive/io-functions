@@ -8,15 +8,15 @@ import { generateVersionedModelId, IVersionedModel, ModelId } from "../utils/ver
  * Base interface for Organization objects
  */
 interface IOrganization {
-  organizationId: ModelId;
-  name: string;
+  readonly organizationId: ModelId;
+  readonly name: string;
 }
 
 /**
  * Interface for new Organization objects
  */
 export interface INewOrganization extends IOrganization, DocumentDb.NewDocument {
-  kind: "INewOrganization";
+  readonly kind: "INewOrganization";
 }
 
 /**
@@ -25,7 +25,7 @@ export interface INewOrganization extends IOrganization, DocumentDb.NewDocument 
  * Existing Organization records have a version number.
  */
 export interface IRetrievedOrganization extends IOrganization, DocumentDb.RetrievedDocument, IVersionedModel {
-  kind: "IRetrievedOrganization";
+  readonly kind: "IRetrievedOrganization";
   readonly organizationId: ModelId; // organizationId should never change
 }
 
@@ -43,7 +43,9 @@ export class OrganizationModel {
    * @param collectionUrl the collection URL
    */
   constructor(dbClient: DocumentDb.DocumentClient, collectionUrl: DocumentDbUtils.DocumentDbCollectionUrl) {
+    // tslint:disable-next-line:no-object-mutation
     this.dbClient = dbClient;
+    // tslint:disable-next-line:no-object-mutation
     this.collectionUrl = collectionUrl;
   }
 

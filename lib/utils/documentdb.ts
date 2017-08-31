@@ -36,7 +36,7 @@ declare class DocumentDbDocumentUrlTag {
 export type DocumentDbDocumentUrl = string & DocumentDbDocumentUrlTag;
 
 export interface IResultIterator<T> {
-  executeNext: () => Promise<T>;
+  readonly executeNext: () => Promise<T>;
 }
 
 //
@@ -124,7 +124,7 @@ export function createDocument<T>(
   client: DocumentDb.DocumentClient,
   collectionUrl: DocumentDbCollectionUrl,
   document: T & DocumentDb.NewDocument,
-  partitionKey: string | string[],
+  partitionKey: string | ReadonlyArray<string>,
 ): Promise<T & DocumentDb.RetrievedDocument> {
   return new Promise((resolve, reject) => {
     client.createDocument(collectionUrl, document, {
@@ -148,7 +148,7 @@ export function createDocument<T>(
 export function readDocument<T>(
   client: DocumentDb.DocumentClient,
   documentUrl: DocumentDbDocumentUrl,
-  partitionKey: string | string[],
+  partitionKey: string | ReadonlyArray<string>,
 ): Promise<T & DocumentDb.RetrievedDocument> {
   return new Promise((resolve, reject) => {
     client.readDocument(documentUrl, {
@@ -174,16 +174,16 @@ export function queryDocuments<T>(
   client: DocumentDb.DocumentClient,
   collectionUrl: DocumentDbCollectionUrl,
   query: DocumentDb.DocumentQuery,
-): IResultIterator<Array<T & DocumentDb.RetrievedDocument>> {
+): IResultIterator<ReadonlyArray<T & DocumentDb.RetrievedDocument>> {
   const documentIterator = client.queryDocuments(collectionUrl, query);
-  const resultIterator: IResultIterator<Array<T & DocumentDb.RetrievedDocument>> = {
+  const resultIterator: IResultIterator<ReadonlyArray<T & DocumentDb.RetrievedDocument>> = {
     executeNext: () => {
       return new Promise((resolve, reject) => {
         documentIterator.executeNext((error, resource, _) => {
           if (error) {
             reject(error);
           } else {
-            resolve(resource as Array<T & DocumentDb.RetrievedDocument>);
+            resolve(resource as ReadonlyArray<T & DocumentDb.RetrievedDocument>);
           }
         });
       });

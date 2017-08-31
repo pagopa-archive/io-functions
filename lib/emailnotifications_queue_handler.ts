@@ -33,15 +33,15 @@ const mailerTransporter = NodeMailer.createTransport(sendGridTransport({
  * see EmailNotificationsQueueHandler/function.json
  */
 interface IContextWithBindings extends IContext {
-  bindings: {
-    emailNotification?: IEmailNotificationEvent;
+  readonly bindings: {
+    readonly emailNotification?: IEmailNotificationEvent;
   };
 }
 
 /**
  * Function handler
  */
-export function index(context: IContextWithBindings) {
+export function index(context: IContextWithBindings): void {
   // since this function gets triggered by a queued message that gets
   // deserialized from a json object, we must first check that what we
   // got is what we expect.

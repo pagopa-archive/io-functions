@@ -1,14 +1,14 @@
 
 interface ILeft<L>  {
-  isLeft: true;
-  isRight: false;
-  left: L;
+  readonly isLeft: true;
+  readonly isRight: false;
+  readonly left: L;
 }
 
 interface IRight<R> {
-  isLeft: false;
-  isRight: true;
-  right: R;
+  readonly isLeft: false;
+  readonly isRight: true;
+  readonly right: R;
 }
 
 export function left<L>(v: L): ILeft<L> {

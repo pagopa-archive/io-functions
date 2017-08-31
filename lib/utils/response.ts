@@ -5,16 +5,16 @@ import * as express from "express";
  * by the handlers.
  */
 export interface IResponse {
-  kind: string;
-  apply: (response: express.Response) => void;
+  readonly kind: string;
+  readonly apply: (response: express.Response) => void;
 }
 
 /**
  * Interface for a successful response returning a json object.
  */
 export interface IResponseSuccessJson<T> extends IResponse {
-  kind: "IResponseSuccessJson";
-  value: T; // needed to discriminate from other T subtypes
+  readonly kind: "IResponseSuccessJson";
+  readonly value: T; // needed to discriminate from other T subtypes
 }
 
 /**
@@ -34,7 +34,7 @@ export function ResponseSuccessJson<T>(o: T): IResponseSuccessJson<T> {
  * Interface for a response describing a 404 error.
  */
 export interface IResponseErrorNotFound extends IResponse {
-  kind: "IResponseErrorNotFound";
+  readonly kind: "IResponseErrorNotFound";
 }
 
 /**
@@ -55,7 +55,7 @@ export function ResponseErrorNotFound(message: string): IResponseErrorNotFound {
  * Interface for a response describing a validation error.
  */
 export interface IResponseErrorValidation extends IResponse {
-  kind: "IResponseErrorValidation";
+  readonly kind: "IResponseErrorValidation";
 }
 
 /**
@@ -76,7 +76,7 @@ export function ResponseErrorValidation(message: string): IResponseErrorValidati
  * Interface for a response describing an authorization error.
  */
 export interface IResponseErrorForbidden extends IResponse {
-  kind: "IResponseErrorForbidden";
+  readonly kind: "IResponseErrorForbidden";
 }
 
 /**
@@ -97,7 +97,7 @@ export function ResponseErrorForbidden(message: string): IResponseErrorForbidden
  * Interface for a response describing a generic server error.
  */
 export interface IResponseErrorGeneric extends IResponse {
-  kind: "IResponseErrorGeneric";
+  readonly kind: "IResponseErrorGeneric";
 }
 
 /**

@@ -5,10 +5,10 @@ engines:
     enabled: true
   git-legal:
     enabled: true
-  tslint:
-    enabled: true
-    channel: beta
-    config: tslint.json
+#  tslint:
+#    enabled: true
+#    channel: beta
+#    config: tslint.json
 ratings:
   paths:
   - "**.ts"

@@ -17,12 +17,12 @@ import {
 import { isModelId, ModelId } from "../versioned_model";
 
 interface IAzureUserNote {
-  organizationId?: string;
+  readonly organizationId?: string;
 }
 
 export interface IAzureUserAttributes {
-  kind: "IAzureUserAttributes";
-  organization?: IRetrievedOrganization;
+  readonly kind: "IAzureUserAttributes";
+  readonly organization?: IRetrievedOrganization;
 }
 
 /**
