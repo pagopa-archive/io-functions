@@ -124,7 +124,8 @@ export function createDocument<T>(
   client: DocumentDb.DocumentClient,
   collectionUrl: DocumentDbCollectionUrl,
   document: T & DocumentDb.NewDocument,
-  partitionKey: string | ReadonlyArray<string>,
+  // tslint:disable-next-line:readonly-array
+  partitionKey: string | string[],
 ): Promise<T & DocumentDb.RetrievedDocument> {
   return new Promise((resolve, reject) => {
     client.createDocument(collectionUrl, document, {
@@ -148,7 +149,8 @@ export function createDocument<T>(
 export function readDocument<T>(
   client: DocumentDb.DocumentClient,
   documentUrl: DocumentDbDocumentUrl,
-  partitionKey: string | ReadonlyArray<string>,
+  // tslint:disable-next-line:readonly-array
+  partitionKey: string | string[],
 ): Promise<T & DocumentDb.RetrievedDocument> {
   return new Promise((resolve, reject) => {
     client.readDocument(documentUrl, {
@@ -179,11 +181,12 @@ export function queryDocuments<T>(
   const resultIterator: IResultIterator<ReadonlyArray<T & DocumentDb.RetrievedDocument>> = {
     executeNext: () => {
       return new Promise((resolve, reject) => {
-        documentIterator.executeNext((error, resource, _) => {
+        documentIterator.executeNext((error, documents, _) => {
           if (error) {
             reject(error);
           } else {
-            resolve(resource as ReadonlyArray<T & DocumentDb.RetrievedDocument>);
+            const readonlyDocuments: ReadonlyArray<DocumentDb.RetrievedDocument> = documents;
+            resolve(readonlyDocuments as ReadonlyArray<T & DocumentDb.RetrievedDocument>);
           }
         });
       });
