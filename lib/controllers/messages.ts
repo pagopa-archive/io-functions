@@ -15,6 +15,10 @@ import {
   IAzureApiAuthorization,
   UserGroup,
 } from "../utils/middlewares/azure_api_auth";
+import {
+  AzureUserAttributesMiddleware,
+  IAzureUserAttributes,
+} from "../utils/middlewares/azure_user_attributes";
 import { ContextMiddleware } from "../utils/middlewares/context_middleware";
 import { FiscalCodeMiddleware } from "../utils/middlewares/fiscalcode";
 import { RequiredIdParamMiddleware } from "../utils/middlewares/required_id_param";
@@ -33,6 +37,10 @@ import {
 import { mapResultIterator } from "../utils/documentdb";
 
 import { ICreatedMessageEvent } from "../models/created_message_event";
+
+import {
+  OrganizationModel,
+} from "../models/organization";
 
 import {
   asPublicExtendedMessage,
@@ -87,9 +95,13 @@ export const MessagePayloadMiddleware: IRequestMiddleware<IResponseErrorValidati
 type ICreateMessageHandler = (
   context: IContext<IBindings>,
   auth: IAzureApiAuthorization,
+  attrs: IAzureUserAttributes,
   fiscalCode: FiscalCode,
   messagePayload: IMessagePayload,
-) => Promise<IResponseSuccessJson<IPublicExtendedMessage>>;
+) => Promise<
+  IResponseSuccessJson<IPublicExtendedMessage> |
+  IResponseErrorValidation
+>;
 
 /**
  * Type of a GetMessage handler.
@@ -128,31 +140,37 @@ type IGetMessagesHandler = (
  * Returns a type safe CreateMessage handler.
  */
 export function CreateMessageHandler(messageModel: MessageModel): ICreateMessageHandler {
-  return (context, _, fiscalCode, messagePayload) =>
-    new Promise((resolve, reject) => {
+  return (context, _, userAttributes, fiscalCode, messagePayload) => new Promise((resolve, reject) => {
 
-    const message: INewMessage = {
-      bodyShort: messagePayload.body_short,
-      fiscalCode,
-      id: ulid(),
-      kind: "INewMessage",
-    };
-
-    messageModel.createMessage(message).then((retrievedMessage) => {
-      context.log(`>> message stored [${retrievedMessage.id}]`);
-
-      const createdMessage: ICreatedMessageEvent = {
-        message: retrievedMessage,
+    if (userAttributes.organization !== undefined) {
+      // we need the user to be associated to a valid organization for him
+      // to be able to send a message
+      const message: INewMessage = {
+        bodyShort: messagePayload.body_short,
+        fiscalCode,
+        id: ulid(),
+        kind: "INewMessage",
+        senderOrganizationId: userAttributes.organization.organizationId,
       };
 
-      // queue the message to the created messages queue by setting
-      // the message to the output binding of this function
-      // tslint:disable-next-line:no-object-mutation
-      context.bindings.createdMessage = createdMessage;
+      messageModel.createMessage(message).then((retrievedMessage) => {
+        context.log(`>> message stored [${retrievedMessage.id}]`);
 
-      const publicMessage = asPublicExtendedMessage(retrievedMessage);
-      resolve(ResponseSuccessJson(publicMessage));
-    }, reject);
+        const createdMessage: ICreatedMessageEvent = {
+          message: retrievedMessage,
+        };
+
+        // queue the message to the created messages queue by setting
+        // the message to the output binding of this function
+        // tslint:disable-next-line:no-object-mutation
+        context.bindings.createdMessage = createdMessage;
+
+        const publicMessage = asPublicExtendedMessage(retrievedMessage);
+        resolve(ResponseSuccessJson(publicMessage));
+      }, reject);
+    } else {
+      resolve(ResponseErrorValidation("The user is not part of any organization."));
+    }
   });
 }
 
@@ -160,6 +178,7 @@ export function CreateMessageHandler(messageModel: MessageModel): ICreateMessage
  * Wraps a CreateMessage handler inside an Express request handler.
  */
 export function CreateMessage(
+  organizationModel: OrganizationModel,
   messageModel: MessageModel,
 ): express.RequestHandler {
   const handler = CreateMessageHandler(messageModel);
@@ -168,6 +187,7 @@ export function CreateMessage(
     AzureApiAuthMiddleware(new Set([
       UserGroup.Developers,
     ])),
+    AzureUserAttributesMiddleware(organizationModel),
     FiscalCodeMiddleware,
     MessagePayloadMiddleware,
   );
