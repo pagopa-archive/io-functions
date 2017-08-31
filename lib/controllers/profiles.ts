@@ -73,16 +73,20 @@ type IUpsertProfileHandler = (
 
 /**
  * Return a type safe GetProfile handler.
- *
- * TODO: return extended profile if client is trusted
  */
 export function GetProfileHandler(profileModel: ProfileModel): IGetProfileHandler {
-  return (_, fiscalCode) => new Promise((resolve, reject) => {
+  return (auth, fiscalCode) => new Promise((resolve, reject) => {
     profileModel.findOneProfileByFiscalCode(fiscalCode).then(
       (profile) => {
         if (profile !== null) {
-          const publicProfile = asPublicLimitedProfile(profile);
-          resolve(ResponseSuccessJson(publicProfile));
+          if (auth.groups.has(UserGroup.TrustedApplications)) {
+            // if the client is a trusted application we return the
+            // extended profile
+            resolve(ResponseSuccessJson(asPublicExtendedProfile(profile)));
+          } else {
+            // or else, we return a limited profile
+            resolve(ResponseSuccessJson(asPublicLimitedProfile(profile)));
+          }
         } else {
           resolve(ResponseErrorNotFound("Profile not found"));
         }
