@@ -100,7 +100,9 @@ export function GetProfile(
 ): express.RequestHandler {
   const handler = GetProfileHandler(profileModel);
   const middlewaresWrap = withRequestMiddlewares(
-    AzureApiAuthMiddleware(new Set([UserGroup.Developers])),
+    AzureApiAuthMiddleware(new Set([
+      UserGroup.Developers,
+    ])),
     FiscalCodeMiddleware,
   );
   return wrapRequestHandler(middlewaresWrap(handler));
@@ -175,7 +177,9 @@ export function UpsertProfile(
 ): express.RequestHandler {
   const handler = UpsertProfileHandler(profileModel);
   const middlewaresWrap = withRequestMiddlewares(
-    AzureApiAuthMiddleware(new Set([UserGroup.TrustedApp])),
+    AzureApiAuthMiddleware(new Set([
+      UserGroup.TrustedApplications,
+    ])),
     FiscalCodeMiddleware,
     ProfilePayloadMiddleware,
   );

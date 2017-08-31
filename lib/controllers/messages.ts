@@ -10,13 +10,13 @@ import { IContext } from "azure-function-express-cloudify";
 import { left, right } from "../utils/either";
 
 import { FiscalCode } from "../utils/fiscalcode";
-import { FiscalCodeMiddleware } from "../utils/fiscalcode_middleware";
 import {
   AzureApiAuthMiddleware,
   IAzureApiAuthorization,
   UserGroup,
 } from "../utils/middlewares/azure_api_auth";
 import { ContextMiddleware } from "../utils/middlewares/context_middleware";
+import { FiscalCodeMiddleware } from "../utils/middlewares/fiscalcode";
 import { RequiredIdParamMiddleware } from "../utils/middlewares/required_id_param";
 import { IRequestMiddleware, withRequestMiddlewares, wrapRequestHandler } from "../utils/request_middleware";
 import {
@@ -159,7 +159,9 @@ export function CreateMessage(
   const handler = CreateMessageHandler(messageModel);
   const middlewaresWrap = withRequestMiddlewares(
     ContextMiddleware<IBindings>(),
-    AzureApiAuthMiddleware(new Set([UserGroup.Developers])),
+    AzureApiAuthMiddleware(new Set([
+      UserGroup.Developers,
+    ])),
     FiscalCodeMiddleware,
     MessagePayloadMiddleware,
   );
@@ -190,7 +192,9 @@ export function GetMessage(
 ): express.RequestHandler {
   const handler = GetMessageHandler(messageModel);
   const middlewaresWrap = withRequestMiddlewares(
-    AzureApiAuthMiddleware(new Set([UserGroup.TrustedApp])),
+    AzureApiAuthMiddleware(new Set([
+      UserGroup.TrustedApplications,
+    ])),
     FiscalCodeMiddleware,
     RequiredIdParamMiddleware,
   );
@@ -218,7 +222,9 @@ export function GetMessages(
 ): express.RequestHandler {
   const handler = GetMessagesHandler(messageModel);
   const middlewaresWrap = withRequestMiddlewares(
-    AzureApiAuthMiddleware(new Set([UserGroup.TrustedApp])),
+    AzureApiAuthMiddleware(new Set([
+      UserGroup.TrustedApplications,
+    ])),
     FiscalCodeMiddleware,
   );
   return wrapRequestHandler(middlewaresWrap(handler));
