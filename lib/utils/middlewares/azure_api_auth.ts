@@ -17,8 +17,9 @@ import {
  * Enumerates all supported user groups
  */
 export enum UserGroup {
+  Administrators = "Administrators",
   Developers = "Developers",
-  TrustedApp = "trusted-app",
+  TrustedApplications = "TrustedApplications",
 }
 
 /**
@@ -27,7 +28,7 @@ export enum UserGroup {
 function toUserGroup(name: string): Option<UserGroup> {
   switch (name) {
     case UserGroup.Developers: return some(UserGroup.Developers);
-    case UserGroup.TrustedApp: return some(UserGroup.TrustedApp);
+    case UserGroup.TrustedApplications: return some(UserGroup.TrustedApplications);
     default: return none;
   }
 }

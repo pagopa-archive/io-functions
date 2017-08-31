@@ -50,7 +50,9 @@ const getDebugHandler: GetDebug = (request, auth, userAttributes) => {
 };
 
 export function GetDebug(organizationModel: OrganizationModel): express.RequestHandler {
-  const azureApiMiddleware = AzureApiAuthMiddleware(new Set([UserGroup.Developers]));
+  const azureApiMiddleware = AzureApiAuthMiddleware(new Set([
+    UserGroup.Administrators,
+  ]));
   const azureUserAttributesMiddleware = AzureUserAttributesMiddleware(organizationModel);
   const middlewaresWrap = withRequestMiddlewares(
     ExpressRequestMiddleware,

@@ -161,7 +161,9 @@ export function CreateMessage(
   const handler = CreateMessageHandler(messageModel);
   const middlewaresWrap = withRequestMiddlewares(
     ContextMiddleware<IBindings>(),
-    AzureApiAuthMiddleware(new Set([UserGroup.Developers])),
+    AzureApiAuthMiddleware(new Set([
+      UserGroup.Developers,
+    ])),
     FiscalCodeMiddleware,
     MessagePayloadMiddleware,
   );
@@ -192,7 +194,9 @@ export function GetMessage(
 ): express.RequestHandler {
   const handler = GetMessageHandler(messageModel);
   const middlewaresWrap = withRequestMiddlewares(
-    AzureApiAuthMiddleware(new Set([UserGroup.TrustedApp])),
+    AzureApiAuthMiddleware(new Set([
+      UserGroup.TrustedApplications,
+    ])),
     FiscalCodeMiddleware,
     RequiredIdParamMiddleware,
   );
@@ -220,7 +224,9 @@ export function GetMessages(
 ): express.RequestHandler {
   const handler = GetMessagesHandler(messageModel);
   const middlewaresWrap = withRequestMiddlewares(
-    AzureApiAuthMiddleware(new Set([UserGroup.TrustedApp])),
+    AzureApiAuthMiddleware(new Set([
+      UserGroup.TrustedApplications,
+    ])),
     FiscalCodeMiddleware,
   );
   return wrapRequestHandler(middlewaresWrap(handler));
