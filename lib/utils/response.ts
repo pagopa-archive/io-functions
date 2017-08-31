@@ -1,5 +1,7 @@
 import * as express from "express";
 
+import { IResultIterator } from "./documentdb";
+
 /**
  * Interface for a Response that can be returned by a middleware or
  * by the handlers.
@@ -27,6 +29,54 @@ export function ResponseSuccessJson<T>(o: T): IResponseSuccessJson<T> {
     apply: (res) => res.status(200).json(o),
     kind: "IResponseSuccessJson",
     value: o,
+  };
+}
+
+/**
+ * Interface for a successful response returning a json object.
+ */
+export interface IResponseSuccessJsonIterator<T> extends IResponse {
+  readonly kind: "IResponseSuccessJsonIterator";
+  readonly value: T; // needed to discriminate from other T subtypes
+}
+
+/**
+ * A successful response that streams the documentdb iterator as a json array
+ */
+export function ResponseSuccessJsonIterator<T>(i: IResultIterator<T>): IResponseSuccessJsonIterator<T> {
+
+  function sendResponseOpen(res: express.Response): void {
+    res.status(200).type("application/json").send("[");
+  }
+
+  function sendResponseClose(res: express.Response): void {
+    res.send("{}]").end();
+  }
+
+  function streamResponse(res: express.Response): void {
+    i.executeNext().then(
+      (result) => {
+        if (Array.isArray(result) && result.length > 0) {
+          result.forEach((r) => {
+            res.send(`${JSON.stringify(r)},`);
+          });
+          streamResponse(res);
+        } else {
+          sendResponseClose(res);
+        }
+      },
+      (_) => {
+        sendResponseClose(res);
+      },
+    );
+  }
+  return {
+    apply: (res) => {
+      sendResponseOpen(res);
+      streamResponse(res);
+    },
+    kind: "IResponseSuccessJsonIterator",
+    value: {} as T,
   };
 }
 

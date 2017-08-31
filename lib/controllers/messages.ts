@@ -23,10 +23,14 @@ import {
   IResponseErrorNotFound,
   IResponseErrorValidation,
   IResponseSuccessJson,
+  IResponseSuccessJsonIterator,
   ResponseErrorNotFound,
   ResponseErrorValidation,
   ResponseSuccessJson,
+  ResponseSuccessJsonIterator,
 } from "../utils/response";
+
+import { mapResultIterator } from "../utils/documentdb";
 
 import { ICreatedMessageEvent } from "../models/created_message_event";
 
@@ -116,7 +120,7 @@ type IGetMessagesHandler = (
   auth: IAzureApiAuthorization,
   fiscalCode: FiscalCode,
 ) => Promise<
-  IResponseSuccessJson<ReadonlyArray<IPublicExtendedMessage>> |
+  IResponseSuccessJsonIterator<IPublicExtendedMessage> |
   IResponseErrorValidation
 >;
 
@@ -207,12 +211,13 @@ export function GetMessage(
  * Handles requests for getting all message for a recipient.
  */
 export function GetMessagesHandler(messageModel: MessageModel): IGetMessagesHandler {
-  return (_, fiscalCode) => new Promise((resolve, reject) => {
-    const iterator = messageModel.findMessages(fiscalCode);
-    iterator.executeNext().then((retrievedMessages) => {
-      const publicMessages = retrievedMessages.map(asPublicExtendedMessage);
-      resolve(ResponseSuccessJson(publicMessages));
-    }, reject);
+  return (_, fiscalCode) => new Promise((resolve) => {
+    const retrievedMessagesIterator = messageModel.findMessages(fiscalCode);
+    const publicExtendedMessagesIterator = mapResultIterator(
+      retrievedMessagesIterator,
+      asPublicExtendedMessage,
+    );
+    resolve(ResponseSuccessJsonIterator(publicExtendedMessagesIterator));
   });
 }
 
