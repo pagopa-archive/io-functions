@@ -3,6 +3,7 @@ import * as DocumentDbUtils from "../utils/documentdb";
 
 import { FiscalCode, isFiscalCode } from "../utils/fiscalcode";
 import { LimitedFields } from "../utils/types";
+import { ModelId } from "../utils/versioned_model";
 
 /**
  * Base interface for Message objects
@@ -10,6 +11,7 @@ import { LimitedFields } from "../utils/types";
 export interface IMessage {
   readonly fiscalCode: FiscalCode;
   readonly bodyShort: string;
+  readonly senderOrganizationId: ModelId;
 }
 
 /**
@@ -28,13 +30,17 @@ export interface INewMessage extends IMessage, DocumentDb.NewDocument {
 }
 
 /**
- * Read-only interface for retrieved Message objects
+ * Interface for retrieved Message objects
  */
 export interface IRetrievedMessage extends Readonly<IMessage>, Readonly<DocumentDb.RetrievedDocument> {
   readonly kind: "IRetrievedMessage";
 }
 
-export interface IPublicExtendedMessage extends LimitedFields<IRetrievedMessage, "fiscalCode" | "bodyShort"> {
+/**
+ * Message objects shared with trusted applications (i.e. client apps).
+ */
+export interface IPublicExtendedMessage extends
+  LimitedFields<IRetrievedMessage, "fiscalCode" | "bodyShort" | "senderOrganizationId"> {
   readonly kind: "IPublicExtendedMessage";
 }
 
@@ -42,11 +48,13 @@ export function asPublicExtendedMessage<T extends IRetrievedMessage>(message: T)
   const {
     fiscalCode,
     bodyShort,
+    senderOrganizationId,
   } = message;
   return {
     bodyShort,
     fiscalCode,
     kind: "IPublicExtendedMessage",
+    senderOrganizationId,
   };
 }
 

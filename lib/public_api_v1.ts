@@ -56,7 +56,7 @@ app.post("/api/v1/profiles/:fiscalcode", UpsertProfile(profileModel));
 
 app.get("/api/v1/messages/:fiscalcode/:id", GetMessage(messageModel));
 app.get("/api/v1/messages/:fiscalcode", GetMessages(messageModel));
-app.post("/api/v1/messages/:fiscalcode", CreateMessage(messageModel));
+app.post("/api/v1/messages/:fiscalcode", CreateMessage(organizationModel, messageModel));
 
 // Binds the express app to an Azure Function handler
 export default createAzureFunctionHandler(app);
