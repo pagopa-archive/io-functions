@@ -14,9 +14,9 @@ const aFiscalCode = toFiscalCode("FRLFRC74E04B157I").get;
 
 describe("findOneProfileByFiscalCode", () => {
 
-  it("should resolve a promise to an existing profile", () => {
+  it("should resolve a promise to an existing profile", async () => {
     const iteratorMock = {
-      executeNext: jest.fn((cb) => cb(null, [ "result" ], null)),
+      executeNext: jest.fn((cb) => cb(undefined, [ "result" ], undefined)),
     };
 
     const clientMock = {
@@ -25,14 +25,18 @@ describe("findOneProfileByFiscalCode", () => {
 
     const model = new ProfileModel((clientMock as any) as DocumentDb.DocumentClient, profilesCollectionUrl);
 
-    const promise = model.findOneProfileByFiscalCode(aFiscalCode);
+    const result = await model.findOneProfileByFiscalCode(aFiscalCode);
 
-    return expect(promise).resolves.toEqual("result");
+    expect(result.isRight).toBeTruthy();
+    if (result.isRight) {
+      expect(result.right.isDefined).toBeTruthy();
+      expect(result.right.get).toEqual("result");
+    }
   });
 
-  it("should resolve a promise to null if no profile is found", () => {
+  it("should resolve a promise to undefined if no profile is found", async () => {
     const iteratorMock = {
-      executeNext: jest.fn((cb) => cb(null, [ ], null)),
+      executeNext: jest.fn((cb) => cb(undefined, [ ], undefined)),
     };
 
     const clientMock = {
@@ -41,9 +45,12 @@ describe("findOneProfileByFiscalCode", () => {
 
     const model = new ProfileModel((clientMock as any) as DocumentDb.DocumentClient, profilesCollectionUrl);
 
-    const promise = model.findOneProfileByFiscalCode(aFiscalCode);
+    const result = await model.findOneProfileByFiscalCode(aFiscalCode);
 
-    return expect(promise).resolves.toEqual(null);
+    expect(result.isRight).toBeTruthy();
+    if (result.isRight) {
+      expect(result.right.isEmpty).toBeTruthy();
+    }
   });
 
 });
@@ -53,7 +60,7 @@ describe("createProfile", () => {
   it("should create a new profile", async () => {
     const clientMock: any = {
       createDocument: jest.fn((_, newDocument, __, cb) => {
-        cb(null, {
+        cb(undefined, {
           ...newDocument,
         });
       }),
@@ -69,12 +76,15 @@ describe("createProfile", () => {
 
     expect(clientMock.createDocument).toHaveBeenCalledTimes(1);
     expect(clientMock.createDocument.mock.calls[0][2]).toHaveProperty("partitionKey", aFiscalCode);
-    expect(result.fiscalCode).toEqual(newProfile.fiscalCode);
-    expect(result.id).toEqual(`${aFiscalCode}-${"0".repeat(16)}`);
-    expect(result.version).toEqual(0);
+    expect(result.isRight).toBeTruthy();
+    if (result.isRight) {
+      expect(result.right.fiscalCode).toEqual(newProfile.fiscalCode);
+      expect(result.right.id).toEqual(`${aFiscalCode}-${"0".repeat(16)}`);
+      expect(result.right.version).toEqual(0);
+    }
   });
 
-  it("should reject the promise in case of error", () => {
+  it("should reject the promise in case of error", async () => {
     const clientMock: any = {
       createDocument: jest.fn((_, __, ___, cb) => {
         cb("error");
@@ -87,11 +97,14 @@ describe("createProfile", () => {
       fiscalCode: aFiscalCode,
     };
 
-    const promise = model.createProfile(newProfile);
+    const result = await model.createProfile(newProfile);
 
     expect(clientMock.createDocument).toHaveBeenCalledTimes(1);
 
-    return expect(promise).rejects.toEqual("error");
+    expect(result.isLeft).toBeTruthy();
+    if (result.isLeft) {
+      expect(result.left).toEqual("error");
+    }
   });
 
 });
@@ -101,7 +114,7 @@ describe("updateProfile", () => {
   it("should update an existing profile", async () => {
     const clientMock: any = {
       createDocument: jest.fn((_, newDocument, __, cb) => {
-        cb(null, {
+        cb(undefined, {
           ...newDocument,
         });
       }),
@@ -122,12 +135,15 @@ describe("updateProfile", () => {
 
     expect(clientMock.createDocument).toHaveBeenCalledTimes(1);
     expect(clientMock.createDocument.mock.calls[0][2]).toHaveProperty("partitionKey", aFiscalCode);
-    expect(result.fiscalCode).toEqual(pendingProfile.fiscalCode);
-    expect(result.id).toEqual(`${aFiscalCode}-${"0".repeat(15)}1`);
-    expect(result.version).toEqual(1);
+    expect(result.isRight).toBeTruthy();
+    if (result.isRight) {
+      expect(result.right.fiscalCode).toEqual(pendingProfile.fiscalCode);
+      expect(result.right.id).toEqual(`${aFiscalCode}-${"0".repeat(15)}1`);
+      expect(result.right.version).toEqual(1);
+    }
   });
 
-  it("should reject the promise in case of error", () => {
+  it("should reject the promise in case of error", async () => {
     const clientMock: any = {
       createDocument: jest.fn((_, __, ___, cb) => {
         cb("error");
@@ -145,11 +161,14 @@ describe("updateProfile", () => {
       version: toNonNegativeNumber(0).get,
     };
 
-    const promise = model.updateProfile(pendingProfile);
+    const result = await model.updateProfile(pendingProfile);
 
     expect(clientMock.createDocument).toHaveBeenCalledTimes(1);
 
-    return expect(promise).rejects.toEqual("error");
+    expect(result.isLeft).toBeTruthy();
+    if (result.isLeft) {
+      expect(result.left).toEqual("error");
+    }
   });
 
 });

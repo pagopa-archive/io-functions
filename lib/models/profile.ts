@@ -1,6 +1,9 @@
 import * as DocumentDb from "documentdb";
 import * as DocumentDbUtils from "../utils/documentdb";
 
+import { Option } from "ts-option";
+import { Either } from "../utils/either";
+
 import { fiscalCodeToModelId } from "../utils/conversions";
 import { FiscalCode } from "../utils/fiscalcode";
 import { toNonNegativeNumber } from "../utils/numbers";
@@ -101,7 +104,9 @@ export class ProfileModel {
    *
    * @param fiscalCode
    */
-  public findOneProfileByFiscalCode(fiscalCode: FiscalCode): Promise<IRetrievedProfile | null> {
+  public findOneProfileByFiscalCode(
+    fiscalCode: FiscalCode,
+  ): Promise<Either<DocumentDb.QueryError, Option<IRetrievedProfile>>> {
     return DocumentDbUtils.queryOneDocument(
       this.dbClient,
       this.collectionUrl,
@@ -120,31 +125,28 @@ export class ProfileModel {
    *
    * @param profile The new Profile object
    */
-  public createProfile(profile: IProfile): Promise<IRetrievedProfile> {
-    return new Promise((resolve, reject) => {
-      // the first version of a profile is 0
-      const initialVersion = toNonNegativeNumber(0).get;
-      // the ID of each profile version is composed of the profile ID and its version
-      // this makes it possible to detect conflicting updates (concurrent creation of
-      // profiles with the same profile ID and version)
-      const profileId = generateVersionedModelId(fiscalCodeToModelId(profile.fiscalCode), initialVersion);
-      DocumentDbUtils.createDocument(
-        this.dbClient,
-        this.collectionUrl,
-        {
-          ...profile,
-          id: profileId,
-          version: initialVersion,
-        },
-        profile.fiscalCode,
-      ).then(
-        (result) => resolve({
-          ...result,
-          kind: "IRetrievedProfile",
-        }),
-        (error) => reject(error),
-      );
-    });
+  public async createProfile(profile: IProfile): Promise<Either<DocumentDb.QueryError, IRetrievedProfile>> {
+    // the first version of a profile is 0
+    const initialVersion = toNonNegativeNumber(0).get;
+    // the ID of each profile version is composed of the profile ID and its version
+    // this makes it possible to detect conflicting updates (concurrent creation of
+    // profiles with the same profile ID and version)
+    const profileId = generateVersionedModelId(fiscalCodeToModelId(profile.fiscalCode), initialVersion);
+    const errorOrDocument = await DocumentDbUtils.createDocument(
+      this.dbClient,
+      this.collectionUrl,
+      {
+        ...profile,
+        id: profileId,
+        version: initialVersion,
+      },
+      profile.fiscalCode,
+    );
+
+    return errorOrDocument.mapRight((document) => ({
+      ...document,
+      kind: "IRetrievedProfile",
+    } as IRetrievedProfile));
   }
 
   /**
@@ -152,24 +154,19 @@ export class ProfileModel {
    *
    * @param profile The updated Profile object
    */
-  public updateProfile(profile: IRetrievedProfile): Promise<IRetrievedProfile> {
-    return new Promise((resolve, reject) => {
-      const newVersion = toNonNegativeNumber(profile.version + 1).get;
-      const profileId = generateVersionedModelId(fiscalCodeToModelId(profile.fiscalCode), newVersion);
-      DocumentDbUtils.createDocument(
-        this.dbClient,
-        this.collectionUrl,
-        {
-          ...profile,
-          id: profileId,
-          version: newVersion,
-        },
-        profile.fiscalCode,
-      ).then(
-        (result) => resolve(result),
-        (error) => reject(error),
-      );
-    });
+  public updateProfile(profile: IRetrievedProfile): Promise<Either<DocumentDb.QueryError, IRetrievedProfile>> {
+    const newVersion = toNonNegativeNumber(profile.version + 1).get;
+    const profileId = generateVersionedModelId(fiscalCodeToModelId(profile.fiscalCode), newVersion);
+    return DocumentDbUtils.createDocument(
+      this.dbClient,
+      this.collectionUrl,
+      {
+        ...profile,
+        id: profileId,
+        version: newVersion,
+      },
+      profile.fiscalCode,
+    );
   }
 
 }

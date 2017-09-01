@@ -1,8 +1,13 @@
 // tslint:disable:no-any
 
+import { some, none } from "ts-option";
+
+import { left, right } from "../../either";
+
 import { AzureUserAttributesMiddleware } from "../azure_user_attributes";
 
 describe("AzureUserAttributesMiddleware", () => {
+
   it("should ignore invalid yaml", () => {
     const orgModel = jest.fn();
 
@@ -18,9 +23,9 @@ describe("AzureUserAttributesMiddleware", () => {
     });
   });
 
-  it("should ignore the user organization from the custom attributes if it does not exist", () => {
+  it("should ignore the user organization from the custom attributes if it does not exist", async () => {
     const orgModel = {
-      findLastVersionById: jest.fn(() => Promise.resolve(null)),
+      findLastVersionById: jest.fn(() => Promise.resolve(right(none))),
     };
 
     const mockRequest = {
@@ -35,23 +40,24 @@ describe("AzureUserAttributesMiddleware", () => {
 
     const middleware = AzureUserAttributesMiddleware(orgModel as any);
 
-    return middleware(mockRequest as any).then((result) => {
-      expect(mockRequest.header).toHaveBeenCalledWith("x-user-note");
-      expect(orgModel.findLastVersionById).toHaveBeenCalledWith("agid");
-      expect(result.isRight).toBeTruthy();
-      if (result.isRight) {
-        expect(result.right.organization).toBeNull();
-      }
-    });
+    const result = await middleware(mockRequest as any);
+
+    expect(mockRequest.header).toHaveBeenCalledWith("x-user-note");
+    expect(orgModel.findLastVersionById).toHaveBeenCalledWith("agid");
+    expect(result.isRight).toBeTruthy();
+    if (result.isRight) {
+      expect(result.right.organization).toBeNull();
+    }
+
   });
 
-  it("should fetch and return the user organization from the custom attributes", () => {
+  it("should fetch and return the user organization from the custom attributes", async () => {
     const mockOrg = {
       name: "AGID",
     };
 
     const orgModel = {
-      findLastVersionById: jest.fn(() => Promise.resolve(mockOrg as any)),
+      findLastVersionById: jest.fn(() => Promise.resolve(right(some(mockOrg as any)))),
     };
 
     const mockRequest = {
@@ -65,17 +71,16 @@ describe("AzureUserAttributesMiddleware", () => {
 
     const middleware = AzureUserAttributesMiddleware(orgModel as any);
 
-    return middleware(mockRequest as any).then((result) => {
-      expect(mockRequest.header).toHaveBeenCalledWith("x-user-note");
-      expect(orgModel.findLastVersionById).toHaveBeenCalledWith("agid");
-      expect(result.isRight);
-      if (result.isRight) {
-        expect(result.right.organization).toEqual(mockOrg);
-      }
-    });
+    const result = await middleware(mockRequest as any);
+    expect(mockRequest.header).toHaveBeenCalledWith("x-user-note");
+    expect(orgModel.findLastVersionById).toHaveBeenCalledWith("agid");
+    expect(result.isRight);
+    if (result.isRight) {
+      expect(result.right.organization).toEqual(mockOrg);
+    }
   });
 
-  it("should fail in case of error when fetching the user organization", () => {
+  it("should fail in case of error when fetching the user organization", async () => {
     const orgModel = {
       findLastVersionById: jest.fn(() => Promise.reject("error")),
     };
@@ -86,14 +91,13 @@ describe("AzureUserAttributesMiddleware", () => {
 
     const middleware = AzureUserAttributesMiddleware(orgModel as any);
 
-    return middleware(mockRequest as any).then((result) => {
-      expect(mockRequest.header).toHaveBeenCalledWith("x-user-note");
-      expect(orgModel.findLastVersionById).toHaveBeenCalledWith("agid");
-      expect(result.isLeft);
-      if (result.isLeft) {
-        expect(result.left.kind).toEqual("IResponseErrorGeneric");
-      }
-    });
+    const result = await middleware(mockRequest as any);
+    expect(mockRequest.header).toHaveBeenCalledWith("x-user-note");
+    expect(orgModel.findLastVersionById).toHaveBeenCalledWith("agid");
+    expect(result.isLeft);
+    if (result.isLeft) {
+      expect(result.left.kind).toEqual("IResponseErrorGeneric");
+    }
   });
 
 });

@@ -1,6 +1,9 @@
 import * as DocumentDb from "documentdb";
 import * as DocumentDbUtils from "../utils/documentdb";
 
+import { Option } from "ts-option";
+import { Either } from "../utils/either";
+
 import { toNonNegativeNumber } from "../utils/numbers";
 import { generateVersionedModelId, IVersionedModel, ModelId } from "../utils/versioned_model";
 
@@ -54,7 +57,9 @@ export class OrganizationModel {
    *
    * @param fiscalCode
    */
-  public findLastVersionById(organizationId: string): Promise<IRetrievedOrganization | null> {
+  public findLastVersionById(
+    organizationId: string,
+  ): Promise<Either<DocumentDb.QueryError, Option<IRetrievedOrganization>>> {
     return DocumentDbUtils.queryOneDocument(
       this.dbClient,
       this.collectionUrl,
@@ -73,28 +78,26 @@ export class OrganizationModel {
    *
    * @param organization The new Profile object
    */
-  public createOrganization(organization: IOrganization): Promise<IRetrievedOrganization> {
-    return new Promise((resolve, reject) => {
-      // the first version of a profile is 0
-      const initialVersion = toNonNegativeNumber(0).get;
-      const recordId = generateVersionedModelId(organization.organizationId, initialVersion);
-      DocumentDbUtils.createDocument(
-        this.dbClient,
-        this.collectionUrl,
-        {
-          ...organization,
-          id: recordId,
-          version: initialVersion,
-        },
-        organization.organizationId,
-      ).then(
-        (result) => resolve({
-          ...result,
-          kind: "IRetrievedOrganization",
-        }),
-        (error) => reject(error),
-      );
-    });
+  public async createOrganization(
+    organization: IOrganization,
+  ): Promise<Either<DocumentDb.QueryError, IRetrievedOrganization>> {
+    // the first version of a profile is 0
+    const initialVersion = toNonNegativeNumber(0).get;
+    const recordId = generateVersionedModelId(organization.organizationId, initialVersion);
+    const errorOrDocument = await DocumentDbUtils.createDocument(
+      this.dbClient,
+      this.collectionUrl,
+      {
+        ...organization,
+        id: recordId,
+        version: initialVersion,
+      },
+      organization.organizationId,
+    );
+    return errorOrDocument.mapRight((document) => ({
+      ...document,
+      kind: "IRetrievedOrganization",
+    } as IRetrievedOrganization));
   }
 
   /**
@@ -102,24 +105,21 @@ export class OrganizationModel {
    *
    * @param organization The updated Profile object
    */
-  public updateOrganization(organization: IRetrievedOrganization): Promise<IRetrievedOrganization> {
-    return new Promise((resolve, reject) => {
-      const newVersion = toNonNegativeNumber(organization.version + 1).get;
-      const recordId = generateVersionedModelId(organization.fiscal, newVersion);
-      DocumentDbUtils.createDocument(
-        this.dbClient,
-        this.collectionUrl,
-        {
-          ...organization,
-          id: recordId,
-          version: newVersion,
-        },
-        organization.organizationId,
-      ).then(
-        (result) => resolve(result),
-        (error) => reject(error),
-      );
-    });
+  public updateOrganization(
+    organization: IRetrievedOrganization,
+  ): Promise<Either<DocumentDb.QueryError, IRetrievedOrganization>> {
+    const newVersion = toNonNegativeNumber(organization.version + 1).get;
+    const recordId = generateVersionedModelId(organization.fiscal, newVersion);
+    return DocumentDbUtils.createDocument(
+      this.dbClient,
+      this.collectionUrl,
+      {
+        ...organization,
+        id: recordId,
+        version: newVersion,
+      },
+      organization.organizationId,
+    );
   }
 
 }

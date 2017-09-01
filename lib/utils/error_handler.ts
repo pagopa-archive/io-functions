@@ -1,3 +1,5 @@
+import { Option } from "ts-option";
+
 import {
   IResponseErrorGeneric,
   IResponseSuccessJson,
@@ -19,15 +21,13 @@ export function handleErrorAndRespond<T>(): (reason: T) => IResponseErrorGeneric
 /**
  * Returns an error handler that responds to the current HTTP request.
  */
-export function handleNullableResultAndRespond<T>(
+export function handleOptionalResultAndRespond<T>(
   resolve: (value: IResponseSuccessJson<T> | IResponseErrorGeneric) => void,
-  nullErrorMessage: string,
-): ((result: T | null) => void) {
-  return (result) => {
-    if (result !== null) {
-      resolve(ResponseSuccessJson(result));
-    } else {
-      resolve(ResponseErrorGeneric(nullErrorMessage));
-    }
-  };
+  emptyErrorMessage: string,
+): ((result: Option<T>) => void) {
+  return (maybeResult) => maybeResult.map((result) => {
+    resolve(ResponseSuccessJson(result));
+  }).getOrElse(() => {
+    resolve(ResponseErrorGeneric(emptyErrorMessage));
+  });
 }

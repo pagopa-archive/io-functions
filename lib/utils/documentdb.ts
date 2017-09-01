@@ -10,6 +10,10 @@
 
 import * as DocumentDb from "documentdb";
 
+import { none, Option, some } from "ts-option";
+
+import { Either, left, right } from "./either";
+
 //
 // Definition of types
 //
@@ -43,7 +47,7 @@ export type DocumentDbDocumentUrl = string & DocumentDbDocumentUrlTag;
  * See http://azure.github.io/azure-documentdb-node/QueryIterator.html
  */
 export interface IResultIterator<T> {
-  readonly executeNext: () => Promise<ReadonlyArray<T> | undefined>;
+  readonly executeNext: () => Promise<Either<DocumentDb.QueryError, Option<ReadonlyArray<T>>>>;
 }
 
 //
@@ -88,13 +92,13 @@ export function getDocumentUrl(collectionUrl: DocumentDbCollectionUrl, documentI
 export function readDatabase(
   client: DocumentDb.DocumentClient,
   databaseUrl: DocumentDbDatabaseUrl,
-): Promise<DocumentDb.DatabaseMeta> {
-  return new Promise((resolve, reject) => {
+): Promise<Either<DocumentDb.QueryError, DocumentDb.DatabaseMeta>> {
+  return new Promise((resolve) => {
     client.readDatabase(databaseUrl, (err, result) => {
       if (err) {
-        reject(err);
+        resolve(left(err));
       } else {
-        resolve(result);
+        resolve(right(result));
       }
     });
   });
@@ -109,13 +113,13 @@ export function readDatabase(
 export function readCollection(
   client: DocumentDb.DocumentClient,
   collectionUrl: DocumentDbCollectionUrl,
-): Promise<DocumentDb.CollectionMeta> {
-  return new Promise((resolve, reject) => {
+): Promise<Either<DocumentDb.QueryError, DocumentDb.CollectionMeta>> {
+  return new Promise((resolve) => {
     client.readCollection(collectionUrl, (err, result) => {
       if (err) {
-        reject(err);
+        resolve(left(err));
       } else {
-        resolve(result);
+        resolve(right(result));
       }
     });
   });
@@ -133,15 +137,15 @@ export function createDocument<T>(
   document: T & DocumentDb.NewDocument,
   // tslint:disable-next-line:readonly-array
   partitionKey: string | string[],
-): Promise<T & DocumentDb.RetrievedDocument> {
-  return new Promise((resolve, reject) => {
+): Promise<Either<DocumentDb.QueryError, T & DocumentDb.RetrievedDocument>> {
+  return new Promise((resolve) => {
     client.createDocument(collectionUrl, document, {
       partitionKey,
     }, (err, created) => {
       if (err) {
-        reject(err);
+        resolve(left(err));
       } else {
-        resolve(created as T & DocumentDb.RetrievedDocument);
+        resolve(right(created as T & DocumentDb.RetrievedDocument));
       }
     });
   });
@@ -158,15 +162,15 @@ export function readDocument<T>(
   documentUrl: DocumentDbDocumentUrl,
   // tslint:disable-next-line:readonly-array
   partitionKey: string | string[],
-): Promise<T & DocumentDb.RetrievedDocument> {
-  return new Promise((resolve, reject) => {
+): Promise<Either<DocumentDb.QueryError, T & DocumentDb.RetrievedDocument>> {
+  return new Promise((resolve) => {
     client.readDocument(documentUrl, {
       partitionKey,
     }, (err, result) => {
       if (err) {
-        reject(err);
+        resolve(left(err));
       } else {
-        resolve(result as T & DocumentDb.RetrievedDocument);
+        resolve(right(result as T & DocumentDb.RetrievedDocument));
       }
     });
   });
@@ -187,13 +191,15 @@ export function queryDocuments<T>(
   const documentIterator = client.queryDocuments(collectionUrl, query);
   const resultIterator: IResultIterator<T & DocumentDb.RetrievedDocument> = {
     executeNext: () => {
-      return new Promise((resolve, reject) => {
+      return new Promise((resolve) => {
         documentIterator.executeNext((error, documents, _) => {
           if (error) {
-            reject(error);
-          } else {
+            resolve(left(error));
+          } else if (documents && documents.length > 0) {
             const readonlyDocuments: ReadonlyArray<DocumentDb.RetrievedDocument> = documents;
-            resolve(readonlyDocuments as ReadonlyArray<T & DocumentDb.RetrievedDocument>);
+            resolve(right(some(readonlyDocuments as ReadonlyArray<T & DocumentDb.RetrievedDocument>)));
+          } else {
+            resolve(right(none));
           }
         });
       });
@@ -213,18 +219,26 @@ export function queryOneDocument<T>(
   client: DocumentDb.DocumentClient,
   collectionUrl: DocumentDbCollectionUrl,
   query: DocumentDb.DocumentQuery,
-): Promise<T | null> {
+): Promise<Either<DocumentDb.QueryError, Option<T>>> {
   const iterator = queryDocuments<T>(client, collectionUrl, query);
   return new Promise((resolve, reject) => {
     iterator.executeNext().then(
-      (result) => {
-        if (result != null && result.length > 0) {
-          resolve(result[0]);
-        } else {
-          resolve(null);
-        }
+      (maybeError) => {
+        maybeError.mapRight((maybeDocuments) => {
+          maybeDocuments.map((documents) => {
+            if (documents && documents.length > 0 && documents[0]) {
+              resolve(right(some(documents[0])));
+            } else {
+              resolve(right(none));
+            }
+          }).getOrElse(() => {
+            resolve(right(none as Option<T>));
+          });
+        }).mapLeft((error) => {
+          resolve(left(error));
+        });
       },
-      (error) => reject(error),
+      reject,
     );
   });
 }
@@ -235,12 +249,16 @@ export function queryOneDocument<T>(
 export function mapResultIterator<A, B>(i: IResultIterator<A>, f: (a: A) => B): IResultIterator<B> {
   return {
     executeNext: () => new Promise((resolve, reject) => i.executeNext().then(
-      (result) => {
-        if (result !== undefined) {
-          resolve(result.map(f));
-        } else {
-          resolve(undefined);
-        }
+      (maybeError) => {
+        maybeError.mapRight((maybeDocuments) => {
+          maybeDocuments.map((documents) => {
+            if (documents && documents.length > 0) {
+              resolve(right(some(documents.map(f))));
+            } else {
+              resolve(right(none));
+            }
+          }).getOrElse(() => resolve(right(none)));
+        }).mapLeft((error) => resolve(left(error)));
       }, reject)),
   };
 }

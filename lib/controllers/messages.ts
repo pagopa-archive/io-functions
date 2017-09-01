@@ -24,10 +24,12 @@ import { FiscalCodeMiddleware } from "../utils/middlewares/fiscalcode";
 import { RequiredIdParamMiddleware } from "../utils/middlewares/required_id_param";
 import { IRequestMiddleware, withRequestMiddlewares, wrapRequestHandler } from "../utils/request_middleware";
 import {
+  IResponseErrorGeneric,
   IResponseErrorNotFound,
   IResponseErrorValidation,
   IResponseSuccessJson,
   IResponseSuccessJsonIterator,
+  ResponseErrorGeneric,
   ResponseErrorNotFound,
   ResponseErrorValidation,
   ResponseSuccessJson,
@@ -100,7 +102,8 @@ type ICreateMessageHandler = (
   messagePayload: IMessagePayload,
 ) => Promise<
   IResponseSuccessJson<IPublicExtendedMessage> |
-  IResponseErrorValidation
+  IResponseErrorValidation |
+  IResponseErrorGeneric
 >;
 
 /**
@@ -117,6 +120,7 @@ type IGetMessageHandler = (
 ) => Promise<
   IResponseSuccessJson<IPublicExtendedMessage> |
   IResponseErrorNotFound |
+  IResponseErrorGeneric |
   IResponseErrorValidation
 >;
 
@@ -140,8 +144,7 @@ type IGetMessagesHandler = (
  * Returns a type safe CreateMessage handler.
  */
 export function CreateMessageHandler(messageModel: MessageModel): ICreateMessageHandler {
-  return (context, _, userAttributes, fiscalCode, messagePayload) => new Promise((resolve, reject) => {
-
+  return async (context, _, userAttributes, fiscalCode, messagePayload) => {
     if (userAttributes.organization !== undefined) {
       // we need the user to be associated to a valid organization for him
       // to be able to send a message
@@ -153,7 +156,10 @@ export function CreateMessageHandler(messageModel: MessageModel): ICreateMessage
         senderOrganizationId: userAttributes.organization.organizationId,
       };
 
-      messageModel.createMessage(message).then((retrievedMessage) => {
+      const errorOrMessage = await messageModel.createMessage(message);
+
+      if (errorOrMessage.isRight) {
+        const retrievedMessage = errorOrMessage.right;
         context.log(`>> message stored [${retrievedMessage.id}]`);
 
         const createdMessage: ICreatedMessageEvent = {
@@ -166,12 +172,14 @@ export function CreateMessageHandler(messageModel: MessageModel): ICreateMessage
         context.bindings.createdMessage = createdMessage;
 
         const publicMessage = asPublicExtendedMessage(retrievedMessage);
-        resolve(ResponseSuccessJson(publicMessage));
-      }, reject);
+        return(ResponseSuccessJson(publicMessage));
+      } else {
+        return(ResponseErrorGeneric(`Error while creating Message|${errorOrMessage.left.code}`));
+      }
     } else {
-      resolve(ResponseErrorValidation("The user is not part of any organization."));
+      return(ResponseErrorValidation("The user is not part of any organization."));
     }
-  });
+  };
 }
 
 /**
@@ -198,16 +206,20 @@ export function CreateMessage(
  * Handles requests for getting a single message for a recipient.
  */
 export function GetMessageHandler(messageModel: MessageModel): IGetMessageHandler {
-  return (_, fiscalCode, messageId) => new Promise((resolve, reject) => {
-    messageModel.findMessageForRecipient(fiscalCode, messageId).then((retrievedMessage) => {
-      if (retrievedMessage != null) {
-        const publicMessage = asPublicExtendedMessage(retrievedMessage);
-        resolve(ResponseSuccessJson(publicMessage));
+  return async (_, fiscalCode, messageId) => {
+    const errorOrMaybeDocument = await messageModel.findMessageForRecipient(fiscalCode, messageId);
+    if (errorOrMaybeDocument.isRight) {
+      const maybeDocument = errorOrMaybeDocument.right;
+      if (maybeDocument.isDefined) {
+        const publicMessage = asPublicExtendedMessage(maybeDocument.get);
+        return ResponseSuccessJson(publicMessage);
       } else {
-        resolve(ResponseErrorNotFound("Message not found"));
+        return ResponseErrorNotFound("Message not found");
       }
-    }, reject);
-  });
+    } else {
+      return(ResponseErrorGeneric(`Error while creating Message|${errorOrMaybeDocument.left.code}`));
+    }
+  };
 }
 
 /**
@@ -231,14 +243,14 @@ export function GetMessage(
  * Handles requests for getting all message for a recipient.
  */
 export function GetMessagesHandler(messageModel: MessageModel): IGetMessagesHandler {
-  return (_, fiscalCode) => new Promise((resolve) => {
-    const retrievedMessagesIterator = messageModel.findMessages(fiscalCode);
+  return async (_, fiscalCode) => {
+    const retrievedMessagesIterator = await messageModel.findMessages(fiscalCode);
     const publicExtendedMessagesIterator = mapResultIterator(
       retrievedMessagesIterator,
       asPublicExtendedMessage,
     );
-    resolve(ResponseSuccessJsonIterator(publicExtendedMessagesIterator));
-  });
+    return(ResponseSuccessJsonIterator(publicExtendedMessagesIterator));
+  };
 }
 
 /**

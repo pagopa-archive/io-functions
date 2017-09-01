@@ -45,9 +45,9 @@ export function index(context: IContextWithBindings): void {
   // since this function gets triggered by a queued message that gets
   // deserialized from a json object, we must first check that what we
   // got is what we expect.
-  if (context.bindings.emailNotification != null && isIEmailNotificationEvent(context.bindings.emailNotification)) {
+  const emailNotificationEvent = context.bindings.emailNotification;
+  if (emailNotificationEvent !== undefined && isIEmailNotificationEvent(emailNotificationEvent)) {
     // it is an IEmailNotificationEvent
-    const emailNotificationEvent = context.bindings.emailNotification;
     context.log(`Dequeued email notification|${emailNotificationEvent.message.fiscalCode}`);
 
     // collect the message and the recipient addresses

@@ -20,13 +20,12 @@ import {
   wrapRequestHandler,
 } from "../utils/request_middleware";
 
-import { handleNullableResultAndRespond } from "../../lib/utils/error_handler";
-
 import {
   IResponseErrorGeneric,
   IResponseErrorNotFound,
   IResponseErrorValidation,
   IResponseSuccessJson,
+  ResponseErrorGeneric,
   ResponseErrorNotFound,
   ResponseSuccessJson,
 } from "../utils/response";
@@ -37,6 +36,7 @@ import {
   IProfile,
   IPublicExtendedProfile,
   IPublicLimitedProfile,
+  IRetrievedProfile,
   ProfileModel,
 } from "../models/profile";
 
@@ -52,7 +52,8 @@ type IGetProfileHandler = (
 ) => Promise<
   IResponseSuccessJson<IPublicLimitedProfile> |
   IResponseSuccessJson<IPublicExtendedProfile> |
-  IResponseErrorNotFound
+  IResponseErrorNotFound |
+  IResponseErrorGeneric
 >;
 
 /**
@@ -75,25 +76,29 @@ type IUpsertProfileHandler = (
  * Return a type safe GetProfile handler.
  */
 export function GetProfileHandler(profileModel: ProfileModel): IGetProfileHandler {
-  return (auth, fiscalCode) => new Promise((resolve, reject) => {
-    profileModel.findOneProfileByFiscalCode(fiscalCode).then(
-      (profile) => {
-        if (profile !== null) {
-          if (auth.groups.has(UserGroup.TrustedApplications)) {
-            // if the client is a trusted application we return the
-            // extended profile
-            resolve(ResponseSuccessJson(asPublicExtendedProfile(profile)));
-          } else {
-            // or else, we return a limited profile
-            resolve(ResponseSuccessJson(asPublicLimitedProfile(profile)));
-          }
+  return async (auth, fiscalCode) => {
+    const errorOrMaybeProfile = await profileModel.findOneProfileByFiscalCode(fiscalCode);
+    if (errorOrMaybeProfile.isRight) {
+      const maybeProfile = errorOrMaybeProfile.right;
+      if (maybeProfile.isDefined) {
+        const profile = maybeProfile.get;
+        if (auth.groups.has(UserGroup.TrustedApplications)) {
+          // if the client is a trusted application we return the
+          // extended profile
+          return(ResponseSuccessJson(asPublicExtendedProfile(profile)));
         } else {
-          resolve(ResponseErrorNotFound("Profile not found"));
+          // or else, we return a limited profile
+          return(ResponseSuccessJson(asPublicLimitedProfile(profile)));
         }
-      },
-      reject,
-    );
-  });
+      } else {
+        return(ResponseErrorNotFound("Profile not found"));
+      }
+    } else {
+      return ResponseErrorGeneric(
+        `Error while retrieving the profile|${errorOrMaybeProfile.left.code}`,
+      );
+    }
+  };
 }
 
 /**
@@ -133,44 +138,70 @@ export const ProfilePayloadMiddleware: IRequestMiddleware<never, IProfilePayload
     }));
   };
 
+async function createNewProfileFromPayload(
+  profileModel: ProfileModel,
+  fiscalCode: FiscalCode,
+  profileModelPayload: IProfilePayload,
+): Promise<IResponseSuccessJson<IPublicExtendedProfile> | IResponseErrorGeneric> {
+  // create a new profile
+  const profile: IProfile = {
+    email: profileModelPayload.email,
+    fiscalCode,
+  };
+  const errorOrProfile = await profileModel.createProfile(profile);
+  const errorOrProfileAsPublicExtendedProfile = errorOrProfile.mapRight(asPublicExtendedProfile);
+  if (errorOrProfileAsPublicExtendedProfile.isRight) {
+    return ResponseSuccessJson(errorOrProfileAsPublicExtendedProfile.right);
+  } else {
+    return ResponseErrorGeneric(
+      `Error while creating a new profile|${errorOrProfileAsPublicExtendedProfile.left.code}`,
+    );
+  }
+}
+
+async function updateExistingProfileFromPayload(
+  profileModel: ProfileModel,
+  existingProfile: IRetrievedProfile,
+  profileModelPayload: IProfilePayload,
+): Promise<IResponseSuccessJson<IPublicExtendedProfile> | IResponseErrorGeneric> {
+  const profile = {
+    ...existingProfile,
+    email: profileModelPayload.email,
+  };
+  const errorOrProfile = await profileModel.updateProfile(profile);
+  const errorOrProfileAsPublicExtendedProfile = errorOrProfile.mapRight(asPublicExtendedProfile);
+  if (errorOrProfileAsPublicExtendedProfile.isRight) {
+    return ResponseSuccessJson(errorOrProfileAsPublicExtendedProfile.right);
+  } else {
+    return ResponseErrorGeneric(
+      `Error while updating the existing profile|${errorOrProfileAsPublicExtendedProfile.left.code}`,
+    );
+  }
+}
+
 /**
  * This handler will receive attributes for a profile and create a
  * profile with those attributes if the profile does not yet exist or
  * update the profile with it already exist.
  */
 export function UpsertProfileHandler(profileModel: ProfileModel): IUpsertProfileHandler {
-  return (_, fiscalCode, profileModelPayload) => new Promise((resolve, reject) => {
-    const existingProfilePromise = profileModel.findOneProfileByFiscalCode(fiscalCode);
-    existingProfilePromise.then((queryProfileResult) => {
-      if (queryProfileResult == null) {
+  return async (_, fiscalCode, profileModelPayload) => {
+    const errorOrMaybeProfile = await profileModel.findOneProfileByFiscalCode(fiscalCode);
+    if (errorOrMaybeProfile.isRight) {
+      const maybeProfile = errorOrMaybeProfile.right;
+      if (maybeProfile.isEmpty) {
         // create a new profile
-        const profile: IProfile = {
-          email: profileModelPayload.email,
-          fiscalCode,
-        };
-        profileModel.createProfile(profile).then(
-          (p) => p !== null ? asPublicExtendedProfile(p) : null,
-          reject,
-        ).then(
-          handleNullableResultAndRespond(resolve, "Error while creating a new profile"),
-          reject,
-        );
+        return createNewProfileFromPayload(profileModel, fiscalCode, profileModelPayload);
       } else {
         // update existing profile
-        const profile = {
-          ...queryProfileResult,
-          email: profileModelPayload.email,
-        };
-        profileModel.updateProfile(profile).then(
-          (p) => p !== null ? asPublicExtendedProfile(p) : null,
-          reject,
-        ).then(
-          handleNullableResultAndRespond(resolve, "Error while updating the profile"),
-          reject,
-        );
+        return updateExistingProfileFromPayload(profileModel, maybeProfile.get, profileModelPayload);
       }
-    });
-  });
+    } else {
+      return ResponseErrorGeneric(
+        `Error|${errorOrMaybeProfile.left.code}`,
+      );
+    }
+  };
 }
 
 /**
