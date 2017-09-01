@@ -1,3 +1,4 @@
-import * as azureFunction from "../lib/emailnotifications_queue_handler";
+import { index } from "../lib/emailnotifications_queue_handler";
 
-export default azureFunction;
+// tslint:disable-next-line:no-object-mutation
+module.exports = index;

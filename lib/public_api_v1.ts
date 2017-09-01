@@ -59,4 +59,4 @@ app.get("/api/v1/messages/:fiscalcode", GetMessages(messageModel));
 app.post("/api/v1/messages/:fiscalcode", CreateMessage(organizationModel, messageModel));
 
 // Binds the express app to an Azure Function handler
-export default createAzureFunctionHandler(app);
+export const index = createAzureFunctionHandler(app);
