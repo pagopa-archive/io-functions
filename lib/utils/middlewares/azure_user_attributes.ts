@@ -14,7 +14,7 @@ import {
   IResponseErrorGeneric,
   ResponseErrorGeneric,
 } from "../response";
-import { isModelId, ModelId } from "../versioned_model";
+import { isModelId } from "../versioned_model";
 
 interface IAzureUserNote {
   readonly organizationId?: string;
@@ -29,27 +29,22 @@ export interface IAzureUserAttributes {
  * Attempts to fetch the Organization associated to the user in the
  * user custom attributes.
  */
-function getUserOrganization(
+async function getUserOrganization(
   organizationModel: OrganizationModel,
   azureUserAttributes: IAzureUserNote,
 ): Promise<Option<IRetrievedOrganization>> {
-  return option(azureUserAttributes.organizationId)
-    .flatMap<ModelId>((maybeOrganizationId) => {
-      if (maybeOrganizationId !== undefined && isModelId(maybeOrganizationId)) {
-        return some(maybeOrganizationId);
-      } else {
-        return none;
-      }
-    }).map((organizationId) => {
-      return organizationModel.findLastVersionById(organizationId)
-        .then((result) => {
-          if (result !== null) {
-            return some(result);
-          } else {
-            return none;
-          }
-        });
-    }).getOrElse(() => Promise.resolve(none));
+  const organizationId = azureUserAttributes.organizationId;
+  if (organizationId === undefined || !isModelId(organizationId)) {
+    return Promise.resolve(none);
+  }
+
+  const errorOrMaybeOrganization = await organizationModel.findLastVersionById(organizationId);
+
+  if (errorOrMaybeOrganization.isRight) {
+    return errorOrMaybeOrganization.right;
+  } else {
+    return Promise.resolve(none);
+  }
 }
 
 /**

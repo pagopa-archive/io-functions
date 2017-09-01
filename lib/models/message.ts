@@ -1,6 +1,9 @@
 import * as DocumentDb from "documentdb";
 import * as DocumentDbUtils from "../utils/documentdb";
 
+import { Option, option } from "ts-option";
+import { Either } from "../utils/either";
+
 import { FiscalCode, isFiscalCode } from "../utils/fiscalcode";
 import { LimitedFields } from "../utils/types";
 import { ModelId } from "../utils/versioned_model";
@@ -94,52 +97,43 @@ export class MessageModel {
    *
    * @param message The new Message
    */
-  public async createMessage(message: INewMessage): Promise<IRetrievedMessage> {
-    const createdDocument = await DocumentDbUtils.createDocument(
+  public async createMessage(message: INewMessage): Promise<Either<DocumentDb.QueryError, IRetrievedMessage>> {
+    const maybeCreatedDocument = await DocumentDbUtils.createDocument(
       this.dbClient,
       this.collectionUrl,
       message,
       message.fiscalCode,
     );
-    return {
+    return maybeCreatedDocument.mapRight((createdDocument) => ({
       ...createdDocument,
       kind: "IRetrievedMessage",
-    };
+    } as IRetrievedMessage));
   }
 
   /**
    * Returns the message associated to the provided message ID
    *
-   * @param messageId The ID of the message
+   * @param fiscalCode  The fiscal code associated to this message (used as partitionKey)
+   * @param messageId   The ID of the message
    */
-  public findMessage(fiscalCode: FiscalCode, messageId: string): Promise<IRetrievedMessage | null> {
+  public async findMessage(
+    fiscalCode: FiscalCode, messageId: string,
+  ): Promise<Either<DocumentDb.QueryError, IRetrievedMessage>> {
     const documentUrl = DocumentDbUtils.getDocumentUrl(
       this.collectionUrl,
       messageId,
     );
-    return new Promise((resolve, reject) => {
-      // To properly handle "not found" case vs other errors
-      // we need to handle the Promise returned by readDocument
-      // to be able to catch the 404 error in case the document
-      // does not exist and resolve the outer Promise to null.
-      DocumentDbUtils.readDocument<IMessage>(
-        this.dbClient,
-        documentUrl,
-        fiscalCode,
-      ).then(
-        (document) => resolve({
-          ...document,
-          kind: "IRetrievedMessage",
-        }),
-        (error: DocumentDb.QueryError) => {
-          if (error.code === 404) {
-            resolve(null);
-          } else {
-            reject(error);
-          }
-        },
-      );
-    });
+
+    const errorOrDocument = await DocumentDbUtils.readDocument<IMessage>(
+      this.dbClient,
+      documentUrl,
+      fiscalCode,
+    );
+
+    return errorOrDocument.mapRight((document) => ({
+      ...document,
+      kind: "IRetrievedMessage",
+    } as IRetrievedMessage));
   }
 
   /**
@@ -148,13 +142,13 @@ export class MessageModel {
    * @param fiscalCode The fiscal code of the recipient
    * @param messageId The ID of the message
    */
-  public async findMessageForRecipient(fiscalCode: FiscalCode, messageId: string): Promise<IRetrievedMessage | null> {
-    const message = await this.findMessage(fiscalCode, messageId);
-    if (message != null && message.fiscalCode === fiscalCode) {
-      return message;
-    } else {
-      return null;
-    }
+  public async findMessageForRecipient(
+    fiscalCode: FiscalCode, messageId: string,
+  ): Promise<Either<DocumentDb.QueryError, Option<IRetrievedMessage>>> {
+    const errorOrMessage = await this.findMessage(fiscalCode, messageId);
+    return errorOrMessage.mapRight((message) =>
+      option(message).filter((m) => m.fiscalCode === fiscalCode),
+    );
   }
 
   /**
