@@ -220,21 +220,31 @@ export function queryOneDocument<T>(
   collectionUrl: DocumentDbCollectionUrl,
   query: DocumentDb.DocumentQuery,
 ): Promise<Either<DocumentDb.QueryError, Option<T>>> {
+  // get a result iterator for the query
   const iterator = queryDocuments<T>(client, collectionUrl, query);
   return new Promise((resolve, reject) => {
+    // fetch the first batch of results, since we're looking for just the
+    // first result, we should go no further
     iterator.executeNext().then(
       (maybeError) => {
+        // here we may have a query error or possibly a document, if at
+        // least one was found
         maybeError.mapRight((maybeDocuments) => {
+          // it's not an error
           maybeDocuments.map((documents) => {
+            // query resulted in at least a document
             if (documents && documents.length > 0 && documents[0]) {
+              // resolve with the first document
               resolve(right(some(documents[0])));
             } else {
+              // query result was empty
               resolve(right(none));
             }
           }).getOrElse(() => {
             resolve(right(none as Option<T>));
           });
         }).mapLeft((error) => {
+          // it's an error
           resolve(left(error));
         });
       },

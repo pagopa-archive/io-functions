@@ -61,29 +61,34 @@ async function handleMessage(
   const errorOrMaybeProfile = await profileModel.findOneProfileByFiscalCode(retrievedMessage.fiscalCode);
 
   if (errorOrMaybeProfile.isRight) {
+    // query succeeded, let's see if we have a result
     const maybeProfile = errorOrMaybeProfile.right;
     if (maybeProfile.isDefined) {
+      // yes we have a matching profile
       const profile = maybeProfile.get;
       // we got a valid profile associated to the message, we can trigger
       // notifications on the configured channels.
       // TODO: emit to all channels (push notification, sms, etc...)
 
-      // in case an email address is configured in the profile, we can
-      // trigger an email notification event
-      // context.log.verbose(`Queing email notification|${errorOrMaybeProfile.email}|${retrievedMessage.bodyShort}`);
       if (profile.email !== undefined) {
+        // in case an email address is configured in the profile, we can
+        // trigger an email notification event
+        // context.log.verbose(`Queing email notification|${errorOrMaybeProfile.email}|${retrievedMessage.bodyShort}`);
         const emailNotification: IEmailNotificationEvent = {
           message: retrievedMessage,
           recipients: [ profile.email ],
         };
         return(right(emailNotification));
       } else {
+        // we have a profile, but the profile has no email configured
         return(left(ProcessingErrors.NO_EMAIL));
       }
     } else {
+      // query succeeded but no profile was found
       return(left(ProcessingErrors.NO_PROFILE));
     }
   } else {
+    // query failed
     return left(ProcessingErrors.TRANSIENT);
   }
 
@@ -99,7 +104,7 @@ export function index(context: IContextWithBindings): void {
   if (context.bindings.createdMessage !== undefined && isICreatedMessageEvent(context.bindings.createdMessage)) {
     // it is an ICreatedMessageEvent
     const createdMessageEvent = context.bindings.createdMessage;
-    context.log(`Dequeued message|${createdMessageEvent.message.fiscalCode}`);
+    context.log(`Dequeued message|${createdMessageEvent.message.id}|${createdMessageEvent.message.fiscalCode}`);
 
     const retrievedMessage = createdMessageEvent.message;
 
