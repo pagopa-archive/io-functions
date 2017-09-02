@@ -70,9 +70,25 @@ describe("AzureApiAuthMiddleware", () => {
     });
   });
 
-  it("should succeed if the use is part of an allowed group", () => {
+  it("should succeed if the user is part of an allowed group", () => {
     const mockRequest = {
-      header: jest.fn(() => "Developers,trusted-apps"),
+      header: jest.fn(() => "Developers"),
+    };
+
+    const middleware = AzureApiAuthMiddleware(anAllowedGroupSet);
+
+    return middleware(mockRequest as any).then((result) => {
+      expect(mockRequest.header).toHaveBeenCalledWith("x-user-groups");
+      expect(result.isRight).toBeTruthy();
+      if (result.isRight) {
+        expect(result.right.groups).toContain(UserGroup.Developers);
+      }
+    });
+  });
+
+  it("should succeed if the user is part of at least an allowed group", () => {
+    const mockRequest = {
+      header: jest.fn(() => "Administrators,Developers,AnotherGroup"),
     };
 
     const middleware = AzureApiAuthMiddleware(anAllowedGroupSet);
