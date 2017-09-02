@@ -30,12 +30,14 @@ import {
   IResponseErrorValidation,
   IResponseSuccessJson,
   IResponseSuccessJsonIterator,
+  IResponseSuccessRedirectToResource,
   ResponseErrorForbiddenNotAuthorized,
   ResponseErrorGeneric,
   ResponseErrorNotFound,
   ResponseErrorValidation,
   ResponseSuccessJson,
   ResponseSuccessJsonIterator,
+  ResponseSuccessRedirectToResource,
 } from "../utils/response";
 
 import { mapResultIterator } from "../utils/documentdb";
@@ -48,6 +50,7 @@ import {
 
 import {
   asPublicExtendedMessage,
+  IMessage,
   INewMessage,
   IPublicExtendedMessage,
   MessageModel,
@@ -103,7 +106,7 @@ type ICreateMessageHandler = (
   fiscalCode: FiscalCode,
   messagePayload: IMessagePayload,
 ) => Promise<
-  IResponseSuccessJson<IPublicExtendedMessage> |
+  IResponseSuccessRedirectToResource<IMessage> |
   IResponseErrorValidation |
   IResponseErrorGeneric
 >;
@@ -149,40 +152,47 @@ type IGetMessagesHandler = (
  */
 export function CreateMessageHandler(messageModel: MessageModel): ICreateMessageHandler {
   return async (context, _, userAttributes, fiscalCode, messagePayload) => {
-    if (userAttributes.organization !== undefined) {
-      // we need the user to be associated to a valid organization for him
-      // to be able to send a message
-      const message: INewMessage = {
-        bodyShort: messagePayload.body_short,
-        fiscalCode,
-        id: ulid(),
-        kind: "INewMessage",
-        senderOrganizationId: userAttributes.organization.organizationId,
-      };
-
-      const errorOrMessage = await messageModel.createMessage(message);
-
-      if (errorOrMessage.isRight) {
-        const retrievedMessage = errorOrMessage.right;
-        context.log(`>> message stored [${retrievedMessage.id}]`);
-
-        const createdMessage: ICreatedMessageEvent = {
-          message: retrievedMessage,
-        };
-
-        // queue the message to the created messages queue by setting
-        // the message to the output binding of this function
-        // tslint:disable-next-line:no-object-mutation
-        context.bindings.createdMessage = createdMessage;
-
-        const publicMessage = asPublicExtendedMessage(retrievedMessage);
-        return(ResponseSuccessJson(publicMessage));
-      } else {
-        return(ResponseErrorGeneric(`Error while creating Message|${errorOrMessage.left.code}`));
-      }
-    } else {
+    const userOrganization = userAttributes.organization;
+    if (!userOrganization) {
+      // to be able to send a message the user musy be part of an organization
       return(ResponseErrorValidation("The user is not part of any organization."));
     }
+
+    // we need the user to be associated to a valid organization for him
+    // to be able to send a message
+    const message: INewMessage = {
+      bodyShort: messagePayload.body_short,
+      fiscalCode,
+      id: ulid(),
+      kind: "INewMessage",
+      senderOrganizationId: userOrganization.organizationId,
+    };
+
+    // attempt to create the message
+    const errorOrMessage = await messageModel.createMessage(message);
+
+    if (errorOrMessage.isRight) {
+      // message creation succeeded
+      const retrievedMessage = errorOrMessage.right;
+      context.log(`>> message created|${fiscalCode}|${userOrganization.organizationId}|${retrievedMessage.id}`);
+
+      // prepare the created message event
+      const createdMessageEvent: ICreatedMessageEvent = {
+        message: retrievedMessage,
+      };
+
+      // queue the message to the created messages queue by setting
+      // the message to the output binding of this function
+      // tslint:disable-next-line:no-object-mutation
+      context.bindings.createdMessage = createdMessageEvent;
+
+      // redirect the client to the message resource
+      return(ResponseSuccessRedirectToResource(retrievedMessage, `/api/v1/messages/${fiscalCode}/${message.id}`));
+    } else {
+      // we got an error while creating the message
+      return(ResponseErrorGeneric(`Error while creating Message|${errorOrMessage.left.code}`));
+    }
+
   };
 }
 
