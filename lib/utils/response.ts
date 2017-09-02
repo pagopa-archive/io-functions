@@ -81,6 +81,25 @@ export function ResponseSuccessJsonIterator<T>(i: IResultIterator<T>): IResponse
 }
 
 /**
+ * Interface for a successful response returning a redirect to a resource.
+ */
+export interface IResponseSuccessRedirectToResource<T> extends IResponse {
+  readonly kind: "IResponseSuccessRedirectToResource";
+  readonly resource: T; // type checks the right kind of resource
+}
+
+/**
+ * Returns a successful response returning a redirect to a resource.
+ */
+export function ResponseSuccessRedirectToResource<T>(resource: T, url: string): IResponseSuccessRedirectToResource<T> {
+  return {
+    apply: (res) => res.redirect(202, url),
+    kind: "IResponseSuccessRedirectToResource",
+    resource,
+  };
+}
+
+/**
  * Interface for a response describing a 404 error.
  */
 export interface IResponseErrorNotFound extends IResponse {

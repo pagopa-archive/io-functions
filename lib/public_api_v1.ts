@@ -54,7 +54,7 @@ app.post("/api/v1/debug", debugHandler);
 app.get("/api/v1/profiles/:fiscalcode", GetProfile(profileModel));
 app.post("/api/v1/profiles/:fiscalcode", UpsertProfile(profileModel));
 
-app.get("/api/v1/messages/:fiscalcode/:id", GetMessage(messageModel));
+app.get("/api/v1/messages/:fiscalcode/:id", GetMessage(organizationModel, messageModel));
 app.get("/api/v1/messages/:fiscalcode", GetMessages(messageModel));
 app.post("/api/v1/messages/:fiscalcode", CreateMessage(organizationModel, messageModel));
 
