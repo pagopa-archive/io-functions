@@ -40,7 +40,12 @@ type GetDebug = (
 const getDebugHandler: GetDebug = (request, auth, userAttributes) => {
   return new Promise((resolve, _) => {
     resolve(ResponseSuccessJson({
-      auth,
+      auth: {
+        ...auth,
+        // must convert the Set to an Array
+        // see https://stackoverflow.com/questions/31190885/json-stringify-a-set
+        groups: Array.from(auth.groups.values()),
+      },
       body: request.body,
       headers: request.headers,
       params: request.params,
