@@ -18,7 +18,7 @@ import {
 /**
  * Enumerates all supported user groups
  */
-export enum UserGroup {
+export const enum UserGroup {
   Administrators = "Administrators",
   Developers = "Developers",
   TrustedApplications = "TrustedApplications",
