@@ -24,11 +24,13 @@ import { FiscalCodeMiddleware } from "../utils/middlewares/fiscalcode";
 import { RequiredIdParamMiddleware } from "../utils/middlewares/required_id_param";
 import { IRequestMiddleware, withRequestMiddlewares, wrapRequestHandler } from "../utils/request_middleware";
 import {
+  IResponseErrorForbiddenNotAuthorized,
   IResponseErrorGeneric,
   IResponseErrorNotFound,
   IResponseErrorValidation,
   IResponseSuccessJson,
   IResponseSuccessJsonIterator,
+  ResponseErrorForbiddenNotAuthorized,
   ResponseErrorGeneric,
   ResponseErrorNotFound,
   ResponseErrorValidation,
@@ -115,13 +117,15 @@ type ICreateMessageHandler = (
  */
 type IGetMessageHandler = (
   auth: IAzureApiAuthorization,
+  attrs: IAzureUserAttributes,
   fiscalCode: FiscalCode,
   messageId: string,
 ) => Promise<
   IResponseSuccessJson<IPublicExtendedMessage> |
   IResponseErrorNotFound |
   IResponseErrorGeneric |
-  IResponseErrorValidation
+  IResponseErrorValidation |
+  IResponseErrorForbiddenNotAuthorized
 >;
 
 /**
@@ -206,18 +210,43 @@ export function CreateMessage(
  * Handles requests for getting a single message for a recipient.
  */
 export function GetMessageHandler(messageModel: MessageModel): IGetMessageHandler {
-  return async (_, fiscalCode, messageId) => {
+  return async (userAuth, userAttributes, fiscalCode, messageId) => {
+    // whether the user is a trusted application (i.e. can access al inboxes)
+    const isTrustedApplication = userAuth.groups.has(UserGroup.TrustedApplications);
+    if (!isTrustedApplication) {
+      // since this is not a trusted application we must allow only accessing messages
+      // that have been sent by this organization
+      if (!userAttributes.organization) {
+        // the user doesn't have any organization associated, so we can't continue
+        return(ResponseErrorForbiddenNotAuthorized);
+      }
+    }
     const errorOrMaybeDocument = await messageModel.findMessageForRecipient(fiscalCode, messageId);
     if (errorOrMaybeDocument.isRight) {
       const maybeDocument = errorOrMaybeDocument.right;
       if (maybeDocument.isDefined) {
-        const publicMessage = asPublicExtendedMessage(maybeDocument.get);
-        return ResponseSuccessJson(publicMessage);
+        const retrievedMessage = maybeDocument.get;
+        if (isTrustedApplication) {
+          // the user is a trusted application, we can share the message
+          const publicMessage = asPublicExtendedMessage(retrievedMessage);
+          return ResponseSuccessJson(publicMessage);
+        } else if (
+          userAttributes.organization &&
+          retrievedMessage.senderOrganizationId === userAttributes.organization.organizationId
+        ) {
+          // the user is the sender of this message, we can share it with him
+          // TODO: share also notification status
+          const publicMessage = asPublicExtendedMessage(retrievedMessage);
+          return ResponseSuccessJson(publicMessage);
+        } else {
+          // the user is not the sender of the message, then he is not authorized
+          return(ResponseErrorForbiddenNotAuthorized);
+        }
       } else {
         return ResponseErrorNotFound("Message not found");
       }
     } else {
-      return(ResponseErrorGeneric(`Error while creating Message|${errorOrMaybeDocument.left.code}`));
+      return(ResponseErrorGeneric(`Error while retrieving the message|${errorOrMaybeDocument.left.code}`));
     }
   };
 }
@@ -226,6 +255,7 @@ export function GetMessageHandler(messageModel: MessageModel): IGetMessageHandle
  * Wraps a GetMessage handler inside an Express request handler.
  */
 export function GetMessage(
+  organizationModel: OrganizationModel,
   messageModel: MessageModel,
 ): express.RequestHandler {
   const handler = GetMessageHandler(messageModel);
@@ -233,6 +263,7 @@ export function GetMessage(
     AzureApiAuthMiddleware(new Set([
       UserGroup.TrustedApplications,
     ])),
+    AzureUserAttributesMiddleware(organizationModel),
     FiscalCodeMiddleware,
     RequiredIdParamMiddleware,
   );
