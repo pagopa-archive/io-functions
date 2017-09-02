@@ -271,7 +271,10 @@ export function GetMessage(
   const handler = GetMessageHandler(messageModel);
   const middlewaresWrap = withRequestMiddlewares(
     AzureApiAuthMiddleware(new Set([
+      // trusted applications will be able to access all messages
       UserGroup.TrustedApplications,
+      // developers will be able to access only messages they sent
+      UserGroup.Developers,
     ])),
     AzureUserAttributesMiddleware(organizationModel),
     FiscalCodeMiddleware,
