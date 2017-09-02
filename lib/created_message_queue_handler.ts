@@ -107,17 +107,24 @@ export function index(context: IContextWithBindings): void {
       if (errorOrNotification.isRight) {
         // tslint:disable-next-line:no-object-mutation
         context.bindings.emailNotification = errorOrNotification.right;
+        context.done();
       } else {
         switch (errorOrNotification.left) {
-          case ProcessingErrors.NO_PROFILE:
+          case ProcessingErrors.NO_PROFILE: {
             context.log.error(`Fiscal code has no associated profile|${retrievedMessage.fiscalCode}`);
             context.done();
-          case ProcessingErrors.NO_EMAIL:
+            break;
+          }
+          case ProcessingErrors.NO_EMAIL: {
             context.log.error(`Profile has no associated email|${retrievedMessage.fiscalCode}`);
             context.done();
-          case ProcessingErrors.TRANSIENT:
+            break;
+          }
+          case ProcessingErrors.TRANSIENT: {
             context.log.error(`Transient error, retrying|${retrievedMessage.fiscalCode}`);
             context.done("Transient error");
+            break;
+          }
         }
       }
     },
