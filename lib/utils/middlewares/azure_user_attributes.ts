@@ -10,7 +10,7 @@ import { left, right } from "../either";
 import { IRetrievedOrganization, OrganizationModel } from "../../models/organization";
 import { IRequestMiddleware } from "../request_middleware";
 import {
-  IResponseErrorForbidden,
+  IResponseErrorForbiddenNotAuthorized,
   IResponseErrorGeneric,
   ResponseErrorGeneric,
 } from "../response";
@@ -66,7 +66,7 @@ async function getUserOrganization(
  */
 export function AzureUserAttributesMiddleware(
   organizationModel: OrganizationModel,
-): IRequestMiddleware<IResponseErrorForbidden | IResponseErrorGeneric, IAzureUserAttributes> {
+): IRequestMiddleware<IResponseErrorForbiddenNotAuthorized | IResponseErrorGeneric, IAzureUserAttributes> {
   return (request) => new Promise((resolve) => {
 
     // now we check whether some custom user attributes have been set

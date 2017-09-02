@@ -123,25 +123,38 @@ export function ResponseErrorValidation(message: string): IResponseErrorValidati
 }
 
 /**
- * Interface for a response describing an authorization error.
+ * The user is not allowed here.
  */
-export interface IResponseErrorForbidden extends IResponse {
-  readonly kind: "IResponseErrorForbidden";
+export interface IResponseErrorForbiddenNotAuthorized extends IResponse {
+  readonly kind: "IResponseErrorForbiddenNotAuthorized";
 }
 
 /**
- * Returns a response describing an authorization error.
- *
- * @param message The error message
+ * The user is not allowed here.
  */
-export function ResponseErrorForbidden(message: string): IResponseErrorForbidden {
-  return {
-    apply: (res) => res.status(403).json({
-      error: message,
-    }),
-    kind: "IResponseErrorForbidden",
-  };
+export const ResponseErrorForbiddenNotAuthorized: IResponseErrorForbiddenNotAuthorized = {
+  apply: (res) => res.status(403).json({
+    error: "You are not allowed here",
+  }),
+  kind: "IResponseErrorForbiddenNotAuthorized",
+};
+
+/**
+ * The user is not part of any valid authorization groups.
+ */
+export interface IResponseErrorForbiddenNoAuthorizationGroups extends IResponse {
+  readonly kind: "IResponseErrorForbiddenNoAuthorizationGroups";
 }
+
+/**
+ * The user is not part of any valid authorization groups.
+ */
+export const ResponseErrorForbiddenNoAuthorizationGroups: IResponseErrorForbiddenNoAuthorizationGroups = {
+  apply: (res) => res.status(403).json({
+    error: "You are not part of any valid authorization groups",
+  }),
+  kind: "IResponseErrorForbiddenNoAuthorizationGroups",
+};
 
 /**
  * Interface for a response describing a generic server error.

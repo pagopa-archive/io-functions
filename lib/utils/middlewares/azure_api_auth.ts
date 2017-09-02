@@ -9,8 +9,10 @@ import { left, right } from "../either";
 
 import { IRequestMiddleware } from "../request_middleware";
 import {
-  IResponseErrorForbidden,
-  ResponseErrorForbidden,
+  IResponseErrorForbiddenNoAuthorizationGroups,
+  IResponseErrorForbiddenNotAuthorized,
+  ResponseErrorForbiddenNoAuthorizationGroups,
+  ResponseErrorForbiddenNotAuthorized,
 } from "../response";
 
 /**
@@ -27,6 +29,7 @@ export enum UserGroup {
  */
 function toUserGroup(name: string): Option<UserGroup> {
   switch (name) {
+    case UserGroup.Administrators: return some(UserGroup.Administrators);
     case UserGroup.Developers: return some(UserGroup.Developers);
     case UserGroup.TrustedApplications: return some(UserGroup.TrustedApplications);
     default: return none;
@@ -70,7 +73,10 @@ function getGroupsFromHeader(groupsHeader: string): Set<UserGroup> {
  */
 export function AzureApiAuthMiddleware(
   allowedGroups: Set<UserGroup>,
-): IRequestMiddleware<IResponseErrorForbidden, IAzureApiAuthorization> {
+): IRequestMiddleware<
+  IResponseErrorForbiddenNotAuthorized | IResponseErrorForbiddenNoAuthorizationGroups,
+  IAzureApiAuthorization
+> {
   return (request) => new Promise((resolve) => {
     // to correctly process the request, we must associate the correct
     // authorizations to the user that made the request; to do so, we
@@ -99,12 +105,12 @@ export function AzureApiAuthMiddleware(
           resolve(right(authInfo));
         } else {
           // or else no valid groups, the user is not allowed here
-          resolve(left(ResponseErrorForbidden(`You are not allowed here`)));
+          resolve(left(ResponseErrorForbiddenNotAuthorized));
         }
 
       }).getOrElse(() => {
         // or else no valid groups
-        resolve(left(ResponseErrorForbidden(`You are not part of any valid group|${groupsHeader}`)));
+        resolve(left(ResponseErrorForbiddenNoAuthorizationGroups));
       });
 
   });
