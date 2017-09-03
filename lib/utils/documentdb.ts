@@ -84,6 +84,15 @@ export function getDocumentUrl(collectionUrl: DocumentDbCollectionUrl, documentI
 }
 
 /**
+ * Returns the URL for a DocumentDB document from the _self field of a document
+ *
+ * @param document  The document
+ */
+export function getDocumentUrlFromDocument<T extends DocumentDb.AbstractMeta>(document: T): DocumentDbDocumentUrl {
+  return document._self as DocumentDbDocumentUrl;
+}
+
+/**
  * Returns a DatabaseMeta object for a database URL
  *
  * @param client The DocumentDB client
@@ -135,8 +144,7 @@ export function createDocument<T>(
   client: DocumentDb.DocumentClient,
   collectionUrl: DocumentDbCollectionUrl,
   document: T & DocumentDb.NewDocument,
-  // tslint:disable-next-line:readonly-array
-  partitionKey: string | string[],
+  partitionKey: string,
 ): Promise<Either<DocumentDb.QueryError, T & DocumentDb.RetrievedDocument>> {
   return new Promise((resolve) => {
     client.createDocument(collectionUrl, document, {
@@ -160,8 +168,7 @@ export function createDocument<T>(
 export function readDocument<T>(
   client: DocumentDb.DocumentClient,
   documentUrl: DocumentDbDocumentUrl,
-  // tslint:disable-next-line:readonly-array
-  partitionKey: string | string[],
+  partitionKey: string,
 ): Promise<Either<DocumentDb.QueryError, T & DocumentDb.RetrievedDocument>> {
   return new Promise((resolve) => {
     client.readDocument(documentUrl, {
@@ -271,4 +278,31 @@ export function mapResultIterator<A, B>(i: IResultIterator<A>, f: (a: A) => B): 
         }).mapLeft((error) => resolve(left(error)));
       }, reject)),
   };
+}
+
+/**
+ * Replaces an existing document with a new one
+ *
+ * @param client        The DocumentDB client
+ * @param documentUrl   The existing document URL
+ * @param document      The new document
+ * @param partitionKey  The partitionKey
+ */
+export function replaceDocument<T>(
+  client: DocumentDb.DocumentClient,
+  documentUrl: DocumentDbDocumentUrl,
+  document: T & DocumentDb.NewDocument,
+  partitionKey: string,
+): Promise<Either<DocumentDb.QueryError, T & DocumentDb.RetrievedDocument>> {
+  return new Promise((resolve) => {
+    client.replaceDocument(documentUrl, document, {
+      partitionKey,
+    }, (err, created) => {
+      if (err) {
+        resolve(left(err));
+      } else {
+        resolve(right(created as T & DocumentDb.RetrievedDocument));
+      }
+    });
+  });
 }
