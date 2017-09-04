@@ -180,7 +180,7 @@ async function handleNotification(
   // TODO: store the message ID for handling bounces and delivery updates
   // see https://nodemailer.com/usage/#sending-mail
   // see #150597597
-  const updateResult = await notificationModel.updateNotification(
+  const updateResult = await notificationModel.update(
     message.id, notification.id, setEmailNotificationSend,
   );
 

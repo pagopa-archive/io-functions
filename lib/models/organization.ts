@@ -110,7 +110,7 @@ export class OrganizationModel extends DocumentDbModel<INewOrganization, IRetrie
    *
    * @param organization The updated Profile object
    */
-  public updateOrganization(
+  public update(
     organization: IRetrievedOrganization,
   ): Promise<Either<DocumentDb.QueryError, IRetrievedOrganization>> {
     const newVersion = toNonNegativeNumber(organization.version + 1).get;

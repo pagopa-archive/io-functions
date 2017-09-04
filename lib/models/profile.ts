@@ -158,7 +158,7 @@ export class ProfileModel extends DocumentDbModel<INewProfile, IRetrievedProfile
    *
    * @param profile The updated Profile object
    */
-  public updateProfile(profile: IRetrievedProfile): Promise<Either<DocumentDb.QueryError, IRetrievedProfile>> {
+  public update(profile: IRetrievedProfile): Promise<Either<DocumentDb.QueryError, IRetrievedProfile>> {
     const newVersion = toNonNegativeNumber(profile.version + 1).get;
     const profileId = generateVersionedModelId(fiscalCodeToModelId(profile.fiscalCode), newVersion);
     return DocumentDbUtils.createDocument(

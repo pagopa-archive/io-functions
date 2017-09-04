@@ -168,7 +168,7 @@ async function updateExistingProfileFromPayload(
     ...existingProfile,
     email: profileModelPayload.email,
   };
-  const errorOrProfile = await profileModel.updateProfile(profile);
+  const errorOrProfile = await profileModel.update(profile);
   const errorOrProfileAsPublicExtendedProfile = errorOrProfile.mapRight(asPublicExtendedProfile);
   if (errorOrProfileAsPublicExtendedProfile.isRight) {
     return ResponseSuccessJson(errorOrProfileAsPublicExtendedProfile.right);

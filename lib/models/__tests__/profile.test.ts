@@ -131,7 +131,7 @@ describe("updateProfile", () => {
       version: toNonNegativeNumber(0).get,
     };
 
-    const result = await model.updateProfile(pendingProfile);
+    const result = await model.update(pendingProfile);
 
     expect(clientMock.createDocument).toHaveBeenCalledTimes(1);
     expect(clientMock.createDocument.mock.calls[0][2]).toHaveProperty("partitionKey", aFiscalCode);
@@ -161,7 +161,7 @@ describe("updateProfile", () => {
       version: toNonNegativeNumber(0).get,
     };
 
-    const result = await model.updateProfile(pendingProfile);
+    const result = await model.update(pendingProfile);
 
     expect(clientMock.createDocument).toHaveBeenCalledTimes(1);
 

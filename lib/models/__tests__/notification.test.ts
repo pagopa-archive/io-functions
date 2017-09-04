@@ -142,7 +142,7 @@ describe("updateNotification", () => {
 
     const model = new NotificationModel((clientMock as any) as DocumentDb.DocumentClient, aNotificationsCollectionUrl);
 
-    const result = await model.updateNotification(
+    const result = await model.update(
       aRetrievedNotification.messageId,
       aRetrievedNotification.id,
       updateFunction,
@@ -176,7 +176,7 @@ describe("updateNotification", () => {
 
     const model = new NotificationModel((clientMock as any) as DocumentDb.DocumentClient, aNotificationsCollectionUrl);
 
-    const result = await model.updateNotification(
+    const result = await model.update(
       aRetrievedNotification.messageId,
       aRetrievedNotification.id,
       updateFunction,
@@ -202,7 +202,7 @@ describe("updateNotification", () => {
 
     const model = new NotificationModel((clientMock as any) as DocumentDb.DocumentClient, aNotificationsCollectionUrl);
 
-    const result = await model.updateNotification(
+    const result = await model.update(
       aRetrievedNotification.messageId,
       aRetrievedNotification.id,
       updateFunction,

@@ -98,7 +98,7 @@ export class NotificationModel extends DocumentDbModel<INewNotification, IRetrie
   /**
    * Updates an existing Notification
    */
-  public async updateNotification(
+  public async update(
     messageId: string,
     notificationId: string,
     f: (current: INotification) => INotification,

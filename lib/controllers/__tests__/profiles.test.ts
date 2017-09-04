@@ -181,11 +181,11 @@ describe("UpsertProfile", () => {
 it("should update an existing profile", async () => {
 
   const profileModelMock = {
-    createProfile: jest.fn(),
+    create: jest.fn(),
     findOneProfileByFiscalCode: jest.fn(() => {
       return Promise.resolve(right(some(aRetrievedProfile)));
     }),
-    updateProfile: jest.fn(() => {
+    update: jest.fn(() => {
       return Promise.resolve(right(aRetrievedProfile));
     }),
   };
@@ -202,8 +202,8 @@ it("should update an existing profile", async () => {
     profilePayloadMock,
   );
   expect(profileModelMock.findOneProfileByFiscalCode).toHaveBeenCalledWith(aRetrievedProfile.fiscalCode);
-  expect(profileModelMock.createProfile).not.toHaveBeenCalled();
-  expect(profileModelMock.updateProfile).toHaveBeenCalledWith({
+  expect(profileModelMock.create).not.toHaveBeenCalled();
+  expect(profileModelMock.update).toHaveBeenCalledWith({
     ...aRetrievedProfile,
     email: "y@example.com",
   });
