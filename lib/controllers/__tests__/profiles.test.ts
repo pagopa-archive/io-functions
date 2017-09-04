@@ -168,7 +168,7 @@ describe("UpsertProfile", () => {
     expect(profileModelMock.create).toHaveBeenCalledWith({
       email: "x@example.com",
       fiscalCode: aRetrievedProfile.fiscalCode,
-    });
+    }, aRetrievedProfile.fiscalCode);
     expect(response.kind).toBe("IResponseSuccessJson");
     if (response.kind === "IResponseSuccessJson") {
       expect(response.value).toEqual(aPublicExtendedProfile);
@@ -180,12 +180,16 @@ describe("UpsertProfile", () => {
 
 it("should update an existing profile", async () => {
 
+  // tslint:disable-next-line:no-let
+  let updatedProfile;
+
   const profileModelMock = {
     create: jest.fn(),
     findOneProfileByFiscalCode: jest.fn(() => {
       return Promise.resolve(right(some(aRetrievedProfile)));
     }),
-    update: jest.fn(() => {
+    update: jest.fn((_, __, f) => {
+      updatedProfile = f(aRetrievedProfile);
       return Promise.resolve(right(aRetrievedProfile));
     }),
   };
@@ -203,10 +207,8 @@ it("should update an existing profile", async () => {
   );
   expect(profileModelMock.findOneProfileByFiscalCode).toHaveBeenCalledWith(aRetrievedProfile.fiscalCode);
   expect(profileModelMock.create).not.toHaveBeenCalled();
-  expect(profileModelMock.update).toHaveBeenCalledWith({
-    ...aRetrievedProfile,
-    email: "y@example.com",
-  });
+  expect(profileModelMock.update).toHaveBeenCalledTimes(1);
+  expect(updatedProfile.email).toBe("y@example.com");
   expect(response.kind).toBe("IResponseSuccessJson");
   if (response.kind === "IResponseSuccessJson") {
     expect(response.value).toEqual(aPublicExtendedProfile);

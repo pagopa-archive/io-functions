@@ -12,6 +12,15 @@ import { IProfile, IRetrievedProfile, ProfileModel } from "../profile";
 const profilesCollectionUrl = {} as DocumentDbUtils.DocumentDbCollectionUrl;
 const aFiscalCode = toFiscalCode("FRLFRC74E04B157I").get;
 
+const aRetrievedProfile: IRetrievedProfile = {
+  _self: "xyz",
+  _ts: "xyz",
+  fiscalCode: aFiscalCode,
+  id: "xyz",
+  kind: "IRetrievedProfile",
+  version: toNonNegativeNumber(0).get,
+};
+
 describe("findOneProfileByFiscalCode", () => {
 
   it("should resolve a promise to an existing profile", async () => {
@@ -72,7 +81,7 @@ describe("createProfile", () => {
       fiscalCode: aFiscalCode,
     };
 
-    const result = await model.create(newProfile);
+    const result = await model.create(newProfile, newProfile.fiscalCode);
 
     expect(clientMock.createDocument).toHaveBeenCalledTimes(1);
     expect(clientMock.createDocument.mock.calls[0][2]).toHaveProperty("partitionKey", aFiscalCode);
@@ -97,7 +106,7 @@ describe("createProfile", () => {
       fiscalCode: aFiscalCode,
     };
 
-    const result = await model.create(newProfile);
+    const result = await model.create(newProfile, newProfile.fiscalCode);
 
     expect(clientMock.createDocument).toHaveBeenCalledTimes(1);
 
@@ -118,51 +127,64 @@ describe("updateProfile", () => {
           ...newDocument,
         });
       }),
+      readDocument: jest.fn((_, __, cb) => cb(undefined, aRetrievedProfile)),
     };
 
     const model = new ProfileModel(clientMock, profilesCollectionUrl);
 
-    const pendingProfile: IRetrievedProfile = {
-      _self: "xyz",
-      _ts: "xyz",
-      fiscalCode: aFiscalCode,
-      id: "xyz",
-      kind: "IRetrievedProfile",
-      version: toNonNegativeNumber(0).get,
-    };
-
-    const result = await model.update(pendingProfile);
+    const result = await model.update(
+      aRetrievedProfile.fiscalCode,
+      aRetrievedProfile.fiscalCode,
+      (p) => {
+        return {
+          ...p,
+          email: "new@example.com",
+        };
+      },
+    );
 
     expect(clientMock.createDocument).toHaveBeenCalledTimes(1);
     expect(clientMock.createDocument.mock.calls[0][2]).toHaveProperty("partitionKey", aFiscalCode);
     expect(result.isRight).toBeTruthy();
     if (result.isRight) {
-      expect(result.right.fiscalCode).toEqual(pendingProfile.fiscalCode);
-      expect(result.right.id).toEqual(`${aFiscalCode}-${"0".repeat(15)}1`);
-      expect(result.right.version).toEqual(1);
+      const updatedProfile = result.right;
+      expect(updatedProfile.fiscalCode).toEqual(aRetrievedProfile.fiscalCode);
+      expect(updatedProfile.id).toEqual(`${aFiscalCode}-${"0".repeat(15)}1`);
+      expect(updatedProfile.version).toEqual(1);
+      expect(updatedProfile.email).toEqual("new@example.com");
     }
   });
 
-  it("should reject the promise in case of error", async () => {
+  it("should reject the promise in case of error (read)", async () => {
     const clientMock: any = {
-      createDocument: jest.fn((_, __, ___, cb) => {
-        cb("error");
-      }),
+      createDocument: jest.fn(),
+      readDocument: jest.fn((_, __, cb) => cb("error")),
     };
 
     const model = new ProfileModel(clientMock, profilesCollectionUrl);
 
-    const pendingProfile: IRetrievedProfile = {
-      _self: "xyz",
-      _ts: "xyz",
-      fiscalCode: aFiscalCode,
-      id: "xyz",
-      kind: "IRetrievedProfile",
-      version: toNonNegativeNumber(0).get,
+    const result = await model.update(aFiscalCode, aFiscalCode, (o) => o);
+
+    expect(clientMock.readDocument).toHaveBeenCalledTimes(1);
+    expect(clientMock.createDocument).not.toHaveBeenCalled();
+
+    expect(result.isLeft).toBeTruthy();
+    if (result.isLeft) {
+      expect(result.left).toEqual("error");
+    }
+  });
+
+  it("should reject the promise in case of error (create)", async () => {
+    const clientMock: any = {
+      createDocument: jest.fn((_, __, ___, cb) => cb("error")),
+      readDocument: jest.fn((_, __, cb) => cb(undefined, aRetrievedProfile)),
     };
 
-    const result = await model.update(pendingProfile);
+    const model = new ProfileModel(clientMock, profilesCollectionUrl);
 
+    const result = await model.update(aFiscalCode, aFiscalCode, (o) => o);
+
+    expect(clientMock.readDocument).toHaveBeenCalledTimes(1);
     expect(clientMock.createDocument).toHaveBeenCalledTimes(1);
 
     expect(result.isLeft).toBeTruthy();

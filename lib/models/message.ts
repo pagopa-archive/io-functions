@@ -7,7 +7,6 @@ import { Either } from "../utils/either";
 
 import { FiscalCode, isFiscalCode } from "../utils/fiscalcode";
 import { LimitedFields } from "../utils/types";
-import { ModelId } from "../utils/versioned_model";
 
 /**
  * Base interface for Message objects
@@ -15,7 +14,7 @@ import { ModelId } from "../utils/versioned_model";
 export interface IMessage {
   readonly fiscalCode: FiscalCode;
   readonly bodyShort: string;
-  readonly senderOrganizationId: ModelId;
+  readonly senderOrganizationId: string;
 }
 
 /**

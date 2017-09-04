@@ -1,12 +1,11 @@
 import * as DocumentDb from "documentdb";
 import * as DocumentDbUtils from "../utils/documentdb";
-import { DocumentDbModel } from "../utils/documentdb_model";
+import { DocumentDbModelVersioned, IVersionedModel, ModelId } from "../utils/documentdb_model_versioned";
 
 import { Option } from "ts-option";
 import { Either } from "../utils/either";
 
-import { toNonNegativeNumber } from "../utils/numbers";
-import { generateVersionedModelId, IVersionedModel, ModelId } from "../utils/versioned_model";
+import { NonNegativeNumber } from "../utils/numbers";
 
 /**
  * Base interface for Organization objects
@@ -19,7 +18,7 @@ interface IOrganization {
 /**
  * Interface for new Organization objects
  */
-export interface INewOrganization extends IOrganization, DocumentDb.NewDocument {
+export interface INewOrganization extends IOrganization, DocumentDb.NewDocument, IVersionedModel {
   readonly kind: "INewOrganization";
 }
 
@@ -40,10 +39,32 @@ function toRetrieved(result: DocumentDb.RetrievedDocument): IRetrievedOrganizati
   } as IRetrievedOrganization);
 }
 
+function updateModelId(o: IOrganization, id: string, version: NonNegativeNumber): INewOrganization {
+  const newOrganization: INewOrganization = {
+    ...o,
+    id,
+    kind: "INewOrganization",
+    version,
+  };
+
+  return newOrganization;
+}
+
+function toBaseType(o: IRetrievedOrganization): IOrganization {
+  return {
+    name: o.name,
+    organizationId: o.organizationId,
+  };
+}
+
 /**
  * A model for handling Organizations
  */
-export class OrganizationModel extends DocumentDbModel<INewOrganization, IRetrievedOrganization> {
+export class OrganizationModel extends DocumentDbModelVersioned<
+  IOrganization,
+  INewOrganization,
+  IRetrievedOrganization
+> {
   protected dbClient: DocumentDb.DocumentClient;
   protected collectionUrl: DocumentDbUtils.DocumentDbCollectionUrl;
 
@@ -57,6 +78,10 @@ export class OrganizationModel extends DocumentDbModel<INewOrganization, IRetrie
     super();
     // tslint:disable-next-line:no-object-mutation
     this.toRetrieved = toRetrieved;
+    // tslint:disable-next-line:no-object-mutation
+    this.versionateModel = updateModelId;
+    // tslint:disable-next-line:no-object-mutation
+    this.toBaseType = toBaseType;
     // tslint:disable-next-line:no-object-mutation
     this.dbClient = dbClient;
     // tslint:disable-next-line:no-object-mutation
@@ -81,49 +106,6 @@ export class OrganizationModel extends DocumentDbModel<INewOrganization, IRetrie
         }],
         query: "SELECT * FROM organizations o WHERE (o.organizationId = @organizationId) ORDER BY o.version DESC",
       },
-    );
-  }
-
-  /**
-   * Create a new Profile
-   *
-   * @param organization The new Profile object
-   */
-  public async create(
-    organization: IOrganization,
-  ): Promise<Either<DocumentDb.QueryError, IRetrievedOrganization>> {
-    // the first version of a profile is 0
-    const initialVersion = toNonNegativeNumber(0).get;
-    const recordId = generateVersionedModelId(organization.organizationId, initialVersion);
-
-    const newOrganization: INewOrganization = {
-      ...organization,
-      id: recordId,
-      kind: "INewOrganization",
-      version: initialVersion,
-    };
-    return super.create(newOrganization, organization.organizationId);
-  }
-
-  /**
-   * Update an existing Organization by creating a new version
-   *
-   * @param organization The updated Profile object
-   */
-  public update(
-    organization: IRetrievedOrganization,
-  ): Promise<Either<DocumentDb.QueryError, IRetrievedOrganization>> {
-    const newVersion = toNonNegativeNumber(organization.version + 1).get;
-    const recordId = generateVersionedModelId(organization.fiscal, newVersion);
-    return DocumentDbUtils.createDocument(
-      this.dbClient,
-      this.collectionUrl,
-      {
-        ...organization,
-        id: recordId,
-        version: newVersion,
-      },
-      organization.organizationId,
     );
   }
 

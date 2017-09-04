@@ -148,7 +148,7 @@ async function createNewProfileFromPayload(
     email: profileModelPayload.email,
     fiscalCode,
   };
-  const errorOrProfile = await profileModel.create(profile);
+  const errorOrProfile = await profileModel.create(profile, profile.fiscalCode);
   const errorOrProfileAsPublicExtendedProfile = errorOrProfile.mapRight(asPublicExtendedProfile);
   if (errorOrProfileAsPublicExtendedProfile.isRight) {
     return ResponseSuccessJson(errorOrProfileAsPublicExtendedProfile.right);
@@ -164,11 +164,16 @@ async function updateExistingProfileFromPayload(
   existingProfile: IRetrievedProfile,
   profileModelPayload: IProfilePayload,
 ): Promise<IResponseSuccessJson<IPublicExtendedProfile> | IResponseErrorGeneric> {
-  const profile = {
-    ...existingProfile,
-    email: profileModelPayload.email,
-  };
-  const errorOrProfile = await profileModel.update(profile);
+  const errorOrProfile = await profileModel.update(
+    existingProfile.fiscalCode,
+    existingProfile.fiscalCode,
+    (p) => {
+      return {
+        ...p,
+        email: profileModelPayload.email,
+      };
+    },
+  );
   const errorOrProfileAsPublicExtendedProfile = errorOrProfile.mapRight(asPublicExtendedProfile);
   if (errorOrProfileAsPublicExtendedProfile.isRight) {
     return ResponseSuccessJson(errorOrProfileAsPublicExtendedProfile.right);

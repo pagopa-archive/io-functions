@@ -14,7 +14,6 @@ import {
   IResponseErrorGeneric,
   ResponseErrorGeneric,
 } from "../response";
-import { isModelId } from "../versioned_model";
 
 interface IAzureUserNote {
   readonly organizationId?: string;
@@ -34,7 +33,7 @@ async function getUserOrganization(
   azureUserAttributes: IAzureUserNote,
 ): Promise<Option<IRetrievedOrganization>> {
   const organizationId = azureUserAttributes.organizationId;
-  if (organizationId === undefined || !isModelId(organizationId)) {
+  if (typeof organizationId !== "string" || organizationId.length === 0) {
     return Promise.resolve(none);
   }
 

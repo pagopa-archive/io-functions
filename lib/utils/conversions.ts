@@ -1,5 +1,5 @@
+import { ModelId } from "./documentdb_model_versioned";
 import { FiscalCode } from "./fiscalcode";
-import { ModelId } from "./versioned_model";
 
 /**
  * Converts a FiscalCode to a ModelId.
