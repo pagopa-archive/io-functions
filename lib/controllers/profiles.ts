@@ -148,7 +148,7 @@ async function createNewProfileFromPayload(
     email: profileModelPayload.email,
     fiscalCode,
   };
-  const errorOrProfile = await profileModel.createProfile(profile);
+  const errorOrProfile = await profileModel.create(profile);
   const errorOrProfileAsPublicExtendedProfile = errorOrProfile.mapRight(asPublicExtendedProfile);
   if (errorOrProfileAsPublicExtendedProfile.isRight) {
     return ResponseSuccessJson(errorOrProfileAsPublicExtendedProfile.right);

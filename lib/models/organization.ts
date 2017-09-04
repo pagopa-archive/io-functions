@@ -1,5 +1,6 @@
 import * as DocumentDb from "documentdb";
 import * as DocumentDbUtils from "../utils/documentdb";
+import { DocumentDbModel } from "../utils/documentdb_model";
 
 import { Option } from "ts-option";
 import { Either } from "../utils/either";
@@ -32,12 +33,19 @@ export interface IRetrievedOrganization extends IOrganization, DocumentDb.Retrie
   readonly organizationId: ModelId; // organizationId should never change
 }
 
+function toRetrieved(result: DocumentDb.RetrievedDocument): IRetrievedOrganization {
+  return ({
+    ...result,
+    kind: "IRetrievedOrganization",
+  } as IRetrievedOrganization);
+}
+
 /**
  * A model for handling Organizations
  */
-export class OrganizationModel {
-  private dbClient: DocumentDb.DocumentClient;
-  private collectionUrl: DocumentDbUtils.DocumentDbCollectionUrl;
+export class OrganizationModel extends DocumentDbModel<INewOrganization, IRetrievedOrganization> {
+  protected dbClient: DocumentDb.DocumentClient;
+  protected collectionUrl: DocumentDbUtils.DocumentDbCollectionUrl;
 
   /**
    * Creates a new Organization model
@@ -46,6 +54,9 @@ export class OrganizationModel {
    * @param collectionUrl the collection URL
    */
   constructor(dbClient: DocumentDb.DocumentClient, collectionUrl: DocumentDbUtils.DocumentDbCollectionUrl) {
+    super();
+    // tslint:disable-next-line:no-object-mutation
+    this.toRetrieved = toRetrieved;
     // tslint:disable-next-line:no-object-mutation
     this.dbClient = dbClient;
     // tslint:disable-next-line:no-object-mutation
@@ -78,26 +89,20 @@ export class OrganizationModel {
    *
    * @param organization The new Profile object
    */
-  public async createOrganization(
+  public async create(
     organization: IOrganization,
   ): Promise<Either<DocumentDb.QueryError, IRetrievedOrganization>> {
     // the first version of a profile is 0
     const initialVersion = toNonNegativeNumber(0).get;
     const recordId = generateVersionedModelId(organization.organizationId, initialVersion);
-    const errorOrDocument = await DocumentDbUtils.createDocument(
-      this.dbClient,
-      this.collectionUrl,
-      {
-        ...organization,
-        id: recordId,
-        version: initialVersion,
-      },
-      organization.organizationId,
-    );
-    return errorOrDocument.mapRight((document) => ({
-      ...document,
-      kind: "IRetrievedOrganization",
-    } as IRetrievedOrganization));
+
+    const newOrganization: INewOrganization = {
+      ...organization,
+      id: recordId,
+      kind: "INewOrganization",
+      version: initialVersion,
+    };
+    return super.create(newOrganization, organization.organizationId);
   }
 
   /**

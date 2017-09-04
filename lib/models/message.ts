@@ -1,5 +1,6 @@
 import * as DocumentDb from "documentdb";
 import * as DocumentDbUtils from "../utils/documentdb";
+import { DocumentDbModel } from "../utils/documentdb_model";
 
 import { Option, option } from "ts-option";
 import { Either } from "../utils/either";
@@ -75,12 +76,19 @@ export function isIRetrievedMessage(arg: any): arg is IRetrievedMessage {
     isIMessage(arg);
 }
 
+function toRetrieved(result: DocumentDb.RetrievedDocument): IRetrievedMessage {
+  return ({
+    ...result,
+    kind: "IRetrievedMessage",
+  } as IRetrievedMessage);
+}
+
 /**
  * A model for handling Messages
  */
-export class MessageModel {
-  private dbClient: DocumentDb.DocumentClient;
-  private collectionUrl: DocumentDbUtils.DocumentDbCollectionUrl;
+export class MessageModel extends DocumentDbModel<INewMessage, IRetrievedMessage> {
+  protected dbClient: DocumentDb.DocumentClient;
+  protected collectionUrl: DocumentDbUtils.DocumentDbCollectionUrl;
 
   /**
    * Creates a new Message model
@@ -89,56 +97,13 @@ export class MessageModel {
    * @param collectionUrl the collection URL
    */
   constructor(dbClient: DocumentDb.DocumentClient, collectionUrl: DocumentDbUtils.DocumentDbCollectionUrl) {
+    super();
+    // tslint:disable-next-line:no-object-mutation
+    this.toRetrieved = toRetrieved;
     // tslint:disable-next-line:no-object-mutation
     this.dbClient = dbClient;
     // tslint:disable-next-line:no-object-mutation
     this.collectionUrl = collectionUrl;
-  }
-
-  /**
-   * Creates a new Message
-   *
-   * @param message The new Message
-   */
-  public async createMessage(message: INewMessage): Promise<Either<DocumentDb.QueryError, IRetrievedMessage>> {
-    const maybeCreatedDocument = await DocumentDbUtils.createDocument(
-      this.dbClient,
-      this.collectionUrl,
-      message,
-      message.fiscalCode,
-    );
-    return maybeCreatedDocument.mapRight((createdDocument) => ({
-      ...createdDocument,
-      kind: "IRetrievedMessage",
-    } as IRetrievedMessage));
-  }
-
-  /**
-   * Returns the message associated to the provided message ID
-   *
-   * @param fiscalCode  The fiscal code associated to this message (used as partitionKey)
-   * @param messageId   The ID of the message
-   *
-   * TODO: perhaps should return an option (mapping 404 to empty)
-   */
-  public async findMessage(
-    fiscalCode: FiscalCode, messageId: string,
-  ): Promise<Either<DocumentDb.QueryError, IRetrievedMessage>> {
-    const documentUrl = DocumentDbUtils.getDocumentUrl(
-      this.collectionUrl,
-      messageId,
-    );
-
-    const errorOrDocument = await DocumentDbUtils.readDocument<IMessage>(
-      this.dbClient,
-      documentUrl,
-      fiscalCode,
-    );
-
-    return errorOrDocument.mapRight((document) => ({
-      ...document,
-      kind: "IRetrievedMessage",
-    } as IRetrievedMessage));
   }
 
   /**
@@ -150,7 +115,7 @@ export class MessageModel {
   public async findMessageForRecipient(
     fiscalCode: FiscalCode, messageId: string,
   ): Promise<Either<DocumentDb.QueryError, Option<IRetrievedMessage>>> {
-    const errorOrMessage = await this.findMessage(fiscalCode, messageId);
+    const errorOrMessage = await this.find(messageId, fiscalCode);
     return errorOrMessage.mapRight((message) =>
       option(message).filter((m) => m.fiscalCode === fiscalCode),
     );

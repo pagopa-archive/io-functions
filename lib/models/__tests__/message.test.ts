@@ -39,7 +39,7 @@ describe("createMessage", () => {
 
     const model = new MessageModel((clientMock as any) as DocumentDb.DocumentClient, aMessagesCollectionUrl);
 
-    const result = await model.createMessage(aNewMessage);
+    const result = await model.create(aNewMessage, aNewMessage.fiscalCode);
 
     expect(result.isRight).toBeTruthy();
     if (result.isRight) {
@@ -54,7 +54,7 @@ describe("createMessage", () => {
 
     const model = new MessageModel((clientMock as any) as DocumentDb.DocumentClient, aMessagesCollectionUrl);
 
-    const result = await model.createMessage(aNewMessage);
+    const result = await model.create(aNewMessage, aNewMessage.fiscalCode);
 
     expect(clientMock.createDocument).toHaveBeenCalledTimes(1);
     expect(clientMock.createDocument.mock.calls[0][0]).toEqual(aMessagesCollectionUrl);
@@ -79,7 +79,7 @@ describe("findMessage", () => {
 
     const model = new MessageModel((clientMock as any) as DocumentDb.DocumentClient, aMessagesCollectionUrl);
 
-    const result = await model.findMessage(aRetrievedMessage.fiscalCode, aRetrievedMessage.id);
+    const result = await model.find(aRetrievedMessage.id, aRetrievedMessage.fiscalCode);
 
     expect(clientMock.readDocument).toHaveBeenCalledTimes(1);
     expect(clientMock.readDocument.mock.calls[0][0]).toEqual("mockmessages/docs/A_MESSAGE_ID");
@@ -99,7 +99,7 @@ describe("findMessage", () => {
 
     const model = new MessageModel((clientMock as any) as DocumentDb.DocumentClient, aMessagesCollectionUrl);
 
-    const result = await model.findMessage(aRetrievedMessage.fiscalCode, aRetrievedMessage.id);
+    const result = await model.find(aRetrievedMessage.id, aRetrievedMessage.fiscalCode);
 
     expect(result.isLeft).toBeTruthy();
     if (result.isLeft) {

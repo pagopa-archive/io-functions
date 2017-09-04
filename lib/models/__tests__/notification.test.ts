@@ -44,7 +44,7 @@ describe("createNotification", () => {
 
     const model = new NotificationModel((clientMock as any) as DocumentDb.DocumentClient, aNotificationsCollectionUrl);
 
-    const result = await model.createNotification(aNewNotification);
+    const result = await model.create(aNewNotification, aNewNotification.messageId);
 
     expect(result.isRight).toBeTruthy();
     if (result.isRight) {
@@ -59,7 +59,7 @@ describe("createNotification", () => {
 
     const model = new NotificationModel((clientMock as any) as DocumentDb.DocumentClient, aNotificationsCollectionUrl);
 
-    const result = await model.createNotification(aNewNotification);
+    const result = await model.create(aNewNotification, aNewNotification.messageId);
 
     expect(clientMock.createDocument).toHaveBeenCalledTimes(1);
     expect(clientMock.createDocument.mock.calls[0][0]).toEqual(aNotificationsCollectionUrl);
@@ -84,7 +84,7 @@ describe("findNotification", () => {
 
     const model = new NotificationModel((clientMock as any) as DocumentDb.DocumentClient, aNotificationsCollectionUrl);
 
-    const result = await model.findNotification(aRetrievedNotification.messageId, aRetrievedNotification.id);
+    const result = await model.find(aRetrievedNotification.id, aRetrievedNotification.messageId);
 
     expect(clientMock.readDocument).toHaveBeenCalledTimes(1);
     expect(clientMock.readDocument.mock.calls[0][0]).toEqual("mocknotifications/docs/A_NOTIFICATION_ID");
@@ -104,7 +104,7 @@ describe("findNotification", () => {
 
     const model = new NotificationModel((clientMock as any) as DocumentDb.DocumentClient, aNotificationsCollectionUrl);
 
-    const result = await model.findNotification(aRetrievedNotification.fiscalCode, aRetrievedNotification.id);
+    const result = await model.find(aRetrievedNotification.id, aRetrievedNotification.fiscalCode);
 
     expect(result.isLeft).toBeTruthy();
     if (result.isLeft) {

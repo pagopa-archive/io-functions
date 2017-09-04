@@ -72,7 +72,7 @@ describe("createProfile", () => {
       fiscalCode: aFiscalCode,
     };
 
-    const result = await model.createProfile(newProfile);
+    const result = await model.create(newProfile);
 
     expect(clientMock.createDocument).toHaveBeenCalledTimes(1);
     expect(clientMock.createDocument.mock.calls[0][2]).toHaveProperty("partitionKey", aFiscalCode);
@@ -97,7 +97,7 @@ describe("createProfile", () => {
       fiscalCode: aFiscalCode,
     };
 
-    const result = await model.createProfile(newProfile);
+    const result = await model.create(newProfile);
 
     expect(clientMock.createDocument).toHaveBeenCalledTimes(1);
 

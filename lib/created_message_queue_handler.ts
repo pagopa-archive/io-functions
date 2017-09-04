@@ -117,7 +117,7 @@ async function handleMessage(
       };
 
       // save the Notification
-      const result = await notificationModel.createNotification(notification);
+      const result = await notificationModel.create(notification, notification.messageId);
 
       if (result.isRight) {
         // save succeeded, return the saved Notification

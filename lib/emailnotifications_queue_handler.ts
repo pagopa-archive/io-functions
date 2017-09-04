@@ -123,7 +123,7 @@ async function handleNotification(
 ): Promise<Either<ProcessingError, ProcessingResult>> {
 
   // fetch the notification
-  const errorOrNotification = await notificationModel.findNotification(messageId, notificationId);
+  const errorOrNotification = await notificationModel.find(notificationId, messageId);
 
   if (errorOrNotification.isLeft) {
     // we got an error while fetching the notification
@@ -141,7 +141,7 @@ async function handleNotification(
   }
 
   // fetch the message
-  const errorOrMessage = await messageModel.findMessage(notification.fiscalCode, notification.messageId);
+  const errorOrMessage = await messageModel.find(notification.messageId, notification.fiscalCode);
 
   if (errorOrMessage.isLeft) {
     // we got an error while fetching the message

@@ -169,7 +169,7 @@ export function CreateMessageHandler(messageModel: MessageModel): ICreateMessage
     };
 
     // attempt to create the message
-    const errorOrMessage = await messageModel.createMessage(message);
+    const errorOrMessage = await messageModel.create(message, message.fiscalCode);
 
     if (errorOrMessage.isRight) {
       // message creation succeeded

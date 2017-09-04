@@ -1,5 +1,6 @@
 import * as DocumentDb from "documentdb";
 import * as DocumentDbUtils from "../utils/documentdb";
+import { DocumentDbModel } from "../utils/documentdb_model";
 
 import { Option } from "ts-option";
 import { Either } from "../utils/either";
@@ -79,12 +80,19 @@ export function asPublicLimitedProfile<T extends IProfile>(profile: T): IPublicL
   };
 }
 
+function toRetrieved(result: DocumentDb.RetrievedDocument): IRetrievedProfile {
+  return ({
+    ...result,
+    kind: "IRetrievedProfile",
+  } as IRetrievedProfile);
+}
+
 /**
  * A model for handling Profiles
  */
-export class ProfileModel {
-  private dbClient: DocumentDb.DocumentClient;
-  private collectionUrl: DocumentDbUtils.DocumentDbCollectionUrl;
+export class ProfileModel extends DocumentDbModel<INewProfile, IRetrievedProfile> {
+  protected dbClient: DocumentDb.DocumentClient;
+  protected collectionUrl: DocumentDbUtils.DocumentDbCollectionUrl;
 
   /**
    * Creates a new Profile model
@@ -93,6 +101,9 @@ export class ProfileModel {
    * @param collectionUrl the collection URL
    */
   constructor(dbClient: DocumentDb.DocumentClient, collectionUrl: DocumentDbUtils.DocumentDbCollectionUrl) {
+    super();
+    // tslint:disable-next-line:no-object-mutation
+    this.toRetrieved = toRetrieved;
     // tslint:disable-next-line:no-object-mutation
     this.dbClient = dbClient;
     // tslint:disable-next-line:no-object-mutation
@@ -125,28 +136,21 @@ export class ProfileModel {
    *
    * @param profile The new Profile object
    */
-  public async createProfile(profile: IProfile): Promise<Either<DocumentDb.QueryError, IRetrievedProfile>> {
+  public async create(profile: IProfile): Promise<Either<DocumentDb.QueryError, IRetrievedProfile>> {
     // the first version of a profile is 0
     const initialVersion = toNonNegativeNumber(0).get;
     // the ID of each profile version is composed of the profile ID and its version
     // this makes it possible to detect conflicting updates (concurrent creation of
     // profiles with the same profile ID and version)
     const profileId = generateVersionedModelId(fiscalCodeToModelId(profile.fiscalCode), initialVersion);
-    const errorOrDocument = await DocumentDbUtils.createDocument(
-      this.dbClient,
-      this.collectionUrl,
-      {
-        ...profile,
-        id: profileId,
-        version: initialVersion,
-      },
-      profile.fiscalCode,
-    );
 
-    return errorOrDocument.mapRight((document) => ({
-      ...document,
-      kind: "IRetrievedProfile",
-    } as IRetrievedProfile));
+    const newProfile: INewProfile = {
+      ...profile,
+      id: profileId,
+      kind: "INewProfile",
+      version: initialVersion,
+    };
+    return super.create(newProfile, profile.fiscalCode);
   }
 
   /**

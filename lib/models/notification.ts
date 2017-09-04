@@ -6,6 +6,7 @@
 
 import * as DocumentDb from "documentdb";
 import * as DocumentDbUtils from "../utils/documentdb";
+import { DocumentDbModel } from "../utils/documentdb_model";
 
 import { Either } from "../utils/either";
 
@@ -64,12 +65,19 @@ export interface IRetrievedNotification extends Readonly<INotification>, Readonl
   readonly kind: "IRetrievedNotification";
 }
 
+function toRetrieved(result: DocumentDb.RetrievedDocument): IRetrievedNotification {
+  return ({
+    ...result,
+    kind: "IRetrievedNotification",
+  } as IRetrievedNotification);
+}
+
 /**
  * A model for handling Notifications
  */
-export class NotificationModel {
-  private dbClient: DocumentDb.DocumentClient;
-  private collectionUrl: DocumentDbUtils.DocumentDbCollectionUrl;
+export class NotificationModel extends DocumentDbModel<INewNotification, IRetrievedNotification> {
+  protected dbClient: DocumentDb.DocumentClient;
+  protected collectionUrl: DocumentDbUtils.DocumentDbCollectionUrl;
 
   /**
    * Creates a new Notification model
@@ -78,59 +86,13 @@ export class NotificationModel {
    * @param collectionUrl the collection URL
    */
   constructor(dbClient: DocumentDb.DocumentClient, collectionUrl: DocumentDbUtils.DocumentDbCollectionUrl) {
+    super();
+    // tslint:disable-next-line:no-object-mutation
+    this.toRetrieved = toRetrieved;
     // tslint:disable-next-line:no-object-mutation
     this.dbClient = dbClient;
     // tslint:disable-next-line:no-object-mutation
     this.collectionUrl = collectionUrl;
-  }
-
-  /**
-   * Creates a new Notification
-   *
-   * @param notification The new Notification
-   */
-  public async createNotification(
-    notification: INewNotification,
-  ): Promise<Either<DocumentDb.QueryError, IRetrievedNotification>> {
-    const maybeCreatedDocument = await DocumentDbUtils.createDocument(
-      this.dbClient,
-      this.collectionUrl,
-      notification,
-      notification.messageId, // partitionKey
-    );
-    return maybeCreatedDocument.mapRight((createdDocument) => ({
-      ...createdDocument,
-      kind: "IRetrievedNotification",
-    } as IRetrievedNotification));
-  }
-
-  /**
-   * Returns the Notification associated to the provided notification ID
-   *
-   * @param messageId       The ID of the message this notification is for (used as partitionKey)
-   * @param notificationId  The ID of the Notification
-   *
-   * TODO: should perhaps return an Option (mapping 404 error to empty)
-   */
-  public async findNotification(
-    messageId: string,
-    notificationId: string,
-  ): Promise<Either<DocumentDb.QueryError, IRetrievedNotification>> {
-    const documentUrl = DocumentDbUtils.getDocumentUrl(
-      this.collectionUrl,
-      notificationId,
-    );
-
-    const errorOrDocument = await DocumentDbUtils.readDocument<INotification>(
-      this.dbClient,
-      documentUrl,
-      messageId,
-    );
-
-    return errorOrDocument.mapRight((document) => ({
-      ...document,
-      kind: "IRetrievedNotification",
-    } as IRetrievedNotification));
   }
 
   /**
@@ -142,7 +104,7 @@ export class NotificationModel {
     f: (current: INotification) => INotification,
   ): Promise<Either<DocumentDb.QueryError, IRetrievedNotification>> {
     // fetch the notification
-    const errorOrCurrent = await this.findNotification(messageId, notificationId);
+    const errorOrCurrent = await this.find(notificationId, messageId);
     if (errorOrCurrent.isLeft) {
       // if the query returned an error, forward it
       return errorOrCurrent;

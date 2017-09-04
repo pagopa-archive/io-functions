@@ -2,7 +2,7 @@
 
 import { response as MockResponse } from "jest-mock-express";
 
-import { some, none } from "ts-option";
+import { none, some } from "ts-option";
 import { left, right } from "../../utils/either";
 
 import {
@@ -149,7 +149,7 @@ describe("UpsertProfile", () => {
   it("should create a new profile", async () => {
 
     const profileModelMock = {
-      createProfile: jest.fn(() => {
+      create: jest.fn(() => {
         return Promise.resolve(right(aRetrievedProfile));
       }),
       findOneProfileByFiscalCode: jest.fn(() => {
@@ -165,7 +165,7 @@ describe("UpsertProfile", () => {
       aProfilePayloadMock as any,
     );
     expect(profileModelMock.findOneProfileByFiscalCode).toHaveBeenCalledWith(aRetrievedProfile.fiscalCode);
-    expect(profileModelMock.createProfile).toHaveBeenCalledWith({
+    expect(profileModelMock.create).toHaveBeenCalledWith({
       email: "x@example.com",
       fiscalCode: aRetrievedProfile.fiscalCode,
     });
