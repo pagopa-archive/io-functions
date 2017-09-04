@@ -47,7 +47,10 @@ export interface IPublicExtendedMessage extends
   readonly kind: "IPublicExtendedMessage";
 }
 
-export function asPublicExtendedMessage<T extends IRetrievedMessage>(message: T): IPublicExtendedMessage {
+/**
+ * Converts a Message to an IPublicExtendedMessage
+ */
+export function asPublicExtendedMessage<T extends IMessage>(message: T): IPublicExtendedMessage {
   const {
     fiscalCode,
     bodyShort,
