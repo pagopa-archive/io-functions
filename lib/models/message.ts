@@ -115,6 +115,8 @@ export class MessageModel {
    *
    * @param fiscalCode  The fiscal code associated to this message (used as partitionKey)
    * @param messageId   The ID of the message
+   *
+   * TODO: perhaps should return an option (mapping 404 to empty)
    */
   public async findMessage(
     fiscalCode: FiscalCode, messageId: string,
