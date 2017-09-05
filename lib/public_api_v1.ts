@@ -11,6 +11,7 @@ import * as documentDbUtils from "./utils/documentdb";
 import { createAzureFunctionHandler } from "azure-function-express-cloudify";
 
 import { MessageModel } from "./models/message";
+import { NotificationModel } from "./models/notification";
 import { OrganizationModel } from "./models/organization";
 import { ProfileModel } from "./models/profile";
 
@@ -38,12 +39,14 @@ const documentDbDatabaseUrl = documentDbUtils.getDatabaseUrl("development");
 const messagesCollectionUrl = documentDbUtils.getCollectionUrl(documentDbDatabaseUrl, "messages");
 const profilesCollectionUrl = documentDbUtils.getCollectionUrl(documentDbDatabaseUrl, "profiles");
 const organizationsCollectionUrl = documentDbUtils.getCollectionUrl(documentDbDatabaseUrl, "organizations");
+const notificationsCollectionUrl = documentDbUtils.getCollectionUrl(documentDbDatabaseUrl, "notifications");
 
 const documentClient = new DocumentDBClient(COSMOSDB_URI, { masterKey: COSMOSDB_KEY });
 
 const profileModel = new ProfileModel(documentClient, profilesCollectionUrl);
 const messageModel = new MessageModel(documentClient, messagesCollectionUrl);
 const organizationModel = new OrganizationModel(documentClient, organizationsCollectionUrl);
+const notificationModel = new NotificationModel(documentClient, notificationsCollectionUrl);
 
 // Setup handlers
 
@@ -54,7 +57,7 @@ app.post("/api/v1/debug", debugHandler);
 app.get("/api/v1/profiles/:fiscalcode", GetProfile(profileModel));
 app.post("/api/v1/profiles/:fiscalcode", UpsertProfile(profileModel));
 
-app.get("/api/v1/messages/:fiscalcode/:id", GetMessage(organizationModel, messageModel));
+app.get("/api/v1/messages/:fiscalcode/:id", GetMessage(organizationModel, messageModel, notificationModel));
 app.get("/api/v1/messages/:fiscalcode", GetMessages(messageModel));
 app.post("/api/v1/messages/:fiscalcode", CreateMessage(organizationModel, messageModel));
 

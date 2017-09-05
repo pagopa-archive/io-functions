@@ -44,9 +44,8 @@ import { mapResultIterator } from "../utils/documentdb";
 
 import { ICreatedMessageEvent } from "../models/created_message_event";
 
-import {
-  OrganizationModel,
-} from "../models/organization";
+import { NotificationChannelStatus, NotificationModel } from "../models/notification";
+import { OrganizationModel } from "../models/organization";
 
 import {
   asPublicExtendedMessage,
@@ -82,6 +81,16 @@ export interface IResponseDryRun {
   readonly status: "DRY_RUN_SUCCESS";
   readonly bodyShort: string;
   readonly senderOrganizationId: string;
+}
+
+/**
+ * Response for public message data
+ */
+export interface IResponsePublicMessage {
+  readonly message: IPublicExtendedMessage;
+  readonly notification: undefined | {
+    readonly email: undefined | NotificationChannelStatus,
+  };
 }
 
 /**
@@ -141,7 +150,7 @@ type IGetMessageHandler = (
   fiscalCode: FiscalCode,
   messageId: string,
 ) => Promise<
-  IResponseSuccessJson<IPublicExtendedMessage> |
+  IResponseSuccessJson<IResponsePublicMessage> |
   IResponseErrorNotFound |
   IResponseErrorGeneric |
   IResponseErrorValidation |
@@ -250,7 +259,10 @@ export function CreateMessage(
 /**
  * Handles requests for getting a single message for a recipient.
  */
-export function GetMessageHandler(messageModel: MessageModel): IGetMessageHandler {
+export function GetMessageHandler(
+  messageModel: MessageModel,
+  notificationModel: NotificationModel,
+): IGetMessageHandler {
   return async (userAuth, userAttributes, fiscalCode, messageId) => {
     // whether the user is a trusted application (i.e. can access al inboxes)
     const isTrustedApplication = userAuth.groups.has(UserGroup.TrustedApplications);
@@ -262,33 +274,58 @@ export function GetMessageHandler(messageModel: MessageModel): IGetMessageHandle
         return(ResponseErrorForbiddenNotAuthorized);
       }
     }
+
     const errorOrMaybeDocument = await messageModel.findMessageForRecipient(fiscalCode, messageId);
-    if (errorOrMaybeDocument.isRight) {
-      const maybeDocument = errorOrMaybeDocument.right;
-      if (maybeDocument.isDefined) {
-        const retrievedMessage = maybeDocument.get;
-        if (isTrustedApplication) {
-          // the user is a trusted application, we can share the message
-          const publicMessage = asPublicExtendedMessage(retrievedMessage);
-          return ResponseSuccessJson(publicMessage);
-        } else if (
-          userAttributes.organization &&
-          retrievedMessage.senderOrganizationId === userAttributes.organization.organizationId
-        ) {
-          // the user is the sender of this message, we can share it with him
-          // TODO: share also notification status
-          const publicMessage = asPublicExtendedMessage(retrievedMessage);
-          return ResponseSuccessJson(publicMessage);
-        } else {
-          // the user is not the sender of the message, then he is not authorized
-          return(ResponseErrorForbiddenNotAuthorized);
-        }
-      } else {
-        return ResponseErrorNotFound("Message not found");
-      }
-    } else {
+
+    if (errorOrMaybeDocument.isLeft) {
+      // the query failed
       return(ResponseErrorGeneric(`Error while retrieving the message|${errorOrMaybeDocument.left.code}`));
     }
+
+    const maybeDocument = errorOrMaybeDocument.right;
+    if (maybeDocument.isEmpty) {
+      // the document does not exist
+      return ResponseErrorNotFound("Message not found");
+    }
+
+    const retrievedMessage = maybeDocument.get;
+
+    // the user is allowed to see the message when he is either
+    // a trusted application or he is the sender of the message
+    const isUserAllowed = isTrustedApplication || (
+      userAttributes.organization &&
+      retrievedMessage.senderOrganizationId === userAttributes.organization.organizationId
+    );
+
+    if (!isUserAllowed) {
+      // the user is not allowed to see the message
+      return(ResponseErrorForbiddenNotAuthorized);
+    }
+
+    const errorOrMaybeNotification = await notificationModel.findNotificationForMessage(retrievedMessage.id);
+
+    if (errorOrMaybeNotification.isLeft) {
+      // query failed
+      return(ResponseErrorGeneric(
+        `Error while retrieving the notification status|${errorOrMaybeNotification.left.code}`,
+      ));
+    }
+
+    const maybeNotification = errorOrMaybeNotification.right;
+
+    const maybeNotificationStatus = maybeNotification.map((n) => {
+      return {
+        email: n.emailNotification ? n.emailNotification.status : undefined,
+      };
+    });
+
+    const publicMessageJson: IResponsePublicMessage = {
+      message: asPublicExtendedMessage(retrievedMessage),
+      notification: maybeNotificationStatus.isDefined ? maybeNotificationStatus.get : undefined,
+    };
+
+    return ResponseSuccessJson(publicMessageJson);
+
   };
 }
 
@@ -298,8 +335,9 @@ export function GetMessageHandler(messageModel: MessageModel): IGetMessageHandle
 export function GetMessage(
   organizationModel: OrganizationModel,
   messageModel: MessageModel,
+  notificationModel: NotificationModel,
 ): express.RequestHandler {
-  const handler = GetMessageHandler(messageModel);
+  const handler = GetMessageHandler(messageModel, notificationModel);
   const middlewaresWrap = withRequestMiddlewares(
     AzureApiAuthMiddleware(new Set([
       // trusted applications will be able to access all messages
