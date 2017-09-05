@@ -93,19 +93,13 @@ export class OrganizationModel extends DocumentDbModelVersioned<
    *
    * @param fiscalCode
    */
-  public findLastVersionById(
+  public findByOrganizationId(
     organizationId: string,
   ): Promise<Either<DocumentDb.QueryError, Option<IRetrievedOrganization>>> {
-    return DocumentDbUtils.queryOneDocument(
-      this.dbClient,
-      this.collectionUrl,
-      {
-        parameters: [{
-          name: "@organizationId",
-          value: organizationId,
-        }],
-        query: "SELECT * FROM organizations o WHERE (o.organizationId = @organizationId) ORDER BY o.version DESC",
-      },
+    return super.findLastVersionByModelId(
+      "organizations",
+      "organizationId",
+      organizationId,
     );
   }
 

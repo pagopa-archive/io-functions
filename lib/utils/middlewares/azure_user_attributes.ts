@@ -37,7 +37,7 @@ async function getUserOrganization(
     return Promise.resolve(none);
   }
 
-  const errorOrMaybeOrganization = await organizationModel.findLastVersionById(organizationId);
+  const errorOrMaybeOrganization = await organizationModel.findByOrganizationId(organizationId);
 
   if (errorOrMaybeOrganization.isRight) {
     return errorOrMaybeOrganization.right;

@@ -1,5 +1,8 @@
 import * as DocumentDb from "documentdb";
+import * as DocumentDbUtils from "./documentdb";
 import { DocumentDbModel } from "./documentdb_model";
+
+import { Option } from "ts-option";
 
 import { NonNegativeNumber, toNonNegativeNumber } from "./numbers";
 
@@ -102,6 +105,24 @@ export abstract class DocumentDbModelVersioned<
     const newDocument = this.versionateModel(updatedObject, versionedModelId, nextVersion);
 
     return super.create(newDocument, partitionKey);
+  }
+
+  protected findLastVersionByModelId<V>(
+    collectionName: string,
+    modelIdField: string,
+    modelIdValue: V,
+  ): Promise<Either<DocumentDb.QueryError, Option<TR>>> {
+    return DocumentDbUtils.queryOneDocument(
+      this.dbClient,
+      this.collectionUrl,
+      {
+        parameters: [{
+          name: "@modelId",
+          value: modelIdValue,
+        }],
+        query: `SELECT * FROM ${collectionName} m WHERE (m.${modelIdField} = @modelId) ORDER BY m.version DESC`,
+      },
+    );
   }
 
 }

@@ -145,16 +145,10 @@ export class ProfileModel extends DocumentDbModelVersioned<IProfile, INewProfile
   public findOneProfileByFiscalCode(
     fiscalCode: FiscalCode,
   ): Promise<Either<DocumentDb.QueryError, Option<IRetrievedProfile>>> {
-    return DocumentDbUtils.queryOneDocument(
-      this.dbClient,
-      this.collectionUrl,
-      {
-        parameters: [{
-          name: "@fiscalCode",
-          value: fiscalCode,
-        }],
-        query: "SELECT * FROM profiles p WHERE (p.fiscalCode = @fiscalCode) ORDER BY p.version DESC",
-      },
+    return super.findLastVersionByModelId(
+      "profiles",
+      "fiscalCode",
+      fiscalCode,
     );
   }
 
