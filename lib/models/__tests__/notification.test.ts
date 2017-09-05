@@ -121,7 +121,6 @@ describe("findNotification", () => {
 describe("updateNotification", () => {
 
   const anEmailNotification: INotificationChannelEmail = {
-    kind: "INotificationChannelEmail",
     status: NotificationChannelStatus.NOTIFICATION_SENT_TO_CHANNEL,
     toAddress: "to@example.com",
   };

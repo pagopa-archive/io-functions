@@ -12,6 +12,7 @@ import { IAzureApiAuthorization, UserGroup } from "../../utils/middlewares/azure
 import { IAzureUserAttributes } from "../../utils/middlewares/azure_user_attributes";
 
 import { INewMessage, IPublicExtendedMessage, IRetrievedMessage } from "../../models/message";
+import { IRetrievedNotification, NotificationChannelStatus } from "../../models/notification";
 import { CreateMessageHandler, GetMessageHandler, IMessagePayload } from "../messages";
 
 const aFiscalCode = toFiscalCode("FRLFRC74E04B157I").get;
@@ -210,7 +211,11 @@ describe("GetMessageHandler", () => {
       findMessageForRecipient: jest.fn(() => right(some(aRetrievedMessage))),
     };
 
-    const getMessageHandler = GetMessageHandler(mockMessageModel as any);
+    const mockNotificationModel = {
+      findNotificationForMessage: jest.fn(() => right(none)),
+    };
+
+    const getMessageHandler = GetMessageHandler(mockMessageModel as any, mockNotificationModel as any);
 
     const result = await getMessageHandler(
       aUserAuthenticationDeveloper,
@@ -226,7 +231,9 @@ describe("GetMessageHandler", () => {
 
     expect(result.kind).toBe("IResponseSuccessJson");
     if (result.kind === "IResponseSuccessJson") {
-      expect(result.value).toEqual(aPublicExtendedMessage);
+      expect(result.value).toEqual({
+        message: aPublicExtendedMessage,
+      });
     }
   });
 
@@ -235,7 +242,11 @@ describe("GetMessageHandler", () => {
       findMessageForRecipient: jest.fn(() => right(some(aRetrievedMessage))),
     };
 
-    const getMessageHandler = GetMessageHandler(mockMessageModel as any);
+    const mockNotificationModel = {
+      findNotificationForMessage: jest.fn(() => right(none)),
+    };
+
+    const getMessageHandler = GetMessageHandler(mockMessageModel as any, mockNotificationModel as any);
 
     const userAttributes: IAzureUserAttributes = {
       ...someUserAttributes,
@@ -256,7 +267,9 @@ describe("GetMessageHandler", () => {
 
     expect(result.kind).toBe("IResponseSuccessJson");
     if (result.kind === "IResponseSuccessJson") {
-      expect(result.value).toEqual(aPublicExtendedMessage);
+      expect(result.value).toEqual({
+        message: aPublicExtendedMessage,
+      });
     }
   });
 
@@ -270,7 +283,7 @@ describe("GetMessageHandler", () => {
       findMessageForRecipient: jest.fn(() => right(some(message))),
     };
 
-    const getMessageHandler = GetMessageHandler(mockMessageModel as any);
+    const getMessageHandler = GetMessageHandler(mockMessageModel as any, {} as any);
 
     const result = await getMessageHandler(
       aUserAuthenticationDeveloper,
@@ -292,7 +305,7 @@ describe("GetMessageHandler", () => {
       findMessageForRecipient: jest.fn(() => right(none)),
     };
 
-    const getMessageHandler = GetMessageHandler(mockMessageModel as any);
+    const getMessageHandler = GetMessageHandler(mockMessageModel as any, {} as any);
 
     const result = await getMessageHandler(
       aUserAuthenticationDeveloper,
@@ -304,6 +317,58 @@ describe("GetMessageHandler", () => {
     expect(mockMessageModel.findMessageForRecipient).toHaveBeenCalledTimes(1);
 
     expect(result.kind).toBe("IResponseErrorNotFound");
+  });
+
+  it("should provide information about notification status", async () => {
+    const aRetrievedNotification: IRetrievedNotification = {
+      _self: "xyz",
+      _ts: "xyz",
+      emailNotification: {
+        status: NotificationChannelStatus.NOTIFICATION_SENT_TO_CHANNEL,
+        toAddress: "x@example.com",
+      },
+      fiscalCode: aFiscalCode,
+      id: "A_NOTIFICATION_ID",
+      kind: "IRetrievedNotification",
+      messageId: "A_MESSAGE_ID",
+    };
+
+    const mockMessageModel = {
+      findMessageForRecipient: jest.fn(() => right(some(aRetrievedMessage))),
+    };
+
+    const mockNotificationModel = {
+      findNotificationForMessage: jest.fn(() => right(some(aRetrievedNotification))),
+    };
+
+    const getMessageHandler = GetMessageHandler(mockMessageModel as any, mockNotificationModel as any);
+
+    const userAttributes: IAzureUserAttributes = {
+      ...someUserAttributes,
+      organization: undefined,
+    };
+
+    const result = await getMessageHandler(
+      aUserAuthenticationTrustedApplication,
+      userAttributes,
+      aFiscalCode,
+      aRetrievedMessage.id,
+    );
+
+    expect(mockMessageModel.findMessageForRecipient).toHaveBeenCalledTimes(1);
+    expect(mockMessageModel.findMessageForRecipient).toHaveBeenCalledWith(
+      aRetrievedMessage.fiscalCode, aRetrievedMessage.id,
+    );
+
+    expect(result.kind).toBe("IResponseSuccessJson");
+    if (result.kind === "IResponseSuccessJson") {
+      expect(result.value).toEqual({
+        message: aPublicExtendedMessage,
+        notification: {
+          email: "SENT_TO_CHANNEL",
+        },
+      });
+    }
   });
 
 });

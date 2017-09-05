@@ -8,6 +8,8 @@ import * as DocumentDb from "documentdb";
 import * as DocumentDbUtils from "../utils/documentdb";
 import { DocumentDbModel } from "../utils/documentdb_model";
 
+import { Option } from "ts-option";
+
 import { Either } from "../utils/either";
 
 import { FiscalCode, isFiscalCode } from "../utils/fiscalcode";
@@ -27,7 +29,6 @@ export const enum NotificationChannelStatus {
  * Attributes for the email channel
  */
 export interface INotificationChannelEmail {
-  readonly kind: "INotificationChannelEmail";
   readonly status: NotificationChannelStatus;
   readonly fromAddress?: string;
   readonly toAddress: string;
@@ -146,8 +147,10 @@ export class NotificationModel extends DocumentDbModel<INewNotification, IRetrie
    *
    * @param messageId The Id of the message
    */
-  public findNotificationsForMessage(messageId: string): DocumentDbUtils.IResultIterator<IRetrievedNotification> {
-    return DocumentDbUtils.queryDocuments(
+  public findNotificationForMessage(
+    messageId: string,
+  ): Promise<Either<DocumentDb.QueryError, Option<IRetrievedNotification>>> {
+    return DocumentDbUtils.queryOneDocument(
       this.dbClient,
       this.collectionUrl,
       {
