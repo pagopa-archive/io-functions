@@ -118,16 +118,20 @@ export class NotificationModel extends DocumentDbModel<INewNotification, IRetrie
       messageId: currentNotification.messageId,
     });
 
-    const newNotificationDocument = {
+    const newNotificationDocument: INewNotification = {
       ...updatedNotification,
       id: currentNotification.id,
       kind: "INewNotification",
     };
 
+    const kindlessNewNotificationDocument = Object.assign(
+      Object.assign({}, newNotificationDocument), { kind: undefined },
+    );
+
     const maybeReplacedDocument = await DocumentDbUtils.replaceDocument<INotification>(
       this.dbClient,
       DocumentDbUtils.getDocumentUrlFromDocument(currentNotification),
-      newNotificationDocument,
+      kindlessNewNotificationDocument,
       messageId,
     );
 

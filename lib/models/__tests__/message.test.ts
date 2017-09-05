@@ -9,7 +9,7 @@ import { toNonNegativeNumber } from "../../utils/numbers";
 
 import { INewMessage, IRetrievedMessage, MessageModel } from "../message";
 
-import { ModelId } from "../../utils/versioned_model";
+import { ModelId } from "../../utils/documentdb_model_versioned";
 
 const aMessagesCollectionUrl = "mockmessages" as DocumentDbUtils.DocumentDbCollectionUrl;
 
@@ -41,6 +41,8 @@ describe("createMessage", () => {
 
     const result = await model.create(aNewMessage, aNewMessage.fiscalCode);
 
+    expect(clientMock.createDocument.mock.calls[0][1].kind).toBeUndefined();
+
     expect(result.isRight).toBeTruthy();
     if (result.isRight) {
       expect(result.right).toEqual(aRetrievedMessage);
@@ -58,7 +60,10 @@ describe("createMessage", () => {
 
     expect(clientMock.createDocument).toHaveBeenCalledTimes(1);
     expect(clientMock.createDocument.mock.calls[0][0]).toEqual(aMessagesCollectionUrl);
-    expect(clientMock.createDocument.mock.calls[0][1]).toEqual(aNewMessage);
+    expect(clientMock.createDocument.mock.calls[0][1]).toEqual({
+      ...aNewMessage,
+      kind: undefined,
+    });
     expect(clientMock.createDocument.mock.calls[0][2]).toEqual({
       partitionKey: aNewMessage.fiscalCode,
     });

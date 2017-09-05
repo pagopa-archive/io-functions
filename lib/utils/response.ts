@@ -25,8 +25,9 @@ export interface IResponseSuccessJson<T> extends IResponse {
  * @param o The object to return to the client
  */
 export function ResponseSuccessJson<T>(o: T): IResponseSuccessJson<T> {
+  const kindlessObject = Object.assign(Object.assign({}, o), { kind: undefined });
   return {
-    apply: (res) => res.status(200).json(o),
+    apply: (res) => res.status(200).json(kindlessObject),
     kind: "IResponseSuccessJson",
     value: o,
   };

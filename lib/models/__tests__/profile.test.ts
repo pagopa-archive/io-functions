@@ -84,6 +84,7 @@ describe("createProfile", () => {
     const result = await model.create(newProfile, newProfile.fiscalCode);
 
     expect(clientMock.createDocument).toHaveBeenCalledTimes(1);
+    expect(clientMock.createDocument.mock.calls[0][1].kind).toBeUndefined();
     expect(clientMock.createDocument.mock.calls[0][2]).toHaveProperty("partitionKey", aFiscalCode);
     expect(result.isRight).toBeTruthy();
     if (result.isRight) {
@@ -144,6 +145,7 @@ describe("updateProfile", () => {
     );
 
     expect(clientMock.createDocument).toHaveBeenCalledTimes(1);
+    expect(clientMock.createDocument.mock.calls[0][1].kind).toBeUndefined();
     expect(clientMock.createDocument.mock.calls[0][2]).toHaveProperty("partitionKey", aFiscalCode);
     expect(result.isRight).toBeTruthy();
     if (result.isRight) {

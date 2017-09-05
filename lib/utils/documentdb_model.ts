@@ -16,10 +16,13 @@ export abstract class DocumentDbModel<TN extends DocumentDb.NewDocument, TR exte
     document: TN,
     partitionKey: string,
   ): Promise<Either<DocumentDb.QueryError, TR>> {
+    // we don't want to store the "kind" property, let's remove it
+    const kindlessDocument = Object.assign(Object.assign({}, document), { kind: undefined });
+
     const maybeCreatedDocument = await DocumentDbUtils.createDocument(
       this.dbClient,
       this.collectionUrl,
-      document,
+      kindlessDocument,
       partitionKey,
     );
     return maybeCreatedDocument.mapRight(this.toRetrieved);
