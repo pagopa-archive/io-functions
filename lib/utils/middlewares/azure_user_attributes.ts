@@ -7,7 +7,7 @@ import { none, option, Option, some } from "ts-option";
 
 import { left, right } from "../either";
 
-import { IRetrievedOrganization, OrganizationModel } from "../../models/organization";
+import { IOrganization, IRetrievedOrganization, OrganizationModel } from "../../models/organization";
 import { IRequestMiddleware } from "../request_middleware";
 import {
   IResponseErrorForbiddenNotAuthorized,
@@ -21,7 +21,7 @@ interface IAzureUserNote {
 
 export interface IAzureUserAttributes {
   readonly kind: "IAzureUserAttributes";
-  readonly organization?: IRetrievedOrganization;
+  readonly organization?: IOrganization;
 }
 
 /**

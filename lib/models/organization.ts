@@ -10,7 +10,7 @@ import { NonNegativeNumber } from "../utils/numbers";
 /**
  * Base interface for Organization objects
  */
-interface IOrganization {
+export interface IOrganization {
   readonly organizationId: ModelId;
   readonly name: string;
 }

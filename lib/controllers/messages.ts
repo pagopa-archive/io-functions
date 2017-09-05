@@ -70,8 +70,18 @@ interface IBindings {
  *
  * TODO: generate from a schema.
  */
-interface IMessagePayload {
+export interface IMessagePayload {
   readonly body_short: string;
+  readonly dry_run: boolean;
+}
+
+/**
+ * Response for successful dry run requests
+ */
+export interface IResponseDryRun {
+  readonly status: "DRY_RUN_SUCCESS";
+  readonly bodyShort: string;
+  readonly senderOrganizationId: string;
 }
 
 /**
@@ -81,15 +91,20 @@ interface IMessagePayload {
  */
 export const MessagePayloadMiddleware: IRequestMiddleware<IResponseErrorValidation, IMessagePayload> =
   (request) => {
-    if (typeof request.body.body_short === "string") {
-      return Promise.resolve(right({
-        body_short: request.body.body_short,
-      }));
-    } else {
-      const response = ResponseErrorValidation("body_short is required");
-      return Promise.resolve(left(response));
+    const body = request.body;
+    // validate body
+    if (typeof body.body_short !== "string") {
+      return Promise.resolve(left(ResponseErrorValidation("body_short is required")));
     }
-  };
+    // validate dry_run
+    if (body.dry_run && typeof body.dry_run !== "boolean") {
+      return Promise.resolve(left(ResponseErrorValidation("dry_run must be a boolean")));
+    }
+    return Promise.resolve(right({
+      body_short: body.body_short,
+      dry_run: body.dry_run,
+    }));
+};
 
 /**
  * Type of a CreateMessage handler.
@@ -107,6 +122,7 @@ type ICreateMessageHandler = (
   messagePayload: IMessagePayload,
 ) => Promise<
   IResponseSuccessRedirectToResource<IMessage> |
+  IResponseSuccessJson<IResponseDryRun> |
   IResponseErrorValidation |
   IResponseErrorGeneric
 >;
@@ -156,6 +172,17 @@ export function CreateMessageHandler(messageModel: MessageModel): ICreateMessage
     if (!userOrganization) {
       // to be able to send a message the user musy be part of an organization
       return(ResponseErrorValidation("The user is not part of any organization."));
+    }
+
+    if (messagePayload.dry_run) {
+      // if the user requested a dry run, we respond with the attributes
+      // that we received
+      const response: IResponseDryRun = {
+        bodyShort: messagePayload.body_short,
+        senderOrganizationId: userOrganization.organizationId,
+        status: "DRY_RUN_SUCCESS",
+      };
+      return(ResponseSuccessJson(response));
     }
 
     // we need the user to be associated to a valid organization for him
