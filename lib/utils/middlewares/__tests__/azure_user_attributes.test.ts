@@ -46,7 +46,7 @@ describe("AzureUserAttributesMiddleware", () => {
     expect(orgModel.findByOrganizationId).toHaveBeenCalledWith("agid");
     expect(result.isRight).toBeTruthy();
     if (result.isRight) {
-      expect(result.right.organization).toBeNull();
+      expect(result.right.organization).toBeUndefined();
     }
 
   });
