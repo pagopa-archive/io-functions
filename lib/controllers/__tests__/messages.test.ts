@@ -2,7 +2,7 @@
 
 import { response as MockResponse } from "jest-mock-express";
 
-import { options, some, none } from "ts-option";
+import { none, some } from "ts-option";
 import { left, right } from "../../utils/either";
 
 import { ModelId } from "../../utils/documentdb_model_versioned";
@@ -22,6 +22,7 @@ const someUserAttributes: IAzureUserAttributes = {
     name: "AgID",
     organizationId: "agid" as ModelId,
   },
+  productionEnabled: true,
 };
 
 const aUserAuthenticationDeveloper: IAzureApiAuthorization = {
@@ -144,6 +145,34 @@ describe("CreateMessageHandler", () => {
       result.apply(response);
       expect(response.redirect).toBeCalledWith(202, `/api/v1/messages/${aFiscalCode}/${messageDocument.id}`);
     }
+  });
+
+  it("should require the user to be enable for production to create a new message", async () => {
+    const mockMessageModel = {
+      create: jest.fn(() => right(aRetrievedMessage)),
+    };
+
+    const createMessageHandler = CreateMessageHandler(mockMessageModel as any);
+
+    const mockContext = {
+      bindings: {},
+      log: jest.fn(),
+    };
+
+    const result = await createMessageHandler(
+      mockContext as any,
+      {} as any,
+      {
+        ...someUserAttributes,
+        productionEnabled: false,
+      },
+      aFiscalCode,
+      aMessagePayload,
+    );
+
+    expect(mockMessageModel.create).not.toHaveBeenCalled();
+
+    expect(result.kind).toBe("IResponseErrorForbiddenNotAuthorized");
   });
 
   it("should return failure if creation fails", async () => {

@@ -124,6 +124,7 @@ type ICreateMessageHandler = (
   IResponseSuccessRedirectToResource<IMessage> |
   IResponseSuccessJson<IResponseDryRun> |
   IResponseErrorValidation |
+  IResponseErrorForbiddenNotAuthorized |
   IResponseErrorGeneric
 >;
 
@@ -183,6 +184,9 @@ export function CreateMessageHandler(messageModel: MessageModel): ICreateMessage
         status: "DRY_RUN_SUCCESS",
       };
       return(ResponseSuccessJson(response));
+    } else if (!userAttributes.productionEnabled) {
+      // the user is doing a production call but he's not enabled
+      return(ResponseErrorForbiddenNotAuthorized);
     }
 
     // we need the user to be associated to a valid organization for him
