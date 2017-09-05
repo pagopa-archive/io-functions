@@ -15,7 +15,7 @@ import {
   NotificationModel,
 } from "../notification";
 
-import { ModelId } from "../../utils/versioned_model";
+import { ModelId } from "../../utils/documentdb_model_versioned";
 
 const aNotificationsCollectionUrl = "mocknotifications" as DocumentDbUtils.DocumentDbCollectionUrl;
 
@@ -46,6 +46,7 @@ describe("createNotification", () => {
 
     const result = await model.create(aNewNotification, aNewNotification.messageId);
 
+    expect(clientMock.createDocument.mock.calls[0][1].kind).toBeUndefined();
     expect(result.isRight).toBeTruthy();
     if (result.isRight) {
       expect(result.right).toEqual(aRetrievedNotification);
@@ -63,7 +64,10 @@ describe("createNotification", () => {
 
     expect(clientMock.createDocument).toHaveBeenCalledTimes(1);
     expect(clientMock.createDocument.mock.calls[0][0]).toEqual(aNotificationsCollectionUrl);
-    expect(clientMock.createDocument.mock.calls[0][1]).toEqual(aNewNotification);
+    expect(clientMock.createDocument.mock.calls[0][1]).toEqual({
+      ...aNewNotification,
+      kind: undefined,
+    });
     expect(clientMock.createDocument.mock.calls[0][2]).toEqual({
       partitionKey: aNewNotification.messageId,
     });
@@ -156,6 +160,8 @@ describe("updateNotification", () => {
       fiscalCode: aRetrievedNotification.fiscalCode,
       messageId: aRetrievedNotification.messageId,
     });
+
+    expect(clientMock.replaceDocument.mock.calls[0][1].kind).toBeUndefined();
 
     expect(result.isRight).toBeTruthy();
     if (result.isRight) {
