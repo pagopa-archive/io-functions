@@ -1,9 +1,9 @@
 import * as DocumentDb from "documentdb";
 import * as DocumentDbUtils from "../utils/documentdb";
 
-import { none, Option, some } from "ts-option";
+import { Option } from "ts-option";
 
-import { Either, right } from "./either";
+import { Either } from "./either";
 
 export abstract class DocumentDbModel<TN extends DocumentDb.NewDocument, TR extends DocumentDb.RetrievedDocument> {
   protected dbClient: DocumentDb.DocumentClient;
@@ -33,26 +33,19 @@ export abstract class DocumentDbModel<TN extends DocumentDb.NewDocument, TR exte
   /**
    * Looks for a specific object
    */
-  public async find(
-    id: string, partitionKey: string,
-  ): Promise<Either<DocumentDb.QueryError, Option<TR>>> {
-    const documentUrl = DocumentDbUtils.getDocumentUri(
-      this.collectionUri,
-      id,
-    );
-
-    const errorOrDocument = await DocumentDbUtils.readDocument(
+  public async find<T>(id: T): Promise<Either<DocumentDb.QueryError, Option<TR>>> {
+    const errorOrMaybeDocument = await DocumentDbUtils.queryOneDocument<TR>(
       this.dbClient,
-      documentUrl,
-      partitionKey,
+      this.collectionUri,
+      {
+        parameters: [{
+          name: "@id",
+          value: id,
+        }],
+        query: `SELECT * FROM ${this.collectionUri.collectionId} c WHERE (c.id = @id)`,
+      },
     );
-
-    if (errorOrDocument.isLeft && errorOrDocument.left.code === 404) {
-      // if the error is 404 (Not Found), we return an empty value
-      return right(none);
-    }
-
-    return errorOrDocument.mapRight((r) => some(this.toRetrieved(r)));
+    return errorOrMaybeDocument.mapRight((maybeDocument) => maybeDocument.map(this.toRetrieved));
   }
 
 }

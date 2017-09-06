@@ -79,19 +79,19 @@ describe("createMessage", () => {
 describe("find", () => {
 
   it("should return an existing message", async () => {
+    const iteratorMock = {
+      executeNext: jest.fn((cb) => cb(undefined, [ aRetrievedMessage ], undefined)),
+    };
+
     const clientMock = {
-      readDocument: jest.fn((_, __, cb) => cb(undefined, aRetrievedMessage)),
+      queryDocuments: jest.fn(() => iteratorMock),
     };
 
     const model = new MessageModel((clientMock as any) as DocumentDb.DocumentClient, aMessagesCollectionUrl);
 
-    const result = await model.find(aRetrievedMessage.id, aRetrievedMessage.fiscalCode);
+    const result = await model.find(aRetrievedMessage.id);
 
-    expect(clientMock.readDocument).toHaveBeenCalledTimes(1);
-    expect(clientMock.readDocument.mock.calls[0][0]).toEqual("dbs/mockdb/colls/messages/docs/A_MESSAGE_ID");
-    expect(clientMock.readDocument.mock.calls[0][1]).toEqual({
-      partitionKey: aRetrievedMessage.fiscalCode,
-    });
+    expect(clientMock.queryDocuments).toHaveBeenCalledTimes(1);
     expect(result.isRight).toBeTruthy();
     if (result.isRight) {
       expect(result.right.isDefined).toBeTruthy();
@@ -100,13 +100,17 @@ describe("find", () => {
   });
 
   it("should return the error", async () => {
+    const iteratorMock = {
+      executeNext: jest.fn((cb) => cb({code: 500})),
+    };
+
     const clientMock = {
-      readDocument: jest.fn((_, __, cb) => cb({code: 500})),
+      queryDocuments: jest.fn(() => iteratorMock),
     };
 
     const model = new MessageModel((clientMock as any) as DocumentDb.DocumentClient, aMessagesCollectionUrl);
 
-    const result = await model.find(aRetrievedMessage.id, aRetrievedMessage.fiscalCode);
+    const result = await model.find(aRetrievedMessage.id);
 
     expect(result.isLeft).toBeTruthy();
     if (result.isLeft) {
@@ -115,13 +119,17 @@ describe("find", () => {
   });
 
   it("should return an empty value on 404 error", async () => {
+    const iteratorMock = {
+      executeNext: jest.fn((cb) => cb(undefined, [ ], undefined)),
+    };
+
     const clientMock = {
-      readDocument: jest.fn((_, __, cb) => cb({code: 404})),
+      queryDocuments: jest.fn(() => iteratorMock),
     };
 
     const model = new MessageModel((clientMock as any) as DocumentDb.DocumentClient, aMessagesCollectionUrl);
 
-    const result = await model.find(aRetrievedMessage.id, aRetrievedMessage.fiscalCode);
+    const result = await model.find(aRetrievedMessage.id);
 
     expect(result.isRight).toBeTruthy();
     if (result.isRight) {
@@ -135,7 +143,7 @@ describe("findMessages", () => {
 
   it("should return the messages for a fiscal code", async () => {
     const iteratorMock = {
-      executeNext: jest.fn((cb) => cb(undefined, [ "result" ], undefined)),
+      executeNext: jest.fn((cb) => cb(undefined, [ aRetrievedMessage ], undefined)),
     };
 
     const clientMock = {
@@ -153,7 +161,7 @@ describe("findMessages", () => {
     expect(result.isRight).toBeTruthy();
     if (result.isRight) {
       expect(result.right.isDefined).toBeTruthy();
-      expect(result.right.get).toEqual([ "result" ]);
+      expect(result.right.get).toEqual([ aRetrievedMessage ]);
     }
   });
 
@@ -162,19 +170,18 @@ describe("findMessages", () => {
 describe("findMessageForRecipient", () => {
 
   it("should return the messages if the recipient matches", async () => {
+    const iteratorMock = {
+      executeNext: jest.fn((cb) => cb(undefined, [ aRetrievedMessage ], undefined)),
+    };
+
     const clientMock = {
-      readDocument: jest.fn((_, __, cb) => cb(undefined, aRetrievedMessage)),
+      queryDocuments: jest.fn(() => iteratorMock),
     };
 
     const model = new MessageModel((clientMock as any) as DocumentDb.DocumentClient, aMessagesCollectionUrl);
 
     const result = await model.findMessageForRecipient(aRetrievedMessage.fiscalCode, aRetrievedMessage.id);
 
-    expect(clientMock.readDocument).toHaveBeenCalledTimes(1);
-    expect(clientMock.readDocument.mock.calls[0][0]).toEqual("dbs/mockdb/colls/messages/docs/A_MESSAGE_ID");
-    expect(clientMock.readDocument.mock.calls[0][1]).toEqual({
-      partitionKey: aRetrievedMessage.fiscalCode,
-    });
     expect(result.isRight).toBeTruthy();
     if (result.isRight) {
       expect(result.right.isDefined).toBeTruthy();
@@ -183,15 +190,18 @@ describe("findMessageForRecipient", () => {
   });
 
   it("should return an empty value if the recipient doesn't match", async () => {
+    const iteratorMock = {
+      executeNext: jest.fn((cb) => cb(undefined, [ aRetrievedMessage ], undefined)),
+    };
+
     const clientMock = {
-      readDocument: jest.fn((_, __, cb) => cb(undefined, aRetrievedMessage)),
+      queryDocuments: jest.fn(() => iteratorMock),
     };
 
     const model = new MessageModel((clientMock as any) as DocumentDb.DocumentClient, aMessagesCollectionUrl);
 
     const result = await model.findMessageForRecipient(toFiscalCode("FRLFRC73E04B157I").get, aRetrievedMessage.id);
 
-    expect(clientMock.readDocument).toHaveBeenCalledTimes(1);
     expect(result.isRight).toBeTruthy();
     if (result.isRight) {
       expect(result.right.isEmpty).toBeTruthy();
@@ -199,15 +209,18 @@ describe("findMessageForRecipient", () => {
   });
 
   it("should return an error", async () => {
+    const iteratorMock = {
+      executeNext: jest.fn((cb) => cb("error")),
+    };
+
     const clientMock = {
-      readDocument: jest.fn((_, __, cb) => cb("error")),
+      queryDocuments: jest.fn(() => iteratorMock),
     };
 
     const model = new MessageModel((clientMock as any) as DocumentDb.DocumentClient, aMessagesCollectionUrl);
 
     const result = await model.findMessageForRecipient(toFiscalCode("FRLFRC73E04B157I").get, aRetrievedMessage.id);
 
-    expect(clientMock.readDocument).toHaveBeenCalledTimes(1);
     expect(result.isLeft).toBeTruthy();
     if (result.isLeft) {
       expect(result.left).toBe("error");
