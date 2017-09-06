@@ -100,7 +100,6 @@ async function handleMessage(
         // in case an email address is configured in the profile, we can
         // trigger an email notification event
         const emailNotification: INotificationChannelEmail = {
-          kind: "INotificationChannelEmail",
           status: NotificationChannelStatus.NOTIFICATION_QUEUED,
           toAddress: email,
         };
