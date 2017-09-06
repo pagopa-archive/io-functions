@@ -16,6 +16,7 @@ import { OrganizationModel } from "./models/organization";
 import { ProfileModel } from "./models/profile";
 
 import { GetDebug } from "./controllers/debug";
+import { GetInfo } from "./controllers/info";
 import {
   CreateMessage,
   GetMessage,
@@ -60,6 +61,8 @@ app.post("/api/v1/profiles/:fiscalcode", UpsertProfile(profileModel));
 app.get("/api/v1/messages/:fiscalcode/:id", GetMessage(organizationModel, messageModel, notificationModel));
 app.get("/api/v1/messages/:fiscalcode", GetMessages(messageModel));
 app.post("/api/v1/messages/:fiscalcode", CreateMessage(organizationModel, messageModel));
+
+app.get("/api/v1/info", GetInfo());
 
 // Binds the express app to an Azure Function handler
 export const index = createAzureFunctionHandler(app);
