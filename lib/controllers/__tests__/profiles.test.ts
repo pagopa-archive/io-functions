@@ -190,7 +190,7 @@ it("should update an existing profile", async () => {
     }),
     update: jest.fn((_, __, f) => {
       updatedProfile = f(aRetrievedProfile);
-      return Promise.resolve(right(aRetrievedProfile));
+      return Promise.resolve(right(some(aRetrievedProfile)));
     }),
   };
 

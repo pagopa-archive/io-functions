@@ -164,7 +164,7 @@ async function updateExistingProfileFromPayload(
   existingProfile: IRetrievedProfile,
   profileModelPayload: IProfilePayload,
 ): Promise<IResponseSuccessJson<IPublicExtendedProfile> | IResponseErrorGeneric> {
-  const errorOrProfile = await profileModel.update(
+  const errorOrMaybeProfile = await profileModel.update(
     existingProfile.fiscalCode,
     existingProfile.fiscalCode,
     (p) => {
@@ -174,14 +174,28 @@ async function updateExistingProfileFromPayload(
       };
     },
   );
-  const errorOrProfileAsPublicExtendedProfile = errorOrProfile.mapRight(asPublicExtendedProfile);
-  if (errorOrProfileAsPublicExtendedProfile.isRight) {
-    return ResponseSuccessJson(errorOrProfileAsPublicExtendedProfile.right);
-  } else {
+
+  if (errorOrMaybeProfile.isLeft) {
     return ResponseErrorGeneric(
-      `Error while updating the existing profile|${errorOrProfileAsPublicExtendedProfile.left.code}`,
+      `Error while updating the existing profile|${errorOrMaybeProfile.left.code}`,
     );
   }
+
+  const maybeProfile = errorOrMaybeProfile.right;
+
+  if (maybeProfile.isEmpty) {
+    // this should never happen since if the profile doesn't exist this function
+    // will never be called, but let's deal with this anyway, you never know
+    return ResponseErrorGeneric(
+      `Error while updating the existing profile, the profile does not exist!`,
+    );
+  }
+
+  const profile = maybeProfile.get;
+
+  const publicExtendedProfile = asPublicExtendedProfile(profile);
+
+  return ResponseSuccessJson(publicExtendedProfile);
 }
 
 /**
