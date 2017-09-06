@@ -124,17 +124,13 @@ describe("createProfile", () => {
 describe("update", () => {
 
   it("should update an existing profile", async () => {
-    const iteratorMock = {
-      executeNext: jest.fn((cb) => cb(undefined, [ aRetrievedProfile ], undefined)),
-    };
-
     const clientMock: any = {
       createDocument: jest.fn((_, newDocument, __, cb) => {
         cb(undefined, {
           ...newDocument,
         });
       }),
-      queryDocuments: jest.fn(() => iteratorMock),
+      readDocument: jest.fn((_, __, cb) => cb(undefined, aRetrievedProfile)),
     };
 
     const model = new ProfileModel(clientMock, profilesCollectionUrl);
@@ -165,19 +161,16 @@ describe("update", () => {
   });
 
   it("should reject the promise in case of error (read)", async () => {
-    const iteratorMock = {
-      executeNext: jest.fn((cb) => cb("error")),
-    };
-
     const clientMock: any = {
       createDocument: jest.fn(),
-      queryDocuments: jest.fn(() => iteratorMock),
+      readDocument: jest.fn((_, __, cb) => cb("error")),
     };
 
     const model = new ProfileModel(clientMock, profilesCollectionUrl);
 
     const result = await model.update(aFiscalCode, aFiscalCode, (o) => o);
 
+    expect(clientMock.readDocument).toHaveBeenCalledTimes(1);
     expect(clientMock.createDocument).not.toHaveBeenCalled();
 
     expect(result.isLeft).toBeTruthy();
@@ -187,19 +180,16 @@ describe("update", () => {
   });
 
   it("should reject the promise in case of error (create)", async () => {
-    const iteratorMock = {
-      executeNext: jest.fn((cb) => cb(undefined, [ aRetrievedProfile ], undefined)),
-    };
-
     const clientMock: any = {
-      createDocument: jest.fn((_, newDocument, __, cb) => cb("error")),
-      queryDocuments: jest.fn(() => iteratorMock),
+      createDocument: jest.fn((_, __, ___, cb) => cb("error")),
+      readDocument: jest.fn((_, __, cb) => cb(undefined, aRetrievedProfile)),
     };
 
     const model = new ProfileModel(clientMock, profilesCollectionUrl);
 
     const result = await model.update(aFiscalCode, aFiscalCode, (o) => o);
 
+    expect(clientMock.readDocument).toHaveBeenCalledTimes(1);
     expect(clientMock.createDocument).toHaveBeenCalledTimes(1);
 
     expect(result.isLeft).toBeTruthy();
