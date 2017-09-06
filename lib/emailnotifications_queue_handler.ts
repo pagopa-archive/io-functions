@@ -123,15 +123,22 @@ async function handleNotification(
 ): Promise<Either<ProcessingError, ProcessingResult>> {
 
   // fetch the notification
-  const errorOrNotification = await notificationModel.find(notificationId, messageId);
+  const errorOrMaybeNotification = await notificationModel.find(notificationId, messageId);
 
-  if (errorOrNotification.isLeft) {
+  if (errorOrMaybeNotification.isLeft) {
     // we got an error while fetching the notification
     return left(ProcessingError.TRANSIENT);
   }
 
+  const maybeNotification = errorOrMaybeNotification.right;
+
+  if (maybeNotification.isEmpty) {
+    // it may happen that the object is not yet visible to this function due to latency?
+    return left(ProcessingError.TRANSIENT);
+  }
+
   // we have the notification
-  const notification = errorOrNotification.right;
+  const notification = maybeNotification.get;
 
   const emailNotification = notification.emailNotification;
   if (!emailNotification) {
@@ -141,14 +148,21 @@ async function handleNotification(
   }
 
   // fetch the message
-  const errorOrMessage = await messageModel.find(notification.messageId, notification.fiscalCode);
+  const errorOrMaybeMessage = await messageModel.find(notification.messageId, notification.fiscalCode);
 
-  if (errorOrMessage.isLeft) {
+  if (errorOrMaybeMessage.isLeft) {
     // we got an error while fetching the message
     return left(ProcessingError.TRANSIENT);
   }
 
-  const message = errorOrMessage.right;
+  const maybeMessage = errorOrMaybeMessage.right;
+
+  if (maybeMessage.isEmpty) {
+    // race condition?
+    return left(ProcessingError.TRANSIENT);
+  }
+
+  const message = maybeMessage.get;
 
   // trigger email delivery
   // TODO: use fromAddress from the emailNotification object
