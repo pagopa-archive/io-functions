@@ -25,6 +25,7 @@ import { RequiredIdParamMiddleware } from "../utils/middlewares/required_id_para
 import { IRequestMiddleware, withRequestMiddlewares, wrapRequestHandler } from "../utils/request_middleware";
 import {
   IResponseErrorForbiddenNotAuthorized,
+  IResponseErrorForbiddenNotAuthorizedForProduction,
   IResponseErrorGeneric,
   IResponseErrorNotFound,
   IResponseErrorValidation,
@@ -32,6 +33,7 @@ import {
   IResponseSuccessJsonIterator,
   IResponseSuccessRedirectToResource,
   ResponseErrorForbiddenNotAuthorized,
+  ResponseErrorForbiddenNotAuthorizedForProduction,
   ResponseErrorGeneric,
   ResponseErrorNotFound,
   ResponseErrorValidation,
@@ -134,6 +136,7 @@ type ICreateMessageHandler = (
   IResponseSuccessJson<IResponseDryRun> |
   IResponseErrorValidation |
   IResponseErrorForbiddenNotAuthorized |
+  IResponseErrorForbiddenNotAuthorizedForProduction |
   IResponseErrorGeneric
 >;
 
@@ -195,7 +198,7 @@ export function CreateMessageHandler(messageModel: MessageModel): ICreateMessage
       return(ResponseSuccessJson(response));
     } else if (!userAttributes.productionEnabled) {
       // the user is doing a production call but he's not enabled
-      return(ResponseErrorForbiddenNotAuthorized);
+      return(ResponseErrorForbiddenNotAuthorizedForProduction);
     }
 
     // we need the user to be associated to a valid organization for him

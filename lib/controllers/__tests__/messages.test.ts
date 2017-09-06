@@ -173,7 +173,7 @@ describe("CreateMessageHandler", () => {
 
     expect(mockMessageModel.create).not.toHaveBeenCalled();
 
-    expect(result.kind).toBe("IResponseErrorForbiddenNotAuthorized");
+    expect(result.kind).toBe("IResponseErrorForbiddenNotAuthorizedForProduction");
   });
 
   it("should return failure if creation fails", async () => {

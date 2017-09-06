@@ -160,6 +160,23 @@ export const ResponseErrorForbiddenNotAuthorized: IResponseErrorForbiddenNotAuth
 };
 
 /**
+ * The user is not allowed here.
+ */
+export interface IResponseErrorForbiddenNotAuthorizedForProduction extends IResponse {
+  readonly kind: "IResponseErrorForbiddenNotAuthorizedForProduction";
+}
+
+/**
+ * The user is not allowed here.
+ */
+export const ResponseErrorForbiddenNotAuthorizedForProduction: IResponseErrorForbiddenNotAuthorizedForProduction = {
+  apply: (res) => res.status(403).json({
+    error: "You are not allowed to issue production calls, set 'dry_run' to true.",
+  }),
+  kind: "IResponseErrorForbiddenNotAuthorizedForProduction",
+};
+
+/**
  * The user is not part of any valid authorization groups.
  */
 export interface IResponseErrorForbiddenNoAuthorizationGroups extends IResponse {
