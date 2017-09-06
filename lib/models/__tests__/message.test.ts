@@ -11,7 +11,8 @@ import { INewMessage, IRetrievedMessage, MessageModel } from "../message";
 
 import { ModelId } from "../../utils/documentdb_model_versioned";
 
-const aMessagesCollectionUrl = "mockmessages" as DocumentDbUtils.DocumentDbCollectionUrl;
+const aDatabaseUri = DocumentDbUtils.getDatabaseUri("mockdb");
+const aMessagesCollectionUrl = DocumentDbUtils.getCollectionUri(aDatabaseUri, "messages");
 
 const aFiscalCode = toFiscalCode("FRLFRC74E04B157I").get;
 
@@ -59,7 +60,7 @@ describe("createMessage", () => {
     const result = await model.create(aNewMessage, aNewMessage.fiscalCode);
 
     expect(clientMock.createDocument).toHaveBeenCalledTimes(1);
-    expect(clientMock.createDocument.mock.calls[0][0]).toEqual(aMessagesCollectionUrl);
+    expect(clientMock.createDocument.mock.calls[0][0]).toEqual("dbs/mockdb/colls/messages");
     expect(clientMock.createDocument.mock.calls[0][1]).toEqual({
       ...aNewMessage,
       kind: undefined,
@@ -87,7 +88,7 @@ describe("find", () => {
     const result = await model.find(aRetrievedMessage.id, aRetrievedMessage.fiscalCode);
 
     expect(clientMock.readDocument).toHaveBeenCalledTimes(1);
-    expect(clientMock.readDocument.mock.calls[0][0]).toEqual("mockmessages/docs/A_MESSAGE_ID");
+    expect(clientMock.readDocument.mock.calls[0][0]).toEqual("dbs/mockdb/colls/messages/docs/A_MESSAGE_ID");
     expect(clientMock.readDocument.mock.calls[0][1]).toEqual({
       partitionKey: aRetrievedMessage.fiscalCode,
     });
@@ -170,7 +171,7 @@ describe("findMessageForRecipient", () => {
     const result = await model.findMessageForRecipient(aRetrievedMessage.fiscalCode, aRetrievedMessage.id);
 
     expect(clientMock.readDocument).toHaveBeenCalledTimes(1);
-    expect(clientMock.readDocument.mock.calls[0][0]).toEqual("mockmessages/docs/A_MESSAGE_ID");
+    expect(clientMock.readDocument.mock.calls[0][0]).toEqual("dbs/mockdb/colls/messages/docs/A_MESSAGE_ID");
     expect(clientMock.readDocument.mock.calls[0][1]).toEqual({
       partitionKey: aRetrievedMessage.fiscalCode,
     });

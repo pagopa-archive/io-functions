@@ -27,9 +27,9 @@ const COSMOSDB_URI: string = process.env.CUSTOMCONNSTR_COSMOSDB_URI;
 const COSMOSDB_KEY: string = process.env.CUSTOMCONNSTR_COSMOSDB_KEY;
 
 // TODO: read from env vars
-const documentDbDatabaseUrl = documentDbUtils.getDatabaseUrl("development");
-const messagesCollectionUrl = documentDbUtils.getCollectionUrl(documentDbDatabaseUrl, "messages");
-const notificationsCollectionUrl = documentDbUtils.getCollectionUrl(documentDbDatabaseUrl, "notifications");
+const documentDbDatabaseUrl = documentDbUtils.getDatabaseUri("development");
+const messagesCollectionUrl = documentDbUtils.getCollectionUri(documentDbDatabaseUrl, "messages");
+const notificationsCollectionUrl = documentDbUtils.getCollectionUri(documentDbDatabaseUrl, "notifications");
 
 //
 // setup NodeMailer

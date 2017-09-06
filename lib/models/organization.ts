@@ -66,7 +66,7 @@ export class OrganizationModel extends DocumentDbModelVersioned<
   IRetrievedOrganization
 > {
   protected dbClient: DocumentDb.DocumentClient;
-  protected collectionUrl: DocumentDbUtils.DocumentDbCollectionUrl;
+  protected collectionUri: DocumentDbUtils.IDocumentDbCollectionUri;
 
   /**
    * Creates a new Organization model
@@ -74,7 +74,7 @@ export class OrganizationModel extends DocumentDbModelVersioned<
    * @param dbClient the DocumentDB client
    * @param collectionUrl the collection URL
    */
-  constructor(dbClient: DocumentDb.DocumentClient, collectionUrl: DocumentDbUtils.DocumentDbCollectionUrl) {
+  constructor(dbClient: DocumentDb.DocumentClient, collectionUrl: DocumentDbUtils.IDocumentDbCollectionUri) {
     super();
     // tslint:disable-next-line:no-object-mutation
     this.toRetrieved = toRetrieved;
@@ -85,7 +85,7 @@ export class OrganizationModel extends DocumentDbModelVersioned<
     // tslint:disable-next-line:no-object-mutation
     this.dbClient = dbClient;
     // tslint:disable-next-line:no-object-mutation
-    this.collectionUrl = collectionUrl;
+    this.collectionUri = collectionUrl;
   }
 
   /**

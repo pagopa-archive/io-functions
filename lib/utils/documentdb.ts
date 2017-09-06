@@ -18,26 +18,26 @@ import { Either, left, right } from "./either";
 // Definition of types
 //
 
-// tslint:disable-next-line:max-classes-per-file
-declare class DocumentDbDatabaseUrlTag {
-  private dummy: boolean;
+interface IDocumentDbUri {
+  readonly uri: string;
 }
 
-export type DocumentDbDatabaseUrl = string & DocumentDbDatabaseUrlTag;
-
-// tslint:disable-next-line:max-classes-per-file
-declare class DocumentDbCollectionUrlTag {
-  private dummy: boolean;
+export interface IDocumentDbDatabaseUri extends IDocumentDbUri {
+  readonly kind: "DocumentDbDatabaseUri";
+  readonly databaseId: string;
 }
 
-export type DocumentDbCollectionUrl = string & DocumentDbCollectionUrlTag;
-
-// tslint:disable-next-line:max-classes-per-file
-declare class DocumentDbDocumentUrlTag {
-  private dummy: boolean;
+export interface IDocumentDbCollectionUri extends IDocumentDbUri {
+  readonly kind: "DocumentDbCollectionUri";
+  readonly collectionId: string;
+  readonly databaseUri: IDocumentDbDatabaseUri;
 }
 
-export type DocumentDbDocumentUrl = string & DocumentDbDocumentUrlTag;
+export interface IDocumentDbDocumentUri extends IDocumentDbUri {
+  readonly kind: "DocumentDbDocumentUri";
+  readonly documentId: string;
+  readonly collectionUri: IDocumentDbCollectionUri;
+}
 
 /**
  * Result of DocumentDb queries.
@@ -55,41 +55,48 @@ export interface IResultIterator<T> {
 //
 
 /**
- * Returns the URL for a DocumentDB database
+ * Returns the URI for a DocumentDB database
  *
- * @param databaseName The name of the database
+ * @param databaseId The name of the database
  */
-export function getDatabaseUrl(databaseName: string): DocumentDbDatabaseUrl {
-  return `dbs/${databaseName}` as DocumentDbDatabaseUrl;
+export function getDatabaseUri(databaseId: string): IDocumentDbDatabaseUri {
+  return {
+    databaseId,
+    kind: "DocumentDbDatabaseUri",
+    uri: DocumentDb.UriFactory.createDatabaseUri(databaseId),
+  };
 }
 
 /**
- * Returns the URL for a DocumentDB collection
+ * Returns the URI for a DocumentDB collection
  *
- * @param databaseUrl The URL of the database
- * @param collectionName The name of the collection
+ * @param databaseUri The URI of the database
+ * @param collectionId The name of the collection
  */
-export function getCollectionUrl(databaseUrl: DocumentDbDatabaseUrl, collectionName: string): DocumentDbCollectionUrl {
-  return `${databaseUrl}/colls/${collectionName}` as DocumentDbCollectionUrl;
+export function getCollectionUri(databaseUri: IDocumentDbDatabaseUri, collectionId: string): IDocumentDbCollectionUri {
+  return {
+    collectionId,
+    databaseUri,
+    kind: "DocumentDbCollectionUri",
+    uri: DocumentDb.UriFactory.createDocumentCollectionUri(databaseUri.databaseId, collectionId),
+  };
 }
 
 /**
- * Returns the URL for a DocumentDB document
+ * Returns the URi for a DocumentDB document
  *
- * @param collectionUrl The URL of the collection
+ * @param collectionUri The URI of the collection
  * @param documentId The ID of the document
  */
-export function getDocumentUrl(collectionUrl: DocumentDbCollectionUrl, documentId: string): DocumentDbDocumentUrl {
-  return `${collectionUrl}/docs/${documentId}` as DocumentDbDocumentUrl;
-}
-
-/**
- * Returns the URL for a DocumentDB document from the _self field of a document
- *
- * @param document  The document
- */
-export function getDocumentUrlFromDocument<T extends DocumentDb.AbstractMeta>(document: T): DocumentDbDocumentUrl {
-  return document._self as DocumentDbDocumentUrl;
+export function getDocumentUri(collectionUri: IDocumentDbCollectionUri, documentId: string): IDocumentDbDocumentUri {
+  return {
+    collectionUri,
+    documentId,
+    kind: "DocumentDbDocumentUri",
+    uri: DocumentDb.UriFactory.createDocumentUri(
+      collectionUri.databaseUri.databaseId, collectionUri.collectionId, documentId,
+    ),
+  };
 }
 
 /**
@@ -100,10 +107,10 @@ export function getDocumentUrlFromDocument<T extends DocumentDb.AbstractMeta>(do
  */
 export function readDatabase(
   client: DocumentDb.DocumentClient,
-  databaseUrl: DocumentDbDatabaseUrl,
+  databaseUri: IDocumentDbDatabaseUri,
 ): Promise<Either<DocumentDb.QueryError, DocumentDb.DatabaseMeta>> {
   return new Promise((resolve) => {
-    client.readDatabase(databaseUrl, (err, result) => {
+    client.readDatabase(databaseUri.uri, (err, result) => {
       if (err) {
         resolve(left(err));
       } else {
@@ -121,10 +128,10 @@ export function readDatabase(
  */
 export function readCollection(
   client: DocumentDb.DocumentClient,
-  collectionUrl: DocumentDbCollectionUrl,
+  collectionUri: IDocumentDbCollectionUri,
 ): Promise<Either<DocumentDb.QueryError, DocumentDb.CollectionMeta>> {
   return new Promise((resolve) => {
-    client.readCollection(collectionUrl, (err, result) => {
+    client.readCollection(collectionUri.uri, (err, result) => {
       if (err) {
         resolve(left(err));
       } else {
@@ -142,12 +149,12 @@ export function readCollection(
  */
 export function createDocument<T>(
   client: DocumentDb.DocumentClient,
-  collectionUrl: DocumentDbCollectionUrl,
+  collectionUri: IDocumentDbCollectionUri,
   document: T & DocumentDb.NewDocument,
   partitionKey: string,
 ): Promise<Either<DocumentDb.QueryError, T & DocumentDb.RetrievedDocument>> {
   return new Promise((resolve) => {
-    client.createDocument(collectionUrl, document, {
+    client.createDocument(collectionUri.uri, document, {
       partitionKey,
     }, (err, created) => {
       if (err) {
@@ -167,11 +174,11 @@ export function createDocument<T>(
  */
 export function readDocument<T>(
   client: DocumentDb.DocumentClient,
-  documentUrl: DocumentDbDocumentUrl,
+  documentUri: IDocumentDbDocumentUri,
   partitionKey: string,
 ): Promise<Either<DocumentDb.QueryError, T & DocumentDb.RetrievedDocument>> {
   return new Promise((resolve) => {
-    client.readDocument(documentUrl, {
+    client.readDocument(documentUri.uri, {
       partitionKey,
     }, (err, result) => {
       if (err) {
@@ -192,10 +199,10 @@ export function readDocument<T>(
  */
 export function queryDocuments<T>(
   client: DocumentDb.DocumentClient,
-  collectionUrl: DocumentDbCollectionUrl,
+  collectionUri: IDocumentDbCollectionUri,
   query: DocumentDb.DocumentQuery,
 ): IResultIterator<T & DocumentDb.RetrievedDocument> {
-  const documentIterator = client.queryDocuments(collectionUrl, query);
+  const documentIterator = client.queryDocuments(collectionUri.uri, query);
   const resultIterator: IResultIterator<T & DocumentDb.RetrievedDocument> = {
     executeNext: () => {
       return new Promise((resolve) => {
@@ -224,7 +231,7 @@ export function queryDocuments<T>(
  */
 export function queryOneDocument<T>(
   client: DocumentDb.DocumentClient,
-  collectionUrl: DocumentDbCollectionUrl,
+  collectionUrl: IDocumentDbCollectionUri,
   query: DocumentDb.DocumentQuery,
 ): Promise<Either<DocumentDb.QueryError, Option<T>>> {
   // get a result iterator for the query
@@ -290,12 +297,12 @@ export function mapResultIterator<A, B>(i: IResultIterator<A>, f: (a: A) => B): 
  */
 export function replaceDocument<T>(
   client: DocumentDb.DocumentClient,
-  documentUrl: DocumentDbDocumentUrl,
+  documentUri: IDocumentDbDocumentUri,
   document: T & DocumentDb.NewDocument,
   partitionKey: string,
 ): Promise<Either<DocumentDb.QueryError, T & DocumentDb.RetrievedDocument>> {
   return new Promise((resolve) => {
-    client.replaceDocument(documentUrl, document, {
+    client.replaceDocument(documentUri.uri, document, {
       partitionKey,
     }, (err, created) => {
       if (err) {

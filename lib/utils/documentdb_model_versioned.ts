@@ -122,7 +122,7 @@ export abstract class DocumentDbModelVersioned<
   ): Promise<Either<DocumentDb.QueryError, Option<TR>>> {
     return DocumentDbUtils.queryOneDocument(
       this.dbClient,
-      this.collectionUrl,
+      this.collectionUri,
       {
         parameters: [{
           name: "@modelId",

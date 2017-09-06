@@ -87,7 +87,7 @@ function toRetrieved(result: DocumentDb.RetrievedDocument): IRetrievedMessage {
  */
 export class MessageModel extends DocumentDbModel<INewMessage, IRetrievedMessage> {
   protected dbClient: DocumentDb.DocumentClient;
-  protected collectionUrl: DocumentDbUtils.DocumentDbCollectionUrl;
+  protected collectionUri: DocumentDbUtils.IDocumentDbCollectionUri;
 
   /**
    * Creates a new Message model
@@ -95,14 +95,14 @@ export class MessageModel extends DocumentDbModel<INewMessage, IRetrievedMessage
    * @param dbClient the DocumentDB client
    * @param collectionUrl the collection URL
    */
-  constructor(dbClient: DocumentDb.DocumentClient, collectionUrl: DocumentDbUtils.DocumentDbCollectionUrl) {
+  constructor(dbClient: DocumentDb.DocumentClient, collectionUrl: DocumentDbUtils.IDocumentDbCollectionUri) {
     super();
     // tslint:disable-next-line:no-object-mutation
     this.toRetrieved = toRetrieved;
     // tslint:disable-next-line:no-object-mutation
     this.dbClient = dbClient;
     // tslint:disable-next-line:no-object-mutation
-    this.collectionUrl = collectionUrl;
+    this.collectionUri = collectionUrl;
   }
 
   /**
@@ -129,7 +129,7 @@ export class MessageModel extends DocumentDbModel<INewMessage, IRetrievedMessage
   public findMessages(fiscalCode: FiscalCode): DocumentDbUtils.IResultIterator<IRetrievedMessage> {
     return DocumentDbUtils.queryDocuments(
       this.dbClient,
-      this.collectionUrl,
+      this.collectionUri,
       {
         parameters: [{
           name: "@fiscalCode",

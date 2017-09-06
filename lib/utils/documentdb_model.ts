@@ -7,7 +7,7 @@ import { Either, right } from "./either";
 
 export abstract class DocumentDbModel<TN extends DocumentDb.NewDocument, TR extends DocumentDb.RetrievedDocument> {
   protected dbClient: DocumentDb.DocumentClient;
-  protected collectionUrl: DocumentDbUtils.DocumentDbCollectionUrl;
+  protected collectionUri: DocumentDbUtils.IDocumentDbCollectionUri;
 
   protected toRetrieved: (result: DocumentDb.RetrievedDocument) => TR;
 
@@ -23,7 +23,7 @@ export abstract class DocumentDbModel<TN extends DocumentDb.NewDocument, TR exte
 
     const maybeCreatedDocument = await DocumentDbUtils.createDocument(
       this.dbClient,
-      this.collectionUrl,
+      this.collectionUri,
       kindlessDocument,
       partitionKey,
     );
@@ -36,8 +36,8 @@ export abstract class DocumentDbModel<TN extends DocumentDb.NewDocument, TR exte
   public async find(
     id: string, partitionKey: string,
   ): Promise<Either<DocumentDb.QueryError, Option<TR>>> {
-    const documentUrl = DocumentDbUtils.getDocumentUrl(
-      this.collectionUrl,
+    const documentUrl = DocumentDbUtils.getDocumentUri(
+      this.collectionUri,
       id,
     );
 

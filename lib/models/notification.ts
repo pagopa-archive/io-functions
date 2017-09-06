@@ -78,7 +78,7 @@ function toRetrieved(result: DocumentDb.RetrievedDocument): IRetrievedNotificati
  */
 export class NotificationModel extends DocumentDbModel<INewNotification, IRetrievedNotification> {
   protected dbClient: DocumentDb.DocumentClient;
-  protected collectionUrl: DocumentDbUtils.DocumentDbCollectionUrl;
+  protected collectionUri: DocumentDbUtils.IDocumentDbCollectionUri;
 
   /**
    * Creates a new Notification model
@@ -86,14 +86,14 @@ export class NotificationModel extends DocumentDbModel<INewNotification, IRetrie
    * @param dbClient the DocumentDB client
    * @param collectionUrl the collection URL
    */
-  constructor(dbClient: DocumentDb.DocumentClient, collectionUrl: DocumentDbUtils.DocumentDbCollectionUrl) {
+  constructor(dbClient: DocumentDb.DocumentClient, collectionUrl: DocumentDbUtils.IDocumentDbCollectionUri) {
     super();
     // tslint:disable-next-line:no-object-mutation
     this.toRetrieved = toRetrieved;
     // tslint:disable-next-line:no-object-mutation
     this.dbClient = dbClient;
     // tslint:disable-next-line:no-object-mutation
-    this.collectionUrl = collectionUrl;
+    this.collectionUri = collectionUrl;
   }
 
   /**
@@ -137,7 +137,7 @@ export class NotificationModel extends DocumentDbModel<INewNotification, IRetrie
 
     const maybeReplacedDocument = await DocumentDbUtils.replaceDocument<INotification>(
       this.dbClient,
-      DocumentDbUtils.getDocumentUrlFromDocument(currentNotification),
+      DocumentDbUtils.getDocumentUri(this.collectionUri, currentNotification.id),
       kindlessNewNotificationDocument,
       messageId,
     );
@@ -158,7 +158,7 @@ export class NotificationModel extends DocumentDbModel<INewNotification, IRetrie
   ): Promise<Either<DocumentDb.QueryError, Option<IRetrievedNotification>>> {
     return DocumentDbUtils.queryOneDocument(
       this.dbClient,
-      this.collectionUrl,
+      this.collectionUri,
       {
         parameters: [{
           name: "@messageId",

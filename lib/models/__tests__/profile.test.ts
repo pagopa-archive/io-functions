@@ -9,7 +9,9 @@ import { toNonNegativeNumber } from "../../utils/numbers";
 
 import { IProfile, IRetrievedProfile, ProfileModel } from "../profile";
 
-const profilesCollectionUrl = {} as DocumentDbUtils.DocumentDbCollectionUrl;
+const aDatabaseUri = DocumentDbUtils.getDatabaseUri("mockdb");
+const profilesCollectionUrl = DocumentDbUtils.getCollectionUri(aDatabaseUri, "profiles");
+
 const aFiscalCode = toFiscalCode("FRLFRC74E04B157I").get;
 
 const aRetrievedProfile: IRetrievedProfile = {

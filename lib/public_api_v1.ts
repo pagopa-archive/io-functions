@@ -36,11 +36,11 @@ const app = express();
 const COSMOSDB_URI: string = process.env.CUSTOMCONNSTR_COSMOSDB_URI;
 const COSMOSDB_KEY: string = process.env.CUSTOMCONNSTR_COSMOSDB_KEY;
 
-const documentDbDatabaseUrl = documentDbUtils.getDatabaseUrl("development");
-const messagesCollectionUrl = documentDbUtils.getCollectionUrl(documentDbDatabaseUrl, "messages");
-const profilesCollectionUrl = documentDbUtils.getCollectionUrl(documentDbDatabaseUrl, "profiles");
-const organizationsCollectionUrl = documentDbUtils.getCollectionUrl(documentDbDatabaseUrl, "organizations");
-const notificationsCollectionUrl = documentDbUtils.getCollectionUrl(documentDbDatabaseUrl, "notifications");
+const documentDbDatabaseUrl = documentDbUtils.getDatabaseUri("development");
+const messagesCollectionUrl = documentDbUtils.getCollectionUri(documentDbDatabaseUrl, "messages");
+const profilesCollectionUrl = documentDbUtils.getCollectionUri(documentDbDatabaseUrl, "profiles");
+const organizationsCollectionUrl = documentDbUtils.getCollectionUri(documentDbDatabaseUrl, "organizations");
+const notificationsCollectionUrl = documentDbUtils.getCollectionUri(documentDbDatabaseUrl, "notifications");
 
 const documentClient = new DocumentDBClient(COSMOSDB_URI, { masterKey: COSMOSDB_KEY });
 

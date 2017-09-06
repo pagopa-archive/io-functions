@@ -17,7 +17,8 @@ import {
 
 import { ModelId } from "../../utils/documentdb_model_versioned";
 
-const aNotificationsCollectionUrl = "mocknotifications" as DocumentDbUtils.DocumentDbCollectionUrl;
+const aDatabaseUri = DocumentDbUtils.getDatabaseUri("mockdb");
+const aNotificationsCollectionUri = DocumentDbUtils.getCollectionUri(aDatabaseUri, "notifications");
 
 const aFiscalCode = toFiscalCode("FRLFRC74E04B157I").get;
 
@@ -42,7 +43,7 @@ describe("createNotification", () => {
       createDocument: jest.fn((_, __, ___, cb) => cb(undefined, aRetrievedNotification)),
     };
 
-    const model = new NotificationModel((clientMock as any) as DocumentDb.DocumentClient, aNotificationsCollectionUrl);
+    const model = new NotificationModel((clientMock as any) as DocumentDb.DocumentClient, aNotificationsCollectionUri);
 
     const result = await model.create(aNewNotification, aNewNotification.messageId);
 
@@ -58,12 +59,12 @@ describe("createNotification", () => {
       createDocument: jest.fn((_, __, ___, cb) => cb("error")),
     };
 
-    const model = new NotificationModel((clientMock as any) as DocumentDb.DocumentClient, aNotificationsCollectionUrl);
+    const model = new NotificationModel((clientMock as any) as DocumentDb.DocumentClient, aNotificationsCollectionUri);
 
     const result = await model.create(aNewNotification, aNewNotification.messageId);
 
     expect(clientMock.createDocument).toHaveBeenCalledTimes(1);
-    expect(clientMock.createDocument.mock.calls[0][0]).toEqual(aNotificationsCollectionUrl);
+    expect(clientMock.createDocument.mock.calls[0][0]).toEqual("dbs/mockdb/colls/notifications");
     expect(clientMock.createDocument.mock.calls[0][1]).toEqual({
       ...aNewNotification,
       kind: undefined,
@@ -86,12 +87,12 @@ describe("find", () => {
       readDocument: jest.fn((_, __, cb) => cb(undefined, aRetrievedNotification)),
     };
 
-    const model = new NotificationModel((clientMock as any) as DocumentDb.DocumentClient, aNotificationsCollectionUrl);
+    const model = new NotificationModel((clientMock as any) as DocumentDb.DocumentClient, aNotificationsCollectionUri);
 
     const result = await model.find(aRetrievedNotification.id, aRetrievedNotification.messageId);
 
     expect(clientMock.readDocument).toHaveBeenCalledTimes(1);
-    expect(clientMock.readDocument.mock.calls[0][0]).toEqual("mocknotifications/docs/A_NOTIFICATION_ID");
+    expect(clientMock.readDocument.mock.calls[0][0]).toEqual("dbs/mockdb/colls/notifications/docs/A_NOTIFICATION_ID");
     expect(clientMock.readDocument.mock.calls[0][1]).toEqual({
       partitionKey: aRetrievedNotification.messageId,
     });
@@ -107,7 +108,7 @@ describe("find", () => {
       readDocument: jest.fn((_, __, cb) => cb("error")),
     };
 
-    const model = new NotificationModel((clientMock as any) as DocumentDb.DocumentClient, aNotificationsCollectionUrl);
+    const model = new NotificationModel((clientMock as any) as DocumentDb.DocumentClient, aNotificationsCollectionUri);
 
     const result = await model.find(aRetrievedNotification.id, aRetrievedNotification.fiscalCode);
 
@@ -144,7 +145,7 @@ describe("update", () => {
       })),
     };
 
-    const model = new NotificationModel((clientMock as any) as DocumentDb.DocumentClient, aNotificationsCollectionUrl);
+    const model = new NotificationModel((clientMock as any) as DocumentDb.DocumentClient, aNotificationsCollectionUri);
 
     const result = await model.update(
       aRetrievedNotification.messageId,
@@ -153,7 +154,7 @@ describe("update", () => {
     );
 
     expect(clientMock.readDocument).toHaveBeenCalledTimes(1);
-    expect(clientMock.readDocument.mock.calls[0][0]).toEqual("mocknotifications/docs/A_NOTIFICATION_ID");
+    expect(clientMock.readDocument.mock.calls[0][0]).toEqual("dbs/mockdb/colls/notifications/docs/A_NOTIFICATION_ID");
 
     expect(updateFunction).toHaveBeenCalledTimes(1);
     expect(updateFunction).toHaveBeenCalledWith({
@@ -181,7 +182,7 @@ describe("update", () => {
       replaceDocument: jest.fn(),
     };
 
-    const model = new NotificationModel((clientMock as any) as DocumentDb.DocumentClient, aNotificationsCollectionUrl);
+    const model = new NotificationModel((clientMock as any) as DocumentDb.DocumentClient, aNotificationsCollectionUri);
 
     const result = await model.update(
       aRetrievedNotification.messageId,
@@ -207,7 +208,7 @@ describe("update", () => {
       replaceDocument: jest.fn((_, __, ___, cb) => cb("error")),
     };
 
-    const model = new NotificationModel((clientMock as any) as DocumentDb.DocumentClient, aNotificationsCollectionUrl);
+    const model = new NotificationModel((clientMock as any) as DocumentDb.DocumentClient, aNotificationsCollectionUri);
 
     const result = await model.update(
       aRetrievedNotification.messageId,
