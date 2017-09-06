@@ -79,7 +79,7 @@ describe("createNotification", () => {
 
 });
 
-describe("findNotification", () => {
+describe("find", () => {
 
   it("should return an existing message", async () => {
     const clientMock = {
@@ -97,7 +97,8 @@ describe("findNotification", () => {
     });
     expect(result.isRight).toBeTruthy();
     if (result.isRight) {
-      expect(result.right).toEqual(aRetrievedNotification);
+      expect(result.right.isDefined).toBeTruthy();
+      expect(result.right.get).toEqual(aRetrievedNotification);
     }
   });
 
@@ -118,7 +119,7 @@ describe("findNotification", () => {
 
 });
 
-describe("updateNotification", () => {
+describe("update", () => {
 
   const anEmailNotification: INotificationChannelEmail = {
     status: NotificationChannelStatus.NOTIFICATION_SENT_TO_CHANNEL,
@@ -164,7 +165,8 @@ describe("updateNotification", () => {
 
     expect(result.isRight).toBeTruthy();
     if (result.isRight) {
-      expect(result.right).toEqual({
+      expect(result.right.isDefined).toBeTruthy();
+      expect(result.right.get).toEqual({
         ...aRetrievedNotification,
         emailNotification: anEmailNotification,
       });

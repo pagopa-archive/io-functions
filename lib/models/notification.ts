@@ -8,9 +8,9 @@ import * as DocumentDb from "documentdb";
 import * as DocumentDbUtils from "../utils/documentdb";
 import { DocumentDbModel } from "../utils/documentdb_model";
 
-import { Option } from "ts-option";
+import { Option, some } from "ts-option";
 
-import { Either } from "../utils/either";
+import { Either, right } from "../utils/either";
 
 import { FiscalCode, isFiscalCode } from "../utils/fiscalcode";
 
@@ -103,15 +103,21 @@ export class NotificationModel extends DocumentDbModel<INewNotification, IRetrie
     messageId: string,
     notificationId: string,
     f: (current: INotification) => INotification,
-  ): Promise<Either<DocumentDb.QueryError, IRetrievedNotification>> {
+  ): Promise<Either<DocumentDb.QueryError, Option<IRetrievedNotification>>> {
     // fetch the notification
-    const errorOrCurrent = await this.find(notificationId, messageId);
-    if (errorOrCurrent.isLeft) {
+    const errorOrMaybeCurrent = await this.find(notificationId, messageId);
+    if (errorOrMaybeCurrent.isLeft) {
       // if the query returned an error, forward it
-      return errorOrCurrent;
+      return errorOrMaybeCurrent;
     }
 
-    const currentNotification = errorOrCurrent.right;
+    const maybeCurrent = errorOrMaybeCurrent.right;
+
+    if (maybeCurrent.isEmpty) {
+      return right(maybeCurrent);
+    }
+
+    const currentNotification = maybeCurrent.get;
 
     const updatedNotification = f({
       emailNotification: currentNotification.emailNotification,
@@ -136,7 +142,7 @@ export class NotificationModel extends DocumentDbModel<INewNotification, IRetrie
       messageId,
     );
 
-    return maybeReplacedDocument.mapRight((replacedDocument) => ({
+    return maybeReplacedDocument.mapRight((replacedDocument) => some({
       ...replacedDocument,
       kind: "IRetrievedNotification",
     } as IRetrievedNotification));

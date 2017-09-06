@@ -119,7 +119,7 @@ describe("createProfile", () => {
 
 });
 
-describe("updateProfile", () => {
+describe("update", () => {
 
   it("should update an existing profile", async () => {
     const clientMock: any = {
@@ -149,7 +149,8 @@ describe("updateProfile", () => {
     expect(clientMock.createDocument.mock.calls[0][2]).toHaveProperty("partitionKey", aFiscalCode);
     expect(result.isRight).toBeTruthy();
     if (result.isRight) {
-      const updatedProfile = result.right;
+      expect(result.right.isDefined).toBeTruthy();
+      const updatedProfile = result.right.get;
       expect(updatedProfile.fiscalCode).toEqual(aRetrievedProfile.fiscalCode);
       expect(updatedProfile.id).toEqual(`${aFiscalCode}-${"0".repeat(15)}1`);
       expect(updatedProfile.version).toEqual(1);

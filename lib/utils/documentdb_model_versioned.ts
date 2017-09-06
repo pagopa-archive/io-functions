@@ -2,11 +2,11 @@ import * as DocumentDb from "documentdb";
 import * as DocumentDbUtils from "./documentdb";
 import { DocumentDbModel } from "./documentdb_model";
 
-import { Option } from "ts-option";
+import { Option, some } from "ts-option";
 
 import { NonNegativeNumber, toNonNegativeNumber } from "./numbers";
 
-import { Either } from "./either";
+import { Either, right } from "./either";
 
 interface IModelIdTag {
   readonly kind: "IModelIdTag";
@@ -85,15 +85,21 @@ export abstract class DocumentDbModelVersioned<
     objectId: string,
     partitionKey: string,
     f: (current: T) => T,
-  ): Promise<Either<DocumentDb.QueryError, TR>> {
+  ): Promise<Either<DocumentDb.QueryError, Option<TR>>> {
     // fetch the notification
-    const errorOrCurrent = await this.find(objectId, partitionKey);
-    if (errorOrCurrent.isLeft) {
+    const errorOrMaybeCurrent = await this.find(objectId, partitionKey);
+    if (errorOrMaybeCurrent.isLeft) {
       // if the query returned an error, forward it
-      return errorOrCurrent;
+      return errorOrMaybeCurrent;
     }
 
-    const currentRetrievedDocument = errorOrCurrent.right;
+    const maybeCurrent = errorOrMaybeCurrent.right;
+
+    if (maybeCurrent.isEmpty) {
+      return right(maybeCurrent);
+    }
+
+    const currentRetrievedDocument = maybeCurrent.get;
     const currentObject = this.toBaseType(currentRetrievedDocument);
 
     const updatedObject = f(currentObject);
@@ -104,7 +110,9 @@ export abstract class DocumentDbModelVersioned<
 
     const newDocument = this.versionateModel(updatedObject, versionedModelId, nextVersion);
 
-    return super.create(newDocument, partitionKey);
+    const createdDocument = await super.create(newDocument, partitionKey);
+
+    return createdDocument.mapRight(some);
   }
 
   protected findLastVersionByModelId<V>(

@@ -75,7 +75,7 @@ describe("createMessage", () => {
 
 });
 
-describe("findMessage", () => {
+describe("find", () => {
 
   it("should return an existing message", async () => {
     const clientMock = {
@@ -93,13 +93,14 @@ describe("findMessage", () => {
     });
     expect(result.isRight).toBeTruthy();
     if (result.isRight) {
-      expect(result.right).toEqual(aRetrievedMessage);
+      expect(result.right.isDefined).toBeTruthy();
+      expect(result.right.get).toEqual(aRetrievedMessage);
     }
   });
 
   it("should return the error", async () => {
     const clientMock = {
-      readDocument: jest.fn((_, __, cb) => cb("error")),
+      readDocument: jest.fn((_, __, cb) => cb({code: 500})),
     };
 
     const model = new MessageModel((clientMock as any) as DocumentDb.DocumentClient, aMessagesCollectionUrl);
@@ -108,7 +109,22 @@ describe("findMessage", () => {
 
     expect(result.isLeft).toBeTruthy();
     if (result.isLeft) {
-      expect(result.left).toEqual("error");
+      expect(result.left).toEqual({code: 500});
+    }
+  });
+
+  it("should return an empty value on 404 error", async () => {
+    const clientMock = {
+      readDocument: jest.fn((_, __, cb) => cb({code: 404})),
+    };
+
+    const model = new MessageModel((clientMock as any) as DocumentDb.DocumentClient, aMessagesCollectionUrl);
+
+    const result = await model.find(aRetrievedMessage.id, aRetrievedMessage.fiscalCode);
+
+    expect(result.isRight).toBeTruthy();
+    if (result.isRight) {
+      expect(result.right.isEmpty).toBeTruthy();
     }
   });
 

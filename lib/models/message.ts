@@ -2,7 +2,7 @@ import * as DocumentDb from "documentdb";
 import * as DocumentDbUtils from "../utils/documentdb";
 import { DocumentDbModel } from "../utils/documentdb_model";
 
-import { Option, option } from "ts-option";
+import { Option } from "ts-option";
 import { Either } from "../utils/either";
 
 import { FiscalCode, isFiscalCode } from "../utils/fiscalcode";
@@ -114,9 +114,10 @@ export class MessageModel extends DocumentDbModel<INewMessage, IRetrievedMessage
   public async findMessageForRecipient(
     fiscalCode: FiscalCode, messageId: string,
   ): Promise<Either<DocumentDb.QueryError, Option<IRetrievedMessage>>> {
-    const errorOrMessage = await this.find(messageId, fiscalCode);
-    return errorOrMessage.mapRight((message) =>
-      option(message).filter((m) => m.fiscalCode === fiscalCode),
+    const errorOrMaybeMessage = await this.find(messageId, fiscalCode);
+
+    return errorOrMaybeMessage.mapRight((maybeMessage) =>
+      maybeMessage.filter((m) => m.fiscalCode === fiscalCode),
     );
   }
 
