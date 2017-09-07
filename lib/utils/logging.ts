@@ -22,6 +22,7 @@ class AzureContextTransport extends winston.Transport {
   public log(
     _: string,
     msg: string,
+    __: object | undefined,
     callback: (err: Error | undefined, cont: boolean) => void,
   ): void {
     if (this.silent) {
