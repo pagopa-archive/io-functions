@@ -1,15 +1,27 @@
 import * as express from "express";
+import * as winston from "winston";
 
 import { Either } from "./either";
 import { IResponse, ResponseErrorGeneric } from "./response";
 
 export type RequestHandler<R extends IResponse> = (request: express.Request) => Promise<R>;
 
+/**
+ * Transforms a typesafe RequestHandler into an Express Request Handler.
+ *
+ * Failed promises will be mapped to 500 errors handled by ResponseErrorGeneric.
+ */
 export function wrapRequestHandler<R extends IResponse>(handler: RequestHandler<R>): express.RequestHandler {
   return (request, response, _) => {
     handler(request).then(
-      (r) => r.apply(response),
-      (e) => ResponseErrorGeneric(e).apply(response),
+      (r) => {
+        winston.log("debug", `wrapRequestHandler|SUCCESS|${request.url}|${r.kind}`);
+        r.apply(response);
+      },
+      (e) => {
+        winston.log("debug", `wrapRequestHandler|ERROR|${request.url}|${e}`);
+        ResponseErrorGeneric(e).apply(response);
+      },
     );
   };
 }

@@ -2,7 +2,12 @@
  * Main entrypoint for the public APIs handlers
  */
 
+import { IContext } from "azure-function-express-cloudify";
+
 import * as express from "express";
+import * as winston from "winston";
+
+import { configureAzureContextTransport } from "./utils/logging";
 
 import { DocumentClient as DocumentDBClient } from "documentdb";
 
@@ -64,5 +69,10 @@ app.post("/api/v1/messages/:fiscalcode", CreateMessage(organizationModel, messag
 
 app.get("/api/v1/info", GetInfo());
 
+const azureFunctionHandler = createAzureFunctionHandler(app);
+
 // Binds the express app to an Azure Function handler
-export const index = createAzureFunctionHandler(app);
+export function index(context: IContext<{}>): void {
+  configureAzureContextTransport(context, winston, "debug");
+  azureFunctionHandler(context);
+}
