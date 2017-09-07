@@ -39,6 +39,10 @@ function toRetrieved(result: DocumentDb.RetrievedDocument): IRetrievedOrganizati
   } as IRetrievedOrganization);
 }
 
+function getModelId(o: IOrganization): ModelId {
+    return o.organizationId;
+}
+
 function updateModelId(o: IOrganization, id: string, version: NonNegativeNumber): INewOrganization {
   const newOrganization: INewOrganization = {
     ...o,
@@ -78,6 +82,8 @@ export class OrganizationModel extends DocumentDbModelVersioned<
     super();
     // tslint:disable-next-line:no-object-mutation
     this.toRetrieved = toRetrieved;
+    // tslint:disable-next-line:no-object-mutation
+    this.getModelId = getModelId;
     // tslint:disable-next-line:no-object-mutation
     this.versionateModel = updateModelId;
     // tslint:disable-next-line:no-object-mutation
