@@ -5,6 +5,10 @@
  * to each configured channel.
  */
 
+import * as winston from "winston";
+
+import { configureAzureContextTransport } from "./utils/logging";
+
 import { DocumentClient as DocumentDBClient } from "documentdb";
 
 import * as documentDbUtils from "./utils/documentdb";
@@ -212,6 +216,8 @@ async function handleNotification(
  * Function handler
  */
 export function index(context: IContextWithBindings): void {
+  configureAzureContextTransport(context, winston, "debug");
+  winston.log("debug", `EmailNotificationsQueueHandler|STARTED|${context.invocationId}`);
 
   const emailNotificationEvent = context.bindings.notificationEvent;
 
@@ -219,12 +225,12 @@ export function index(context: IContextWithBindings): void {
   // deserialized from a json object, we must first check that what we
   // got is what we expect.
   if (emailNotificationEvent === undefined && !isNotificationEvent(emailNotificationEvent)) {
-    context.log.error(`Fatal! No valid email notification found in bindings.`);
+    winston.log("error", `EmailNotificationsQueueHandler|Fatal! No valid email notification found in bindings.`);
     context.done();
     return;
   }
   // it is an IEmailNotificationEvent
-  context.log(`Dequeued email notification|${emailNotificationEvent.notificationId}`);
+  winston.log("debug", `Dequeued email notification|${emailNotificationEvent.notificationId}`);
 
   // setup required models
   const documentClient = new DocumentDBClient(COSMOSDB_URI, { masterKey: COSMOSDB_KEY });
@@ -258,7 +264,7 @@ export function index(context: IContextWithBindings): void {
     context.done();
   }, (error) => {
     // the promise failed
-    context.log.error(
+    winston.log("error",
       `Error while processing event, retrying` +
       `|${emailNotificationEvent.messageId}|${emailNotificationEvent.notificationId}|${error}`,
     );
