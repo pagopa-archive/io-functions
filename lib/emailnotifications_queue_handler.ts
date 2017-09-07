@@ -130,7 +130,11 @@ async function handleNotification(
   const errorOrMaybeNotification = await notificationModel.find(notificationId, messageId);
 
   if (errorOrMaybeNotification.isLeft) {
+    const error = errorOrMaybeNotification.left;
     // we got an error while fetching the notification
+    winston.warn(
+      `Error while fetching the notification|notification=${notificationId}|message=${messageId}|error=${error.code}`,
+    );
     return left(ProcessingError.TRANSIENT);
   }
 
@@ -138,6 +142,7 @@ async function handleNotification(
 
   if (maybeNotification.isEmpty) {
     // it may happen that the object is not yet visible to this function due to latency?
+    winston.warn(`Notification not found|notification=${notificationId}|message=${messageId}`);
     return left(ProcessingError.TRANSIENT);
   }
 
@@ -148,6 +153,7 @@ async function handleNotification(
   if (!emailNotification) {
     // for some reason the notification is missing the email channel attributes
     // we will never be able to send an email for this notification
+    winston.warn(`The notification does not have email info|notification=${notificationId}|message=${messageId}`);
     return left(ProcessingError.PERMANENT);
   }
 
@@ -155,7 +161,11 @@ async function handleNotification(
   const errorOrMaybeMessage = await messageModel.find(notification.messageId, notification.fiscalCode);
 
   if (errorOrMaybeMessage.isLeft) {
+    const error = errorOrMaybeMessage.left;
     // we got an error while fetching the message
+    winston.warn(
+      `Error while fetching the message|notification=${notificationId}|message=${messageId}|error=${error.code}`,
+    );
     return left(ProcessingError.TRANSIENT);
   }
 
@@ -163,6 +173,7 @@ async function handleNotification(
 
   if (maybeMessage.isEmpty) {
     // race condition?
+    winston.warn(`Message not found|notification=${notificationId}|message=${messageId}`);
     return left(ProcessingError.TRANSIENT);
   }
 
@@ -191,6 +202,10 @@ async function handleNotification(
 
   if (sendResult.isLeft) {
     // we got an error while sending the email
+    const error = sendResult.left;
+    winston.warn(
+      `Error while sending email|notification=${notificationId}|message=${messageId}|error=${error.message}`,
+    );
     return left(ProcessingError.TRANSIENT);
   }
 
@@ -205,10 +220,17 @@ async function handleNotification(
   if (updateResult.isLeft) {
     // we got an error while updating the notification status
     // TODO: this will re-send the email, check whether sendgrid supports idempotent calls (dedup on notificationId)
+    const error = updateResult.left;
+    winston.warn(
+      `Error while updating the notification|notification=${notificationId}|message=${messageId}|error=${error.code}`,
+    );
     return left(ProcessingError.TRANSIENT);
   }
 
   // success!
+  winston.debug(
+    `Email notification succeeded|notification=${notificationId}|message=${messageId}`,
+  );
   return right(ProcessingResult.OK);
 }
 
@@ -217,7 +239,7 @@ async function handleNotification(
  */
 export function index(context: IContextWithBindings): void {
   configureAzureContextTransport(context, winston, "debug");
-  winston.log("debug", `EmailNotificationsQueueHandler|STARTED|${context.invocationId}`);
+  winston.debug(`STARTED|${context.invocationId}`);
 
   const emailNotificationEvent = context.bindings.notificationEvent;
 
@@ -225,12 +247,12 @@ export function index(context: IContextWithBindings): void {
   // deserialized from a json object, we must first check that what we
   // got is what we expect.
   if (emailNotificationEvent === undefined || !isNotificationEvent(emailNotificationEvent)) {
-    winston.log("error", `EmailNotificationsQueueHandler|Fatal! No valid email notification found in bindings.`);
+    winston.log("error", `Fatal! No valid email notification found in bindings.`);
     context.done();
     return;
   }
   // it is an IEmailNotificationEvent
-  winston.log("debug", `Dequeued email notification|${emailNotificationEvent.notificationId}`);
+  winston.debug(`Dequeued email notification|${emailNotificationEvent.notificationId}`);
 
   // setup required models
   const documentClient = new DocumentDBClient(COSMOSDB_URI, { masterKey: COSMOSDB_KEY });
@@ -264,7 +286,7 @@ export function index(context: IContextWithBindings): void {
     context.done();
   }, (error) => {
     // the promise failed
-    winston.log("error",
+    winston.error(
       `Error while processing event, retrying` +
       `|${emailNotificationEvent.messageId}|${emailNotificationEvent.notificationId}|${error}`,
     );
