@@ -14,6 +14,7 @@ export interface INotificationEvent {
  */
 // tslint:disable-next-line:no-any
 export function isNotificationEvent(arg: any): arg is INotificationEvent {
-  return typeof arg.notificationId === "string" && arg.notificationId.length > 0 &&
+  return arg &&
+  typeof arg.notificationId === "string" && arg.notificationId.length > 0 &&
   typeof arg.messageId === "string" && arg.messageId.length > 0;
 }

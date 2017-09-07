@@ -5,7 +5,7 @@
     {
       "type": "queueTrigger",
       "direction": "in",
-      "name": "emailNotification",
+      "name": "notificationEvent",
       "queueName": "emailnotifications",
       "connection": "QueueStorageConnection"
     }
