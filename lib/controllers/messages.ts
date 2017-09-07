@@ -250,7 +250,7 @@ export function CreateMessage(
   const middlewaresWrap = withRequestMiddlewares(
     ContextMiddleware<IBindings>(),
     AzureApiAuthMiddleware(new Set([
-      UserGroup.Developers,
+      UserGroup.ApiMessageWrite,
     ])),
     AzureUserAttributesMiddleware(organizationModel),
     FiscalCodeMiddleware,
@@ -267,11 +267,11 @@ export function GetMessageHandler(
   notificationModel: NotificationModel,
 ): IGetMessageHandler {
   return async (userAuth, userAttributes, fiscalCode, messageId) => {
-    // whether the user is a trusted application (i.e. can access al inboxes)
-    const isTrustedApplication = userAuth.groups.has(UserGroup.TrustedApplications);
-    if (!isTrustedApplication) {
+    // whether the user is a trusted application (i.e. can access all messages for a user)
+    const canListMessages = userAuth.groups.has(UserGroup.ApiMessageList);
+    if (!canListMessages) {
       // since this is not a trusted application we must allow only accessing messages
-      // that have been sent by this organization
+      // that have been sent by the organization he belongs to
       if (!userAttributes.organization) {
         // the user doesn't have any organization associated, so we can't continue
         return(ResponseErrorForbiddenNotAuthorized);
@@ -295,7 +295,7 @@ export function GetMessageHandler(
 
     // the user is allowed to see the message when he is either
     // a trusted application or he is the sender of the message
-    const isUserAllowed = isTrustedApplication || (
+    const isUserAllowed = canListMessages || (
       userAttributes.organization &&
       retrievedMessage.senderOrganizationId === userAttributes.organization.organizationId
     );
@@ -343,10 +343,8 @@ export function GetMessage(
   const handler = GetMessageHandler(messageModel, notificationModel);
   const middlewaresWrap = withRequestMiddlewares(
     AzureApiAuthMiddleware(new Set([
-      // trusted applications will be able to access all messages
-      UserGroup.TrustedApplications,
-      // developers will be able to access only messages they sent
-      UserGroup.Developers,
+      UserGroup.ApiMessageRead,
+      UserGroup.ApiMessageList,
     ])),
     AzureUserAttributesMiddleware(organizationModel),
     FiscalCodeMiddleware,
@@ -378,7 +376,7 @@ export function GetMessages(
   const handler = GetMessagesHandler(messageModel);
   const middlewaresWrap = withRequestMiddlewares(
     AzureApiAuthMiddleware(new Set([
-      UserGroup.TrustedApplications,
+      UserGroup.ApiMessageList,
     ])),
     FiscalCodeMiddleware,
   );
