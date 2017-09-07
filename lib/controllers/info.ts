@@ -38,7 +38,7 @@ const getInfoHandler: GetInfo = (_) => {
 // TODO: give access to a more specific group, see #150738263
 export function GetInfo(): express.RequestHandler {
   const azureApiMiddleware = AzureApiAuthMiddleware(new Set([
-    UserGroup.Developers,
+    UserGroup.ApiInfoRead,
   ]));
   const middlewaresWrap = withRequestMiddlewares(
     azureApiMiddleware,

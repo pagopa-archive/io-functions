@@ -17,7 +17,7 @@ import { toFiscalCode } from "../../utils/fiscalcode";
 import { toNonNegativeNumber } from "../../utils/numbers";
 
 const anAzureAuthorization: IAzureApiAuthorization = {
-  groups: new Set([UserGroup.Developers]),
+  groups: new Set([UserGroup.ApiLimitedProfileRead]),
   kind: "IAzureApiAuthorization",
 };
 
@@ -90,7 +90,7 @@ describe("GetProfileHandler", () => {
 
     const trustedAuth = {
       ...anAzureAuthorization,
-      groups: new Set([UserGroup.TrustedApplications]),
+      groups: new Set([UserGroup.ApiFullProfileRead]),
     };
 
     const response = await getProfileHandler(

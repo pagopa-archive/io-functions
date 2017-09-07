@@ -82,7 +82,7 @@ export function GetProfileHandler(profileModel: ProfileModel): IGetProfileHandle
       const maybeProfile = errorOrMaybeProfile.right;
       if (maybeProfile.isDefined) {
         const profile = maybeProfile.get;
-        if (auth.groups.has(UserGroup.TrustedApplications)) {
+        if (auth.groups.has(UserGroup.ApiFullProfileRead)) {
           // if the client is a trusted application we return the
           // extended profile
           return(ResponseSuccessJson(asPublicExtendedProfile(profile)));
@@ -110,7 +110,8 @@ export function GetProfile(
   const handler = GetProfileHandler(profileModel);
   const middlewaresWrap = withRequestMiddlewares(
     AzureApiAuthMiddleware(new Set([
-      UserGroup.Developers,
+      UserGroup.ApiLimitedProfileRead,
+      UserGroup.ApiFullProfileRead,
     ])),
     FiscalCodeMiddleware,
   );
@@ -232,7 +233,7 @@ export function UpsertProfile(
   const handler = UpsertProfileHandler(profileModel);
   const middlewaresWrap = withRequestMiddlewares(
     AzureApiAuthMiddleware(new Set([
-      UserGroup.TrustedApplications,
+      UserGroup.ApiProfileWrite,
     ])),
     FiscalCodeMiddleware,
     ProfilePayloadMiddleware,

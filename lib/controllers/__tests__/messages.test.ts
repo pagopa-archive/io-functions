@@ -27,12 +27,12 @@ const someUserAttributes: IAzureUserAttributes = {
 };
 
 const aUserAuthenticationDeveloper: IAzureApiAuthorization = {
-  groups: new Set([UserGroup.Developers]),
+  groups: new Set([UserGroup.ApiMessageRead, UserGroup.ApiMessageWrite]),
   kind: "IAzureApiAuthorization",
 };
 
 const aUserAuthenticationTrustedApplication: IAzureApiAuthorization = {
-  groups: new Set([UserGroup.TrustedApplications]),
+  groups: new Set([UserGroup.ApiMessageRead, UserGroup.ApiMessageList]),
   kind: "IAzureApiAuthorization",
 };
 

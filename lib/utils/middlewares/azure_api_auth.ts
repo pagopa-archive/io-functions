@@ -16,12 +16,33 @@ import {
 } from "../response";
 
 /**
- * Enumerates all supported user groups
+ * Enumerates all supported Azure user groups.
+ *
+ * Each groups is named after a Scope.
+ * A Scope associates an Access Type to a Resource.
  */
 export const enum UserGroup {
-  Administrators = "Administrators",
-  Developers = "Developers",
-  TrustedApplications = "TrustedApplications",
+
+  // profiles
+  ApiLimitedProfileRead = "ApiLimitedProfileRead",
+  ApiFullProfileRead = "ApiFullProfileRead",
+  ApiProfileWrite = "ApiProfileWrite",
+
+  // organizations
+  ApiOrganizationRead = "ApiOrganizationRead",
+  ApiOrganizationWrite = "ApiOrganizationWrite",
+
+  // messages
+  ApiMessageRead = "ApiMessageRead",
+  ApiMessageWrite = "ApiMessageWrite",
+  ApiMessageList = "ApiMessageList",
+
+  // info
+  ApiInfoRead = "ApiInfoRead",
+
+  // debug
+  ApiDebugRead = "ApiDebugRead",
+
 }
 
 /**
@@ -29,9 +50,16 @@ export const enum UserGroup {
  */
 function toUserGroup(name: string): Option<UserGroup> {
   switch (name) {
-    case UserGroup.Administrators: return some(UserGroup.Administrators);
-    case UserGroup.Developers: return some(UserGroup.Developers);
-    case UserGroup.TrustedApplications: return some(UserGroup.TrustedApplications);
+    case UserGroup.ApiLimitedProfileRead: return some(UserGroup.ApiLimitedProfileRead);
+    case UserGroup.ApiFullProfileRead: return some(UserGroup.ApiFullProfileRead);
+    case UserGroup.ApiProfileWrite: return some(UserGroup.ApiProfileWrite);
+    case UserGroup.ApiOrganizationRead: return some(UserGroup.ApiOrganizationRead);
+    case UserGroup.ApiOrganizationWrite: return some(UserGroup.ApiOrganizationWrite);
+    case UserGroup.ApiMessageRead: return some(UserGroup.ApiMessageRead);
+    case UserGroup.ApiMessageWrite: return some(UserGroup.ApiMessageWrite);
+    case UserGroup.ApiMessageList: return some(UserGroup.ApiMessageList);
+    case UserGroup.ApiInfoRead: return some(UserGroup.ApiInfoRead);
+    case UserGroup.ApiDebugRead: return some(UserGroup.ApiDebugRead);
     default: return none;
   }
 }
