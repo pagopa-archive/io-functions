@@ -186,10 +186,10 @@ async function handleNotification(
   // see https://nodemailer.com/message/
   const sendResult = await sendMail(mailerTransporter, {
     from: "no-reply@italia.it",
-    headers: [{
+    headers: {
       "X-Italia-Messages-MessageId": message.id,
       "X-Italia-Messages-NotificationId": notification.id,
-    }],
+    },
     html: message.bodyShort,
     messageId: message.id,
     subject: "Un nuovo avviso per te.",
