@@ -15,12 +15,12 @@ export function wrapRequestHandler<R extends IResponse>(handler: RequestHandler<
   return (request, response, _) => {
     handler(request).then(
       (r) => {
-        winston.log("debug", `wrapRequestHandler|SUCCESS|${request.url}|${r.kind}`);
         r.apply(response);
+        winston.log("debug", `wrapRequestHandler|SUCCESS|${request.url}|${r.kind}`);
       },
       (e) => {
-        winston.log("debug", `wrapRequestHandler|ERROR|${request.url}|${e}`);
         ResponseErrorGeneric(e).apply(response);
+        winston.log("debug", `wrapRequestHandler|ERROR|${request.url}|${e}`);
       },
     );
   };
