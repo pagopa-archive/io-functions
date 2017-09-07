@@ -273,8 +273,8 @@ export function queryOneDocument<T>(
 export function mapResultIterator<A, B>(i: IResultIterator<A>, f: (a: A) => B): IResultIterator<B> {
   return {
     executeNext: () => new Promise((resolve, reject) => i.executeNext().then(
-      (maybeError) => {
-        maybeError.mapRight((maybeDocuments) => {
+      (errorOrMaybeDocuments) => {
+        errorOrMaybeDocuments.mapRight((maybeDocuments) => {
           maybeDocuments.map((documents) => {
             if (documents && documents.length > 0) {
               resolve(right(some(documents.map(f))));

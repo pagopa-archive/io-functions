@@ -13,7 +13,12 @@ import { IAzureUserAttributes } from "../../utils/middlewares/azure_user_attribu
 
 import { INewMessage, IPublicExtendedMessage, IRetrievedMessage } from "../../models/message";
 import { IRetrievedNotification, NotificationChannelStatus } from "../../models/notification";
-import { CreateMessageHandler, GetMessageHandler, IMessagePayload } from "../messages";
+import {
+  CreateMessageHandler,
+  GetMessageHandler,
+  GetMessagesHandler,
+  IMessagePayload,
+} from "../messages";
 
 const aFiscalCode = toFiscalCode("FRLFRC74E04B157I").get;
 
@@ -62,6 +67,10 @@ const aPublicExtendedMessage: IPublicExtendedMessage = {
   kind: "IPublicExtendedMessage",
   senderOrganizationId: aNewMessage.senderOrganizationId,
 };
+
+function flushPromises<T>(): Promise<T> {
+  return new Promise((resolve) => setImmediate(resolve));
+}
 
 describe("CreateMessageHandler", () => {
 
@@ -369,6 +378,43 @@ describe("GetMessageHandler", () => {
         },
       });
     }
+  });
+
+});
+
+describe("GetMessagesHandler", () => {
+
+  it("should respond with the messages for the recipient", async () => {
+    const mockIterator = {
+      executeNext: jest.fn(),
+    };
+
+    mockIterator.executeNext.mockImplementationOnce(() => Promise.resolve(right(some([{data: "a"}]))));
+    mockIterator.executeNext.mockImplementationOnce(() => Promise.resolve(right(none)));
+
+    const mockMessageModel = {
+      findMessages: jest.fn(() => right(some(aRetrievedMessage))),
+    };
+
+    const getMessagesHandler = GetMessagesHandler(mockMessageModel as any);
+
+    const result = await getMessagesHandler(
+      aUserAuthenticationDeveloper,
+      aFiscalCode,
+    );
+
+    expect(result.kind).toBe("IResponseSuccessJsonIterator");
+
+    // TODO: I wasn't able to find a way to test the following since the promise will not get completed during the test
+    /*
+    if (result.kind === "IResponseSuccessJsonIterator") {
+      const mockResponse = MockResponse();
+      result.apply(mockResponse);
+
+      expect(mockIterator.executeNext).toHaveBeenCalledTimes(2);
+    }
+    */
+
   });
 
 });

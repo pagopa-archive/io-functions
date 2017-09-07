@@ -4,6 +4,9 @@ import * as Express from "express";
 
 import { response as MockResponse } from "jest-mock-express";
 
+import { none, some } from "ts-option";
+import { left, right } from "../either";
+
 import { IResultIterator } from "../documentdb";
 
 import {
@@ -44,7 +47,7 @@ describe("ResponseSuccessJsonIterator", () => {
 
   it("should stream an empty iterator as json", () => {
     const mockIterator = {
-      executeNext: jest.fn(() => Promise.resolve([])),
+      executeNext: jest.fn(() => Promise.resolve(right(some([])))),
     };
 
     const streamingResponse = ResponseSuccessJsonIterator(mockIterator);
@@ -68,8 +71,8 @@ describe("ResponseSuccessJsonIterator", () => {
       executeNext: jest.fn(),
     };
 
-    mockIterator.executeNext.mockImplementationOnce(() => Promise.resolve([{data: "a"}]));
-    mockIterator.executeNext.mockImplementationOnce(() => Promise.resolve(undefined));
+    mockIterator.executeNext.mockImplementationOnce(() => Promise.resolve(right(some([{data: "a"}]))));
+    mockIterator.executeNext.mockImplementationOnce(() => Promise.resolve(right(none)));
 
     const streamingResponse = ResponseSuccessJsonIterator(mockIterator);
 
@@ -78,6 +81,7 @@ describe("ResponseSuccessJsonIterator", () => {
     streamingResponse.apply(mockResponse);
 
     return flushPromises().then(() => {
+      expect(mockIterator.executeNext).toHaveBeenCalledTimes(2);
       expect(mockResponse.status).toHaveBeenCalledWith(200);
       expect(mockResponse.send).toHaveBeenCalledTimes(3);
       expect((mockResponse.send as any).mock.calls).toEqual([

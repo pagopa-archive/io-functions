@@ -46,34 +46,51 @@ export interface IResponseSuccessJsonIterator<T> extends IResponse {
  */
 export function ResponseSuccessJsonIterator<T>(i: IResultIterator<T>): IResponseSuccessJsonIterator<T> {
 
-  function sendResponseOpen(res: express.Response): void {
-    res.status(200).type("application/json").send("[");
+  // helper to open the json
+  function sendResponseOpen(res: express.Response, status: number): void {
+    res.status(status).type("application/json").send("[");
   }
 
+  // helper to close the json, assumes last item of the array ends with a comma
   function sendResponseClose(res: express.Response): void {
     res.send("{}]").end();
   }
 
-  function streamResponse(res: express.Response): void {
+  function streamResponse(res: express.Response, isOpened: boolean = false): void {
     i.executeNext().then(
-      (result) => {
-        if (Array.isArray(result) && result.length > 0) {
-          result.forEach((r) => {
-            res.send(`${JSON.stringify(r)},`);
-          });
-          streamResponse(res);
-        } else {
+      (maybeResultOrError) => {
+        if (maybeResultOrError.isLeft) {
+          // we got an error, let's close the stream
+          if (!isOpened) {
+            // we haven't yet opened the json structure
+            sendResponseOpen(res, 500);
+          }
           sendResponseClose(res);
+          return;
         }
+        const maybeResult = maybeResultOrError.right;
+        if (maybeResult.isEmpty || maybeResult.get.length === 0) {
+          // no more data, let's close the response
+          sendResponseClose(res);
+          return;
+        }
+
+        const result = maybeResult.get;
+
+        // append each item to the response
+        result.forEach((r) => {
+          res.send(`${JSON.stringify(r)},`);
+        });
+
+        // recourse to the next batch of results
+        streamResponse(res, true);
       },
-      (_) => {
-        sendResponseClose(res);
-      },
+      (_) => sendResponseClose(res),
     );
   }
   return {
     apply: (res) => {
-      sendResponseOpen(res);
+      sendResponseOpen(res, 200);
       streamResponse(res);
     },
     kind: "IResponseSuccessJsonIterator",

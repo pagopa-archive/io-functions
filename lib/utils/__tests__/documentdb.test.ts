@@ -2,6 +2,8 @@
 
 import * as DocumentDb from "documentdb";
 
+import { none, some } from "ts-option";
+
 import * as DocumentDbUtils from "../documentdb";
 import { left, right } from "../either";
 
@@ -307,6 +309,36 @@ describe("queryOneDocument", () => {
     expect(result.isLeft).toBeTruthy();
     if (result.isLeft) {
       expect(result.left).toEqual("error");
+    }
+  });
+
+});
+
+describe("mapResultIterator", () => {
+
+  it("should map the documents or the wrapped iterator", async () => {
+
+    const iteratorMock = {
+      executeNext: jest.fn(),
+    };
+
+    iteratorMock.executeNext.mockImplementationOnce(() => Promise.resolve(right(some([1, 2]))));
+    iteratorMock.executeNext.mockImplementationOnce(() => Promise.resolve(right(none)));
+
+    const mappedIterator = DocumentDbUtils.mapResultIterator(iteratorMock as any, (n: number) => n * 2);
+
+    const result1 = await mappedIterator.executeNext();
+    const result2 = await mappedIterator.executeNext();
+
+    expect(iteratorMock.executeNext).toHaveBeenCalledTimes(2);
+    expect(result1.isRight).toBeTruthy();
+    if (result1.isRight) {
+      expect(result1.right.isDefined);
+      expect(result1.right.get).toEqual([2, 4]);
+    }
+    expect(result1.isRight).toBeTruthy();
+    if (result1.isRight) {
+      expect(result1.right.isEmpty);
     }
   });
 
