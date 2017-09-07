@@ -224,7 +224,7 @@ export function index(context: IContextWithBindings): void {
   // since this function gets triggered by a queued message that gets
   // deserialized from a json object, we must first check that what we
   // got is what we expect.
-  if (emailNotificationEvent === undefined && !isNotificationEvent(emailNotificationEvent)) {
+  if (emailNotificationEvent === undefined || !isNotificationEvent(emailNotificationEvent)) {
     winston.log("error", `EmailNotificationsQueueHandler|Fatal! No valid email notification found in bindings.`);
     context.done();
     return;
