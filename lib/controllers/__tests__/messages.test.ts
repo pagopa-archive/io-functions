@@ -68,10 +68,6 @@ const aPublicExtendedMessage: IPublicExtendedMessage = {
   senderOrganizationId: aNewMessage.senderOrganizationId,
 };
 
-function flushPromises<T>(): Promise<T> {
-  return new Promise((resolve) => setImmediate(resolve));
-}
-
 describe("CreateMessageHandler", () => {
 
   it("should require the user to be part of an organization", async () => {
@@ -393,7 +389,7 @@ describe("GetMessagesHandler", () => {
     mockIterator.executeNext.mockImplementationOnce(() => Promise.resolve(right(none)));
 
     const mockMessageModel = {
-      findMessages: jest.fn(() => right(some(aRetrievedMessage))),
+      findMessages: jest.fn(() => mockIterator),
     };
 
     const getMessagesHandler = GetMessagesHandler(mockMessageModel as any);
@@ -405,15 +401,12 @@ describe("GetMessagesHandler", () => {
 
     expect(result.kind).toBe("IResponseSuccessJsonIterator");
 
-    // TODO: I wasn't able to find a way to test the following since the promise will not get completed during the test
-    /*
-    if (result.kind === "IResponseSuccessJsonIterator") {
-      const mockResponse = MockResponse();
-      result.apply(mockResponse);
+    const mockResponse = MockResponse();
+    result.apply(mockResponse);
 
-      expect(mockIterator.executeNext).toHaveBeenCalledTimes(2);
-    }
-    */
+    await Promise.resolve(); // needed to let the response promise complete
+
+    expect(mockIterator.executeNext).toHaveBeenCalledTimes(2);
 
   });
 

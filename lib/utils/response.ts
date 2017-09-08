@@ -47,32 +47,27 @@ export interface IResponseSuccessJsonIterator<T> extends IResponse {
 export function ResponseSuccessJsonIterator<T>(i: IResultIterator<T>): IResponseSuccessJsonIterator<T> {
 
   // helper to open the json
-  function sendResponseOpen(res: express.Response, status: number): void {
-    res.status(status).type("application/json").send("[");
+  function sendResponseOpen(res: express.Response, status: number): Promise<express.Response> {
+    return Promise.resolve(res.status(status).type("application/json").send("["));
   }
 
   // helper to close the json, assumes last item of the array ends with a comma
-  function sendResponseClose(res: express.Response): void {
-    res.send("{}]").end();
+  function sendResponseClose(res: express.Response): Promise<void> {
+    return Promise.resolve(res.send("{}]").end());
   }
 
-  function streamResponse(res: express.Response, isOpened: boolean = false): void {
-    i.executeNext().then(
+  // helper for sending chunks of streamed results
+  // TODO: send errors in stream
+  function streamResponse(res: express.Response): Promise<void> {
+    return i.executeNext().then(
       (maybeResultOrError) => {
         if (maybeResultOrError.isLeft) {
-          // we got an error, let's close the stream
-          if (!isOpened) {
-            // we haven't yet opened the json structure
-            sendResponseOpen(res, 500);
-          }
-          sendResponseClose(res);
-          return;
+          return sendResponseClose(res);
         }
         const maybeResult = maybeResultOrError.right;
         if (maybeResult.isEmpty || maybeResult.get.length === 0) {
           // no more data, let's close the response
-          sendResponseClose(res);
-          return;
+          return sendResponseClose(res);
         }
 
         const result = maybeResult.get;
@@ -83,11 +78,14 @@ export function ResponseSuccessJsonIterator<T>(i: IResultIterator<T>): IResponse
         });
 
         // recourse to the next batch of results
-        streamResponse(res, true);
+        return streamResponse(res);
       },
-      (_) => sendResponseClose(res),
+      (_) => {
+        return sendResponseClose(res);
+      },
     );
   }
+
   return {
     apply: (res) => {
       sendResponseOpen(res, 200);
