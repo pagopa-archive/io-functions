@@ -58,11 +58,7 @@ describe("ResponseSuccessJsonIterator", () => {
 
     return flushPromises().then(() => {
       expect(mockResponse.status).toHaveBeenCalledWith(200);
-      expect(mockResponse.send).toHaveBeenCalledTimes(2);
-      expect((mockResponse.send as any).mock.calls).toEqual([
-        ["["],
-        ["{}]"],
-      ]);
+      expect(mockResponse.json).toHaveBeenCalledWith([]);
     });
   });
 
@@ -83,12 +79,7 @@ describe("ResponseSuccessJsonIterator", () => {
     return flushPromises().then(() => {
       expect(mockIterator.executeNext).toHaveBeenCalledTimes(2);
       expect(mockResponse.status).toHaveBeenCalledWith(200);
-      expect(mockResponse.send).toHaveBeenCalledTimes(3);
-      expect((mockResponse.send as any).mock.calls).toEqual([
-        ["["],
-        [`{"data":"a"},`],
-        ["{}]"],
-      ]);
+      expect(mockResponse.json).toHaveBeenCalledWith([{data: "a"}]);
     });
   });
 

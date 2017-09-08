@@ -288,6 +288,23 @@ export function mapResultIterator<A, B>(i: IResultIterator<A>, f: (a: A) => B): 
 }
 
 /**
+ * Consumes the iterator and returns an arrays with the generated elements
+ */
+export async function iteratorToArray<T>(i: IResultIterator<T>): Promise<ReadonlyArray<T>> {
+  async function iterate(a: ReadonlyArray<T>): Promise<ReadonlyArray<T>> {
+    const errorOrMaybeDocuments = await i.executeNext();
+    if (errorOrMaybeDocuments.isLeft ||
+      errorOrMaybeDocuments.right.isEmpty ||
+      errorOrMaybeDocuments.right.get.length === 0) {
+      return a;
+    }
+    const result = errorOrMaybeDocuments.right.get;
+    return iterate(a.concat(...result));
+  }
+  return iterate([]);
+}
+
+/**
  * Replaces an existing document with a new one
  *
  * @param client        The DocumentDB client

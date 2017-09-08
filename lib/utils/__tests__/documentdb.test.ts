@@ -343,3 +343,22 @@ describe("mapResultIterator", () => {
   });
 
 });
+
+describe("iteratorToArray", () => {
+
+  it("should consume an iterator", async () => {
+    const iteratorMock = {
+      executeNext: jest.fn(),
+    };
+
+    iteratorMock.executeNext.mockImplementationOnce(() => Promise.resolve(right(some([1, 2]))));
+    iteratorMock.executeNext.mockImplementationOnce(() => Promise.resolve(right(some([3, 4]))));
+    iteratorMock.executeNext.mockImplementationOnce(() => Promise.resolve(right(none)));
+
+    const result = await DocumentDbUtils.iteratorToArray(iteratorMock);
+
+    expect(iteratorMock.executeNext).toHaveBeenCalledTimes(3);
+    expect(result).toEqual([1, 2, 3, 4]);
+  });
+
+});

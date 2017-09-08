@@ -1,6 +1,6 @@
 import * as express from "express";
 
-import { IResultIterator } from "./documentdb";
+import { IResultIterator, iteratorToArray } from "./documentdb";
 
 /**
  * Interface for a Response that can be returned by a middleware or
@@ -42,58 +42,18 @@ export interface IResponseSuccessJsonIterator<T> extends IResponse {
 }
 
 /**
- * A successful response that streams the documentdb iterator as a json array
+ * A successful response that consumes and return the documentdb iterator as a json array
  */
 export function ResponseSuccessJsonIterator<T>(i: IResultIterator<T>): IResponseSuccessJsonIterator<T> {
 
-  // helper to open the json
-  function sendResponseOpen(res: express.Response, status: number): Promise<express.Response> {
-    return Promise.resolve(res.status(status).type("application/json").send("["));
-  }
-
-  // helper to close the json, assumes last item of the array ends with a comma
-  function sendResponseClose(res: express.Response): Promise<void> {
-    return Promise.resolve(res.send("{}]").end());
-  }
-
-  // helper for sending chunks of streamed results
-  // TODO: send errors in stream
-  function streamResponse(res: express.Response): Promise<void> {
-    return i.executeNext().then(
-      (maybeResultOrError) => {
-        if (maybeResultOrError.isLeft) {
-          return sendResponseClose(res);
-        }
-        const maybeResult = maybeResultOrError.right;
-        if (maybeResult.isEmpty || maybeResult.get.length === 0) {
-          // no more data, let's close the response
-          return sendResponseClose(res);
-        }
-
-        const result = maybeResult.get;
-
-        // append each item to the response
-        result.forEach((r) => {
-          res.send(`${JSON.stringify(r)},`);
-        });
-
-        // recourse to the next batch of results
-        return streamResponse(res);
-      },
-      (_) => {
-        return sendResponseClose(res);
-      },
-    );
-  }
-
   return {
-    apply: (res) => {
-      sendResponseOpen(res, 200);
-      streamResponse(res);
-    },
+    apply: (res) => iteratorToArray(i).then((documents) => {
+      res.status(200).json(documents);
+    }),
     kind: "IResponseSuccessJsonIterator",
     value: {} as T,
   };
+
 }
 
 /**
