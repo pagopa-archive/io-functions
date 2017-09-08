@@ -45,7 +45,7 @@ describe("ResponseSuccessJson", () => {
 
 describe("ResponseSuccessJsonIterator", () => {
 
-  it("should stream an empty iterator as json", () => {
+  it("should stream an empty iterator as json", async () => {
     const mockIterator = {
       executeNext: jest.fn(() => Promise.resolve(right(some([])))),
     };
@@ -56,13 +56,12 @@ describe("ResponseSuccessJsonIterator", () => {
 
     streamingResponse.apply(mockResponse);
 
-    return flushPromises().then(() => {
-      expect(mockResponse.status).toHaveBeenCalledWith(200);
-      expect(mockResponse.json).toHaveBeenCalledWith([]);
-    });
+    await flushPromises();
+    expect(mockResponse.status).toHaveBeenCalledWith(200);
+    expect(mockResponse.json).toHaveBeenCalledWith([]);
   });
 
-  it("should stream an iterator with a single page as json", () => {
+  it("should stream an iterator with a single page as json", async () => {
     const mockIterator = {
       executeNext: jest.fn(),
     };
@@ -76,11 +75,31 @@ describe("ResponseSuccessJsonIterator", () => {
 
     streamingResponse.apply(mockResponse);
 
-    return flushPromises().then(() => {
-      expect(mockIterator.executeNext).toHaveBeenCalledTimes(2);
-      expect(mockResponse.status).toHaveBeenCalledWith(200);
-      expect(mockResponse.json).toHaveBeenCalledWith([{data: "a"}]);
-    });
+    await flushPromises();
+    expect(mockIterator.executeNext).toHaveBeenCalledTimes(2);
+    expect(mockResponse.status).toHaveBeenCalledWith(200);
+    expect(mockResponse.json).toHaveBeenCalledWith([{data: "a"}]);
+  });
+
+  it("should remove the kind attribute", async () => {
+    const mockIterator = {
+      executeNext: jest.fn(),
+    };
+
+    mockIterator.executeNext.mockImplementationOnce(() => Promise.resolve(right(some([{
+      data: "a",
+      kind: "IResponse",
+    }]))));
+    mockIterator.executeNext.mockImplementationOnce(() => Promise.resolve(right(none)));
+
+    const streamingResponse = ResponseSuccessJsonIterator(mockIterator);
+
+    const mockResponse = (MockResponse() as any) as Express.Response;
+
+    streamingResponse.apply(mockResponse);
+
+    await flushPromises();
+    expect(mockResponse.json).toHaveBeenCalledWith([{data: "a"}]);
   });
 
 });

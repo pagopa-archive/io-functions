@@ -48,7 +48,8 @@ export function ResponseSuccessJsonIterator<T>(i: IResultIterator<T>): IResponse
 
   return {
     apply: (res) => iteratorToArray(i).then((documents) => {
-      res.status(200).json(documents);
+      const kindlessDocuments = documents.map((d) => Object.assign(Object.assign({}, d), { kind: undefined }));
+      res.status(200).json(kindlessDocuments);
     }),
     kind: "IResponseSuccessJsonIterator",
     value: {} as T,
