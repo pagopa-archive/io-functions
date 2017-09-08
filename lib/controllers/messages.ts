@@ -5,6 +5,9 @@
 import * as express from "express";
 import * as ulid from "ulid";
 
+// cannot use "import * from", see https://goo.gl/HbzFra
+import ApplicationInsightsClient = require("../../node_modules/applicationinsights/out/Library/Client");
+
 import { IContext } from "azure-function-express-cloudify";
 
 import { left, right } from "../utils/either";
@@ -179,7 +182,10 @@ type IGetMessagesHandler = (
 /**
  * Returns a type safe CreateMessage handler.
  */
-export function CreateMessageHandler(messageModel: MessageModel): ICreateMessageHandler {
+export function CreateMessageHandler(
+  applicationInsightsClient: ApplicationInsightsClient,
+  messageModel: MessageModel,
+): ICreateMessageHandler {
   return async (context, _, userAttributes, fiscalCode, messagePayload) => {
     const userOrganization = userAttributes.organization;
     if (!userOrganization) {
@@ -187,9 +193,19 @@ export function CreateMessageHandler(messageModel: MessageModel): ICreateMessage
       return(ResponseErrorValidation("The user is not part of any organization."));
     }
 
+    const eventName = "api.messages.create";
+    const eventData = {
+      senderOrganizationId: userOrganization.organizationId,
+    };
+
     if (messagePayload.dry_run) {
       // if the user requested a dry run, we respond with the attributes
       // that we received
+      applicationInsightsClient.trackEvent(eventName, {
+        ...eventData,
+        dryRun: "true",
+        success: "true",
+      });
       const response: IResponseDryRun = {
         bodyShort: messagePayload.body_short,
         senderOrganizationId: userOrganization.organizationId,
@@ -219,6 +235,12 @@ export function CreateMessageHandler(messageModel: MessageModel): ICreateMessage
       const retrievedMessage = errorOrMessage.right;
       context.log(`>> message created|${fiscalCode}|${userOrganization.organizationId}|${retrievedMessage.id}`);
 
+      applicationInsightsClient.trackEvent(eventName, {
+        ...eventData,
+        dryRun: "false",
+        success: "true",
+      });
+
       // prepare the created message event
       const createdMessageEvent: ICreatedMessageEvent = {
         message: retrievedMessage,
@@ -243,10 +265,11 @@ export function CreateMessageHandler(messageModel: MessageModel): ICreateMessage
  * Wraps a CreateMessage handler inside an Express request handler.
  */
 export function CreateMessage(
+  applicationInsightsClient: ApplicationInsightsClient,
   organizationModel: OrganizationModel,
   messageModel: MessageModel,
 ): express.RequestHandler {
-  const handler = CreateMessageHandler(messageModel);
+  const handler = CreateMessageHandler(applicationInsightsClient, messageModel);
   const middlewaresWrap = withRequestMiddlewares(
     ContextMiddleware<IBindings>(),
     AzureApiAuthMiddleware(new Set([

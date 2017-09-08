@@ -71,7 +71,7 @@ const aPublicExtendedMessage: IPublicExtendedMessage = {
 describe("CreateMessageHandler", () => {
 
   it("should require the user to be part of an organization", async () => {
-    const createMessageHandler = CreateMessageHandler({} as any);
+    const createMessageHandler = CreateMessageHandler({} as any, {} as any);
     const result = await createMessageHandler({} as any, {} as any, {
       organization: undefined,
     } as any, {} as any, {} as any);
@@ -80,11 +80,15 @@ describe("CreateMessageHandler", () => {
   });
 
   it("should allow dry run calls", async () => {
+    const mockAppInsights = {
+      trackEvent: jest.fn(),
+    };
+
     const mockMessageModel = {
       create: jest.fn(),
     };
 
-    const createMessageHandler = CreateMessageHandler(mockMessageModel as any);
+    const createMessageHandler = CreateMessageHandler(mockAppInsights as any, mockMessageModel as any);
 
     const aDryRunMessagePayload: IMessagePayload = {
       ...aMessagePayload,
@@ -105,6 +109,12 @@ describe("CreateMessageHandler", () => {
 
     expect(mockMessageModel.create).not.toHaveBeenCalled();
     expect(mockContext.bindings).toEqual({});
+    expect(mockAppInsights.trackEvent).toHaveBeenCalledTimes(1);
+    expect(mockAppInsights.trackEvent).toHaveBeenCalledWith("api.messages.create", {
+      dryRun: "true",
+      senderOrganizationId: "agid",
+      success: "true",
+    });
     expect(result.kind).toBe("IResponseSuccessJson");
     if (result.kind === "IResponseSuccessJson") {
       expect(result.value.bodyShort).toEqual(aDryRunMessagePayload.body_short);
@@ -114,11 +124,15 @@ describe("CreateMessageHandler", () => {
   });
 
   it("should create a new message", async () => {
+    const mockAppInsights = {
+      trackEvent: jest.fn(),
+    };
+
     const mockMessageModel = {
       create: jest.fn(() => right(aRetrievedMessage)),
     };
 
-    const createMessageHandler = CreateMessageHandler(mockMessageModel as any);
+    const createMessageHandler = CreateMessageHandler(mockAppInsights as any, mockMessageModel as any);
 
     const mockContext = {
       bindings: {},
@@ -145,6 +159,14 @@ describe("CreateMessageHandler", () => {
         message: aRetrievedMessage,
       },
     });
+
+    expect(mockAppInsights.trackEvent).toHaveBeenCalledTimes(1);
+    expect(mockAppInsights.trackEvent).toHaveBeenCalledWith("api.messages.create", {
+      dryRun: "false",
+      senderOrganizationId: "agid",
+      success: "true",
+    });
+
     expect(result.kind).toBe("IResponseSuccessRedirectToResource");
     if (result.kind === "IResponseSuccessRedirectToResource") {
       const response = MockResponse();
@@ -154,11 +176,15 @@ describe("CreateMessageHandler", () => {
   });
 
   it("should require the user to be enable for production to create a new message", async () => {
+    const mockAppInsights = {
+      trackEvent: jest.fn(),
+    };
+
     const mockMessageModel = {
       create: jest.fn(() => right(aRetrievedMessage)),
     };
 
-    const createMessageHandler = CreateMessageHandler(mockMessageModel as any);
+    const createMessageHandler = CreateMessageHandler(mockAppInsights as any, mockMessageModel as any);
 
     const mockContext = {
       bindings: {},
@@ -182,11 +208,15 @@ describe("CreateMessageHandler", () => {
   });
 
   it("should return failure if creation fails", async () => {
+    const mockAppInsights = {
+      trackEvent: jest.fn(),
+    };
+
     const mockMessageModel = {
       create: jest.fn(() => left("error")),
     };
 
-    const createMessageHandler = CreateMessageHandler(mockMessageModel as any);
+    const createMessageHandler = CreateMessageHandler(mockAppInsights as any, mockMessageModel as any);
 
     const mockContext = {
       bindings: {},
@@ -202,6 +232,7 @@ describe("CreateMessageHandler", () => {
     );
 
     expect(mockMessageModel.create).toHaveBeenCalledTimes(1);
+    expect(mockAppInsights.trackEvent).not.toHaveBeenCalled();
 
     expect(mockContext.bindings).toEqual({});
     expect(result.kind).toBe("IResponseErrorGeneric");
