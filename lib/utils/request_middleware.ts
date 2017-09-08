@@ -19,7 +19,7 @@ export function wrapRequestHandler<R extends IResponse>(handler: RequestHandler<
         winston.log("debug", `wrapRequestHandler|SUCCESS|${request.url}|${r.kind}`);
       },
       (e) => {
-        ResponseErrorGeneric(e).apply(response);
+        ResponseErrorGeneric(500, "Internal server error", e).apply(response);
         winston.log("debug", `wrapRequestHandler|ERROR|${request.url}|${e}`);
       },
     );

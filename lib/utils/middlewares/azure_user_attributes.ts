@@ -116,7 +116,11 @@ export function AzureUserAttributesMiddleware(
       };
 
       resolve(right(authInfo));
-    }, (error) => resolve(left(ResponseErrorGeneric(`Error while fetching organization details|${error}`))));
+    }, (error) => resolve(left(ResponseErrorGeneric(
+      500,
+      "Internal server error",
+      `Error while fetching organization details|${error}`,
+    ))));
 
   });
 }

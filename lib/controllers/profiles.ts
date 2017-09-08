@@ -91,10 +91,12 @@ export function GetProfileHandler(profileModel: ProfileModel): IGetProfileHandle
           return(ResponseSuccessJson(asPublicLimitedProfile(profile)));
         }
       } else {
-        return(ResponseErrorNotFound("Profile not found"));
+        return(ResponseErrorNotFound("Profile not found", "The profile you requested was not found in the system."));
       }
     } else {
       return ResponseErrorGeneric(
+        500,
+        "Internal server error",
         `Error while retrieving the profile|${errorOrMaybeProfile.left.code}`,
       );
     }
@@ -155,6 +157,8 @@ async function createNewProfileFromPayload(
     return ResponseSuccessJson(errorOrProfileAsPublicExtendedProfile.right);
   } else {
     return ResponseErrorGeneric(
+      500,
+      "Internal server error",
       `Error while creating a new profile|${errorOrProfileAsPublicExtendedProfile.left.code}`,
     );
   }
@@ -178,6 +182,8 @@ async function updateExistingProfileFromPayload(
 
   if (errorOrMaybeProfile.isLeft) {
     return ResponseErrorGeneric(
+      500,
+      "Internal server error",
       `Error while updating the existing profile|${errorOrMaybeProfile.left.code}`,
     );
   }
@@ -188,6 +194,8 @@ async function updateExistingProfileFromPayload(
     // this should never happen since if the profile doesn't exist this function
     // will never be called, but let's deal with this anyway, you never know
     return ResponseErrorGeneric(
+      500,
+      "Internal server error",
       `Error while updating the existing profile, the profile does not exist!`,
     );
   }
@@ -218,6 +226,8 @@ export function UpsertProfileHandler(profileModel: ProfileModel): IUpsertProfile
       }
     } else {
       return ResponseErrorGeneric(
+        500,
+        "Internal server error",
         `Error|${errorOrMaybeProfile.left.code}`,
       );
     }
