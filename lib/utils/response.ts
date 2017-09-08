@@ -11,6 +11,10 @@ export interface IResponse {
   readonly apply: (response: express.Response) => void;
 }
 
+//
+// Success reponses
+//
+
 /**
  * Interface for a successful response returning a json object.
  */
@@ -76,6 +80,52 @@ export function ResponseSuccessRedirectToResource<T>(resource: T, url: string): 
   };
 }
 
+//
+// Error responses
+//
+
+interface IProblemDescription {
+  readonly title: string;
+  readonly status: number;
+  readonly detail: string;
+  readonly "type"?: string;
+}
+
+/**
+ * Interface for a response describing a generic server error.
+ */
+export interface IResponseErrorGeneric extends IResponse {
+  readonly kind: "IResponseErrorGeneric";
+}
+
+/**
+ * Returns a response describing a generic error.
+ *
+ * The error is translated to an RFC 7807 response (Problem JSON)
+ * See https://zalando.github.io/restful-api-guidelines/index.html#176
+ *
+ */
+export function ResponseErrorGeneric(
+  status: number,
+  title: string,
+  detail: string,
+  problemType?: string,
+): IResponseErrorGeneric {
+  const problem: IProblemDescription = {
+    detail,
+    status,
+    title,
+    type: problemType,
+  };
+  return {
+    apply: (res) => res
+      .status(status)
+      .contentType("application/problem+json")
+      .json(problem),
+    kind: "IResponseErrorGeneric",
+  };
+}
+
 /**
  * Interface for a response describing a 404 error.
  */
@@ -86,13 +136,11 @@ export interface IResponseErrorNotFound extends IResponse {
 /**
  * Returns a response describing a 404 error.
  *
- * @param message The error message
+ * @param title The error message
  */
-export function ResponseErrorNotFound(message: string): IResponseErrorNotFound {
+export function ResponseErrorNotFound(title: string, detail: string): IResponseErrorNotFound {
   return {
-    apply: (res) => res.status(404).json({
-      error: message,
-    }),
+    ...ResponseErrorGeneric(404, title, detail),
     kind: "IResponseErrorNotFound",
   };
 }
@@ -109,11 +157,9 @@ export interface IResponseErrorValidation extends IResponse {
  *
  * @param message The error message
  */
-export function ResponseErrorValidation(message: string): IResponseErrorValidation {
+export function ResponseErrorValidation(title: string, detail: string): IResponseErrorValidation {
   return {
-    apply: (res) => res.status(400).json({
-      error: message,
-    }),
+    ...ResponseErrorGeneric(400, title, detail),
     kind: "IResponseErrorValidation",
   };
 }
@@ -129,9 +175,11 @@ export interface IResponseErrorForbiddenNotAuthorized extends IResponse {
  * The user is not allowed here.
  */
 export const ResponseErrorForbiddenNotAuthorized: IResponseErrorForbiddenNotAuthorized = {
-  apply: (res) => res.status(403).json({
-    error: "You are not allowed here",
-  }),
+  ...ResponseErrorGeneric(
+    403,
+    "You are not allowed here",
+    "You do not have enough permission to complete the operation you requested",
+  ),
   kind: "IResponseErrorForbiddenNotAuthorized",
 };
 
@@ -146,9 +194,11 @@ export interface IResponseErrorForbiddenNotAuthorizedForProduction extends IResp
  * The user is not allowed here.
  */
 export const ResponseErrorForbiddenNotAuthorizedForProduction: IResponseErrorForbiddenNotAuthorizedForProduction = {
-  apply: (res) => res.status(403).json({
-    error: "You are not allowed to issue production calls, set 'dry_run' to true.",
-  }),
+  ...ResponseErrorGeneric(
+    403,
+    "Production call forbidden",
+    "You are not allowed to issue production calls, set 'dry_run' to true or ask to be enabled for production.",
+  ),
   kind: "IResponseErrorForbiddenNotAuthorizedForProduction",
 };
 
@@ -163,29 +213,10 @@ export interface IResponseErrorForbiddenNoAuthorizationGroups extends IResponse 
  * The user is not part of any valid authorization groups.
  */
 export const ResponseErrorForbiddenNoAuthorizationGroups: IResponseErrorForbiddenNoAuthorizationGroups = {
-  apply: (res) => res.status(403).json({
-    error: "You are not part of any valid authorization groups",
-  }),
+  ...ResponseErrorGeneric(
+    403,
+    "User has no valid scopes",
+    "You are not part of any valid scope, you should ask the administrator to give you the required permissions.",
+  ),
   kind: "IResponseErrorForbiddenNoAuthorizationGroups",
 };
-
-/**
- * Interface for a response describing a generic server error.
- */
-export interface IResponseErrorGeneric extends IResponse {
-  readonly kind: "IResponseErrorGeneric";
-}
-
-/**
- * Returns a response describing a generic error.
- *
- * @param message The error message
- */
-export function ResponseErrorGeneric(message: string): IResponseErrorGeneric {
-  return {
-    apply: (res) => res.status(500).json({
-      error: message,
-    }),
-    kind: "IResponseErrorGeneric",
-  };
-}

@@ -108,11 +108,11 @@ export const MessagePayloadMiddleware: IRequestMiddleware<IResponseErrorValidati
     const body = request.body;
     // validate body
     if (typeof body.body_short !== "string") {
-      return Promise.resolve(left(ResponseErrorValidation("body_short is required")));
+      return Promise.resolve(left(ResponseErrorValidation("Request not valid", "body_short is required")));
     }
     // validate dry_run
     if (body.dry_run && typeof body.dry_run !== "boolean") {
-      return Promise.resolve(left(ResponseErrorValidation("dry_run must be a boolean")));
+      return Promise.resolve(left(ResponseErrorValidation("Request not valid", "dry_run must be a boolean")));
     }
     return Promise.resolve(right({
       body_short: body.body_short,
@@ -190,7 +190,7 @@ export function CreateMessageHandler(
     const userOrganization = userAttributes.organization;
     if (!userOrganization) {
       // to be able to send a message the user musy be part of an organization
-      return(ResponseErrorValidation("The user is not part of any organization."));
+      return(ResponseErrorValidation("Request not valid", "The user is not part of any organization."));
     }
 
     const eventName = "api.messages.create";
@@ -255,7 +255,11 @@ export function CreateMessageHandler(
       return(ResponseSuccessRedirectToResource(retrievedMessage, `/api/v1/messages/${fiscalCode}/${message.id}`));
     } else {
       // we got an error while creating the message
-      return(ResponseErrorGeneric(`Error while creating Message|${errorOrMessage.left.code}`));
+      return(ResponseErrorGeneric(
+        500,
+        "Internal server error",
+        `Error while creating Message|${errorOrMessage.left.code}`,
+      ));
     }
 
   };
@@ -305,13 +309,17 @@ export function GetMessageHandler(
 
     if (errorOrMaybeDocument.isLeft) {
       // the query failed
-      return(ResponseErrorGeneric(`Error while retrieving the message|${errorOrMaybeDocument.left.code}`));
+      return(ResponseErrorGeneric(
+        500,
+        "Internal server error",
+        `Error while retrieving the message|${errorOrMaybeDocument.left.code}`,
+      ));
     }
 
     const maybeDocument = errorOrMaybeDocument.right;
     if (maybeDocument.isEmpty) {
       // the document does not exist
-      return ResponseErrorNotFound("Message not found");
+      return ResponseErrorNotFound("Message not found", "The message that you requested was not found in the system.");
     }
 
     const retrievedMessage = maybeDocument.get;
@@ -333,6 +341,8 @@ export function GetMessageHandler(
     if (errorOrMaybeNotification.isLeft) {
       // query failed
       return(ResponseErrorGeneric(
+        500,
+        "Internal server error",
         `Error while retrieving the notification status|${errorOrMaybeNotification.left.code}`,
       ));
     }

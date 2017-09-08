@@ -16,7 +16,10 @@ export const FiscalCodeMiddleware: IRequestMiddleware<IResponseErrorValidation, 
     if (isFiscalCode(fiscalCode)) {
       return Promise.resolve(right(fiscalCode));
     } else {
-      const validationErrorResponse = ResponseErrorValidation(`The fiscal code [${fiscalCode}] is not valid.`);
+      const validationErrorResponse = ResponseErrorValidation(
+        "Bad request",
+        `The fiscal code [${fiscalCode}] is not valid.`,
+      );
       return Promise.resolve(left(validationErrorResponse));
     }
   };
