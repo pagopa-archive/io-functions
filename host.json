@@ -15,8 +15,28 @@
     "consoleLevel": "verbose",
     "fileLoggingMode": "debugOnly"
   },
-  "watchDirectories": [ 
-    "node_modules", 
+  "watchDirectories": [
+    "node_modules",
     "lib"
-  ]
+  ],
+  "logger": {
+    "categoryFilter": {
+      "defaultLevel": "Information",
+      "categoryLevels": {
+        "Host.Results": "Information",
+        "Function": "Debug",
+        "Host.Aggregator": "Information"
+      }
+    },
+    "aggregator": {
+      "batchSize": 1000,
+      "flushTimeout": "00:00:30"
+    }
+  },
+  "applicationInsights": {
+    "sampling": {
+      "isEnabled": false,
+      "maxTelemetryItemsPerSecond" : 5
+    }
+  }
 }
