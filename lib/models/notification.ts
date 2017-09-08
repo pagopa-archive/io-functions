@@ -100,8 +100,8 @@ export class NotificationModel extends DocumentDbModel<INewNotification, IRetrie
    * Updates an existing Notification
    */
   public async update(
-    messageId: string,
     notificationId: string,
+    messageId: string,
     f: (current: INotification) => INotification,
   ): Promise<Either<DocumentDb.QueryError, Option<IRetrievedNotification>>> {
     // fetch the notification

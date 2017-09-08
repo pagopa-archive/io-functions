@@ -214,7 +214,9 @@ async function handleNotification(
   // see https://nodemailer.com/usage/#sending-mail
   // see #150597597
   const updateResult = await notificationModel.update(
-    message.id, notification.id, setEmailNotificationSend,
+    notification.id,
+    message.id,
+    setEmailNotificationSend,
   );
 
   if (updateResult.isLeft) {
