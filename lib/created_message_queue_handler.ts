@@ -28,11 +28,6 @@ import {
 import { INotificationEvent } from "./models/notification_event";
 import { ProfileModel } from "./models/profile";
 
-// Setup DocumentDB
-
-const COSMOSDB_URI: string = process.env.CUSTOMCONNSTR_COSMOSDB_URI;
-const COSMOSDB_KEY: string = process.env.CUSTOMCONNSTR_COSMOSDB_KEY;
-
 // TODO: read from env vars
 const documentDbDatabaseUrl = documentDbUtils.getDatabaseUri("development");
 const profilesCollectionUrl = documentDbUtils.getCollectionUri(documentDbDatabaseUrl, "profiles");
@@ -46,7 +41,7 @@ const notificationsCollectionUrl = documentDbUtils.getCollectionUri(documentDbDa
  * Input and output bindings for this function
  * see CreatedMessageQueueHandler/function.json
  */
-interface IContextWithBindings extends IContext {
+export interface IContextWithBindings extends IContext {
   readonly bindings: {
 
     // input bindings
@@ -141,7 +136,7 @@ async function handleMessage(
 /**
  * Handler that gets triggerend on incoming event.
  */
-export function index(context: IContextWithBindings): void {
+export function index(context: IContextWithBindings, documentClient: DocumentDBClient): void {
   const createdMessageEvent = context.bindings.createdMessage;
 
   // since this function gets triggered by a queued message that gets
@@ -158,10 +153,9 @@ export function index(context: IContextWithBindings): void {
   // it is an ICreatedMessageEvent
   const retrievedMessage = createdMessageEvent.message;
 
-  context.log(`A new message was created|${retrievedMessage.id}|${retrievedMessage.fiscalCode}`);
+  context.log.info(`A new message was created|${retrievedMessage.id}|${retrievedMessage.fiscalCode}`);
 
   // setup required models
-  const documentClient = new DocumentDBClient(COSMOSDB_URI, { masterKey: COSMOSDB_KEY });
   const profileModel = new ProfileModel(documentClient, profilesCollectionUrl);
   const notificationModel = new NotificationModel(documentClient, notificationsCollectionUrl);
 

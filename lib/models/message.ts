@@ -71,7 +71,7 @@ export function asPublicExtendedMessage<T extends IMessage>(message: T): IPublic
 export function isIRetrievedMessage(arg: any): arg is IRetrievedMessage {
   return (typeof arg.id === "string") &&
     (typeof arg._self === "string") &&
-    (typeof arg._ts === "number") &&
+    (typeof arg._ts === "string") &&
     isIMessage(arg);
 }
 
