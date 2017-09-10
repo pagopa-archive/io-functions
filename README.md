@@ -46,6 +46,10 @@ Most API operations are synchronous, with the exception of the creation of messa
 
 Asynchronous operations are handled through queues implemented via Azure Queue Storage. Events in queue get processed by Azure Functions configured with a Queue trigger.
 
+### HTTP Request Middlewares
+
+API request handlers get wrapped by a number of _middlewares_ that are responsible to validate incoming requests and extract information from their payload (e.g., authentication, payload validation). 
+
 ### Data flow
 
 The high level flow of the data is the following.
@@ -58,12 +62,23 @@ The high level flow of the data is the following.
   2. The public endpoint forwards the request to the Azure API Management system.
   3. The Azure API Management system looks up the credentials provided by the client and validates them, it will also lookup the groups associated with the client.
   4. The Azure API Management system forwards the request to the API Function implementing the REST API, enriching it with authentication data (e.g., the client user ID and the associated groups).
-  5. The API Function processes the requests. Most CRUD requests will need to interacti with the data store.
+  5. The API Function processes the requests. Most CRUD requests will need to interact with the data store.
   6. If the request created a new `Message`, a _new message_ event gets pushed to the _new messages_ queue. 
   7. A function that maps the _new message_ to the _notifications_ gets triggered for each new event consumed from the _new messages_ queue.
   8. For each new `Message`, the function will lookup the notification preferences for the `Profile` associated to the recipient of the `Message` and create a pending `Notification`.
   9. In case one or more notification channels have been configured in the `Profile` preferences, a _new notification_ gets pushed to each configured channel queue (e.g., email, SMS, push notification, etc...).
-  10. A function responsibile for handling _new notification_ for a specific notification channel gets triggered.
+  10. A function responsible for handling _new notification_ for a specific notification channel gets triggered.
   11. Each _new notification_ event triggers a call to a _channel endpoint_ (e.g., an MTA, a 3rd party API, etc...) that will send the content of the `Notification` to the recipient through the channel.
   12. The result of the call is stored in the `Notification`.
 
+## Project structure
+
+The API is developed in TypeScript, all code is under the `lib` directory. Currently the TypeScript code gets compiled to Javascript at deploy time on the production machine (the build process is triggered by the `deploy.cmd` script).  
+
+Each Azure Function is declared in `host.json` and has a top level directory associated (e.g., `PublicApiV1`). Each function directory contains a `function.json` that describe the bindings and an `index.ts` that exports the function handler from the code imported from the `lib` directory.
+
+Each Azure Function has a corresponding `.ts` handler in the `lib` directory (e.g., `lib/public_api_v1.ts`).
+
+### Unit Tests
+
+Unit tests gets execute using Jest and are located in the `__tests__` sub-directory of the module under test.
