@@ -19,7 +19,7 @@ import * as documentDbUtils from "./utils/documentdb";
 
 import { Either, left, right } from "./utils/either";
 
-import { IContext } from "./azure-functions-types";
+import { IContext } from "azure-functions-types";
 
 import * as NodeMailer from "nodemailer";
 import * as sendGridTransport from "nodemailer-sendgrid-transport";

@@ -2,7 +2,7 @@
 
 import * as winston from "winston";
 
-import { IContext } from "azure-function-express-cloudify";
+import { IContext } from "azure-function-express";
 
 /**
  * A custom Winston Transport that logs to the Azure Functions context

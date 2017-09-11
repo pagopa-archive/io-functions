@@ -7,7 +7,7 @@
 
 import * as ulid from "ulid";
 
-import { IContext } from "./azure-functions-types";
+import { IContext } from "azure-functions-types";
 
 import { DocumentClient as DocumentDBClient } from "documentdb";
 

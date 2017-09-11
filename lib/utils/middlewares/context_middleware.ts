@@ -3,7 +3,7 @@ import { right } from "../either";
 import { IRequestMiddleware } from "../request_middleware";
 // import { IResponse } from "../response";
 
-import { IContext, IRequestWithContext } from "azure-function-express-cloudify";
+import { IContext, IRequestWithContext } from "azure-function-express";
 
 /**
  * Returns a request middleware that extracts the Azure request context
@@ -13,6 +13,6 @@ import { IContext, IRequestWithContext } from "azure-function-express-cloudify";
  */
 export function ContextMiddleware<T>(): IRequestMiddleware<never, IContext<T>> {
   return (request: IRequestWithContext<T>) => {
-    return Promise.resolve(right(request.context));
+    return Promise.resolve(right(request.app.get("context")));
   };
 }

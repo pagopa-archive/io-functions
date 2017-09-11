@@ -1,5 +1,5 @@
 
-declare module "azure-function-express-cloudify" {
+declare module "azure-function-express" {
 
   import * as express from "express";
 

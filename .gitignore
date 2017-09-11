@@ -2,4 +2,5 @@
 **/coverage
 **/*.js
 **/*.log
+**/local.*
 .idea

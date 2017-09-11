@@ -8,7 +8,7 @@ import * as ulid from "ulid";
 // cannot use "import * from", see https://goo.gl/HbzFra
 import ApplicationInsightsClient = require("../../node_modules/applicationinsights/out/Library/Client");
 
-import { IContext } from "azure-function-express-cloudify";
+import { IContext } from "azure-function-express";
 
 import { left, right } from "../utils/either";
 
