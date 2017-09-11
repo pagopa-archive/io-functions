@@ -3,7 +3,7 @@
  * request.
  */
 
-import { none, option, Option, some } from "ts-option";
+import { option, Option } from "ts-option";
 
 import { left, right } from "../either";
 
@@ -49,7 +49,7 @@ export enum UserGroup {
  * Looks up a UserGroup by name
  */
 const toUserGroup = (name: keyof typeof UserGroup): Option<UserGroup> =>
-  (UserGroup[name]) ? some(UserGroup[name]) : none;
+  option(UserGroup[name]);
 
 /**
  * Azure authorization info
