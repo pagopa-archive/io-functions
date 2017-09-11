@@ -1,7 +1,6 @@
 import { right } from "../either";
 
 import { IRequestMiddleware } from "../request_middleware";
-// import { IResponse } from "../response";
 
 import { IContext, IRequestWithContext } from "azure-function-express-cloudify";
 
@@ -10,6 +9,8 @@ import { IContext, IRequestWithContext } from "azure-function-express-cloudify";
  * from the request.
  *
  * @param T The type of the bindings found in the context.
+ *
+ * TODO: validate that the context is indeed defined, respond with ResponseErrorInternal instead
  */
 export function ContextMiddleware<T>(): IRequestMiddleware<never, IContext<T>> {
   return (request: IRequestWithContext<T>) => {
