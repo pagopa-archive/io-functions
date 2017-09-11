@@ -235,7 +235,7 @@ describe("CreateMessageHandler", () => {
     expect(mockAppInsights.trackEvent).not.toHaveBeenCalled();
 
     expect(mockContext.bindings).toEqual({});
-    expect(result.kind).toBe("IResponseErrorGeneric");
+    expect(result.kind).toBe("IResponseErrorQuery");
   });
 
 });

@@ -11,8 +11,8 @@ import { IOrganization, IRetrievedOrganization, OrganizationModel } from "../../
 import { IRequestMiddleware } from "../request_middleware";
 import {
   IResponseErrorForbiddenNotAuthorized,
-  IResponseErrorGeneric,
-  ResponseErrorGeneric,
+  IResponseErrorInternal,
+  ResponseErrorInternal,
 } from "../response";
 
 interface IAzureUserNote {
@@ -70,7 +70,7 @@ async function getUserOrganization(
  */
 export function AzureUserAttributesMiddleware(
   organizationModel: OrganizationModel,
-): IRequestMiddleware<IResponseErrorForbiddenNotAuthorized | IResponseErrorGeneric, IAzureUserAttributes> {
+): IRequestMiddleware<IResponseErrorForbiddenNotAuthorized | IResponseErrorInternal, IAzureUserAttributes> {
   return (request) => new Promise((resolve) => {
 
     // now we check whether some custom user attributes have been set
@@ -116,11 +116,7 @@ export function AzureUserAttributesMiddleware(
       };
 
       resolve(right(authInfo));
-    }, (error) => resolve(left(ResponseErrorGeneric(
-      500,
-      "Internal server error",
-      `Error while fetching organization details|${error}`,
-    ))));
+    }, (error) => resolve(left(ResponseErrorInternal(`Error while fetching organization details: ${error}`))));
 
   });
 }

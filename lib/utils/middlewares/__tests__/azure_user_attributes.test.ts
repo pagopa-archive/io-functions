@@ -96,7 +96,7 @@ describe("AzureUserAttributesMiddleware", () => {
     expect(orgModel.findByOrganizationId).toHaveBeenCalledWith("agid");
     expect(result.isLeft);
     if (result.isLeft) {
-      expect(result.left.kind).toEqual("IResponseErrorGeneric");
+      expect(result.left.kind).toEqual("IResponseErrorInternal");
     }
   });
 
