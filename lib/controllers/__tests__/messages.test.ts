@@ -13,7 +13,12 @@ import { IAzureUserAttributes } from "../../utils/middlewares/azure_user_attribu
 
 import { INewMessage, IPublicExtendedMessage, IRetrievedMessage } from "../../models/message";
 import { IRetrievedNotification, NotificationChannelStatus } from "../../models/notification";
-import { CreateMessageHandler, GetMessageHandler, IMessagePayload } from "../messages";
+import {
+  CreateMessageHandler,
+  GetMessageHandler,
+  GetMessagesHandler,
+  IMessagePayload,
+} from "../messages";
 
 const aFiscalCode = toFiscalCode("FRLFRC74E04B157I").get;
 
@@ -27,12 +32,12 @@ const someUserAttributes: IAzureUserAttributes = {
 };
 
 const aUserAuthenticationDeveloper: IAzureApiAuthorization = {
-  groups: new Set([UserGroup.Developers]),
+  groups: new Set([UserGroup.ApiMessageRead, UserGroup.ApiMessageWrite]),
   kind: "IAzureApiAuthorization",
 };
 
 const aUserAuthenticationTrustedApplication: IAzureApiAuthorization = {
-  groups: new Set([UserGroup.TrustedApplications]),
+  groups: new Set([UserGroup.ApiMessageRead, UserGroup.ApiMessageList]),
   kind: "IAzureApiAuthorization",
 };
 
@@ -66,7 +71,7 @@ const aPublicExtendedMessage: IPublicExtendedMessage = {
 describe("CreateMessageHandler", () => {
 
   it("should require the user to be part of an organization", async () => {
-    const createMessageHandler = CreateMessageHandler({} as any);
+    const createMessageHandler = CreateMessageHandler({} as any, {} as any);
     const result = await createMessageHandler({} as any, {} as any, {
       organization: undefined,
     } as any, {} as any, {} as any);
@@ -75,11 +80,15 @@ describe("CreateMessageHandler", () => {
   });
 
   it("should allow dry run calls", async () => {
+    const mockAppInsights = {
+      trackEvent: jest.fn(),
+    };
+
     const mockMessageModel = {
       create: jest.fn(),
     };
 
-    const createMessageHandler = CreateMessageHandler(mockMessageModel as any);
+    const createMessageHandler = CreateMessageHandler(mockAppInsights as any, mockMessageModel as any);
 
     const aDryRunMessagePayload: IMessagePayload = {
       ...aMessagePayload,
@@ -100,6 +109,12 @@ describe("CreateMessageHandler", () => {
 
     expect(mockMessageModel.create).not.toHaveBeenCalled();
     expect(mockContext.bindings).toEqual({});
+    expect(mockAppInsights.trackEvent).toHaveBeenCalledTimes(1);
+    expect(mockAppInsights.trackEvent).toHaveBeenCalledWith("api.messages.create", {
+      dryRun: "true",
+      senderOrganizationId: "agid",
+      success: "true",
+    });
     expect(result.kind).toBe("IResponseSuccessJson");
     if (result.kind === "IResponseSuccessJson") {
       expect(result.value.bodyShort).toEqual(aDryRunMessagePayload.body_short);
@@ -109,11 +124,15 @@ describe("CreateMessageHandler", () => {
   });
 
   it("should create a new message", async () => {
+    const mockAppInsights = {
+      trackEvent: jest.fn(),
+    };
+
     const mockMessageModel = {
       create: jest.fn(() => right(aRetrievedMessage)),
     };
 
-    const createMessageHandler = CreateMessageHandler(mockMessageModel as any);
+    const createMessageHandler = CreateMessageHandler(mockAppInsights as any, mockMessageModel as any);
 
     const mockContext = {
       bindings: {},
@@ -140,6 +159,14 @@ describe("CreateMessageHandler", () => {
         message: aRetrievedMessage,
       },
     });
+
+    expect(mockAppInsights.trackEvent).toHaveBeenCalledTimes(1);
+    expect(mockAppInsights.trackEvent).toHaveBeenCalledWith("api.messages.create", {
+      dryRun: "false",
+      senderOrganizationId: "agid",
+      success: "true",
+    });
+
     expect(result.kind).toBe("IResponseSuccessRedirectToResource");
     if (result.kind === "IResponseSuccessRedirectToResource") {
       const response = MockResponse();
@@ -149,11 +176,15 @@ describe("CreateMessageHandler", () => {
   });
 
   it("should require the user to be enable for production to create a new message", async () => {
+    const mockAppInsights = {
+      trackEvent: jest.fn(),
+    };
+
     const mockMessageModel = {
       create: jest.fn(() => right(aRetrievedMessage)),
     };
 
-    const createMessageHandler = CreateMessageHandler(mockMessageModel as any);
+    const createMessageHandler = CreateMessageHandler(mockAppInsights as any, mockMessageModel as any);
 
     const mockContext = {
       bindings: {},
@@ -177,11 +208,15 @@ describe("CreateMessageHandler", () => {
   });
 
   it("should return failure if creation fails", async () => {
+    const mockAppInsights = {
+      trackEvent: jest.fn(),
+    };
+
     const mockMessageModel = {
       create: jest.fn(() => left("error")),
     };
 
-    const createMessageHandler = CreateMessageHandler(mockMessageModel as any);
+    const createMessageHandler = CreateMessageHandler(mockAppInsights as any, mockMessageModel as any);
 
     const mockContext = {
       bindings: {},
@@ -197,6 +232,7 @@ describe("CreateMessageHandler", () => {
     );
 
     expect(mockMessageModel.create).toHaveBeenCalledTimes(1);
+    expect(mockAppInsights.trackEvent).not.toHaveBeenCalled();
 
     expect(mockContext.bindings).toEqual({});
     expect(result.kind).toBe("IResponseErrorGeneric");
@@ -369,6 +405,40 @@ describe("GetMessageHandler", () => {
         },
       });
     }
+  });
+
+});
+
+describe("GetMessagesHandler", () => {
+
+  it("should respond with the messages for the recipient", async () => {
+    const mockIterator = {
+      executeNext: jest.fn(),
+    };
+
+    mockIterator.executeNext.mockImplementationOnce(() => Promise.resolve(right(some([{data: "a"}]))));
+    mockIterator.executeNext.mockImplementationOnce(() => Promise.resolve(right(none)));
+
+    const mockMessageModel = {
+      findMessages: jest.fn(() => mockIterator),
+    };
+
+    const getMessagesHandler = GetMessagesHandler(mockMessageModel as any);
+
+    const result = await getMessagesHandler(
+      aUserAuthenticationDeveloper,
+      aFiscalCode,
+    );
+
+    expect(result.kind).toBe("IResponseSuccessJsonIterator");
+
+    const mockResponse = MockResponse();
+    result.apply(mockResponse);
+
+    await Promise.resolve(); // needed to let the response promise complete
+
+    expect(mockIterator.executeNext).toHaveBeenCalledTimes(2);
+
   });
 
 });

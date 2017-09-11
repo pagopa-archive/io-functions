@@ -273,8 +273,8 @@ export function queryOneDocument<T>(
 export function mapResultIterator<A, B>(i: IResultIterator<A>, f: (a: A) => B): IResultIterator<B> {
   return {
     executeNext: () => new Promise((resolve, reject) => i.executeNext().then(
-      (maybeError) => {
-        maybeError.mapRight((maybeDocuments) => {
+      (errorOrMaybeDocuments) => {
+        errorOrMaybeDocuments.mapRight((maybeDocuments) => {
           maybeDocuments.map((documents) => {
             if (documents && documents.length > 0) {
               resolve(right(some(documents.map(f))));
@@ -285,6 +285,23 @@ export function mapResultIterator<A, B>(i: IResultIterator<A>, f: (a: A) => B): 
         }).mapLeft((error) => resolve(left(error)));
       }, reject)),
   };
+}
+
+/**
+ * Consumes the iterator and returns an arrays with the generated elements
+ */
+export async function iteratorToArray<T>(i: IResultIterator<T>): Promise<ReadonlyArray<T>> {
+  async function iterate(a: ReadonlyArray<T>): Promise<ReadonlyArray<T>> {
+    const errorOrMaybeDocuments = await i.executeNext();
+    if (errorOrMaybeDocuments.isLeft ||
+      errorOrMaybeDocuments.right.isEmpty ||
+      errorOrMaybeDocuments.right.get.length === 0) {
+      return a;
+    }
+    const result = errorOrMaybeDocuments.right.get;
+    return iterate(a.concat(...result));
+  }
+  return iterate([]);
 }
 
 /**

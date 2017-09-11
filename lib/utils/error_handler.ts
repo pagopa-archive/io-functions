@@ -14,7 +14,7 @@ import {
  */
 export function handleErrorAndRespond<T>(): (reason: T) => IResponseErrorGeneric {
   return (reason: T) => {
-    return ResponseErrorGeneric(`Generic error: ${reason}`);
+    return ResponseErrorGeneric(500, "Internal server error", `${reason}`);
   };
 }
 
@@ -28,6 +28,6 @@ export function handleOptionalResultAndRespond<T>(
   return (maybeResult) => maybeResult.map((result) => {
     resolve(ResponseSuccessJson(result));
   }).getOrElse(() => {
-    resolve(ResponseErrorGeneric(emptyErrorMessage));
+    resolve(ResponseErrorGeneric(500, "Internal server error", emptyErrorMessage));
   });
 }

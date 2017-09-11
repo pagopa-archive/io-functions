@@ -5,6 +5,9 @@
 import * as express from "express";
 import * as ulid from "ulid";
 
+// cannot use "import * from", see https://goo.gl/HbzFra
+import ApplicationInsightsClient = require("../../node_modules/applicationinsights/out/Library/Client");
+
 import { IContext } from "azure-function-express-cloudify";
 
 import { left, right } from "../utils/either";
@@ -105,11 +108,11 @@ export const MessagePayloadMiddleware: IRequestMiddleware<IResponseErrorValidati
     const body = request.body;
     // validate body
     if (typeof body.body_short !== "string") {
-      return Promise.resolve(left(ResponseErrorValidation("body_short is required")));
+      return Promise.resolve(left(ResponseErrorValidation("Request not valid", "body_short is required")));
     }
     // validate dry_run
     if (body.dry_run && typeof body.dry_run !== "boolean") {
-      return Promise.resolve(left(ResponseErrorValidation("dry_run must be a boolean")));
+      return Promise.resolve(left(ResponseErrorValidation("Request not valid", "dry_run must be a boolean")));
     }
     return Promise.resolve(right({
       body_short: body.body_short,
@@ -179,17 +182,30 @@ type IGetMessagesHandler = (
 /**
  * Returns a type safe CreateMessage handler.
  */
-export function CreateMessageHandler(messageModel: MessageModel): ICreateMessageHandler {
+export function CreateMessageHandler(
+  applicationInsightsClient: ApplicationInsightsClient,
+  messageModel: MessageModel,
+): ICreateMessageHandler {
   return async (context, _, userAttributes, fiscalCode, messagePayload) => {
     const userOrganization = userAttributes.organization;
     if (!userOrganization) {
       // to be able to send a message the user musy be part of an organization
-      return(ResponseErrorValidation("The user is not part of any organization."));
+      return(ResponseErrorValidation("Request not valid", "The user is not part of any organization."));
     }
+
+    const eventName = "api.messages.create";
+    const eventData = {
+      senderOrganizationId: userOrganization.organizationId,
+    };
 
     if (messagePayload.dry_run) {
       // if the user requested a dry run, we respond with the attributes
       // that we received
+      applicationInsightsClient.trackEvent(eventName, {
+        ...eventData,
+        dryRun: "true",
+        success: "true",
+      });
       const response: IResponseDryRun = {
         bodyShort: messagePayload.body_short,
         senderOrganizationId: userOrganization.organizationId,
@@ -219,6 +235,12 @@ export function CreateMessageHandler(messageModel: MessageModel): ICreateMessage
       const retrievedMessage = errorOrMessage.right;
       context.log(`>> message created|${fiscalCode}|${userOrganization.organizationId}|${retrievedMessage.id}`);
 
+      applicationInsightsClient.trackEvent(eventName, {
+        ...eventData,
+        dryRun: "false",
+        success: "true",
+      });
+
       // prepare the created message event
       const createdMessageEvent: ICreatedMessageEvent = {
         message: retrievedMessage,
@@ -233,7 +255,11 @@ export function CreateMessageHandler(messageModel: MessageModel): ICreateMessage
       return(ResponseSuccessRedirectToResource(retrievedMessage, `/api/v1/messages/${fiscalCode}/${message.id}`));
     } else {
       // we got an error while creating the message
-      return(ResponseErrorGeneric(`Error while creating Message|${errorOrMessage.left.code}`));
+      return(ResponseErrorGeneric(
+        500,
+        "Internal server error",
+        `Error while creating Message|${errorOrMessage.left.code}`,
+      ));
     }
 
   };
@@ -243,14 +269,15 @@ export function CreateMessageHandler(messageModel: MessageModel): ICreateMessage
  * Wraps a CreateMessage handler inside an Express request handler.
  */
 export function CreateMessage(
+  applicationInsightsClient: ApplicationInsightsClient,
   organizationModel: OrganizationModel,
   messageModel: MessageModel,
 ): express.RequestHandler {
-  const handler = CreateMessageHandler(messageModel);
+  const handler = CreateMessageHandler(applicationInsightsClient, messageModel);
   const middlewaresWrap = withRequestMiddlewares(
     ContextMiddleware<IBindings>(),
     AzureApiAuthMiddleware(new Set([
-      UserGroup.Developers,
+      UserGroup.ApiMessageWrite,
     ])),
     AzureUserAttributesMiddleware(organizationModel),
     FiscalCodeMiddleware,
@@ -267,11 +294,11 @@ export function GetMessageHandler(
   notificationModel: NotificationModel,
 ): IGetMessageHandler {
   return async (userAuth, userAttributes, fiscalCode, messageId) => {
-    // whether the user is a trusted application (i.e. can access al inboxes)
-    const isTrustedApplication = userAuth.groups.has(UserGroup.TrustedApplications);
-    if (!isTrustedApplication) {
+    // whether the user is a trusted application (i.e. can access all messages for a user)
+    const canListMessages = userAuth.groups.has(UserGroup.ApiMessageList);
+    if (!canListMessages) {
       // since this is not a trusted application we must allow only accessing messages
-      // that have been sent by this organization
+      // that have been sent by the organization he belongs to
       if (!userAttributes.organization) {
         // the user doesn't have any organization associated, so we can't continue
         return(ResponseErrorForbiddenNotAuthorized);
@@ -282,20 +309,24 @@ export function GetMessageHandler(
 
     if (errorOrMaybeDocument.isLeft) {
       // the query failed
-      return(ResponseErrorGeneric(`Error while retrieving the message|${errorOrMaybeDocument.left.code}`));
+      return(ResponseErrorGeneric(
+        500,
+        "Internal server error",
+        `Error while retrieving the message|${errorOrMaybeDocument.left.code}`,
+      ));
     }
 
     const maybeDocument = errorOrMaybeDocument.right;
     if (maybeDocument.isEmpty) {
       // the document does not exist
-      return ResponseErrorNotFound("Message not found");
+      return ResponseErrorNotFound("Message not found", "The message that you requested was not found in the system.");
     }
 
     const retrievedMessage = maybeDocument.get;
 
     // the user is allowed to see the message when he is either
     // a trusted application or he is the sender of the message
-    const isUserAllowed = isTrustedApplication || (
+    const isUserAllowed = canListMessages || (
       userAttributes.organization &&
       retrievedMessage.senderOrganizationId === userAttributes.organization.organizationId
     );
@@ -310,6 +341,8 @@ export function GetMessageHandler(
     if (errorOrMaybeNotification.isLeft) {
       // query failed
       return(ResponseErrorGeneric(
+        500,
+        "Internal server error",
         `Error while retrieving the notification status|${errorOrMaybeNotification.left.code}`,
       ));
     }
@@ -343,10 +376,8 @@ export function GetMessage(
   const handler = GetMessageHandler(messageModel, notificationModel);
   const middlewaresWrap = withRequestMiddlewares(
     AzureApiAuthMiddleware(new Set([
-      // trusted applications will be able to access all messages
-      UserGroup.TrustedApplications,
-      // developers will be able to access only messages they sent
-      UserGroup.Developers,
+      UserGroup.ApiMessageRead,
+      UserGroup.ApiMessageList,
     ])),
     AzureUserAttributesMiddleware(organizationModel),
     FiscalCodeMiddleware,
@@ -378,7 +409,7 @@ export function GetMessages(
   const handler = GetMessagesHandler(messageModel);
   const middlewaresWrap = withRequestMiddlewares(
     AzureApiAuthMiddleware(new Set([
-      UserGroup.TrustedApplications,
+      UserGroup.ApiMessageList,
     ])),
     FiscalCodeMiddleware,
   );

@@ -19,7 +19,7 @@ export function RequiredParamMiddleware<T>(
     if (v.isRight) {
       return Promise.resolve(right(v.right));
     } else {
-      const response = ResponseErrorValidation(v.left);
+      const response = ResponseErrorValidation("Validation error", v.left);
       return Promise.resolve(left(response));
     }
   });

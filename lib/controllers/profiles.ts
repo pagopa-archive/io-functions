@@ -82,7 +82,7 @@ export function GetProfileHandler(profileModel: ProfileModel): IGetProfileHandle
       const maybeProfile = errorOrMaybeProfile.right;
       if (maybeProfile.isDefined) {
         const profile = maybeProfile.get;
-        if (auth.groups.has(UserGroup.TrustedApplications)) {
+        if (auth.groups.has(UserGroup.ApiFullProfileRead)) {
           // if the client is a trusted application we return the
           // extended profile
           return(ResponseSuccessJson(asPublicExtendedProfile(profile)));
@@ -91,10 +91,12 @@ export function GetProfileHandler(profileModel: ProfileModel): IGetProfileHandle
           return(ResponseSuccessJson(asPublicLimitedProfile(profile)));
         }
       } else {
-        return(ResponseErrorNotFound("Profile not found"));
+        return(ResponseErrorNotFound("Profile not found", "The profile you requested was not found in the system."));
       }
     } else {
       return ResponseErrorGeneric(
+        500,
+        "Internal server error",
         `Error while retrieving the profile|${errorOrMaybeProfile.left.code}`,
       );
     }
@@ -110,7 +112,8 @@ export function GetProfile(
   const handler = GetProfileHandler(profileModel);
   const middlewaresWrap = withRequestMiddlewares(
     AzureApiAuthMiddleware(new Set([
-      UserGroup.Developers,
+      UserGroup.ApiLimitedProfileRead,
+      UserGroup.ApiFullProfileRead,
     ])),
     FiscalCodeMiddleware,
   );
@@ -154,6 +157,8 @@ async function createNewProfileFromPayload(
     return ResponseSuccessJson(errorOrProfileAsPublicExtendedProfile.right);
   } else {
     return ResponseErrorGeneric(
+      500,
+      "Internal server error",
       `Error while creating a new profile|${errorOrProfileAsPublicExtendedProfile.left.code}`,
     );
   }
@@ -177,6 +182,8 @@ async function updateExistingProfileFromPayload(
 
   if (errorOrMaybeProfile.isLeft) {
     return ResponseErrorGeneric(
+      500,
+      "Internal server error",
       `Error while updating the existing profile|${errorOrMaybeProfile.left.code}`,
     );
   }
@@ -187,6 +194,8 @@ async function updateExistingProfileFromPayload(
     // this should never happen since if the profile doesn't exist this function
     // will never be called, but let's deal with this anyway, you never know
     return ResponseErrorGeneric(
+      500,
+      "Internal server error",
       `Error while updating the existing profile, the profile does not exist!`,
     );
   }
@@ -217,6 +226,8 @@ export function UpsertProfileHandler(profileModel: ProfileModel): IUpsertProfile
       }
     } else {
       return ResponseErrorGeneric(
+        500,
+        "Internal server error",
         `Error|${errorOrMaybeProfile.left.code}`,
       );
     }
@@ -232,7 +243,7 @@ export function UpsertProfile(
   const handler = UpsertProfileHandler(profileModel);
   const middlewaresWrap = withRequestMiddlewares(
     AzureApiAuthMiddleware(new Set([
-      UserGroup.TrustedApplications,
+      UserGroup.ApiProfileWrite,
     ])),
     FiscalCodeMiddleware,
     ProfilePayloadMiddleware,

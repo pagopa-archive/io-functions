@@ -7,6 +7,10 @@
 
 import * as winston from "winston";
 
+// cannot use "import * from", see https://goo.gl/HbzFra
+import ApplicationInsights = require("applicationinsights");
+import ApplicationInsightsClient = require("../node_modules/applicationinsights/out/Library/Client");
+
 import { configureAzureContextTransport } from "./utils/logging";
 
 import { DocumentClient as DocumentDBClient } from "documentdb";
@@ -120,6 +124,7 @@ function setEmailNotificationSend(notification: INotification): INotification {
  * It will then send the email.
  */
 async function handleNotification(
+  appInsightsClient: ApplicationInsightsClient,
   notificationModel: NotificationModel,
   messageModel: MessageModel,
   messageId: string,
@@ -200,8 +205,18 @@ async function handleNotification(
     // disableUrlAccess: true,
   });
 
+  const eventName = "notification.email.delivery";
+  const eventContent = {
+    mta: "sendgrid",
+    senderOrganizationId: message.senderOrganizationId,
+  };
+
   if (sendResult.isLeft) {
     // we got an error while sending the email
+    appInsightsClient.trackEvent(eventName, {
+      ...eventContent,
+      success: "false",
+    });
     const error = sendResult.left;
     winston.warn(
       `Error while sending email|notification=${notificationId}|message=${messageId}|error=${error.message}`,
@@ -209,12 +224,19 @@ async function handleNotification(
     return left(ProcessingError.TRANSIENT);
   }
 
+  appInsightsClient.trackEvent(eventName, {
+    ...eventContent,
+    success: "true",
+  });
+
   // now we can update the notification status
   // TODO: store the message ID for handling bounces and delivery updates
   // see https://nodemailer.com/usage/#sending-mail
   // see #150597597
   const updateResult = await notificationModel.update(
-    message.id, notification.id, setEmailNotificationSend,
+    notification.id,
+    message.id,
+    setEmailNotificationSend,
   );
 
   if (updateResult.isLeft) {
@@ -241,6 +263,9 @@ export function index(context: IContextWithBindings): void {
   configureAzureContextTransport(context, winston, "debug");
   winston.debug(`STARTED|${context.invocationId}`);
 
+  // Setup ApplicationInsights
+  const appInsightsClient = ApplicationInsights.getClient();
+
   const emailNotificationEvent = context.bindings.notificationEvent;
 
   // since this function gets triggered by a queued message that gets
@@ -260,6 +285,7 @@ export function index(context: IContextWithBindings): void {
   const messageModel = new MessageModel(documentClient, messagesCollectionUrl);
 
   handleNotification(
+    appInsightsClient,
     notificationModel,
     messageModel,
     emailNotificationEvent.messageId,

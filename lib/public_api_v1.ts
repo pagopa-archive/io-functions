@@ -7,6 +7,9 @@ import { IContext } from "azure-function-express-cloudify";
 import * as express from "express";
 import * as winston from "winston";
 
+// cannot use "import * from", see https://goo.gl/HbzFra
+import ApplicationInsights = require("applicationinsights");
+
 import { configureAzureContextTransport } from "./utils/logging";
 
 import { DocumentClient as DocumentDBClient } from "documentdb";
@@ -54,6 +57,10 @@ const messageModel = new MessageModel(documentClient, messagesCollectionUrl);
 const organizationModel = new OrganizationModel(documentClient, organizationsCollectionUrl);
 const notificationModel = new NotificationModel(documentClient, notificationsCollectionUrl);
 
+// Setup ApplicationInsights
+
+const appInsightsClient = ApplicationInsights.getClient();
+
 // Setup handlers
 
 const debugHandler = GetDebug(organizationModel);
@@ -65,7 +72,7 @@ app.post("/api/v1/profiles/:fiscalcode", UpsertProfile(profileModel));
 
 app.get("/api/v1/messages/:fiscalcode/:id", GetMessage(organizationModel, messageModel, notificationModel));
 app.get("/api/v1/messages/:fiscalcode", GetMessages(messageModel));
-app.post("/api/v1/messages/:fiscalcode", CreateMessage(organizationModel, messageModel));
+app.post("/api/v1/messages/:fiscalcode", CreateMessage(appInsightsClient, organizationModel, messageModel));
 
 app.get("/api/v1/info", GetInfo());
 

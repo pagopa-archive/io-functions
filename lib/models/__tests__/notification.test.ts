@@ -148,8 +148,8 @@ describe("update", () => {
     const model = new NotificationModel((clientMock as any) as DocumentDb.DocumentClient, aNotificationsCollectionUri);
 
     const result = await model.update(
-      aRetrievedNotification.messageId,
       aRetrievedNotification.id,
+      aRetrievedNotification.messageId,
       updateFunction,
     );
 

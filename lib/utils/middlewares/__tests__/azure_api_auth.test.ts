@@ -4,7 +4,7 @@ import { response as MockResponse } from "jest-mock-express";
 
 import { AzureApiAuthMiddleware, UserGroup } from "../azure_api_auth";
 
-const anAllowedGroupSet = new Set([UserGroup.Developers]);
+const anAllowedGroupSet = new Set([UserGroup.ApiMessageWrite]);
 
 describe("AzureApiAuthMiddleware", () => {
 
@@ -53,9 +53,9 @@ describe("AzureApiAuthMiddleware", () => {
     }
   });
 
-  it("should fail if there user is not part of an allowed group", async () => {
+  it("should fail if the user is not part of an allowed group", async () => {
     const mockRequest = {
-      header: jest.fn(() => "Administrators"),
+      header: jest.fn(() => UserGroup.ApiDebugRead),
     };
 
     const middleware = AzureApiAuthMiddleware(anAllowedGroupSet);
@@ -70,7 +70,7 @@ describe("AzureApiAuthMiddleware", () => {
 
   it("should succeed if the user is part of an allowed group", async () => {
     const mockRequest = {
-      header: jest.fn(() => "Developers"),
+      header: jest.fn(() => UserGroup.ApiMessageWrite),
     };
 
     const middleware = AzureApiAuthMiddleware(anAllowedGroupSet);
@@ -79,13 +79,13 @@ describe("AzureApiAuthMiddleware", () => {
     expect(mockRequest.header).toHaveBeenCalledWith("x-user-groups");
     expect(result.isRight).toBeTruthy();
     if (result.isRight) {
-      expect(result.right.groups).toContain(UserGroup.Developers);
+      expect(result.right.groups).toContain(UserGroup.ApiMessageWrite);
     }
   });
 
   it("should succeed if the user is part of at least an allowed group", async () => {
     const mockRequest = {
-      header: jest.fn(() => "Administrators,Developers,AnotherGroup"),
+      header: jest.fn(() => [UserGroup.ApiMessageRead, UserGroup.ApiMessageWrite].join(",")),
     };
 
     const middleware = AzureApiAuthMiddleware(anAllowedGroupSet);
@@ -94,13 +94,13 @@ describe("AzureApiAuthMiddleware", () => {
     expect(mockRequest.header).toHaveBeenCalledWith("x-user-groups");
     expect(result.isRight).toBeTruthy();
     if (result.isRight) {
-      expect(result.right.groups).toContain(UserGroup.Developers);
+      expect(result.right.groups).toContain(UserGroup.ApiMessageWrite);
     }
   });
 
   it("should skip unknown groups in x-user-groups header", async () => {
     const mockRequest = {
-      header: jest.fn(() => "Developers,a,b,!"),
+      header: jest.fn(() => [UserGroup.ApiMessageWrite, "a", "b", "!"].join(",")),
     };
 
     const middleware = AzureApiAuthMiddleware(anAllowedGroupSet);
@@ -109,7 +109,7 @@ describe("AzureApiAuthMiddleware", () => {
     expect(mockRequest.header).toHaveBeenCalledWith("x-user-groups");
     expect(result.isRight).toBeTruthy();
     if (result.isRight) {
-      expect(result.right.groups).toEqual(new Set([UserGroup.Developers]));
+      expect(result.right.groups).toEqual(new Set([UserGroup.ApiMessageWrite]));
     }
   });
 
