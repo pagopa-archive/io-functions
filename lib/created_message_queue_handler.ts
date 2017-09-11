@@ -136,7 +136,7 @@ async function handleMessage(
 /**
  * Handler that gets triggered on incoming event.
  */
-export async function index(context: IContextWithBindings, documentClient: DocumentDBClient): Promise<void> {
+export function index(context: IContextWithBindings, documentClient: DocumentDBClient): void {
   const createdMessageEvent = context.bindings.createdMessage;
 
   // since this function gets triggered by a queued message that gets
@@ -160,7 +160,7 @@ export async function index(context: IContextWithBindings, documentClient: Docum
   const notificationModel = new NotificationModel(documentClient, notificationsCollectionUrl);
 
   // now we can trigger the notifications for the message
-  await handleMessage(
+  handleMessage(
     profileModel,
     notificationModel,
     retrievedMessage,

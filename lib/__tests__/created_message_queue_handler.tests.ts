@@ -29,9 +29,13 @@ const aRetrievedNotification: IRetrievedNotification = {
   kind: "IRetrievedNotification",
 };
 
+function flushPromises<T>(): Promise<T> {
+  return new Promise((resolve) => setImmediate(resolve));
+}
+
 describe("CreatedMessageQueueHandler", () => {
 
-  it("should return failure if createdMessageEvent is undefined", () => {
+  it("should return failure if createdMessageEvent is undefined", async () => {
     const Mock = jest.fn<IContextWithBindings>(() => ({
       bindings: {
         createdMessage: undefined,
@@ -49,12 +53,14 @@ describe("CreatedMessageQueueHandler", () => {
 
     index(contextMock, (clientMock as any)as DocumentDb.DocumentClient);
 
+    await flushPromises();
+
     expect(contextMock.done).toHaveBeenCalledTimes(1);
     expect(contextMock.log.error).toHaveBeenCalledTimes(1);
     expect(contextMock.log.error.mock.calls[0][0]).toEqual(`Fatal! No valid message found in bindings.`);
   });
 
-  it("should return failure if createdMessageEvent is invalid (wrong fiscal code)", () => {
+  it("should return failure if createdMessageEvent is invalid (wrong fiscal code)", async () => {
     const aMessage: IRetrievedMessage = {
       _self: "",
       _ts: "",
@@ -85,6 +91,8 @@ describe("CreatedMessageQueueHandler", () => {
     const clientMock = {};
 
     index(contextMock, (clientMock as any)as DocumentDb.DocumentClient);
+
+    await flushPromises();
 
     expect(contextMock.done).toHaveBeenCalledTimes(1);
     expect(contextMock.log.error).toHaveBeenCalledTimes(1);
@@ -128,17 +136,19 @@ describe("CreatedMessageQueueHandler", () => {
       queryDocuments: jest.fn((__, ___) => iteratorMock),
     };
 
-    index(contextMock, (clientMock as any)as DocumentDb.DocumentClient).then(() => {
-      expect(contextMock.log.info).toHaveBeenCalledTimes(1);
-      expect(contextMock.log.info.mock.calls[0][0]).toEqual(
-          `A new message was created|${aMessage.id}|${aMessage.fiscalCode}`);
-      expect(clientMock.queryDocuments).toHaveBeenCalledTimes(1);
-      expect(clientMock.createDocument).toHaveBeenCalledTimes(0);
-      expect(contextMock.done).toHaveBeenCalledTimes(1);
-      expect(contextMock.log.error).toHaveBeenCalledTimes(1);
-      expect(contextMock.log.error.mock.calls[0][0]).toEqual(
-          `Fiscal code has no associated profile|${aMessage.fiscalCode}`);
-    });
+    index(contextMock, (clientMock as any)as DocumentDb.DocumentClient);
+
+    await flushPromises();
+
+    expect(contextMock.log.info).toHaveBeenCalledTimes(1);
+    expect(contextMock.log.info.mock.calls[0][0]).toEqual(
+        `A new message was created|${aMessage.id}|${aMessage.fiscalCode}`);
+    expect(clientMock.queryDocuments).toHaveBeenCalledTimes(1);
+    expect(clientMock.createDocument).toHaveBeenCalledTimes(0);
+    expect(contextMock.done).toHaveBeenCalledTimes(1);
+    expect(contextMock.log.error).toHaveBeenCalledTimes(1);
+    expect(contextMock.log.error.mock.calls[0][0]).toEqual(
+`Fiscal code has no associated profile|${aMessage.fiscalCode}`);
   });
 
 });
