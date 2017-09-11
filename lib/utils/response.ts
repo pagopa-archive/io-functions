@@ -1,3 +1,4 @@
+import * as DocumentDb from "documentdb";
 import * as express from "express";
 
 import { IResultIterator, iteratorToArray } from "./documentdb";
@@ -94,7 +95,7 @@ interface IProblemDescription {
 /**
  * Interface for a response describing a generic server error.
  */
-export interface IResponseErrorGeneric extends IResponse {
+interface IResponseErrorGeneric extends IResponse {
   readonly kind: "IResponseErrorGeneric";
 }
 
@@ -105,7 +106,7 @@ export interface IResponseErrorGeneric extends IResponse {
  * See https://zalando.github.io/restful-api-guidelines/index.html#176
  *
  */
-export function ResponseErrorGeneric(
+function ResponseErrorGeneric(
   status: number,
   title: string,
   detail: string,
@@ -220,3 +221,42 @@ export const ResponseErrorForbiddenNoAuthorizationGroups: IResponseErrorForbidde
   ),
   kind: "IResponseErrorForbiddenNoAuthorizationGroups",
 };
+
+/**
+ * Interface for a response describing a database error.
+ */
+export interface IResponseErrorQuery extends IResponse {
+  readonly kind: "IResponseErrorQuery";
+}
+
+/**
+ * Returns a response describing a database error.
+ *
+ * @param detail The error message
+ * @param error  The QueryError object
+ */
+export function ResponseErrorQuery(detail: string, error: DocumentDb.QueryError): IResponseErrorQuery {
+  return {
+    ...ResponseErrorGeneric(500, `Query error (${error.code})`, detail),
+    kind: "IResponseErrorQuery",
+  };
+}
+
+/**
+ * Interface for a response describing an internal server error.
+ */
+export interface IResponseErrorInternal extends IResponse {
+  readonly kind: "IResponseErrorInternal";
+}
+
+/**
+ * Returns a response describing an internal server error.
+ *
+ * @param detail The error message
+ */
+export function ResponseErrorInternal(detail: string): IResponseErrorInternal {
+  return {
+    ...ResponseErrorGeneric(500, "Internal server error", detail),
+    kind: "IResponseErrorInternal",
+  };
+}

@@ -2,7 +2,7 @@ import * as express from "express";
 import * as winston from "winston";
 
 import { Either } from "./either";
-import { IResponse, ResponseErrorGeneric } from "./response";
+import { IResponse, ResponseErrorInternal } from "./response";
 
 export type RequestHandler<R extends IResponse> = (request: express.Request) => Promise<R>;
 
@@ -19,7 +19,7 @@ export function wrapRequestHandler<R extends IResponse>(handler: RequestHandler<
         winston.log("debug", `wrapRequestHandler|SUCCESS|${request.url}|${r.kind}`);
       },
       (e) => {
-        ResponseErrorGeneric(500, "Internal server error", e).apply(response);
+        ResponseErrorInternal(e).apply(response);
         winston.log("debug", `wrapRequestHandler|ERROR|${request.url}|${e}`);
       },
     );

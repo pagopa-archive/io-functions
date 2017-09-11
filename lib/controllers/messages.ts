@@ -29,16 +29,16 @@ import { IRequestMiddleware, withRequestMiddlewares, wrapRequestHandler } from "
 import {
   IResponseErrorForbiddenNotAuthorized,
   IResponseErrorForbiddenNotAuthorizedForProduction,
-  IResponseErrorGeneric,
   IResponseErrorNotFound,
+  IResponseErrorQuery,
   IResponseErrorValidation,
   IResponseSuccessJson,
   IResponseSuccessJsonIterator,
   IResponseSuccessRedirectToResource,
   ResponseErrorForbiddenNotAuthorized,
   ResponseErrorForbiddenNotAuthorizedForProduction,
-  ResponseErrorGeneric,
   ResponseErrorNotFound,
+  ResponseErrorQuery,
   ResponseErrorValidation,
   ResponseSuccessJson,
   ResponseSuccessJsonIterator,
@@ -137,10 +137,10 @@ type ICreateMessageHandler = (
 ) => Promise<
   IResponseSuccessRedirectToResource<IMessage> |
   IResponseSuccessJson<IResponseDryRun> |
+  IResponseErrorQuery |
   IResponseErrorValidation |
   IResponseErrorForbiddenNotAuthorized |
-  IResponseErrorForbiddenNotAuthorizedForProduction |
-  IResponseErrorGeneric
+  IResponseErrorForbiddenNotAuthorizedForProduction
 >;
 
 /**
@@ -158,7 +158,7 @@ type IGetMessageHandler = (
 ) => Promise<
   IResponseSuccessJson<IResponsePublicMessage> |
   IResponseErrorNotFound |
-  IResponseErrorGeneric |
+  IResponseErrorQuery |
   IResponseErrorValidation |
   IResponseErrorForbiddenNotAuthorized
 >;
@@ -176,7 +176,8 @@ type IGetMessagesHandler = (
   fiscalCode: FiscalCode,
 ) => Promise<
   IResponseSuccessJsonIterator<IPublicExtendedMessage> |
-  IResponseErrorValidation
+  IResponseErrorValidation |
+  IResponseErrorQuery
 >;
 
 /**
@@ -255,11 +256,7 @@ export function CreateMessageHandler(
       return(ResponseSuccessRedirectToResource(retrievedMessage, `/api/v1/messages/${fiscalCode}/${message.id}`));
     } else {
       // we got an error while creating the message
-      return(ResponseErrorGeneric(
-        500,
-        "Internal server error",
-        `Error while creating Message|${errorOrMessage.left.code}`,
-      ));
+      return(ResponseErrorQuery("Error while creating Message", errorOrMessage.left));
     }
 
   };
@@ -309,10 +306,7 @@ export function GetMessageHandler(
 
     if (errorOrMaybeDocument.isLeft) {
       // the query failed
-      return(ResponseErrorGeneric(
-        500,
-        "Internal server error",
-        `Error while retrieving the message|${errorOrMaybeDocument.left.code}`,
+      return(ResponseErrorQuery("Error while retrieving the message", errorOrMaybeDocument.left,
       ));
     }
 
@@ -340,11 +334,7 @@ export function GetMessageHandler(
 
     if (errorOrMaybeNotification.isLeft) {
       // query failed
-      return(ResponseErrorGeneric(
-        500,
-        "Internal server error",
-        `Error while retrieving the notification status|${errorOrMaybeNotification.left.code}`,
-      ));
+      return(ResponseErrorQuery("Error while retrieving the notification status", errorOrMaybeNotification.left));
     }
 
     const maybeNotification = errorOrMaybeNotification.right;
