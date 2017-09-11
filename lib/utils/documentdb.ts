@@ -10,33 +10,44 @@
 
 import * as DocumentDb from "documentdb";
 
+import { none, Option, some } from "ts-option";
+
+import { Either, left, right } from "./either";
+
 //
 // Definition of types
 //
 
-// tslint:disable-next-line:max-classes-per-file
-declare class DocumentDbDatabaseUrlTag {
-  private dummy: boolean;
+interface IDocumentDbUri {
+  readonly uri: string;
 }
 
-export type DocumentDbDatabaseUrl = string & DocumentDbDatabaseUrlTag;
-
-// tslint:disable-next-line:max-classes-per-file
-declare class DocumentDbCollectionUrlTag {
-  private dummy: boolean;
+export interface IDocumentDbDatabaseUri extends IDocumentDbUri {
+  readonly kind: "DocumentDbDatabaseUri";
+  readonly databaseId: string;
 }
 
-export type DocumentDbCollectionUrl = string & DocumentDbCollectionUrlTag;
-
-// tslint:disable-next-line:max-classes-per-file
-declare class DocumentDbDocumentUrlTag {
-  private dummy: boolean;
+export interface IDocumentDbCollectionUri extends IDocumentDbUri {
+  readonly kind: "DocumentDbCollectionUri";
+  readonly collectionId: string;
+  readonly databaseUri: IDocumentDbDatabaseUri;
 }
 
-export type DocumentDbDocumentUrl = string & DocumentDbDocumentUrlTag;
+export interface IDocumentDbDocumentUri extends IDocumentDbUri {
+  readonly kind: "DocumentDbDocumentUri";
+  readonly documentId: string;
+  readonly collectionUri: IDocumentDbCollectionUri;
+}
 
+/**
+ * Result of DocumentDb queries.
+ *
+ * This is a wrapper around the executeNext method provided by QueryIterator.
+ *
+ * See http://azure.github.io/azure-documentdb-node/QueryIterator.html
+ */
 export interface IResultIterator<T> {
-  executeNext: () => Promise<T>;
+  readonly executeNext: () => Promise<Either<DocumentDb.QueryError, Option<ReadonlyArray<T>>>>;
 }
 
 //
@@ -44,32 +55,48 @@ export interface IResultIterator<T> {
 //
 
 /**
- * Returns the URL for a DocumentDB database
+ * Returns the URI for a DocumentDB database
  *
- * @param databaseName The name of the database
+ * @param databaseId The name of the database
  */
-export function getDatabaseUrl(databaseName: string): DocumentDbDatabaseUrl {
-  return `dbs/${databaseName}` as DocumentDbDatabaseUrl;
+export function getDatabaseUri(databaseId: string): IDocumentDbDatabaseUri {
+  return {
+    databaseId,
+    kind: "DocumentDbDatabaseUri",
+    uri: DocumentDb.UriFactory.createDatabaseUri(databaseId),
+  };
 }
 
 /**
- * Returns the URL for a DocumentDB collection
+ * Returns the URI for a DocumentDB collection
  *
- * @param databaseUrl The URL of the database
- * @param collectionName The name of the collection
+ * @param databaseUri The URI of the database
+ * @param collectionId The name of the collection
  */
-export function getCollectionUrl(databaseUrl: DocumentDbDatabaseUrl, collectionName: string): DocumentDbCollectionUrl {
-  return `${databaseUrl}/colls/${collectionName}` as DocumentDbCollectionUrl;
+export function getCollectionUri(databaseUri: IDocumentDbDatabaseUri, collectionId: string): IDocumentDbCollectionUri {
+  return {
+    collectionId,
+    databaseUri,
+    kind: "DocumentDbCollectionUri",
+    uri: DocumentDb.UriFactory.createDocumentCollectionUri(databaseUri.databaseId, collectionId),
+  };
 }
 
 /**
- * Returns the URL for a DocumentDB document
+ * Returns the URi for a DocumentDB document
  *
- * @param collectionUrl The URL of the collection
+ * @param collectionUri The URI of the collection
  * @param documentId The ID of the document
  */
-export function getDocumentUrl(collectionUrl: DocumentDbCollectionUrl, documentId: string): DocumentDbDocumentUrl {
-  return `${collectionUrl}/docs/${documentId}` as DocumentDbDocumentUrl;
+export function getDocumentUri(collectionUri: IDocumentDbCollectionUri, documentId: string): IDocumentDbDocumentUri {
+  return {
+    collectionUri,
+    documentId,
+    kind: "DocumentDbDocumentUri",
+    uri: DocumentDb.UriFactory.createDocumentUri(
+      collectionUri.databaseUri.databaseId, collectionUri.collectionId, documentId,
+    ),
+  };
 }
 
 /**
@@ -80,14 +107,14 @@ export function getDocumentUrl(collectionUrl: DocumentDbCollectionUrl, documentI
  */
 export function readDatabase(
   client: DocumentDb.DocumentClient,
-  databaseUrl: DocumentDbDatabaseUrl,
-): Promise<DocumentDb.DatabaseMeta> {
-  return new Promise((resolve, reject) => {
-    client.readDatabase(databaseUrl, (err, result) => {
+  databaseUri: IDocumentDbDatabaseUri,
+): Promise<Either<DocumentDb.QueryError, DocumentDb.DatabaseMeta>> {
+  return new Promise((resolve) => {
+    client.readDatabase(databaseUri.uri, (err, result) => {
       if (err) {
-        reject(err);
+        resolve(left(err));
       } else {
-        resolve(result);
+        resolve(right(result));
       }
     });
   });
@@ -101,14 +128,14 @@ export function readDatabase(
  */
 export function readCollection(
   client: DocumentDb.DocumentClient,
-  collectionUrl: DocumentDbCollectionUrl,
-): Promise<DocumentDb.CollectionMeta> {
-  return new Promise((resolve, reject) => {
-    client.readCollection(collectionUrl, (err, result) => {
+  collectionUri: IDocumentDbCollectionUri,
+): Promise<Either<DocumentDb.QueryError, DocumentDb.CollectionMeta>> {
+  return new Promise((resolve) => {
+    client.readCollection(collectionUri.uri, (err, result) => {
       if (err) {
-        reject(err);
+        resolve(left(err));
       } else {
-        resolve(result);
+        resolve(right(result));
       }
     });
   });
@@ -117,22 +144,23 @@ export function readCollection(
 /**
  * Creates a new document in a collection
  *
- * TODO: add partitionKey
- *
  * @param client The DocumentDB client
  * @param collectionUrl The collection URL
  */
 export function createDocument<T>(
   client: DocumentDb.DocumentClient,
-  collectionUrl: DocumentDbCollectionUrl,
+  collectionUri: IDocumentDbCollectionUri,
   document: T & DocumentDb.NewDocument,
-): Promise<T & DocumentDb.RetrievedDocument> {
-  return new Promise((resolve, reject) => {
-    client.createDocument(collectionUrl, document, (err, created) => {
+  partitionKey: string,
+): Promise<Either<DocumentDb.QueryError, T & DocumentDb.RetrievedDocument>> {
+  return new Promise((resolve) => {
+    client.createDocument(collectionUri.uri, document, {
+      partitionKey,
+    }, (err, created) => {
       if (err) {
-        reject(err);
+        resolve(left(err));
       } else {
-        resolve(created as T & DocumentDb.RetrievedDocument);
+        resolve(right(created as T & DocumentDb.RetrievedDocument));
       }
     });
   });
@@ -146,17 +174,17 @@ export function createDocument<T>(
  */
 export function readDocument<T>(
   client: DocumentDb.DocumentClient,
-  documentUrl: DocumentDbDocumentUrl,
-  partitionKey: string | string[],
-): Promise<T & DocumentDb.RetrievedDocument> {
-  return new Promise((resolve, reject) => {
-    client.readDocument(documentUrl, {
+  documentUri: IDocumentDbDocumentUri,
+  partitionKey: string,
+): Promise<Either<DocumentDb.QueryError, T & DocumentDb.RetrievedDocument>> {
+  return new Promise((resolve) => {
+    client.readDocument(documentUri.uri, {
       partitionKey,
     }, (err, result) => {
       if (err) {
-        reject(err);
+        resolve(left(err));
       } else {
-        resolve(result as T & DocumentDb.RetrievedDocument);
+        resolve(right(result as T & DocumentDb.RetrievedDocument));
       }
     });
   });
@@ -171,18 +199,21 @@ export function readDocument<T>(
  */
 export function queryDocuments<T>(
   client: DocumentDb.DocumentClient,
-  collectionUrl: DocumentDbCollectionUrl,
+  collectionUri: IDocumentDbCollectionUri,
   query: DocumentDb.DocumentQuery,
-): IResultIterator<Array<T & DocumentDb.RetrievedDocument>> {
-  const documentIterator = client.queryDocuments(collectionUrl, query);
-  const resultIterator: IResultIterator<Array<T & DocumentDb.RetrievedDocument>> = {
+): IResultIterator<T & DocumentDb.RetrievedDocument> {
+  const documentIterator = client.queryDocuments(collectionUri.uri, query);
+  const resultIterator: IResultIterator<T & DocumentDb.RetrievedDocument> = {
     executeNext: () => {
-      return new Promise((resolve, reject) => {
-        documentIterator.executeNext((error, resource, _) => {
+      return new Promise((resolve) => {
+        documentIterator.executeNext((error, documents, _) => {
           if (error) {
-            reject(error);
+            resolve(left(error));
+          } else if (documents && documents.length > 0) {
+            const readonlyDocuments: ReadonlyArray<DocumentDb.RetrievedDocument> = documents;
+            resolve(right(some(readonlyDocuments as ReadonlyArray<T & DocumentDb.RetrievedDocument>)));
           } else {
-            resolve(resource as Array<T & DocumentDb.RetrievedDocument>);
+            resolve(right(none));
           }
         });
       });
@@ -200,20 +231,102 @@ export function queryDocuments<T>(
  */
 export function queryOneDocument<T>(
   client: DocumentDb.DocumentClient,
-  collectionUrl: DocumentDbCollectionUrl,
+  collectionUrl: IDocumentDbCollectionUri,
   query: DocumentDb.DocumentQuery,
-): Promise<T | null> {
+): Promise<Either<DocumentDb.QueryError, Option<T>>> {
+  // get a result iterator for the query
   const iterator = queryDocuments<T>(client, collectionUrl, query);
   return new Promise((resolve, reject) => {
+    // fetch the first batch of results, since we're looking for just the
+    // first result, we should go no further
     iterator.executeNext().then(
-      (result) => {
-        if (result != null && result.length > 0) {
-          resolve(result[0]);
-        } else {
-          resolve(null);
-        }
+      (maybeError) => {
+        // here we may have a query error or possibly a document, if at
+        // least one was found
+        maybeError.mapRight((maybeDocuments) => {
+          // it's not an error
+          maybeDocuments.map((documents) => {
+            // query resulted in at least a document
+            if (documents && documents.length > 0 && documents[0]) {
+              // resolve with the first document
+              resolve(right(some(documents[0])));
+            } else {
+              // query result was empty
+              resolve(right(none));
+            }
+          }).getOrElse(() => {
+            resolve(right(none as Option<T>));
+          });
+        }).mapLeft((error) => {
+          // it's an error
+          resolve(left(error));
+        });
       },
-      (error) => reject(error),
+      reject,
     );
+  });
+}
+
+/**
+ * Maps a result iterator
+ */
+export function mapResultIterator<A, B>(i: IResultIterator<A>, f: (a: A) => B): IResultIterator<B> {
+  return {
+    executeNext: () => new Promise((resolve, reject) => i.executeNext().then(
+      (errorOrMaybeDocuments) => {
+        errorOrMaybeDocuments.mapRight((maybeDocuments) => {
+          maybeDocuments.map((documents) => {
+            if (documents && documents.length > 0) {
+              resolve(right(some(documents.map(f))));
+            } else {
+              resolve(right(none));
+            }
+          }).getOrElse(() => resolve(right(none)));
+        }).mapLeft((error) => resolve(left(error)));
+      }, reject)),
+  };
+}
+
+/**
+ * Consumes the iterator and returns an arrays with the generated elements
+ */
+export async function iteratorToArray<T>(i: IResultIterator<T>): Promise<ReadonlyArray<T>> {
+  async function iterate(a: ReadonlyArray<T>): Promise<ReadonlyArray<T>> {
+    const errorOrMaybeDocuments = await i.executeNext();
+    if (errorOrMaybeDocuments.isLeft ||
+      errorOrMaybeDocuments.right.isEmpty ||
+      errorOrMaybeDocuments.right.get.length === 0) {
+      return a;
+    }
+    const result = errorOrMaybeDocuments.right.get;
+    return iterate(a.concat(...result));
+  }
+  return iterate([]);
+}
+
+/**
+ * Replaces an existing document with a new one
+ *
+ * @param client        The DocumentDB client
+ * @param documentUrl   The existing document URL
+ * @param document      The new document
+ * @param partitionKey  The partitionKey
+ */
+export function replaceDocument<T>(
+  client: DocumentDb.DocumentClient,
+  documentUri: IDocumentDbDocumentUri,
+  document: T & DocumentDb.NewDocument,
+  partitionKey: string,
+): Promise<Either<DocumentDb.QueryError, T & DocumentDb.RetrievedDocument>> {
+  return new Promise((resolve) => {
+    client.replaceDocument(documentUri.uri, document, {
+      partitionKey,
+    }, (err, created) => {
+      if (err) {
+        resolve(left(err));
+      } else {
+        resolve(right(created as T & DocumentDb.RetrievedDocument));
+      }
+    });
   });
 }

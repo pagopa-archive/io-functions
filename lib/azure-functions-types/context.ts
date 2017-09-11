@@ -12,27 +12,27 @@ type Logger = (text: string, params?: any) => void;
  * Level-specific loggers
  */
 interface IContextLogger extends Logger {
-  error: Logger;
-  warn: Logger;
-  info: Logger;
-  verbose: Logger;
+  readonly error: Logger;
+  readonly warn: Logger;
+  readonly info: Logger;
+  readonly verbose: Logger;
 }
 
 /**
  * Function context
  */
 export interface IContext {
-  invocationId: string;
-  bindingData: {
-    queueTrigger?: string;
-    expirationTime?: Date;
-    insertionTime?: Date;
-    nextVisibleTime?: Date;
-    id: string;
-    popReceipt: string;
-    dequeueCount: number;
+  readonly invocationId: string;
+  readonly bindingData: {
+    readonly queueTrigger?: string;
+    readonly expirationTime?: Date;
+    readonly insertionTime?: Date;
+    readonly nextVisibleTime?: Date;
+    readonly id: string;
+    readonly popReceipt: string;
+    readonly dequeueCount: number;
   };
 
-  log: IContextLogger;
-  done: (err?: string | object, output?: object) => void;
+  readonly log: IContextLogger;
+  readonly done: (err?: string | object, output?: object) => void;
 }

@@ -1,3 +1,4 @@
-import * as azureFunction from "../lib/public_api_v1";
+import { index } from "../lib/public_api_v1";
 
-module.exports = azureFunction;
+// tslint:disable-next-line:no-object-mutation
+module.exports = index;

@@ -12,29 +12,33 @@ export type HttpMethod =
   | "PATCH";
 
 export interface IFunctionRequest {
-  originalUrl: string;
-  method: HttpMethod;
-  query: { [key: string]: string };
-  headers: { [name: string]: string };
-  body: object;
-  rawbody: string;
+  readonly originalUrl: string;
+  readonly method: HttpMethod;
+  readonly query: {
+    readonly [key: string]: string,
+  };
+  readonly headers: {
+    readonly [name: string]: string,
+  };
+  readonly body: object;
+  readonly rawbody: string;
 }
 
 export interface IFunctionResponse {
-  body?: object;
-  status?: number;
-  headers?: {
-    "content-type"?: string;
-    "content-length"?: HttpStatusCodes | number;
-    "content-disposition"?: string;
-    "content-encoding"?: string;
-    "content-language"?: string;
-    "content-range"?: string;
-    "content-location"?: string;
-    "content-md5"?: Buffer;
-    "expires"?: Date;
-    "last-modified"?: Date;
-    [name: string]: undefined | number | string | Date | Buffer | HttpStatusCodes;
+  readonly body?: object;
+  readonly status?: number;
+  readonly headers?: {
+    readonly "content-type"?: string;
+    readonly "content-length"?: HttpStatusCodes | number;
+    readonly "content-disposition"?: string;
+    readonly "content-encoding"?: string;
+    readonly "content-language"?: string;
+    readonly "content-range"?: string;
+    readonly "content-location"?: string;
+    readonly "content-md5"?: Buffer;
+    readonly "expires"?: Date;
+    readonly "last-modified"?: Date;
+    readonly [name: string]: undefined | number | string | Date | Buffer | HttpStatusCodes;
   };
 }
 
@@ -136,5 +140,5 @@ export enum HttpStatusCodes {
 }
 
 export type HttpContext = IContext & {
-  res: IFunctionResponse,
+  readonly res: IFunctionResponse,
 };

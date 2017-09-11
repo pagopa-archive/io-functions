@@ -1,3 +1,4 @@
-import * as azureFunction from "../lib/created_message_queue_handler";
+import { index } from "../lib/created_message_queue_handler";
 
-module.exports = azureFunction;
+// tslint:disable-next-line:no-object-mutation
+module.exports = index;
