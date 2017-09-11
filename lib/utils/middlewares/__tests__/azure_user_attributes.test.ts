@@ -2,7 +2,7 @@
 
 import { none, some } from "ts-option";
 
-import { left, right } from "../../either";
+import { right } from "../../either";
 
 import { AzureUserAttributesMiddleware } from "../azure_user_attributes";
 

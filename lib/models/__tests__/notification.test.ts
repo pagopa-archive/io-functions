@@ -5,7 +5,6 @@ import * as DocumentDb from "documentdb";
 import * as DocumentDbUtils from "../../utils/documentdb";
 
 import { toFiscalCode } from "../../utils/fiscalcode";
-import { toNonNegativeNumber } from "../../utils/numbers";
 
 import {
   INewNotification,
@@ -14,8 +13,6 @@ import {
   NotificationChannelStatus,
   NotificationModel,
 } from "../notification";
-
-import { ModelId } from "../../utils/documentdb_model_versioned";
 
 const aDatabaseUri = DocumentDbUtils.getDatabaseUri("mockdb");
 const aNotificationsCollectionUri = DocumentDbUtils.getCollectionUri(aDatabaseUri, "notifications");

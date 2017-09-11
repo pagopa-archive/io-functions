@@ -5,7 +5,7 @@ import * as DocumentDb from "documentdb";
 import { none, some } from "ts-option";
 
 import * as DocumentDbUtils from "../documentdb";
-import { left, right } from "../either";
+import { right } from "../either";
 
 describe("getDatabaseUri", () => {
 
@@ -328,7 +328,7 @@ describe("mapResultIterator", () => {
     const mappedIterator = DocumentDbUtils.mapResultIterator(iteratorMock as any, (n: number) => n * 2);
 
     const result1 = await mappedIterator.executeNext();
-    const result2 = await mappedIterator.executeNext();
+    await mappedIterator.executeNext();
 
     expect(iteratorMock.executeNext).toHaveBeenCalledTimes(2);
     expect(result1.isRight).toBeTruthy();

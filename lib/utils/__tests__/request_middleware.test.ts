@@ -17,7 +17,7 @@ const ResolvingMiddleware: IRequestMiddleware<never, string> = (req) => {
 };
 
 const RejectingMiddleware: IRequestMiddleware<IResponseErrorValidation, string> = (_) => {
-  return Promise.resolve(left(ResponseErrorValidation("NOK")));
+  return Promise.resolve(left(ResponseErrorValidation("NOK", "NOT")));
 };
 
 const request = {

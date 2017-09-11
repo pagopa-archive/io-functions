@@ -1,7 +1,5 @@
 // tslint:disable:no-any
 
-import { response as MockResponse } from "jest-mock-express";
-
 import { AzureApiAuthMiddleware, UserGroup } from "../azure_api_auth";
 
 const anAllowedGroupSet = new Set([UserGroup.ApiMessageWrite]);

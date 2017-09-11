@@ -1,9 +1,7 @@
 // tslint:disable:no-any
 
-import { response as MockResponse } from "jest-mock-express";
-
 import { none, some } from "ts-option";
-import { left, right } from "../../utils/either";
+import { right } from "../../utils/either";
 
 import {
   IPublicExtendedProfile,
@@ -48,10 +46,6 @@ const aPublicLimitedProfile: IPublicLimitedProfile = {
   fiscalCode: aPublicExtendedProfile.fiscalCode,
   kind: "IPublicLimitedProfile",
 };
-
-function flushPromises<T>(): Promise<T> {
-  return new Promise((resolve) => setImmediate(resolve));
-}
 
 describe("GetProfileHandler", () => {
 

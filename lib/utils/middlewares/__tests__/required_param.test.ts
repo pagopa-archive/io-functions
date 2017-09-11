@@ -22,7 +22,7 @@ describe("RequiredParamMiddleware", () => {
   });
 
   it("should respond with a validation error if the required parameter is missing", async () => {
-    const middleware = RequiredParamMiddleware((params) => left("param not found"));
+    const middleware = RequiredParamMiddleware((_) => left("param not found"));
 
     const result = await middleware({
       params: { },

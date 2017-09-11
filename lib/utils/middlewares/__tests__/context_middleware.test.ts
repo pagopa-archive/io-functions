@@ -1,8 +1,5 @@
 // tslint:disable:no-any
 
-import { IContext, IRequestWithContext } from "azure-function-express-cloudify";
-
-import { IRequestMiddleware } from "../../request_middleware";
 import { ContextMiddleware } from "../context_middleware";
 
 interface ITestBindings {
