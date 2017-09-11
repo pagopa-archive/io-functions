@@ -11,6 +11,7 @@ import ApplicationInsightsClient = require("../../node_modules/applicationinsigh
 import { IContext } from "azure-function-express-cloudify";
 
 import { left, right } from "../utils/either";
+import { isNonEmptyString, NonEmptyString } from "../utils/strings";
 
 import { FiscalCode } from "../utils/fiscalcode";
 import {
@@ -44,6 +45,7 @@ import {
   ResponseSuccessJsonIterator,
   ResponseSuccessRedirectToResource,
 } from "../utils/response";
+import { toNonEmptyString } from "../utils/strings";
 
 import { mapResultIterator } from "../utils/documentdb";
 
@@ -75,7 +77,7 @@ interface IBindings {
  * TODO: generate from a schema.
  */
 export interface IMessagePayload {
-  readonly body_short: string;
+  readonly body_short: NonEmptyString;
   readonly dry_run: boolean;
 }
 
@@ -106,16 +108,23 @@ export interface IResponsePublicMessage {
 export const MessagePayloadMiddleware: IRequestMiddleware<IResponseErrorValidation, IMessagePayload> =
   (request) => {
     const body = request.body;
+
     // validate body
-    if (typeof body.body_short !== "string") {
-      return Promise.resolve(left(ResponseErrorValidation("Request not valid", "body_short is required")));
+    const bodyShort = body.body_short;
+    if (!isNonEmptyString(bodyShort)) {
+      return Promise.resolve(left(ResponseErrorValidation(
+        "Request not valid", "body_short must be a non-empty string",
+      )));
     }
+
     // validate dry_run
-    if (body.dry_run && typeof body.dry_run !== "boolean") {
+    const dryRun = body.dry_run;
+    if (typeof dryRun !== "boolean") {
       return Promise.resolve(left(ResponseErrorValidation("Request not valid", "dry_run must be a boolean")));
     }
+
     return Promise.resolve(right({
-      body_short: body.body_short,
+      body_short: bodyShort,
       dry_run: body.dry_run,
     }));
 };
@@ -223,7 +232,7 @@ export function CreateMessageHandler(
     const message: INewMessage = {
       bodyShort: messagePayload.body_short,
       fiscalCode,
-      id: ulid(),
+      id: toNonEmptyString(ulid()).get,
       kind: "INewMessage",
       senderOrganizationId: userOrganization.organizationId,
     };

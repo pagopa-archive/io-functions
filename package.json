@@ -11,7 +11,7 @@
   "license": "MIT",
   "scripts": {
     "build": "tsc",
-    "build-noemit": "tsc -p . --noEmit",
+    "build-noemit": "tsc --noEmit --target es6 --module commonjs --alwaysStrict --noImplicitAny --strictNullChecks --noUnusedLocals --noUnusedParameters --noImplicitReturns --noFallthroughCasesInSwitch lib/**/*.ts",
     "lint": "tslint -p . -c tslint.json",
     "pretest": "npm run lint",
     "test": "jest --coverage"
