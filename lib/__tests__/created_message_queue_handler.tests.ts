@@ -128,16 +128,15 @@ describe("CreatedMessageQueueHandler", () => {
       queryDocuments: jest.fn((__, ___) => iteratorMock),
     };
 
-    // TODO: wait for index to complete before evaluate expectations.
-    index(contextMock, (clientMock as any)as DocumentDb.DocumentClient);
-
-    expect(contextMock.log.info).toHaveBeenCalledTimes(1);
-    expect(contextMock.log.info.mock.calls[0][0]).toEqual(`A new message was created|${aMessage.id}|${aMessage.fiscalCode}`);
-    expect(clientMock.queryDocuments).toHaveBeenCalledTimes(1);
-    expect(clientMock.createDocument).toHaveBeenCalledTimes(0);
-    expect(contextMock.done).toHaveBeenCalledTimes(1);
-    expect(contextMock.log.error).toHaveBeenCalledTimes(1);
-    expect(contextMock.log.error.mock.calls[0][0]).toEqual(`Fiscal code has no associated profile|${aMessage.fiscalCode}`);
+    index(contextMock, (clientMock as any)as DocumentDb.DocumentClient).then(() => {
+      expect(contextMock.log.info).toHaveBeenCalledTimes(1);
+      expect(contextMock.log.info.mock.calls[0][0]).toEqual(`A new message was created|${aMessage.id}|${aMessage.fiscalCode}`);
+      expect(clientMock.queryDocuments).toHaveBeenCalledTimes(1);
+      expect(clientMock.createDocument).toHaveBeenCalledTimes(0);
+      expect(contextMock.done).toHaveBeenCalledTimes(1);
+      expect(contextMock.log.error).toHaveBeenCalledTimes(1);
+      expect(contextMock.log.error.mock.calls[0][0]).toEqual(`Fiscal code has no associated profile|${aMessage.fiscalCode}`);
+    });
   });
 
 });
