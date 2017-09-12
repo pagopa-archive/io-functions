@@ -20,6 +20,13 @@
       "problemMatcher": [
         "$tsc"
       ]
+    },
+    {
+      "type": "npm",
+      "script": "build-noemit-tests",
+      "problemMatcher": [
+        "$tsc"
+      ]
     }
   ]
 }

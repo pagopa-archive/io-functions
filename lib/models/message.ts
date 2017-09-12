@@ -4,6 +4,7 @@ import { DocumentDbModel } from "../utils/documentdb_model";
 
 import { Option } from "ts-option";
 import { Either } from "../utils/either";
+import { isNonEmptyString, NonEmptyString } from "../utils/strings";
 
 import { FiscalCode, isFiscalCode } from "../utils/fiscalcode";
 import { LimitedFields } from "../utils/types";
@@ -13,7 +14,7 @@ import { LimitedFields } from "../utils/types";
  */
 export interface IMessage {
   readonly fiscalCode: FiscalCode;
-  readonly bodyShort: string;
+  readonly bodyShort: NonEmptyString;
   readonly senderOrganizationId: string;
 }
 
@@ -22,7 +23,7 @@ export interface IMessage {
  */
 // tslint:disable-next-line:no-any
 export function isIMessage(arg: any): arg is IMessage {
-  return isFiscalCode(arg.fiscalCode) && (typeof arg.bodyShort === "string");
+  return isFiscalCode(arg.fiscalCode) && isNonEmptyString(arg.bodyShort);
 }
 
 /**
@@ -30,12 +31,14 @@ export function isIMessage(arg: any): arg is IMessage {
  */
 export interface INewMessage extends IMessage, DocumentDb.NewDocument {
   readonly kind: "INewMessage";
+  readonly id: NonEmptyString;
 }
 
 /**
  * Interface for retrieved Message objects
  */
 export interface IRetrievedMessage extends Readonly<IMessage>, Readonly<DocumentDb.RetrievedDocument> {
+  readonly id: NonEmptyString;
   readonly kind: "IRetrievedMessage";
 }
 
@@ -69,7 +72,7 @@ export function asPublicExtendedMessage<T extends IMessage>(message: T): IPublic
  */
 // tslint:disable-next-line:no-any
 export function isIRetrievedMessage(arg: any): arg is IRetrievedMessage {
-  return (typeof arg.id === "string") &&
+  return isNonEmptyString(arg.id) &&
     (typeof arg._self === "string") &&
     (typeof arg._ts === "string") &&
     isIMessage(arg);

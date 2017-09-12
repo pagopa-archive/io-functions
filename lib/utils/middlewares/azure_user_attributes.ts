@@ -6,18 +6,19 @@ import * as jsYaml from "js-yaml";
 import { none, option, Option, some } from "ts-option";
 
 import { left, right } from "../either";
+import { NonEmptyString } from "../strings";
 
 import { IOrganization, IRetrievedOrganization, OrganizationModel } from "../../models/organization";
 import { IRequestMiddleware } from "../request_middleware";
 import {
   IResponseErrorForbiddenNotAuthorized,
-  IResponseErrorGeneric,
-  ResponseErrorGeneric,
+  IResponseErrorInternal,
+  ResponseErrorInternal,
 } from "../response";
 
 interface IAzureUserNote {
-  readonly organizationId?: string;
-  readonly productionEnabled?: boolean;
+  readonly organizationId?: NonEmptyString;
+  readonly productionEnabled?: NonEmptyString;
 }
 
 export interface IAzureUserAttributes {
@@ -70,7 +71,7 @@ async function getUserOrganization(
  */
 export function AzureUserAttributesMiddleware(
   organizationModel: OrganizationModel,
-): IRequestMiddleware<IResponseErrorForbiddenNotAuthorized | IResponseErrorGeneric, IAzureUserAttributes> {
+): IRequestMiddleware<IResponseErrorForbiddenNotAuthorized | IResponseErrorInternal, IAzureUserAttributes> {
   return (request) => new Promise((resolve) => {
 
     // now we check whether some custom user attributes have been set
@@ -84,6 +85,7 @@ export function AzureUserAttributesMiddleware(
         try {
           // all IUserAttributes are optional, so we can safely cast
           // the object to it
+          // TODO: add type guard for IAzureUserNote
           const yaml = jsYaml.safeLoad(y) as IAzureUserNote;
           return some(yaml);
         } catch (e) {
@@ -116,11 +118,7 @@ export function AzureUserAttributesMiddleware(
       };
 
       resolve(right(authInfo));
-    }, (error) => resolve(left(ResponseErrorGeneric(
-      500,
-      "Internal server error",
-      `Error while fetching organization details|${error}`,
-    ))));
+    }, (error) => resolve(left(ResponseErrorInternal(`Error while fetching organization details: ${error}`))));
 
   });
 }

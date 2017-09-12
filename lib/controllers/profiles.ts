@@ -4,15 +4,17 @@
 
 import * as express from "express";
 
-import { right } from "../utils/either";
+import { left, right } from "../utils/either";
 
 import { FiscalCode } from "../utils/fiscalcode";
+
 import {
   AzureApiAuthMiddleware,
   IAzureApiAuthorization,
   UserGroup,
 } from "../utils/middlewares/azure_api_auth";
 import { FiscalCodeMiddleware } from "../utils/middlewares/fiscalcode";
+import { isNonEmptyString, NonEmptyString } from "../utils/strings";
 
 import {
   IRequestMiddleware,
@@ -21,12 +23,15 @@ import {
 } from "../utils/request_middleware";
 
 import {
-  IResponseErrorGeneric,
+  IResponseErrorInternal,
   IResponseErrorNotFound,
+  IResponseErrorQuery,
   IResponseErrorValidation,
   IResponseSuccessJson,
-  ResponseErrorGeneric,
+  ResponseErrorInternal,
   ResponseErrorNotFound,
+  ResponseErrorQuery,
+  ResponseErrorValidation,
   ResponseSuccessJson,
 } from "../utils/response";
 
@@ -53,7 +58,7 @@ type IGetProfileHandler = (
   IResponseSuccessJson<IPublicLimitedProfile> |
   IResponseSuccessJson<IPublicExtendedProfile> |
   IResponseErrorNotFound |
-  IResponseErrorGeneric
+  IResponseErrorQuery
 >;
 
 /**
@@ -69,7 +74,8 @@ type IUpsertProfileHandler = (
 ) => Promise<
   IResponseSuccessJson<IPublicExtendedProfile> |
   IResponseErrorValidation |
-  IResponseErrorGeneric
+  IResponseErrorQuery |
+  IResponseErrorInternal
 >;
 
 /**
@@ -94,11 +100,7 @@ export function GetProfileHandler(profileModel: ProfileModel): IGetProfileHandle
         return(ResponseErrorNotFound("Profile not found", "The profile you requested was not found in the system."));
       }
     } else {
-      return ResponseErrorGeneric(
-        500,
-        "Internal server error",
-        `Error while retrieving the profile|${errorOrMaybeProfile.left.code}`,
-      );
+      return(ResponseErrorQuery("Error while retrieving the profile", errorOrMaybeProfile.left));
     }
   };
 }
@@ -126,7 +128,7 @@ export function GetProfile(
  * TODO: generate from a schema.
  */
 interface IProfilePayload {
-  readonly email?: string;
+  readonly email?: NonEmptyString;
 }
 
 /**
@@ -134,10 +136,15 @@ interface IProfilePayload {
  *
  * TODO: validate the payload against a schema.
  */
-export const ProfilePayloadMiddleware: IRequestMiddleware<never, IProfilePayload> =
+export const ProfilePayloadMiddleware: IRequestMiddleware<IResponseErrorValidation, IProfilePayload> =
   (request) => {
+    const email = request.body.email;
+    if (email && !isNonEmptyString(email)) {
+      return(Promise.resolve(left(ResponseErrorValidation("Invalid email", "email must be a non-empty string"))));
+    }
+
     return Promise.resolve(right({
-      email: typeof request.body.email === "string" ? request.body.email : undefined,
+      email,
     }));
   };
 
@@ -145,7 +152,7 @@ async function createNewProfileFromPayload(
   profileModel: ProfileModel,
   fiscalCode: FiscalCode,
   profileModelPayload: IProfilePayload,
-): Promise<IResponseSuccessJson<IPublicExtendedProfile> | IResponseErrorGeneric> {
+): Promise<IResponseSuccessJson<IPublicExtendedProfile> | IResponseErrorQuery> {
   // create a new profile
   const profile: IProfile = {
     email: profileModelPayload.email,
@@ -154,13 +161,9 @@ async function createNewProfileFromPayload(
   const errorOrProfile = await profileModel.create(profile, profile.fiscalCode);
   const errorOrProfileAsPublicExtendedProfile = errorOrProfile.mapRight(asPublicExtendedProfile);
   if (errorOrProfileAsPublicExtendedProfile.isRight) {
-    return ResponseSuccessJson(errorOrProfileAsPublicExtendedProfile.right);
+    return(ResponseSuccessJson(errorOrProfileAsPublicExtendedProfile.right));
   } else {
-    return ResponseErrorGeneric(
-      500,
-      "Internal server error",
-      `Error while creating a new profile|${errorOrProfileAsPublicExtendedProfile.left.code}`,
-    );
+    return(ResponseErrorQuery("Error while creating a new profile", errorOrProfileAsPublicExtendedProfile.left));
   }
 }
 
@@ -168,7 +171,7 @@ async function updateExistingProfileFromPayload(
   profileModel: ProfileModel,
   existingProfile: IRetrievedProfile,
   profileModelPayload: IProfilePayload,
-): Promise<IResponseSuccessJson<IPublicExtendedProfile> | IResponseErrorGeneric> {
+): Promise<IResponseSuccessJson<IPublicExtendedProfile> | IResponseErrorQuery | IResponseErrorInternal> {
   const errorOrMaybeProfile = await profileModel.update(
     existingProfile.fiscalCode,
     existingProfile.fiscalCode,
@@ -181,11 +184,7 @@ async function updateExistingProfileFromPayload(
   );
 
   if (errorOrMaybeProfile.isLeft) {
-    return ResponseErrorGeneric(
-      500,
-      "Internal server error",
-      `Error while updating the existing profile|${errorOrMaybeProfile.left.code}`,
-    );
+    return(ResponseErrorQuery("Error while updating the existing profile", errorOrMaybeProfile.left));
   }
 
   const maybeProfile = errorOrMaybeProfile.right;
@@ -193,11 +192,7 @@ async function updateExistingProfileFromPayload(
   if (maybeProfile.isEmpty) {
     // this should never happen since if the profile doesn't exist this function
     // will never be called, but let's deal with this anyway, you never know
-    return ResponseErrorGeneric(
-      500,
-      "Internal server error",
-      `Error while updating the existing profile, the profile does not exist!`,
-    );
+    return(ResponseErrorInternal("Error while updating the existing profile, the profile does not exist!"));
   }
 
   const profile = maybeProfile.get;
@@ -225,11 +220,7 @@ export function UpsertProfileHandler(profileModel: ProfileModel): IUpsertProfile
         return updateExistingProfileFromPayload(profileModel, maybeProfile.get, profileModelPayload);
       }
     } else {
-      return ResponseErrorGeneric(
-        500,
-        "Internal server error",
-        `Error|${errorOrMaybeProfile.left.code}`,
-      );
+      return(ResponseErrorQuery("Error", errorOrMaybeProfile.left));
     }
   };
 }

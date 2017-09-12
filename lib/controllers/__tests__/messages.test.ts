@@ -10,6 +10,7 @@ import { ModelId } from "../../utils/documentdb_model_versioned";
 import { toFiscalCode } from "../../utils/fiscalcode";
 import { IAzureApiAuthorization, UserGroup } from "../../utils/middlewares/azure_api_auth";
 import { IAzureUserAttributes } from "../../utils/middlewares/azure_user_attributes";
+import { toNonEmptyString } from "../../utils/strings";
 
 import { INewMessage, IPublicExtendedMessage, IRetrievedMessage } from "../../models/message";
 import { IRetrievedNotification, NotificationChannelStatus } from "../../models/notification";
@@ -42,14 +43,14 @@ const aUserAuthenticationTrustedApplication: IAzureApiAuthorization = {
 };
 
 const aMessagePayload: IMessagePayload = {
-  body_short: "Hello, world!",
+  body_short: toNonEmptyString("Hello, world!").get,
   dry_run: false,
 };
 
 const aNewMessage: INewMessage = {
-  bodyShort: "some text",
+  bodyShort: toNonEmptyString("some text").get,
   fiscalCode: aFiscalCode,
-  id: "A_MESSAGE_ID",
+  id: toNonEmptyString("A_MESSAGE_ID").get,
   kind: "INewMessage",
   senderOrganizationId: "agid" as ModelId,
 };
@@ -235,7 +236,7 @@ describe("CreateMessageHandler", () => {
     expect(mockAppInsights.trackEvent).not.toHaveBeenCalled();
 
     expect(mockContext.bindings).toEqual({});
-    expect(result.kind).toBe("IResponseErrorGeneric");
+    expect(result.kind).toBe("IResponseErrorQuery");
   });
 
 });
@@ -361,12 +362,12 @@ describe("GetMessageHandler", () => {
       _ts: "xyz",
       emailNotification: {
         status: NotificationChannelStatus.NOTIFICATION_SENT_TO_CHANNEL,
-        toAddress: "x@example.com",
+        toAddress: toNonEmptyString("x@example.com").get,
       },
       fiscalCode: aFiscalCode,
-      id: "A_NOTIFICATION_ID",
+      id: toNonEmptyString("A_NOTIFICATION_ID").get,
       kind: "IRetrievedNotification",
-      messageId: "A_MESSAGE_ID",
+      messageId: toNonEmptyString("A_MESSAGE_ID").get,
     };
 
     const mockMessageModel = {

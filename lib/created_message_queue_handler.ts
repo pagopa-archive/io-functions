@@ -13,6 +13,7 @@ import { DocumentClient as DocumentDBClient } from "documentdb";
 
 import { Option, option } from "ts-option";
 import { Either, left, right } from "./utils/either";
+import { toNonEmptyString } from "./utils/strings";
 
 import * as documentDbUtils from "./utils/documentdb";
 
@@ -105,7 +106,7 @@ async function handleMessage(
       const notification: INewNotification = {
         emailNotification: maybeEmailNotification.isDefined ? maybeEmailNotification.get : undefined,
         fiscalCode: profile.fiscalCode,
-        id: ulid(),
+        id: toNonEmptyString(ulid()).get,
         kind: "INewNotification",
         messageId: retrievedMessage.id,
       };

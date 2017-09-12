@@ -11,6 +11,7 @@ import ApplicationInsightsClient = require("../../node_modules/applicationinsigh
 import { IContext } from "azure-function-express-cloudify";
 
 import { left, right } from "../utils/either";
+import { isNonEmptyString, NonEmptyString } from "../utils/strings";
 
 import { FiscalCode } from "../utils/fiscalcode";
 import {
@@ -29,21 +30,22 @@ import { IRequestMiddleware, withRequestMiddlewares, wrapRequestHandler } from "
 import {
   IResponseErrorForbiddenNotAuthorized,
   IResponseErrorForbiddenNotAuthorizedForProduction,
-  IResponseErrorGeneric,
   IResponseErrorNotFound,
+  IResponseErrorQuery,
   IResponseErrorValidation,
   IResponseSuccessJson,
   IResponseSuccessJsonIterator,
   IResponseSuccessRedirectToResource,
   ResponseErrorForbiddenNotAuthorized,
   ResponseErrorForbiddenNotAuthorizedForProduction,
-  ResponseErrorGeneric,
   ResponseErrorNotFound,
+  ResponseErrorQuery,
   ResponseErrorValidation,
   ResponseSuccessJson,
   ResponseSuccessJsonIterator,
   ResponseSuccessRedirectToResource,
 } from "../utils/response";
+import { toNonEmptyString } from "../utils/strings";
 
 import { mapResultIterator } from "../utils/documentdb";
 
@@ -75,7 +77,7 @@ interface IBindings {
  * TODO: generate from a schema.
  */
 export interface IMessagePayload {
-  readonly body_short: string;
+  readonly body_short: NonEmptyString;
   readonly dry_run: boolean;
 }
 
@@ -106,16 +108,23 @@ export interface IResponsePublicMessage {
 export const MessagePayloadMiddleware: IRequestMiddleware<IResponseErrorValidation, IMessagePayload> =
   (request) => {
     const body = request.body;
+
     // validate body
-    if (typeof body.body_short !== "string") {
-      return Promise.resolve(left(ResponseErrorValidation("Request not valid", "body_short is required")));
+    const bodyShort = body.body_short;
+    if (!isNonEmptyString(bodyShort)) {
+      return Promise.resolve(left(ResponseErrorValidation(
+        "Request not valid", "body_short must be a non-empty string",
+      )));
     }
+
     // validate dry_run
-    if (body.dry_run && typeof body.dry_run !== "boolean") {
+    const dryRun = body.dry_run;
+    if (typeof dryRun !== "boolean") {
       return Promise.resolve(left(ResponseErrorValidation("Request not valid", "dry_run must be a boolean")));
     }
+
     return Promise.resolve(right({
-      body_short: body.body_short,
+      body_short: bodyShort,
       dry_run: body.dry_run,
     }));
 };
@@ -137,10 +146,10 @@ type ICreateMessageHandler = (
 ) => Promise<
   IResponseSuccessRedirectToResource<IMessage> |
   IResponseSuccessJson<IResponseDryRun> |
+  IResponseErrorQuery |
   IResponseErrorValidation |
   IResponseErrorForbiddenNotAuthorized |
-  IResponseErrorForbiddenNotAuthorizedForProduction |
-  IResponseErrorGeneric
+  IResponseErrorForbiddenNotAuthorizedForProduction
 >;
 
 /**
@@ -158,7 +167,7 @@ type IGetMessageHandler = (
 ) => Promise<
   IResponseSuccessJson<IResponsePublicMessage> |
   IResponseErrorNotFound |
-  IResponseErrorGeneric |
+  IResponseErrorQuery |
   IResponseErrorValidation |
   IResponseErrorForbiddenNotAuthorized
 >;
@@ -176,7 +185,8 @@ type IGetMessagesHandler = (
   fiscalCode: FiscalCode,
 ) => Promise<
   IResponseSuccessJsonIterator<IPublicExtendedMessage> |
-  IResponseErrorValidation
+  IResponseErrorValidation |
+  IResponseErrorQuery
 >;
 
 /**
@@ -222,7 +232,7 @@ export function CreateMessageHandler(
     const message: INewMessage = {
       bodyShort: messagePayload.body_short,
       fiscalCode,
-      id: ulid(),
+      id: toNonEmptyString(ulid()).get,
       kind: "INewMessage",
       senderOrganizationId: userOrganization.organizationId,
     };
@@ -255,11 +265,7 @@ export function CreateMessageHandler(
       return(ResponseSuccessRedirectToResource(retrievedMessage, `/api/v1/messages/${fiscalCode}/${message.id}`));
     } else {
       // we got an error while creating the message
-      return(ResponseErrorGeneric(
-        500,
-        "Internal server error",
-        `Error while creating Message|${errorOrMessage.left.code}`,
-      ));
+      return(ResponseErrorQuery("Error while creating Message", errorOrMessage.left));
     }
 
   };
@@ -309,10 +315,7 @@ export function GetMessageHandler(
 
     if (errorOrMaybeDocument.isLeft) {
       // the query failed
-      return(ResponseErrorGeneric(
-        500,
-        "Internal server error",
-        `Error while retrieving the message|${errorOrMaybeDocument.left.code}`,
+      return(ResponseErrorQuery("Error while retrieving the message", errorOrMaybeDocument.left,
       ));
     }
 
@@ -340,11 +343,7 @@ export function GetMessageHandler(
 
     if (errorOrMaybeNotification.isLeft) {
       // query failed
-      return(ResponseErrorGeneric(
-        500,
-        "Internal server error",
-        `Error while retrieving the notification status|${errorOrMaybeNotification.left.code}`,
-      ));
+      return(ResponseErrorQuery("Error while retrieving the notification status", errorOrMaybeNotification.left));
     }
 
     const maybeNotification = errorOrMaybeNotification.right;

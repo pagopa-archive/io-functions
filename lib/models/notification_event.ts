@@ -1,3 +1,5 @@
+import { isNonEmptyString, NonEmptyString } from "../utils/strings";
+
 /**
  * Payload of a notification event.
  *
@@ -5,8 +7,8 @@
  * have been configured for that notification.
  */
 export interface INotificationEvent {
-  readonly messageId: string;
-  readonly notificationId: string;
+  readonly messageId: NonEmptyString;
+  readonly notificationId: NonEmptyString;
 }
 
 /**
@@ -15,6 +17,6 @@ export interface INotificationEvent {
 // tslint:disable-next-line:no-any
 export function isNotificationEvent(arg: any): arg is INotificationEvent {
   return arg &&
-  typeof arg.notificationId === "string" && arg.notificationId.length > 0 &&
-  typeof arg.messageId === "string" && arg.messageId.length > 0;
+  isNonEmptyString(arg.notificationId) &&
+  isNonEmptyString(arg.messageId);
 }

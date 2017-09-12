@@ -5,9 +5,7 @@ import * as Express from "express";
 import { response as MockResponse } from "jest-mock-express";
 
 import { none, some } from "ts-option";
-import { left, right } from "../either";
-
-import { IResultIterator } from "../documentdb";
+import { right } from "../either";
 
 import {
   ResponseSuccessJson,

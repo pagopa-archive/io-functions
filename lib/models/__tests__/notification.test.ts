@@ -5,7 +5,7 @@ import * as DocumentDb from "documentdb";
 import * as DocumentDbUtils from "../../utils/documentdb";
 
 import { toFiscalCode } from "../../utils/fiscalcode";
-import { toNonNegativeNumber } from "../../utils/numbers";
+import { toNonEmptyString } from "../../utils/strings";
 
 import {
   INewNotification,
@@ -15,8 +15,6 @@ import {
   NotificationModel,
 } from "../notification";
 
-import { ModelId } from "../../utils/documentdb_model_versioned";
-
 const aDatabaseUri = DocumentDbUtils.getDatabaseUri("mockdb");
 const aNotificationsCollectionUri = DocumentDbUtils.getCollectionUri(aDatabaseUri, "notifications");
 
@@ -24,9 +22,9 @@ const aFiscalCode = toFiscalCode("FRLFRC74E04B157I").get;
 
 const aNewNotification: INewNotification = {
   fiscalCode: aFiscalCode,
-  id: "A_NOTIFICATION_ID",
+  id: toNonEmptyString("A_NOTIFICATION_ID").get,
   kind: "INewNotification",
-  messageId: "A_MESSAGE_ID",
+  messageId: toNonEmptyString("A_MESSAGE_ID").get,
 };
 
 const aRetrievedNotification: IRetrievedNotification = {
@@ -124,7 +122,7 @@ describe("update", () => {
 
   const anEmailNotification: INotificationChannelEmail = {
     status: NotificationChannelStatus.NOTIFICATION_SENT_TO_CHANNEL,
-    toAddress: "to@example.com",
+    toAddress: toNonEmptyString("to@example.com").get,
   };
 
   const updateFunction = jest.fn((n) => {
