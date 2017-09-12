@@ -3,7 +3,7 @@
  * request.
  */
 
-import { none, option, Option, some } from "ts-option";
+import { option, Option } from "ts-option";
 
 import { left, right } from "../either";
 
@@ -21,7 +21,7 @@ import {
  * Each groups is named after a Scope.
  * A Scope associates an Access Type to a Resource.
  */
-export const enum UserGroup {
+export enum UserGroup {
 
   // profiles
   ApiLimitedProfileRead = "ApiLimitedProfileRead",
@@ -48,21 +48,8 @@ export const enum UserGroup {
 /**
  * Looks up a UserGroup by name
  */
-function toUserGroup(name: string): Option<UserGroup> {
-  switch (name) {
-    case UserGroup.ApiLimitedProfileRead: return some(UserGroup.ApiLimitedProfileRead);
-    case UserGroup.ApiFullProfileRead: return some(UserGroup.ApiFullProfileRead);
-    case UserGroup.ApiProfileWrite: return some(UserGroup.ApiProfileWrite);
-    case UserGroup.ApiOrganizationRead: return some(UserGroup.ApiOrganizationRead);
-    case UserGroup.ApiOrganizationWrite: return some(UserGroup.ApiOrganizationWrite);
-    case UserGroup.ApiMessageRead: return some(UserGroup.ApiMessageRead);
-    case UserGroup.ApiMessageWrite: return some(UserGroup.ApiMessageWrite);
-    case UserGroup.ApiMessageList: return some(UserGroup.ApiMessageList);
-    case UserGroup.ApiInfoRead: return some(UserGroup.ApiInfoRead);
-    case UserGroup.ApiDebugRead: return some(UserGroup.ApiDebugRead);
-    default: return none;
-  }
-}
+const toUserGroup = (name: keyof typeof UserGroup): Option<UserGroup> =>
+  option(UserGroup[name]);
 
 /**
  * Azure authorization info
