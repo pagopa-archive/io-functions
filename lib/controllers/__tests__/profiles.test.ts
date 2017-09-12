@@ -1,9 +1,8 @@
 // tslint:disable:no-any
 
-import { response as MockResponse } from "jest-mock-express";
-
 import { none, some } from "ts-option";
-import { left, right } from "../../utils/either";
+import { right } from "../../utils/either";
+import { toNonEmptyString } from "../../utils/strings";
 
 import {
   IPublicExtendedProfile,
@@ -30,9 +29,9 @@ const aProfilePayloadMock = {
 const aRetrievedProfile: IRetrievedProfile = {
   _self: "123",
   _ts: "123",
-  email: "x&example.com",
+  email: toNonEmptyString("x&example.com").get,
   fiscalCode: aFiscalCode,
-  id: "123",
+  id: toNonEmptyString("123").get,
   kind: "IRetrievedProfile",
   version: toNonNegativeNumber(1).get,
 };
@@ -48,10 +47,6 @@ const aPublicLimitedProfile: IPublicLimitedProfile = {
   fiscalCode: aPublicExtendedProfile.fiscalCode,
   kind: "IPublicLimitedProfile",
 };
-
-function flushPromises<T>(): Promise<T> {
-  return new Promise((resolve) => setImmediate(resolve));
-}
 
 describe("GetProfileHandler", () => {
 
@@ -197,7 +192,7 @@ it("should update an existing profile", async () => {
   const upsertProfileHandler = UpsertProfileHandler(profileModelMock as any);
 
   const profilePayloadMock = {
-    email: "y@example.com",
+    email: toNonEmptyString("y@example.com").get,
   };
 
   const response = await upsertProfileHandler(

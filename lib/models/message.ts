@@ -1,9 +1,12 @@
 import * as DocumentDb from "documentdb";
+import is from "ts-is";
+
 import * as DocumentDbUtils from "../utils/documentdb";
 import { DocumentDbModel } from "../utils/documentdb_model";
 
 import { Option } from "ts-option";
 import { Either } from "../utils/either";
+import { isNonEmptyString, NonEmptyString } from "../utils/strings";
 
 import { FiscalCode, isFiscalCode } from "../utils/fiscalcode";
 import { LimitedFields } from "../utils/types";
@@ -13,29 +16,30 @@ import { LimitedFields } from "../utils/types";
  */
 export interface IMessage {
   readonly fiscalCode: FiscalCode;
-  readonly bodyShort: string;
+  readonly bodyShort: NonEmptyString;
   readonly senderOrganizationId: string;
 }
 
 /**
  * Type guard for IMessage objects
  */
-// tslint:disable-next-line:no-any
-export function isIMessage(arg: any): arg is IMessage {
-  return isFiscalCode(arg.fiscalCode) && (typeof arg.bodyShort === "string");
-}
+export const isIMessage = is<IMessage>((arg) =>
+  isFiscalCode(arg.fiscalCode) && isNonEmptyString(arg.bodyShort),
+);
 
 /**
  * Interface for new Message objects
  */
 export interface INewMessage extends IMessage, DocumentDb.NewDocument {
   readonly kind: "INewMessage";
+  readonly id: NonEmptyString;
 }
 
 /**
  * Interface for retrieved Message objects
  */
 export interface IRetrievedMessage extends Readonly<IMessage>, Readonly<DocumentDb.RetrievedDocument> {
+  readonly id: NonEmptyString;
   readonly kind: "IRetrievedMessage";
 }
 
@@ -67,13 +71,12 @@ export function asPublicExtendedMessage<T extends IMessage>(message: T): IPublic
 /**
  * Type guard for IRetrievedMessage objects
  */
-// tslint:disable-next-line:no-any
-export function isIRetrievedMessage(arg: any): arg is IRetrievedMessage {
-  return (typeof arg.id === "string") &&
-    (typeof arg._self === "string") &&
-    (typeof arg._ts === "number") &&
-    isIMessage(arg);
-}
+export const isIRetrievedMessage = is<IRetrievedMessage>((arg) =>
+  isNonEmptyString(arg.id) &&
+  (typeof arg._self === "string") &&
+  (typeof arg._ts === "string") &&
+  isIMessage(arg),
+);
 
 function toRetrieved(result: DocumentDb.RetrievedDocument): IRetrievedMessage {
   return ({

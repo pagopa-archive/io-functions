@@ -5,7 +5,7 @@ import * as DocumentDb from "documentdb";
 import * as DocumentDbUtils from "../../utils/documentdb";
 
 import { toFiscalCode } from "../../utils/fiscalcode";
-import { toNonNegativeNumber } from "../../utils/numbers";
+import { toNonEmptyString } from "../../utils/strings";
 
 import { INewMessage, IRetrievedMessage, MessageModel } from "../message";
 
@@ -17,9 +17,9 @@ const aMessagesCollectionUrl = DocumentDbUtils.getCollectionUri(aDatabaseUri, "m
 const aFiscalCode = toFiscalCode("FRLFRC74E04B157I").get;
 
 const aNewMessage: INewMessage = {
-  bodyShort: "some text",
+  bodyShort: toNonEmptyString("some text").get,
   fiscalCode: aFiscalCode,
-  id: "A_MESSAGE_ID",
+  id: toNonEmptyString("A_MESSAGE_ID").get,
   kind: "INewMessage",
   senderOrganizationId: "agid" as ModelId,
 };

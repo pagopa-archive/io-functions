@@ -4,15 +4,17 @@
 
 import * as express from "express";
 
-import { right } from "../utils/either";
+import { left, right } from "../utils/either";
 
 import { FiscalCode } from "../utils/fiscalcode";
+
 import {
   AzureApiAuthMiddleware,
   IAzureApiAuthorization,
   UserGroup,
 } from "../utils/middlewares/azure_api_auth";
 import { FiscalCodeMiddleware } from "../utils/middlewares/fiscalcode";
+import { isNonEmptyString, NonEmptyString } from "../utils/strings";
 
 import {
   IRequestMiddleware,
@@ -29,6 +31,7 @@ import {
   ResponseErrorInternal,
   ResponseErrorNotFound,
   ResponseErrorQuery,
+  ResponseErrorValidation,
   ResponseSuccessJson,
 } from "../utils/response";
 
@@ -125,7 +128,7 @@ export function GetProfile(
  * TODO: generate from a schema.
  */
 interface IProfilePayload {
-  readonly email?: string;
+  readonly email?: NonEmptyString;
 }
 
 /**
@@ -133,10 +136,15 @@ interface IProfilePayload {
  *
  * TODO: validate the payload against a schema.
  */
-export const ProfilePayloadMiddleware: IRequestMiddleware<never, IProfilePayload> =
+export const ProfilePayloadMiddleware: IRequestMiddleware<IResponseErrorValidation, IProfilePayload> =
   (request) => {
+    const email = request.body.email;
+    if (email && !isNonEmptyString(email)) {
+      return(Promise.resolve(left(ResponseErrorValidation("Invalid email", "email must be a non-empty string"))));
+    }
+
     return Promise.resolve(right({
-      email: typeof request.body.email === "string" ? request.body.email : undefined,
+      email,
     }));
   };
 

@@ -5,14 +5,16 @@
  */
 
 import * as DocumentDb from "documentdb";
+import is from "ts-is";
+
 import * as DocumentDbUtils from "../utils/documentdb";
 import { DocumentDbModel } from "../utils/documentdb_model";
 
 import { Option, some } from "ts-option";
 
 import { Either, right } from "../utils/either";
-
 import { FiscalCode, isFiscalCode } from "../utils/fiscalcode";
+import { isNonEmptyString, NonEmptyString } from "../utils/strings";
 
 /**
  * A notification can be sent over multiple channels and each channel
@@ -26,36 +28,54 @@ export const enum NotificationChannelStatus {
 }
 
 /**
+ * Type guard for NotificationChannelStatus objects
+ */
+export const isNotificationChannelStatus = is<NotificationChannelStatus>((arg) =>
+  arg === NotificationChannelStatus.NOTIFICATION_QUEUED ||
+  arg === NotificationChannelStatus.NOTIFICATION_SENT_TO_CHANNEL,
+);
+
+/**
  * Attributes for the email channel
  */
 export interface INotificationChannelEmail {
   readonly status: NotificationChannelStatus;
-  readonly fromAddress?: string;
-  readonly toAddress: string;
+  readonly fromAddress?: NonEmptyString;
+  readonly toAddress: NonEmptyString;
 }
+
+/**
+ * Type guard for INotificationChannelEmail objects
+ */
+export const isINotificationChannelEmail = is<INotificationChannelEmail>((arg) =>
+  isNonEmptyString(arg.toAddress) &&
+  isNotificationChannelStatus(arg.status) &&
+  (!arg.fromAddress || isNonEmptyString(arg.fromAddress)),
+);
 
 /**
  * Base interface for Notification objects
  */
 export interface INotification {
   readonly fiscalCode: FiscalCode;
-  readonly messageId: string;
+  readonly messageId: NonEmptyString;
   readonly emailNotification?: INotificationChannelEmail;
 }
 
 /**
  * Type guard for INotification objects
  */
-// tslint:disable-next-line:no-any
-export function isINotification(arg: any): arg is INotification {
-  return isFiscalCode(arg.fiscalCode) &&
-    typeof arg.messageId === "string" && arg.messageId.length > 0;
-}
+export const isINotification = is<INotification>((arg) =>
+  isFiscalCode(arg.fiscalCode) &&
+  isNonEmptyString(arg.messageId) &&
+  (!arg.emailNotification || isINotificationChannelEmail(arg.emailNotification)),
+);
 
 /**
  * Interface for new Notification objects
  */
 export interface INewNotification extends INotification, DocumentDb.NewDocument {
+  readonly id: NonEmptyString;
   readonly kind: "INewNotification";
 }
 
@@ -63,6 +83,7 @@ export interface INewNotification extends INotification, DocumentDb.NewDocument 
  * Interface for retrieved Notification objects
  */
 export interface IRetrievedNotification extends Readonly<INotification>, Readonly<DocumentDb.RetrievedDocument> {
+  readonly id: NonEmptyString;
   readonly kind: "IRetrievedNotification";
 }
 

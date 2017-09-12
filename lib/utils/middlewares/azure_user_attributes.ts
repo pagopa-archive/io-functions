@@ -6,6 +6,7 @@ import * as jsYaml from "js-yaml";
 import { none, option, Option, some } from "ts-option";
 
 import { left, right } from "../either";
+import { NonEmptyString } from "../strings";
 
 import { IOrganization, IRetrievedOrganization, OrganizationModel } from "../../models/organization";
 import { IRequestMiddleware } from "../request_middleware";
@@ -16,8 +17,8 @@ import {
 } from "../response";
 
 interface IAzureUserNote {
-  readonly organizationId?: string;
-  readonly productionEnabled?: boolean;
+  readonly organizationId?: NonEmptyString;
+  readonly productionEnabled?: NonEmptyString;
 }
 
 export interface IAzureUserAttributes {
@@ -84,6 +85,7 @@ export function AzureUserAttributesMiddleware(
         try {
           // all IUserAttributes are optional, so we can safely cast
           // the object to it
+          // TODO: add type guard for IAzureUserNote
           const yaml = jsYaml.safeLoad(y) as IAzureUserNote;
           return some(yaml);
         } catch (e) {

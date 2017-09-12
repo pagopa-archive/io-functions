@@ -6,6 +6,7 @@ import * as DocumentDbUtils from "../../utils/documentdb";
 
 import { toFiscalCode } from "../../utils/fiscalcode";
 import { toNonNegativeNumber } from "../../utils/numbers";
+import { toNonEmptyString } from "../../utils/strings";
 
 import { IProfile, IRetrievedProfile, ProfileModel } from "../profile";
 
@@ -18,7 +19,7 @@ const aRetrievedProfile: IRetrievedProfile = {
   _self: "xyz",
   _ts: "xyz",
   fiscalCode: aFiscalCode,
-  id: "xyz",
+  id: toNonEmptyString("xyz").get,
   kind: "IRetrievedProfile",
   version: toNonNegativeNumber(0).get,
 };
@@ -141,7 +142,7 @@ describe("update", () => {
       (p) => {
         return {
           ...p,
-          email: "new@example.com",
+          email: toNonEmptyString("new@example.com").get,
         };
       },
     );

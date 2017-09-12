@@ -8,6 +8,7 @@ import { Either } from "../utils/either";
 import { fiscalCodeToModelId } from "../utils/conversions";
 import { FiscalCode } from "../utils/fiscalcode";
 import { NonNegativeNumber } from "../utils/numbers";
+import { NonEmptyString } from "../utils/strings";
 import { LimitedFields } from "../utils/types";
 
 /**
@@ -15,7 +16,7 @@ import { LimitedFields } from "../utils/types";
  */
 export interface IProfile {
   readonly fiscalCode: FiscalCode;
-  readonly email?: string;
+  readonly email?: NonEmptyString;
 }
 
 /**
@@ -31,6 +32,7 @@ export interface INewProfile extends IProfile, DocumentDb.NewDocument, IVersione
  * Existing profile records have a version number.
  */
 export interface IRetrievedProfile extends IProfile, DocumentDb.RetrievedDocument, IVersionedModel {
+  readonly id: NonEmptyString;
   readonly kind: "IRetrievedProfile";
 }
 

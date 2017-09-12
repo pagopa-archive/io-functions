@@ -1,3 +1,5 @@
+import is from "ts-is";
+
 import { IRetrievedMessage, isIRetrievedMessage } from "./message";
 
 /**
@@ -13,7 +15,4 @@ export interface ICreatedMessageEvent {
 /**
  * Type guard for ICreatedMessageEvent objects
  */
-// tslint:disable-next-line:no-any
-export function isICreatedMessageEvent(arg: any): arg is ICreatedMessageEvent {
-  return isIRetrievedMessage(arg.message);
-}
+export const isICreatedMessageEvent = is<ICreatedMessageEvent>((arg) => isIRetrievedMessage(arg.message));
