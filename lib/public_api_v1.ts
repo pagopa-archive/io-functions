@@ -10,6 +10,8 @@ import * as winston from "winston";
 // cannot use "import * from", see https://goo.gl/HbzFra
 import ApplicationInsights = require("applicationinsights");
 
+import { setAppContext } from "./utils/middlewares/context_middleware";
+
 import { configureAzureContextTransport } from "./utils/logging";
 
 import { DocumentClient as DocumentDBClient } from "documentdb";
@@ -81,6 +83,6 @@ const azureFunctionHandler = createAzureFunctionHandler(app);
 // Binds the express app to an Azure Function handler
 export function index(context: IContext<{}>): void {
   configureAzureContextTransport(context, winston, "debug");
-  app.set("context", context);
+  setAppContext(app, context);
   azureFunctionHandler(context);
 }

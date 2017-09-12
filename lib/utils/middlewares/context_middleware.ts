@@ -6,6 +6,18 @@ import { IRequestMiddleware } from "../request_middleware";
 
 import { IContext } from "azure-function-express";
 
+import * as express from "express";
+
+const CONTEXT_IDENTIFIER = "context";
+
+export function setAppContext(app: express.Express, context: IContext<{}>): void {
+  app.set(CONTEXT_IDENTIFIER, context);
+}
+
+export function getAppContext<T>(request: express.Request): IContext<T> {
+  return request.app.get(CONTEXT_IDENTIFIER);
+}
+
 /**
  * Returns a request middleware that extracts the Azure request context
  * from the request.
@@ -16,6 +28,6 @@ import { IContext } from "azure-function-express";
  */
 export function ContextMiddleware<T>(): IRequestMiddleware<never, IContext<T>> {
   return (request: express.Request) => {
-    return Promise.resolve(right(request.app.get("context")));
+    return Promise.resolve(right(request.app.get(CONTEXT_IDENTIFIER)));
   };
 }
