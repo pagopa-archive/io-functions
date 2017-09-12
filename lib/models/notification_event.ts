@@ -1,3 +1,5 @@
+import is from "ts-is";
+
 import { isNonEmptyString, NonEmptyString } from "../utils/strings";
 
 /**
@@ -14,9 +16,8 @@ export interface INotificationEvent {
 /**
  * Type guard for INotificationEvent objects
  */
-// tslint:disable-next-line:no-any
-export function isNotificationEvent(arg: any): arg is INotificationEvent {
-  return arg &&
+export const isNotificationEvent = is<INotificationEvent>((arg) =>
+  arg &&
   isNonEmptyString(arg.notificationId) &&
-  isNonEmptyString(arg.messageId);
-}
+  isNonEmptyString(arg.messageId),
+);

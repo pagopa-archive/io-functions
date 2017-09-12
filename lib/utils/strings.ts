@@ -1,3 +1,4 @@
+import is from "ts-is";
 
 import { none, Option, some } from "ts-option";
 
@@ -11,10 +12,10 @@ interface INonEmptyStringTag {
 
 export type NonEmptyString = string & INonEmptyStringTag;
 
-// tslint:disable-next-line:no-any
-export function isNonEmptyString(s: any): s is NonEmptyString {
-  return(typeof s === "string" && s.length > 0);
-}
+export const isNonEmptyString = is<NonEmptyString>((s) =>
+  typeof s === "string" &&
+  s.length > 0,
+);
 
 export function toNonEmptyString(s: string): Option<NonEmptyString> {
   return isNonEmptyString(s) ? some(s) : none;

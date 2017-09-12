@@ -1,4 +1,6 @@
 import * as DocumentDb from "documentdb";
+import is from "ts-is";
+
 import * as DocumentDbUtils from "../utils/documentdb";
 import { DocumentDbModel } from "../utils/documentdb_model";
 
@@ -21,10 +23,9 @@ export interface IMessage {
 /**
  * Type guard for IMessage objects
  */
-// tslint:disable-next-line:no-any
-export function isIMessage(arg: any): arg is IMessage {
-  return isFiscalCode(arg.fiscalCode) && isNonEmptyString(arg.bodyShort);
-}
+export const isIMessage = is<IMessage>((arg) =>
+  isFiscalCode(arg.fiscalCode) && isNonEmptyString(arg.bodyShort),
+);
 
 /**
  * Interface for new Message objects
@@ -70,13 +71,12 @@ export function asPublicExtendedMessage<T extends IMessage>(message: T): IPublic
 /**
  * Type guard for IRetrievedMessage objects
  */
-// tslint:disable-next-line:no-any
-export function isIRetrievedMessage(arg: any): arg is IRetrievedMessage {
-  return isNonEmptyString(arg.id) &&
-    (typeof arg._self === "string") &&
-    (typeof arg._ts === "string") &&
-    isIMessage(arg);
-}
+export const isIRetrievedMessage = is<IRetrievedMessage>((arg) =>
+  isNonEmptyString(arg.id) &&
+  (typeof arg._self === "string") &&
+  (typeof arg._ts === "string") &&
+  isIMessage(arg),
+);
 
 function toRetrieved(result: DocumentDb.RetrievedDocument): IRetrievedMessage {
   return ({
