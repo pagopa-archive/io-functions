@@ -11,8 +11,4 @@ declare module "azure-function-express" {
     readonly bindings: T,
   }
 
-  export interface IRequestWithContext<T> extends express.Request {
-    readonly context: IContext<T>;
-  }
-
 }

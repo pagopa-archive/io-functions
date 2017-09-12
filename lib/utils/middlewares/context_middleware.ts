@@ -1,8 +1,10 @@
+import * as express from "express";
+
 import { right } from "../either";
 
 import { IRequestMiddleware } from "../request_middleware";
 
-import { IContext, IRequestWithContext } from "azure-function-express";
+import { IContext } from "azure-function-express";
 
 /**
  * Returns a request middleware that extracts the Azure request context
@@ -13,7 +15,7 @@ import { IContext, IRequestWithContext } from "azure-function-express";
  * TODO: validate that the context is indeed defined, respond with ResponseErrorInternal instead
  */
 export function ContextMiddleware<T>(): IRequestMiddleware<never, IContext<T>> {
-  return (request: IRequestWithContext<T>) => {
+  return (request: express.Request) => {
     return Promise.resolve(right(request.app.get("context")));
   };
 }

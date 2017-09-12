@@ -11,21 +11,11 @@ describe("ContextMiddleware", () => {
   it("should extract the context from the request", async () => {
     const middleware = ContextMiddleware<ITestBindings>();
     const response = await middleware({
-      context: {
-        bindings: {
-          test: "test",
-        },
+      app: {
+        get: jest.fn(),
       },
     } as any);
-
     expect(response.isRight).toBeTruthy();
-    if (response.isRight) {
-      expect(response.right).toEqual({
-        bindings: {
-          test: "test",
-        },
-      });
-    }
   });
 
 });
