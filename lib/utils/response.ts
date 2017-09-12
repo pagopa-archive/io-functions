@@ -3,6 +3,14 @@ import * as express from "express";
 
 import { IResultIterator, iteratorToArray } from "./documentdb";
 
+import { HttpStatusCode } from "../api/definitions/HttpStatusCode";
+import { ProblemJson } from "../api/definitions/ProblemJson";
+
+const HTTP_STATUS_400 = 400 as HttpStatusCode;
+const HTTP_STATUS_403 = 403 as HttpStatusCode;
+const HTTP_STATUS_404 = 404 as HttpStatusCode;
+const HTTP_STATUS_500 = 500 as HttpStatusCode;
+
 /**
  * Interface for a Response that can be returned by a middleware or
  * by the handlers.
@@ -85,13 +93,6 @@ export function ResponseSuccessRedirectToResource<T>(resource: T, url: string): 
 // Error responses
 //
 
-interface IProblemDescription {
-  readonly title: string;
-  readonly status: number;
-  readonly detail: string;
-  readonly "type"?: string;
-}
-
 /**
  * Interface for a response describing a generic server error.
  */
@@ -107,12 +108,12 @@ interface IResponseErrorGeneric extends IResponse {
  *
  */
 function ResponseErrorGeneric(
-  status: number,
+  status: HttpStatusCode,
   title: string,
   detail: string,
   problemType?: string,
 ): IResponseErrorGeneric {
-  const problem: IProblemDescription = {
+  const problem: ProblemJson = {
     detail,
     status,
     title,
@@ -141,7 +142,7 @@ export interface IResponseErrorNotFound extends IResponse {
  */
 export function ResponseErrorNotFound(title: string, detail: string): IResponseErrorNotFound {
   return {
-    ...ResponseErrorGeneric(404, title, detail),
+    ...ResponseErrorGeneric(HTTP_STATUS_404, title, detail),
     kind: "IResponseErrorNotFound",
   };
 }
@@ -160,7 +161,7 @@ export interface IResponseErrorValidation extends IResponse {
  */
 export function ResponseErrorValidation(title: string, detail: string): IResponseErrorValidation {
   return {
-    ...ResponseErrorGeneric(400, title, detail),
+    ...ResponseErrorGeneric(HTTP_STATUS_400, title, detail),
     kind: "IResponseErrorValidation",
   };
 }
@@ -177,7 +178,7 @@ export interface IResponseErrorForbiddenNotAuthorized extends IResponse {
  */
 export const ResponseErrorForbiddenNotAuthorized: IResponseErrorForbiddenNotAuthorized = {
   ...ResponseErrorGeneric(
-    403,
+    HTTP_STATUS_403,
     "You are not allowed here",
     "You do not have enough permission to complete the operation you requested",
   ),
@@ -196,7 +197,7 @@ export interface IResponseErrorForbiddenNotAuthorizedForProduction extends IResp
  */
 export const ResponseErrorForbiddenNotAuthorizedForProduction: IResponseErrorForbiddenNotAuthorizedForProduction = {
   ...ResponseErrorGeneric(
-    403,
+    HTTP_STATUS_403,
     "Production call forbidden",
     "You are not allowed to issue production calls, set 'dry_run' to true or ask to be enabled for production.",
   ),
@@ -215,7 +216,7 @@ export interface IResponseErrorForbiddenNoAuthorizationGroups extends IResponse 
  */
 export const ResponseErrorForbiddenNoAuthorizationGroups: IResponseErrorForbiddenNoAuthorizationGroups = {
   ...ResponseErrorGeneric(
-    403,
+    HTTP_STATUS_403,
     "User has no valid scopes",
     "You are not part of any valid scope, you should ask the administrator to give you the required permissions.",
   ),
@@ -237,7 +238,7 @@ export interface IResponseErrorQuery extends IResponse {
  */
 export function ResponseErrorQuery(detail: string, error: DocumentDb.QueryError): IResponseErrorQuery {
   return {
-    ...ResponseErrorGeneric(500, `Query error (${error.code})`, detail),
+    ...ResponseErrorGeneric(HTTP_STATUS_500, `Query error (${error.code})`, detail),
     kind: "IResponseErrorQuery",
   };
 }
@@ -256,7 +257,7 @@ export interface IResponseErrorInternal extends IResponse {
  */
 export function ResponseErrorInternal(detail: string): IResponseErrorInternal {
   return {
-    ...ResponseErrorGeneric(500, "Internal server error", detail),
+    ...ResponseErrorGeneric(HTTP_STATUS_500, "Internal server error", detail),
     kind: "IResponseErrorInternal",
   };
 }

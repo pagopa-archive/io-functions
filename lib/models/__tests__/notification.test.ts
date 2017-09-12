@@ -4,7 +4,7 @@ import * as DocumentDb from "documentdb";
 
 import * as DocumentDbUtils from "../../utils/documentdb";
 
-import { toFiscalCode } from "../../utils/fiscalcode";
+import { toFiscalCode } from "../../api/definitions/FiscalCode";
 import { toNonEmptyString } from "../../utils/strings";
 
 import {

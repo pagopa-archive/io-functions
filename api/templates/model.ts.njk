@@ -1,0 +1,97 @@
+// tslint:disable:ordered-imports
+// tslint:disable:no-consecutive-blank-lines
+// tslint:disable:no-trailing-whitespace
+// tslint:disable:max-line-length
+// tslint:disable:jsdoc-format
+// tslint:disable:interface-name
+
+import { Option } from "ts-option";
+
+{% for propName, prop in definition.properties %}{% if prop.$ref -%}
+{%- set realPropName = prop.$ref | replace("#/definitions/", "") -%}
+import { is{{ realPropName }}, {{ realPropName }} } from "./{{ realPropName }}";
+{% endif %}{% endfor %}
+
+/**
+ * {{ definition.description | safe }}
+ */
+{% if definition.type == "object" %}
+import { option } from "ts-option";
+
+export interface {{ definitionName }} {
+{% for propName, prop in definition.properties %}
+  {%- if prop.$ref %}{% set realPropType = prop.$ref | replace("#/definitions/", "") %}{% else %}{% set realPropType = prop.type | replace("integer", "number") %}{% endif %}
+  readonly {{ propName }}{% if definition.required and (definition.required | contains(propName)) %}{% else %}?{% endif %}: {{ realPropType }};
+{% endfor %}
+}
+
+// tslint:disable-next-line:no-any
+export function is{{ definitionName }}(arg: any): arg is {{ definitionName }} {
+  return arg &&
+{% for propName, prop in definition.properties -%}
+  {% if prop.$ref %}
+    is{{ prop.$ref | replace("#/definitions/", "") }}(arg.{{propName}}) &&
+  {% else %}
+    typeof arg.{{propName}} === "{{ prop.type | replace("integer", "number") }}" &&
+  {% endif %}
+{% endfor %}
+    true;
+}
+
+// tslint:disable-next-line:no-any
+export function to{{ definitionName }}(arg: any): Option<{{ definitionName }}> {
+  return option(arg).filter(is{{ definitionName }});
+}
+
+{% elif definition.type == "integer" %}
+
+import { isWithinRangeNumber, toWithinRangeNumber, WithinRangeNumber } from "../../utils/numbers";
+
+  {% if definition.minimum and definition.maximum %}
+export type {{ definitionName }} = WithinRangeNumber<{{ definition.minimum }}, {{ definition.maximum }}>;
+
+// tslint:disable-next-line:no-any
+export function is{{ definitionName }}(arg: any): arg is {{ definitionName }} {
+  return isWithinRangeNumber(arg, {{ definition.minimum }}, {{ definition.maximum }});
+}
+
+// tslint:disable-next-line:no-any
+export function to{{ definitionName }}(arg: any): Option<{{ definitionName }}> {
+  return toWithinRangeNumber(arg, {{ definition.minimum }}, {{ definition.maximum }});
+}
+  {% else %}
+export type {{ definitionName }} = number;
+  {% endif %}
+{% elif definition.type == "string" %}
+  {% if definition.pattern %}
+import { isPatternString, toPatternString, PatternString } from "../../utils/strings";
+
+export type {{ definitionName }} = PatternString<"{{ definition.pattern }}">;
+
+// tslint:disable-next-line:no-any
+export function is{{ definitionName }}(arg: any): arg is {{ definitionName }} {
+  return isPatternString(arg, "{{ definition.pattern }}");
+}
+
+// tslint:disable-next-line:no-any
+export function to{{ definitionName }}(arg: any): Option<{{ definitionName }}> {
+  return toPatternString(arg, "{{ definition.pattern }}");
+}
+  {% elif definition.minLength and definition.maxLength %}
+import { isWithinRangeString, toWithinRangeString, WithinRangeString } from "../../utils/strings";
+
+export type {{ definitionName }} = WithinRangeString<{{ definition.minLength }}, {{ definition.maxLength }}>;
+
+// tslint:disable-next-line:no-any
+export function is{{ definitionName }}(arg: any): arg is {{ definitionName }} {
+  return isWithinRangeString(arg, {{ definition.minLength }}, {{ definition.maxLength }});
+}
+
+// tslint:disable-next-line:no-any
+export function to{{ definitionName }}(arg: any): Option<{{ definitionName }}> {
+  return toWithinRangeString(arg, {{ definition.minLength }}, {{ definition.maxLength }});
+}
+  {% else %}
+export type {{ definitionName }} = string;
+  {% endif %}
+{% endif %}
