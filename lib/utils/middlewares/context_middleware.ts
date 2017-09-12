@@ -6,8 +6,6 @@ import { IRequestMiddleware } from "../request_middleware";
 
 import { IContext } from "azure-function-express";
 
-import * as express from "express";
-
 const CONTEXT_IDENTIFIER = "context";
 
 export function setAppContext(app: express.Express, context: IContext<{}>): void {
@@ -28,6 +26,6 @@ export function getAppContext<T>(request: express.Request): IContext<T> {
  */
 export function ContextMiddleware<T>(): IRequestMiddleware<never, IContext<T>> {
   return (request: express.Request) => {
-    return Promise.resolve(right(request.app.get(CONTEXT_IDENTIFIER)));
+    return Promise.resolve(right(getAppContext(request)));
   };
 }
