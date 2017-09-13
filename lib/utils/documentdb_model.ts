@@ -36,14 +36,17 @@ export abstract class DocumentDbModel<TN extends DocumentDb.NewDocument, TR exte
   public async find(
     id: string, partitionKey: string,
   ): Promise<Either<DocumentDb.QueryError, Option<TR>>> {
-    const documentUrl = DocumentDbUtils.getDocumentUri(
+    // compose the URI of the document we're looking for
+    const documentUri = DocumentDbUtils.getDocumentUri(
       this.collectionUri,
       id,
     );
 
+    // attemp to retrieve the document by its URI
+    // the result with be either a QueryError or the retrieved document
     const errorOrDocument = await DocumentDbUtils.readDocument(
       this.dbClient,
-      documentUrl,
+      documentUri,
       partitionKey,
     );
 
@@ -52,6 +55,8 @@ export abstract class DocumentDbModel<TN extends DocumentDb.NewDocument, TR exte
       return right(none);
     }
 
+    // for any other error (errorOrDocument is a left), we return it as is
+    // or in case of success, we map the result to a retrieved interface
     return errorOrDocument.mapRight((r) => some(this.toRetrieved(r)));
   }
 
