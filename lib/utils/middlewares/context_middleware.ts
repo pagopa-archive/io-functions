@@ -1,5 +1,6 @@
 import * as express from "express";
 
+import { Option, option } from "ts-option";
 import { right } from "../either";
 
 import { IRequestMiddleware } from "../request_middleware";
@@ -12,8 +13,8 @@ export function setAppContext(app: express.Express, context: IContext<{}>): void
   app.set(CONTEXT_IDENTIFIER, context);
 }
 
-export function getAppContext<T>(request: express.Request): IContext<T> {
-  return request.app.get(CONTEXT_IDENTIFIER);
+export function getAppContext<T>(request: express.Request): Option<IContext<T>> {
+  return option(request.app.get(CONTEXT_IDENTIFIER));
 }
 
 /**
@@ -21,11 +22,11 @@ export function getAppContext<T>(request: express.Request): IContext<T> {
  * from the request.
  *
  * @param T The type of the bindings found in the context.
- *
- * TODO: validate that the context is indeed defined, respond with ResponseErrorInternal instead
  */
 export function ContextMiddleware<T>(): IRequestMiddleware<never, IContext<T>> {
   return (request: express.Request) => {
-    return Promise.resolve(right(getAppContext(request)));
+    const context: IContext<T> = getAppContext<T>(request)
+      .getOrElse(() => { throw new Error("Cannot get context from request"); });
+    return Promise.resolve(right(context));
   };
 }

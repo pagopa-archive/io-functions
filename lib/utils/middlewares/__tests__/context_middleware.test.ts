@@ -12,7 +12,7 @@ describe("ContextMiddleware", () => {
     const middleware = ContextMiddleware<ITestBindings>();
     const response = await middleware({
       app: {
-        get: jest.fn(),
+        get: (s) => ({ context: {} }),
       },
     } as any);
     expect(response.isRight).toBeTruthy();
