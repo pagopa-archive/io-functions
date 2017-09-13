@@ -8,7 +8,9 @@ import { Option } from "ts-option";
 import { Either } from "../utils/either";
 import { isNonEmptyString, NonEmptyString } from "../utils/strings";
 
-import { FiscalCode, isFiscalCode } from "../utils/fiscalcode";
+import { BodyShort, isBodyShort } from "../api/definitions/BodyShort";
+import { FiscalCode, isFiscalCode } from "../api/definitions/FiscalCode";
+
 import { LimitedFields } from "../utils/types";
 
 /**
@@ -16,7 +18,7 @@ import { LimitedFields } from "../utils/types";
  */
 export interface IMessage {
   readonly fiscalCode: FiscalCode;
-  readonly bodyShort: NonEmptyString;
+  readonly bodyShort: BodyShort;
   readonly senderOrganizationId: string;
 }
 
@@ -24,7 +26,7 @@ export interface IMessage {
  * Type guard for IMessage objects
  */
 export const isIMessage = is<IMessage>((arg) =>
-  isFiscalCode(arg.fiscalCode) && isNonEmptyString(arg.bodyShort),
+  arg && isFiscalCode(arg.fiscalCode) && isBodyShort(arg.bodyShort),
 );
 
 /**

@@ -7,8 +7,7 @@ import { IContext } from "azure-function-express";
 import * as express from "express";
 import * as winston from "winston";
 
-// cannot use "import * from", see https://goo.gl/HbzFra
-import ApplicationInsights = require("applicationinsights");
+import * as ApplicationInsights from "applicationinsights";
 
 import { setAppContext } from "./utils/middlewares/context_middleware";
 
@@ -61,7 +60,7 @@ const notificationModel = new NotificationModel(documentClient, notificationsCol
 
 // Setup ApplicationInsights
 
-const appInsightsClient = ApplicationInsights.getClient();
+const appInsightsClient = new ApplicationInsights.TelemetryClient();
 
 // Setup handlers
 

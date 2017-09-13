@@ -5,8 +5,8 @@ import { DocumentDbModelVersioned, IVersionedModel, ModelId } from "../utils/doc
 import { Option } from "ts-option";
 import { Either } from "../utils/either";
 
+import { FiscalCode } from "../api/definitions/FiscalCode";
 import { fiscalCodeToModelId } from "../utils/conversions";
-import { FiscalCode } from "../utils/fiscalcode";
 import { NonNegativeNumber } from "../utils/numbers";
 import { NonEmptyString } from "../utils/strings";
 import { LimitedFields } from "../utils/types";

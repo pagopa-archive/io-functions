@@ -7,9 +7,7 @@
 
 import * as winston from "winston";
 
-// cannot use "import * from", see https://goo.gl/HbzFra
-import ApplicationInsights = require("applicationinsights");
-import ApplicationInsightsClient = require("../node_modules/applicationinsights/out/Library/Client");
+import * as ApplicationInsights from "applicationinsights";
 
 import { configureAzureContextTransport } from "./utils/logging";
 
@@ -124,7 +122,7 @@ function setEmailNotificationSend(notification: INotification): INotification {
  * It will then send the email.
  */
 async function handleNotification(
-  appInsightsClient: ApplicationInsightsClient,
+  appInsightsClient: ApplicationInsights.TelemetryClient,
   notificationModel: NotificationModel,
   messageModel: MessageModel,
   messageId: string,
@@ -213,9 +211,12 @@ async function handleNotification(
 
   if (sendResult.isLeft) {
     // we got an error while sending the email
-    appInsightsClient.trackEvent(eventName, {
-      ...eventContent,
-      success: "false",
+    appInsightsClient.trackEvent({
+      name: eventName,
+      properties: {
+        ...eventContent,
+        success: "false",
+      },
     });
     const error = sendResult.left;
     winston.warn(
@@ -224,9 +225,12 @@ async function handleNotification(
     return left(ProcessingError.TRANSIENT);
   }
 
-  appInsightsClient.trackEvent(eventName, {
-    ...eventContent,
-    success: "true",
+  appInsightsClient.trackEvent({
+    name: eventName,
+    properties: {
+      ...eventContent,
+      success: "true",
+    },
   });
 
   // now we can update the notification status
@@ -264,7 +268,7 @@ export function index(context: IContextWithBindings): void {
   winston.debug(`STARTED|${context.invocationId}`);
 
   // Setup ApplicationInsights
-  const appInsightsClient = ApplicationInsights.getClient();
+  const appInsightsClient = new ApplicationInsights.TelemetryClient();
 
   const emailNotificationEvent = context.bindings.notificationEvent;
 

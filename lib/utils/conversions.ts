@@ -1,5 +1,5 @@
+import { FiscalCode } from "../api/definitions/FiscalCode";
 import { ModelId } from "./documentdb_model_versioned";
-import { FiscalCode } from "./fiscalcode";
 
 /**
  * Converts a FiscalCode to a ModelId.

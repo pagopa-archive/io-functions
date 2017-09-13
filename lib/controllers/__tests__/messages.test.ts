@@ -7,7 +7,10 @@ import { left, right } from "../../utils/either";
 
 import { ModelId } from "../../utils/documentdb_model_versioned";
 
-import { toFiscalCode } from "../../utils/fiscalcode";
+import { toBodyShort } from "../../api/definitions/BodyShort";
+import { toFiscalCode } from "../../api/definitions/FiscalCode";
+import { NewMessage } from "../../api/definitions/NewMessage";
+
 import { IAzureApiAuthorization, UserGroup } from "../../utils/middlewares/azure_api_auth";
 import { IAzureUserAttributes } from "../../utils/middlewares/azure_user_attributes";
 import { toNonEmptyString } from "../../utils/strings";
@@ -18,7 +21,6 @@ import {
   CreateMessageHandler,
   GetMessageHandler,
   GetMessagesHandler,
-  IMessagePayload,
 } from "../messages";
 
 const aFiscalCode = toFiscalCode("FRLFRC74E04B157I").get;
@@ -42,13 +44,15 @@ const aUserAuthenticationTrustedApplication: IAzureApiAuthorization = {
   kind: "IAzureApiAuthorization",
 };
 
-const aMessagePayload: IMessagePayload = {
-  body_short: toNonEmptyString("Hello, world!").get,
+const aMessagePayload: NewMessage = {
+  content: {
+    body_short: toBodyShort("Hello, world!").get,
+  },
   dry_run: false,
 };
 
 const aNewMessage: INewMessage = {
-  bodyShort: toNonEmptyString("some text").get,
+  bodyShort: toBodyShort("some text").get,
   fiscalCode: aFiscalCode,
   id: toNonEmptyString("A_MESSAGE_ID").get,
   kind: "INewMessage",
@@ -91,7 +95,7 @@ describe("CreateMessageHandler", () => {
 
     const createMessageHandler = CreateMessageHandler(mockAppInsights as any, mockMessageModel as any);
 
-    const aDryRunMessagePayload: IMessagePayload = {
+    const aDryRunMessagePayload: NewMessage = {
       ...aMessagePayload,
       dry_run: true,
     };
@@ -111,14 +115,17 @@ describe("CreateMessageHandler", () => {
     expect(mockMessageModel.create).not.toHaveBeenCalled();
     expect(mockContext.bindings).toEqual({});
     expect(mockAppInsights.trackEvent).toHaveBeenCalledTimes(1);
-    expect(mockAppInsights.trackEvent).toHaveBeenCalledWith("api.messages.create", {
-      dryRun: "true",
-      senderOrganizationId: "agid",
-      success: "true",
+    expect(mockAppInsights.trackEvent).toHaveBeenCalledWith({
+      name: "api.messages.create",
+      properties: {
+        dryRun: "true",
+        senderOrganizationId: "agid",
+        success: "true",
+      },
     });
     expect(result.kind).toBe("IResponseSuccessJson");
     if (result.kind === "IResponseSuccessJson") {
-      expect(result.value.bodyShort).toEqual(aDryRunMessagePayload.body_short);
+      expect(result.value.bodyShort).toEqual(aDryRunMessagePayload.content.body_short);
       expect(result.value.senderOrganizationId).toEqual(someUserAttributes.organization.organizationId);
       expect(result.value.status).toEqual("DRY_RUN_SUCCESS");
     }
@@ -151,7 +158,7 @@ describe("CreateMessageHandler", () => {
     expect(mockMessageModel.create).toHaveBeenCalledTimes(1);
 
     const messageDocument: INewMessage = mockMessageModel.create.mock.calls[0][0];
-    expect(messageDocument.bodyShort).toEqual(aMessagePayload.body_short);
+    expect(messageDocument.bodyShort).toEqual(aMessagePayload.content.body_short);
 
     expect(mockMessageModel.create.mock.calls[0][1]).toEqual(aFiscalCode);
 
@@ -162,10 +169,13 @@ describe("CreateMessageHandler", () => {
     });
 
     expect(mockAppInsights.trackEvent).toHaveBeenCalledTimes(1);
-    expect(mockAppInsights.trackEvent).toHaveBeenCalledWith("api.messages.create", {
-      dryRun: "false",
-      senderOrganizationId: "agid",
-      success: "true",
+    expect(mockAppInsights.trackEvent).toHaveBeenCalledWith({
+      name: "api.messages.create",
+      properties: {
+        dryRun: "false",
+        senderOrganizationId: "agid",
+        success: "true",
+      },
     });
 
     expect(result.kind).toBe("IResponseSuccessRedirectToResource");

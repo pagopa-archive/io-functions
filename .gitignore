@@ -3,4 +3,6 @@
 **/*.js
 **/*.log
 **/local.*
+**/*.js.map
 .idea
+.vscode

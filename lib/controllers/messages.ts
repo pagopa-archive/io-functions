@@ -5,15 +5,15 @@
 import * as express from "express";
 import * as ulid from "ulid";
 
-// cannot use "import * from", see https://goo.gl/HbzFra
-import ApplicationInsightsClient = require("../../node_modules/applicationinsights/out/Library/Client");
+import * as ApplicationInsights from "applicationinsights";
 
 import { IContext } from "azure-function-express";
 
 import { left, right } from "../utils/either";
-import { isNonEmptyString, NonEmptyString } from "../utils/strings";
 
-import { FiscalCode } from "../utils/fiscalcode";
+import { FiscalCode } from "../api/definitions/FiscalCode";
+import { isNewMessage, NewMessage } from "../api/definitions/NewMessage";
+
 import {
   AzureApiAuthMiddleware,
   IAzureApiAuthorization,
@@ -72,16 +72,6 @@ interface IBindings {
 }
 
 /**
- * A new Message payload.
- *
- * TODO: generate from a schema.
- */
-export interface IMessagePayload {
-  readonly body_short: NonEmptyString;
-  readonly dry_run: boolean;
-}
-
-/**
  * Response for successful dry run requests
  */
 export interface IResponseDryRun {
@@ -102,31 +92,18 @@ export interface IResponsePublicMessage {
 
 /**
  * A request middleware that validates the Message payload.
- *
- * TODO: generate from the OpenAPI specs.
  */
-export const MessagePayloadMiddleware: IRequestMiddleware<IResponseErrorValidation, IMessagePayload> =
+export const MessagePayloadMiddleware: IRequestMiddleware<IResponseErrorValidation, NewMessage> =
   (request) => {
-    const body = request.body;
+    const requestBody = request.body;
 
-    // validate body
-    const bodyShort = body.body_short;
-    if (!isNonEmptyString(bodyShort)) {
+    if (isNewMessage(requestBody)) {
+      return Promise.resolve(right(requestBody));
+    } else {
       return Promise.resolve(left(ResponseErrorValidation(
-        "Request not valid", "body_short must be a non-empty string",
+        "Request not valid", "The request payload does not represent a valid NewMessage",
       )));
     }
-
-    // validate dry_run
-    const dryRun = body.dry_run;
-    if (typeof dryRun !== "boolean") {
-      return Promise.resolve(left(ResponseErrorValidation("Request not valid", "dry_run must be a boolean")));
-    }
-
-    return Promise.resolve(right({
-      body_short: bodyShort,
-      dry_run: body.dry_run,
-    }));
 };
 
 /**
@@ -142,7 +119,7 @@ type ICreateMessageHandler = (
   auth: IAzureApiAuthorization,
   attrs: IAzureUserAttributes,
   fiscalCode: FiscalCode,
-  messagePayload: IMessagePayload,
+  messagePayload: NewMessage,
 ) => Promise<
   IResponseSuccessRedirectToResource<IMessage> |
   IResponseSuccessJson<IResponseDryRun> |
@@ -193,7 +170,7 @@ type IGetMessagesHandler = (
  * Returns a type safe CreateMessage handler.
  */
 export function CreateMessageHandler(
-  applicationInsightsClient: ApplicationInsightsClient,
+  applicationInsightsClient: ApplicationInsights.TelemetryClient,
   messageModel: MessageModel,
 ): ICreateMessageHandler {
   return async (context, _, userAttributes, fiscalCode, messagePayload) => {
@@ -211,13 +188,16 @@ export function CreateMessageHandler(
     if (messagePayload.dry_run) {
       // if the user requested a dry run, we respond with the attributes
       // that we received
-      applicationInsightsClient.trackEvent(eventName, {
-        ...eventData,
-        dryRun: "true",
-        success: "true",
+      applicationInsightsClient.trackEvent({
+        name: eventName,
+        properties: {
+          ...eventData,
+          dryRun: "true",
+          success: "true",
+        },
       });
       const response: IResponseDryRun = {
-        bodyShort: messagePayload.body_short,
+        bodyShort: messagePayload.content.body_short,
         senderOrganizationId: userOrganization.organizationId,
         status: "DRY_RUN_SUCCESS",
       };
@@ -230,7 +210,7 @@ export function CreateMessageHandler(
     // we need the user to be associated to a valid organization for him
     // to be able to send a message
     const message: INewMessage = {
-      bodyShort: messagePayload.body_short,
+      bodyShort: messagePayload.content.body_short,
       fiscalCode,
       id: toNonEmptyString(ulid()).get,
       kind: "INewMessage",
@@ -245,10 +225,13 @@ export function CreateMessageHandler(
       const retrievedMessage = errorOrMessage.right;
       context.log(`>> message created|${fiscalCode}|${userOrganization.organizationId}|${retrievedMessage.id}`);
 
-      applicationInsightsClient.trackEvent(eventName, {
-        ...eventData,
-        dryRun: "false",
-        success: "true",
+      applicationInsightsClient.trackEvent({
+        name: eventName,
+        properties: {
+          ...eventData,
+          dryRun: "false",
+          success: "true",
+        },
       });
 
       // prepare the created message event
@@ -275,7 +258,7 @@ export function CreateMessageHandler(
  * Wraps a CreateMessage handler inside an Express request handler.
  */
 export function CreateMessage(
-  applicationInsightsClient: ApplicationInsightsClient,
+  applicationInsightsClient: ApplicationInsights.TelemetryClient,
   organizationModel: OrganizationModel,
   messageModel: MessageModel,
 ): express.RequestHandler {
