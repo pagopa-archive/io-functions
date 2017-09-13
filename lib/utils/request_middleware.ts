@@ -186,31 +186,31 @@ export function withRequestMiddlewares<
                           // run handler
                           handler(r1.right, r2.right, r3.right, r4.right, r5.right).then(resolve, reject);
                         }
-                      });
+                      }, reject);
                     } else {
                       // 4th middleware returned a value
                       // run handler
                       handler(r1.right, r2.right, r3.right, r4.right).then(resolve, reject);
                     }
-                  });
+                  }, reject);
                 } else {
                   // 3rd middleware returned a value
                   // run handler
                   handler(r1.right, r2.right, r3.right).then(resolve, reject);
                 }
-              });
+              }, reject);
             } else {
               // 2nd middleware returned a value
               // run handler
               handler(r1.right, r2.right).then(resolve, reject);
             }
-          });
+          }, reject);
         } else {
           // 1st middleware returned a value
           // run handler
           handler(r1.right).then(resolve, reject);
         }
-      });
+      }, reject);
 
     });
 
