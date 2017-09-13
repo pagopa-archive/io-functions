@@ -43,6 +43,14 @@ export function wrapRequestHandler<R extends IResponse>(handler: RequestHandler<
 export type IRequestMiddleware<R extends IResponse, T> =
   (request: express.Request) => Promise<Either<R, T>>;
 
+//
+// The following are the type definitions for withRequestMiddlewares(...)
+// Each overloaded type provided a type safe signature of withRequestMiddlewares with
+// a certain number of middlewares. This is useful for enforcing the constraint that
+// the handler should have the same number of parameters as the number of middlewares
+// and each parameter must be of the same type returned by the corresponding middleware.
+//
+
 export function withRequestMiddlewares<
   RH extends IResponse,
   R1 extends IResponse,
@@ -132,8 +140,15 @@ export function withRequestMiddlewares<
   RequestHandler<R1 | R2 | R3 | R4 | R5 | RH> {
   return (handler) => {
 
+    // The outer promise with resolve to a type that can either be the the type returned
+    // by the handler or one of the types returned by any of the middlewares (i.e., when
+    // a middleware returns an error response).
     return (request) => new Promise<R1 | R2 | R3 | R4 | R5 | RH>((resolve, reject) => {
 
+      // we execute each middleware in sequence, stopping at the first middleware that is
+      // undefined or when a middleware returns an error response.
+      // when we find an undefined middleware, we call the handler with all the results of
+      // the executed middlewares
       v1(request).then((r1) => {
         if (r1.isLeft) {
           // 1st middleware returned a response
