@@ -213,10 +213,13 @@ async function handleNotification(
 
   if (sendResult.isLeft) {
     // we got an error while sending the email
-    appInsightsClient.trackEvent({name: eventName, properties: {
-      ...eventContent,
-      success: "false",
-    }});
+    appInsightsClient.trackEvent({
+      name: eventName,
+      properties: {
+        ...eventContent,
+        success: "false",
+      },
+    });
     const error = sendResult.left;
     winston.warn(
       `Error while sending email|notification=${notificationId}|message=${messageId}|error=${error.message}`,
@@ -224,10 +227,13 @@ async function handleNotification(
     return left(ProcessingError.TRANSIENT);
   }
 
-  appInsightsClient.trackEvent({name: eventName, properties: {
-    ...eventContent,
-    success: "true",
-  }});
+  appInsightsClient.trackEvent({
+    name: eventName,
+    properties: {
+      ...eventContent,
+      success: "true",
+    },
+  });
 
   // now we can update the notification status
   // TODO: store the message ID for handling bounces and delivery updates
