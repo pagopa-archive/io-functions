@@ -1,4 +1,4 @@
-import { FiscalCode, isFiscalCode } from "../fiscalcode";
+import { FiscalCode, isFiscalCode } from "../../api/definitions/FiscalCode";
 
 import { left, right } from "../either";
 

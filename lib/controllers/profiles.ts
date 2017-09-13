@@ -6,7 +6,7 @@ import * as express from "express";
 
 import { left, right } from "../utils/either";
 
-import { FiscalCode } from "../utils/fiscalcode";
+import { FiscalCode } from "../api/definitions/FiscalCode";
 
 import {
   AzureApiAuthMiddleware,

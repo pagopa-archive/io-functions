@@ -1,4 +1,4 @@
-import { isFiscalCode } from "../fiscalcode";
+import { isFiscalCode } from "../../api/definitions/FiscalCode";
 
 describe("isFiscalCode", () => {
 

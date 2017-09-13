@@ -12,8 +12,8 @@ import { DocumentDbModel } from "../utils/documentdb_model";
 
 import { Option, some } from "ts-option";
 
+import { FiscalCode, isFiscalCode } from "../api/definitions/FiscalCode";
 import { Either, right } from "../utils/either";
-import { FiscalCode, isFiscalCode } from "../utils/fiscalcode";
 import { isNonEmptyString, NonEmptyString } from "../utils/strings";
 
 /**

@@ -12,7 +12,7 @@ import {
 import { IAzureApiAuthorization, UserGroup } from "../../utils/middlewares/azure_api_auth";
 import { GetProfileHandler, UpsertProfileHandler } from "../profiles";
 
-import { toFiscalCode } from "../../utils/fiscalcode";
+import { toFiscalCode } from "../../api/definitions/FiscalCode";
 import { toNonNegativeNumber } from "../../utils/numbers";
 
 const anAzureAuthorization: IAzureApiAuthorization = {
