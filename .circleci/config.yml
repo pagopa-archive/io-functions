@@ -38,6 +38,6 @@ jobs:
       - run: chmod +x ./cc-test-reporter
 
       # run tests!
-      - run: ./cc-test-reporter before-build
+      - run: $CIRCLE_PR_REPONAME || ./cc-test-reporter before-build
       - run: yarn test
-      - run: ./cc-test-reporter after-build -t lcov --exit-code $? < ./coverage/lcov.info
+      - run: $CIRCLE_PR_REPONAME || ./cc-test-reporter after-build -t lcov --exit-code $? < ./coverage/lcov.info
