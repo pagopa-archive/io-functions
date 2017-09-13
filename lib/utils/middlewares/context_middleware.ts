@@ -1,9 +1,11 @@
 import * as express from "express";
 
 import { Option, option } from "ts-option";
-import { right } from "../either";
+import { left, right } from "../either";
 
 import { IRequestMiddleware } from "../request_middleware";
+
+import { IResponseErrorInternal, ResponseErrorInternal} from "../response";
 
 import { IContext } from "azure-function-express";
 
@@ -23,10 +25,12 @@ export function getAppContext<T>(request: express.Request): Option<IContext<T>> 
  *
  * @param T The type of the bindings found in the context.
  */
-export function ContextMiddleware<T>(): IRequestMiddleware<never, IContext<T>> {
-  return (request: express.Request) => {
-    const context: IContext<T> = getAppContext<T>(request)
-      .getOrElse(() => { throw new Error("Cannot get context from request"); });
-    return Promise.resolve(right(context));
-  };
+export function ContextMiddleware<T>(): IRequestMiddleware<IResponseErrorInternal, IContext<T> | void> {
+  return (request) => new Promise((resolve) => (
+    getAppContext<T>(request)
+      .match({
+        none: () => resolve(left(ResponseErrorInternal("Cannot get context from request"))),
+        some: (context) => resolve(right(context)),
+      })
+    ));
 }
