@@ -8,7 +8,7 @@ import { IRetrievedMessage } from "../models/message";
 
 import { none, some } from "ts-option";
 import { toBodyShort } from "../api/definitions/BodyShort";
-import { FiscalCode } from "../api/definitions/FiscalCode";
+import { FiscalCode, toFiscalCode } from "../api/definitions/FiscalCode";
 import {
   handleMessage,
   ProcessingError,
@@ -19,7 +19,6 @@ import {
 } from "../models/notification";
 import { IRetrievedProfile } from "../models/profile";
 import { left, right } from "../utils/either";
-import { toFiscalCode } from "../utils/fiscalcode";
 import { toNonNegativeNumber } from "../utils/numbers";
 import { toNonEmptyString } from "../utils/strings";
 
