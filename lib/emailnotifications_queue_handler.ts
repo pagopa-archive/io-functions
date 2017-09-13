@@ -27,6 +27,8 @@ import { INotificationEvent, isNotificationEvent } from "./models/notification_e
 import { MessageModel } from "./models/message";
 import { INotification, NotificationChannelStatus, NotificationModel } from "./models/notification";
 
+const ApplicationInsightsClient = ApplicationInsights.defaultClient;
+
 // Setup DocumentDB
 
 const COSMOSDB_URI: string = process.env.CUSTOMCONNSTR_COSMOSDB_URI;
@@ -122,7 +124,7 @@ function setEmailNotificationSend(notification: INotification): INotification {
  * It will then send the email.
  */
 async function handleNotification(
-  appInsightsClient: ApplicationInsights.TelemetryClient,
+  appInsightsClient: typeof ApplicationInsightsClient,
   notificationModel: NotificationModel,
   messageModel: MessageModel,
   messageId: string,
@@ -268,7 +270,7 @@ export function index(context: IContextWithBindings): void {
   winston.debug(`STARTED|${context.invocationId}`);
 
   // Setup ApplicationInsights
-  const appInsightsClient = new ApplicationInsights.TelemetryClient();
+  const appInsightsClient = ApplicationInsights.defaultClient;
 
   const emailNotificationEvent = context.bindings.notificationEvent;
 

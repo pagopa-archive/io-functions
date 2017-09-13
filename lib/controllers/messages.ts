@@ -62,6 +62,8 @@ import {
   MessageModel,
 } from "../models/message";
 
+const ApplicationInsightsClient = ApplicationInsights.defaultClient;
+
 /**
  * Input and output bindings for this function
  * see CreatedMessageQueueHandler/function.json
@@ -170,7 +172,7 @@ type IGetMessagesHandler = (
  * Returns a type safe CreateMessage handler.
  */
 export function CreateMessageHandler(
-  applicationInsightsClient: ApplicationInsights.TelemetryClient,
+  applicationInsightsClient: typeof ApplicationInsightsClient,
   messageModel: MessageModel,
 ): ICreateMessageHandler {
   return async (context, _, userAttributes, fiscalCode, messagePayload) => {
@@ -258,7 +260,7 @@ export function CreateMessageHandler(
  * Wraps a CreateMessage handler inside an Express request handler.
  */
 export function CreateMessage(
-  applicationInsightsClient: ApplicationInsights.TelemetryClient,
+  applicationInsightsClient: typeof ApplicationInsightsClient,
   organizationModel: OrganizationModel,
   messageModel: MessageModel,
 ): express.RequestHandler {
