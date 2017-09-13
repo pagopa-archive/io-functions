@@ -111,10 +111,13 @@ describe("CreateMessageHandler", () => {
     expect(mockMessageModel.create).not.toHaveBeenCalled();
     expect(mockContext.bindings).toEqual({});
     expect(mockAppInsights.trackEvent).toHaveBeenCalledTimes(1);
-    expect(mockAppInsights.trackEvent).toHaveBeenCalledWith("api.messages.create", {
-      dryRun: "true",
-      senderOrganizationId: "agid",
-      success: "true",
+    expect(mockAppInsights.trackEvent).toHaveBeenCalledWith({
+      name: "api.messages.create",
+      properties: {
+        dryRun: "true",
+        senderOrganizationId: "agid",
+        success: "true",
+      },
     });
     expect(result.kind).toBe("IResponseSuccessJson");
     if (result.kind === "IResponseSuccessJson") {
@@ -162,10 +165,13 @@ describe("CreateMessageHandler", () => {
     });
 
     expect(mockAppInsights.trackEvent).toHaveBeenCalledTimes(1);
-    expect(mockAppInsights.trackEvent).toHaveBeenCalledWith("api.messages.create", {
-      dryRun: "false",
-      senderOrganizationId: "agid",
-      success: "true",
+    expect(mockAppInsights.trackEvent).toHaveBeenCalledWith({
+      name: "api.messages.create",
+      properties: {
+        dryRun: "false",
+        senderOrganizationId: "agid",
+        success: "true",
+      },
     });
 
     expect(result.kind).toBe("IResponseSuccessRedirectToResource");

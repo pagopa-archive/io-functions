@@ -213,9 +213,12 @@ async function handleNotification(
 
   if (sendResult.isLeft) {
     // we got an error while sending the email
-    appInsightsClient.trackEvent(eventName, {
-      ...eventContent,
-      success: "false",
+    appInsightsClient.trackEvent({
+      name: eventName,
+      properties: {
+        ...eventContent,
+        success: "false",
+      },
     });
     const error = sendResult.left;
     winston.warn(
@@ -224,9 +227,12 @@ async function handleNotification(
     return left(ProcessingError.TRANSIENT);
   }
 
-  appInsightsClient.trackEvent(eventName, {
-    ...eventContent,
-    success: "true",
+  appInsightsClient.trackEvent({
+    name: eventName,
+    properties: {
+      ...eventContent,
+      success: "true",
+    },
   });
 
   // now we can update the notification status
@@ -264,7 +270,7 @@ export function index(context: IContextWithBindings): void {
   winston.debug(`STARTED|${context.invocationId}`);
 
   // Setup ApplicationInsights
-  const appInsightsClient = ApplicationInsights.getClient();
+  const appInsightsClient = new ApplicationInsights.TelemetryClient();
 
   const emailNotificationEvent = context.bindings.notificationEvent;
 

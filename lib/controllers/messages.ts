@@ -212,10 +212,13 @@ export function CreateMessageHandler(
     if (messagePayload.dry_run) {
       // if the user requested a dry run, we respond with the attributes
       // that we received
-      applicationInsightsClient.trackEvent(eventName, {
-        ...eventData,
-        dryRun: "true",
-        success: "true",
+      applicationInsightsClient.trackEvent({
+        name: eventName,
+        properties: {
+          ...eventData,
+          dryRun: "true",
+          success: "true",
+        },
       });
       const response: IResponseDryRun = {
         bodyShort: messagePayload.body_short,
@@ -246,10 +249,13 @@ export function CreateMessageHandler(
       const retrievedMessage = errorOrMessage.right;
       context.log(`>> message created|${fiscalCode}|${userOrganization.organizationId}|${retrievedMessage.id}`);
 
-      applicationInsightsClient.trackEvent(eventName, {
-        ...eventData,
-        dryRun: "false",
-        success: "true",
+      applicationInsightsClient.trackEvent({
+        name: eventName,
+        properties: {
+          ...eventData,
+          dryRun: "false",
+          success: "true",
+        },
       });
 
       // prepare the created message event
