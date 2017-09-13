@@ -61,7 +61,7 @@ import {
   MessageModel,
 } from "../models/message";
 
-const ApplicationInsightsClient = ApplicationInsights.getClient();
+const ApplicationInsightsClient = ApplicationInsights.defaultClient;
 
 /**
  * Input and output bindings for this function
@@ -212,11 +212,11 @@ export function CreateMessageHandler(
     if (messagePayload.dry_run) {
       // if the user requested a dry run, we respond with the attributes
       // that we received
-      applicationInsightsClient.trackEvent(eventName, {
+      applicationInsightsClient.trackEvent({name: eventName, properties: {
           ...eventData,
           dryRun: "true",
           success: "true",
-      });
+      }});
       const response: IResponseDryRun = {
         bodyShort: messagePayload.body_short,
         senderOrganizationId: userOrganization.organizationId,
@@ -246,11 +246,11 @@ export function CreateMessageHandler(
       const retrievedMessage = errorOrMessage.right;
       context.log(`>> message created|${fiscalCode}|${userOrganization.organizationId}|${retrievedMessage.id}`);
 
-      applicationInsightsClient.trackEvent(eventName, {
+      applicationInsightsClient.trackEvent({name: eventName, properties: {
         ...eventData,
         dryRun: "false",
         success: "true",
-      });
+      }});
 
       // prepare the created message event
       const createdMessageEvent: ICreatedMessageEvent = {

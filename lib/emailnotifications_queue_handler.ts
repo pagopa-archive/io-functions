@@ -27,7 +27,7 @@ import { INotificationEvent, isNotificationEvent } from "./models/notification_e
 import { MessageModel } from "./models/message";
 import { INotification, NotificationChannelStatus, NotificationModel } from "./models/notification";
 
-const ApplicationInsightsClient = ApplicationInsights.getClient();
+const ApplicationInsightsClient = ApplicationInsights.defaultClient;
 
 // Setup DocumentDB
 
@@ -213,10 +213,10 @@ async function handleNotification(
 
   if (sendResult.isLeft) {
     // we got an error while sending the email
-    appInsightsClient.trackEvent(eventName, {
+    appInsightsClient.trackEvent({name: eventName, properties: {
       ...eventContent,
       success: "false",
-    });
+    }});
     const error = sendResult.left;
     winston.warn(
       `Error while sending email|notification=${notificationId}|message=${messageId}|error=${error.message}`,
@@ -224,10 +224,10 @@ async function handleNotification(
     return left(ProcessingError.TRANSIENT);
   }
 
-  appInsightsClient.trackEvent(eventName, {
+  appInsightsClient.trackEvent({name: eventName, properties: {
     ...eventContent,
     success: "true",
-  });
+  }});
 
   // now we can update the notification status
   // TODO: store the message ID for handling bounces and delivery updates
@@ -264,7 +264,7 @@ export function index(context: IContextWithBindings): void {
   winston.debug(`STARTED|${context.invocationId}`);
 
   // Setup ApplicationInsights
-  const appInsightsClient = ApplicationInsights.getClient();
+  const appInsightsClient = ApplicationInsights.defaultClient;
 
   const emailNotificationEvent = context.bindings.notificationEvent;
 

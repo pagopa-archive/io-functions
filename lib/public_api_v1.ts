@@ -58,7 +58,7 @@ const notificationModel = new NotificationModel(documentClient, notificationsCol
 
 // Setup ApplicationInsights
 
-const appInsightsClient = ApplicationInsights.getClient();
+const appInsightsClient = ApplicationInsights.defaultClient;
 
 // Setup handlers
 
