@@ -5,8 +5,7 @@
 import * as express from "express";
 import * as ulid from "ulid";
 
-// cannot use "import * from", see https://goo.gl/HbzFra
-import ApplicationInsightsClient = require("../../node_modules/applicationinsights/out/Library/Client");
+import * as ApplicationInsights from "applicationinsights";
 
 import { IContext } from "azure-function-express-cloudify";
 
@@ -193,7 +192,7 @@ type IGetMessagesHandler = (
  * Returns a type safe CreateMessage handler.
  */
 export function CreateMessageHandler(
-  applicationInsightsClient: ApplicationInsightsClient,
+  applicationInsightsClient: ApplicationInsights.TelemetryClient,
   messageModel: MessageModel,
 ): ICreateMessageHandler {
   return async (context, _, userAttributes, fiscalCode, messagePayload) => {
@@ -211,10 +210,13 @@ export function CreateMessageHandler(
     if (messagePayload.dry_run) {
       // if the user requested a dry run, we respond with the attributes
       // that we received
-      applicationInsightsClient.trackEvent(eventName, {
-        ...eventData,
-        dryRun: "true",
-        success: "true",
+      applicationInsightsClient.trackEvent({
+        name: eventName,
+        properties: {
+          ...eventData,
+          dryRun: "true",
+          success: "true",
+        },
       });
       const response: IResponseDryRun = {
         bodyShort: messagePayload.body_short,
@@ -245,10 +247,13 @@ export function CreateMessageHandler(
       const retrievedMessage = errorOrMessage.right;
       context.log(`>> message created|${fiscalCode}|${userOrganization.organizationId}|${retrievedMessage.id}`);
 
-      applicationInsightsClient.trackEvent(eventName, {
-        ...eventData,
-        dryRun: "false",
-        success: "true",
+      applicationInsightsClient.trackEvent({
+        name: eventName,
+        properties: {
+          ...eventData,
+          dryRun: "false",
+          success: "true",
+        },
       });
 
       // prepare the created message event
@@ -275,7 +280,7 @@ export function CreateMessageHandler(
  * Wraps a CreateMessage handler inside an Express request handler.
  */
 export function CreateMessage(
-  applicationInsightsClient: ApplicationInsightsClient,
+  applicationInsightsClient: ApplicationInsights.TelemetryClient,
   organizationModel: OrganizationModel,
   messageModel: MessageModel,
 ): express.RequestHandler {
