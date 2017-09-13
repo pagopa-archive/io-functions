@@ -7,8 +7,7 @@ import { IContext } from "azure-function-express-cloudify";
 import * as express from "express";
 import * as winston from "winston";
 
-// cannot use "import * from", see https://goo.gl/HbzFra
-import ApplicationInsights = require("applicationinsights");
+import * as ApplicationInsights from "applicationinsights";
 
 import { configureAzureContextTransport } from "./utils/logging";
 

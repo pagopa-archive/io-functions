@@ -5,8 +5,7 @@
 import * as express from "express";
 import * as ulid from "ulid";
 
-// cannot use "import * from", see https://goo.gl/HbzFra
-import ApplicationInsightsClient = require("../../node_modules/applicationinsights/out/Library/Client");
+import * as ApplicationInsights from "applicationinsights";
 
 import { IContext } from "azure-function-express-cloudify";
 
@@ -61,6 +60,8 @@ import {
   IPublicExtendedMessage,
   MessageModel,
 } from "../models/message";
+
+const ApplicationInsightsClient = ApplicationInsights.getClient();
 
 /**
  * Input and output bindings for this function
@@ -193,7 +194,7 @@ type IGetMessagesHandler = (
  * Returns a type safe CreateMessage handler.
  */
 export function CreateMessageHandler(
-  applicationInsightsClient: ApplicationInsightsClient,
+  applicationInsightsClient: typeof ApplicationInsightsClient,
   messageModel: MessageModel,
 ): ICreateMessageHandler {
   return async (context, _, userAttributes, fiscalCode, messagePayload) => {
@@ -275,7 +276,7 @@ export function CreateMessageHandler(
  * Wraps a CreateMessage handler inside an Express request handler.
  */
 export function CreateMessage(
-  applicationInsightsClient: ApplicationInsightsClient,
+  applicationInsightsClient: typeof ApplicationInsightsClient,
   organizationModel: OrganizationModel,
   messageModel: MessageModel,
 ): express.RequestHandler {

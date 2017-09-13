@@ -7,9 +7,7 @@
 
 import * as winston from "winston";
 
-// cannot use "import * from", see https://goo.gl/HbzFra
-import ApplicationInsights = require("applicationinsights");
-import ApplicationInsightsClient = require("../node_modules/applicationinsights/out/Library/Client");
+import * as ApplicationInsights from "applicationinsights";
 
 import { configureAzureContextTransport } from "./utils/logging";
 
@@ -28,6 +26,8 @@ import { INotificationEvent, isNotificationEvent } from "./models/notification_e
 
 import { MessageModel } from "./models/message";
 import { INotification, NotificationChannelStatus, NotificationModel } from "./models/notification";
+
+const ApplicationInsightsClient = ApplicationInsights.getClient();
 
 // Setup DocumentDB
 
@@ -124,7 +124,7 @@ function setEmailNotificationSend(notification: INotification): INotification {
  * It will then send the email.
  */
 async function handleNotification(
-  appInsightsClient: ApplicationInsightsClient,
+  appInsightsClient: typeof ApplicationInsightsClient,
   notificationModel: NotificationModel,
   messageModel: MessageModel,
   messageId: string,
