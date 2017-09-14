@@ -43,7 +43,7 @@ const notificationsCollectionUrl = documentDbUtils.getCollectionUri(documentDbDa
  * Input and output bindings for this function
  * see CreatedMessageQueueHandler/function.json
  */
-export interface IContextWithBindings extends IContext {
+interface IContextWithBindings extends IContext {
   readonly bindings: {
 
     // input bindings
