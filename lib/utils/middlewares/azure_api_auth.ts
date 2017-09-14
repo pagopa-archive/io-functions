@@ -3,7 +3,7 @@
  * request.
  */
 
-import { none, option, Option, some } from "ts-option";
+import { option, Option } from "ts-option";
 
 import { left, right } from "../either";
 
