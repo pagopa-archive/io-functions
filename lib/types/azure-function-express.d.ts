@@ -1,5 +1,5 @@
 
-declare module "azure-function-express-cloudify" {
+declare module "azure-function-express" {
 
   import * as express from "express";
 
@@ -9,10 +9,6 @@ declare module "azure-function-express-cloudify" {
     readonly log: (text: string, ...params: any[]) => void,
     readonly invocationId: string,
     readonly bindings: T,
-  }
-
-  export interface IRequestWithContext<T> extends express.Request {
-    readonly context: IContext<T>;
   }
 
 }

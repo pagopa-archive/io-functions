@@ -10,22 +10,21 @@ describe("ContextMiddleware", () => {
 
   it("should extract the context from the request", async () => {
     const middleware = ContextMiddleware<ITestBindings>();
-    const response = await middleware({
-      context: {
-        bindings: {
-          test: "test",
-        },
-      },
-    } as any);
 
-    expect(response.isRight).toBeTruthy();
-    if (response.isRight) {
-      expect(response.right).toEqual({
-        bindings: {
-          test: "test",
-        },
-      });
-    }
+    const context = {
+      log: () => true,
+    };
+
+    const request = {
+      app: {
+        get: (s) => (context),
+      },
+    };
+
+    const response = await middleware(request as any);
+
+    response.mapRight((c) => expect(c).toEqual(context));
+
   });
 
 });

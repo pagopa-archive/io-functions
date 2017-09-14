@@ -7,7 +7,7 @@ import * as ulid from "ulid";
 
 import * as ApplicationInsights from "applicationinsights";
 
-import { IContext } from "azure-function-express-cloudify";
+import { IContext } from "azure-function-express";
 
 import { left, right } from "../utils/either";
 
