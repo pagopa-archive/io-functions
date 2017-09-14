@@ -12,10 +12,6 @@ import { DocumentClient as DocumentDBClient } from "documentdb";
 import * as documentDbUtils from "./utils/documentdb";
 
 import {
-  handleMessage,
-  ProcessingError,
-} from "./controllers/queued_message_handler";
-import {
   ICreatedMessageEvent,
   isICreatedMessageEvent,
 } from "./models/created_message_event";
@@ -26,6 +22,10 @@ import {
 } from "./models/notification";
 import { INotificationEvent } from "./models/notification_event";
 import { ProfileModel } from "./models/profile";
+import {
+  handleMessage,
+  ProcessingError,
+} from "./queue_handlers/queued_message_handler";
 import { Either } from "./utils/either";
 
 // Setup DocumentDB

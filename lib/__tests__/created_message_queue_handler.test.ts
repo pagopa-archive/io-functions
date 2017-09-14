@@ -10,14 +10,14 @@ import { none, some } from "ts-option";
 import { toBodyShort } from "../api/definitions/BodyShort";
 import { FiscalCode, toFiscalCode } from "../api/definitions/FiscalCode";
 import {
-  handleMessage,
-  ProcessingError,
-} from "../controllers/queued_message_handler";
-import {
   INewNotification,
   INotificationChannelEmail, NotificationChannelStatus,
 } from "../models/notification";
 import { IRetrievedProfile } from "../models/profile";
+import {
+  handleMessage,
+  ProcessingError,
+} from "../queue_handlers/queued_message_handler";
 import { left, right } from "../utils/either";
 import { toNonNegativeNumber } from "../utils/numbers";
 import { toNonEmptyString } from "../utils/strings";
