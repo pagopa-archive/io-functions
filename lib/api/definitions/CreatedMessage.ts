@@ -5,8 +5,6 @@
 // tslint:disable:jsdoc-format
 // tslint:disable:interface-name
 
-import { Option } from "ts-option";
-
 import { isFiscalCode, FiscalCode } from "./FiscalCode";
 import { isTimeToLive, TimeToLive } from "./TimeToLive";
 import { isMessageContent, MessageContent } from "./MessageContent";
@@ -17,7 +15,7 @@ import { isMessageStatus, MessageStatus } from "./MessageStatus";
  * 
  */
 
-import { option } from "ts-option";
+import { option, Option } from "ts-option";
 
 export interface CreatedMessage {
 

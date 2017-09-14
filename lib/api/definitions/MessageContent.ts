@@ -5,8 +5,6 @@
 // tslint:disable:jsdoc-format
 // tslint:disable:interface-name
 
-import { Option } from "ts-option";
-
 import { isBodyShort, BodyShort } from "./BodyShort";
 import { isBodyLong, BodyLong } from "./BodyLong";
 
@@ -15,7 +13,7 @@ import { isBodyLong, BodyLong } from "./BodyLong";
  * 
  */
 
-import { option } from "ts-option";
+import { option, Option } from "ts-option";
 
 export interface MessageContent {
 

@@ -5,6 +5,7 @@ import { DocumentDbModelVersioned, IVersionedModel, ModelId } from "../utils/doc
 import { Option } from "ts-option";
 import { Either } from "../utils/either";
 
+import { EmailAddress } from "../api/definitions/EmailAddress";
 import { FiscalCode } from "../api/definitions/FiscalCode";
 import { fiscalCodeToModelId } from "../utils/conversions";
 import { NonNegativeNumber } from "../utils/numbers";
@@ -16,7 +17,7 @@ import { LimitedFields } from "../utils/types";
  */
 export interface IProfile {
   readonly fiscalCode: FiscalCode;
-  readonly email?: NonEmptyString;
+  readonly email?: EmailAddress;
 }
 
 /**

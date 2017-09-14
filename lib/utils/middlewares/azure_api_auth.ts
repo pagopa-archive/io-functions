@@ -23,24 +23,31 @@ import {
  */
 export enum UserGroup {
 
-  // profiles
+  // profiles: read limited profile (without addresses)
   ApiLimitedProfileRead = "ApiLimitedProfileRead",
+  // profiles: read full profile (with addresses)
   ApiFullProfileRead = "ApiFullProfileRead",
+  // profiles: create and update full profile
   ApiProfileWrite = "ApiProfileWrite",
 
-  // organizations
+  // organizations: read organization attributes
   ApiOrganizationRead = "ApiOrganizationRead",
+  // organizations: create and update organizations
   ApiOrganizationWrite = "ApiOrganizationWrite",
 
-  // messages
+  // messages: read sent message
   ApiMessageRead = "ApiMessageRead",
+  // messages: send messages
   ApiMessageWrite = "ApiMessageWrite",
+  // messages: ability to set default address when sending a message
+  ApiMessageWriteDefaultAddress = "ApiMessageWriteDefaultAddress",
+  // messages: list all messages for any recipient
   ApiMessageList = "ApiMessageList",
 
-  // info
+  // info: read system information
   ApiInfoRead = "ApiInfoRead",
 
-  // debug
+  // debug endpoint
   ApiDebugRead = "ApiDebugRead",
 
 }

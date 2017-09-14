@@ -5,8 +5,6 @@
 // tslint:disable:jsdoc-format
 // tslint:disable:interface-name
 
-import { Option } from "ts-option";
-
 
 
 /**
@@ -14,6 +12,8 @@ import { Option } from "ts-option";
  */
 
   
+import { Option } from "ts-option";
+
 import { isWithinRangeString, toWithinRangeString, WithinRangeString } from "../../utils/strings";
 
 export type BodyLong = WithinRangeString<100, 100000>;

@@ -1,4 +1,5 @@
 import is from "ts-is";
+import * as validator from "validator";
 
 import { option, Option } from "ts-option";
 
@@ -17,14 +18,15 @@ interface IPatternStringTag<P extends string> {
   readonly kind: "IPatternStringTag";
 }
 
+interface IEmailStringTag {
+  readonly kind: "INonEmptyStringTag";
+}
+
 /**
- * A number guaranteed to be within the range [L,H)
+ * A string guaranteed to have a length within the range [L,H)
  */
 export type WithinRangeString<L extends number, H extends number> = string & IWithinRangeStringTag<L, H>;
 
-/**
- * Type guard for numbers that are within a range.
- */
 export function isWithinRangeString<L extends number, H extends number>(
   // tslint:disable-next-line:no-any
   arg: any, l: L, h: H,
@@ -32,9 +34,6 @@ export function isWithinRangeString<L extends number, H extends number>(
   return typeof arg === "string" && arg.length >= l && arg.length < h;
 }
 
-/**
- * Returns a defined option if the provided number is within the provided range.
- */
 export function toWithinRangeString<L extends number, H extends number>(
   // tslint:disable-next-line:no-any
   arg: any, l: L, h: H,
@@ -43,7 +42,7 @@ export function toWithinRangeString<L extends number, H extends number>(
 }
 
 /**
- * A tagged unboxed type that is a non-empty string
+ * A non-empty string
  */
 export type NonEmptyString = string & INonEmptyStringTag;
 
@@ -58,13 +57,10 @@ export function toNonEmptyString(s: any): Option<NonEmptyString> {
 }
 
 /**
- * A tagged unboxed type that is a string that matches a pattern.
+ * A string that matches a pattern.
  */
 export type PatternString<P extends string> = string & IPatternStringTag<P>;
 
-/**
- * Type guard for strings that match a pattern.
- */
 export function isPatternString<P extends string>(
   // tslint:disable-next-line:no-any
   arg: any, p: P,
@@ -72,12 +68,29 @@ export function isPatternString<P extends string>(
   return typeof arg === "string" && arg.match(p) !== null;
 }
 
-/**
- * Returns a defined option if the provided string that matches the pattern.
- */
 export function toPatternString<P extends string>(
   // tslint:disable-next-line:no-any
   arg: any, p: P,
 ): Option<PatternString<P>> {
   return option(arg).filter((_) => isPatternString(_, p));
+}
+
+/**
+ * A string that represents a valid email address.
+ */
+export type EmailString = string & IEmailStringTag;
+
+export const isEmailString = is<EmailString>((arg) => {
+  return typeof arg === "string" && validator.isEmail(arg, {
+    allow_display_name: false,
+    allow_utf8_local_part: false,
+    require_tld: true,
+  });
+});
+
+export function toEmailString(
+  // tslint:disable-next-line:no-any
+  arg: any,
+): Option<EmailString> {
+  return option(arg).filter(isEmailString);
 }

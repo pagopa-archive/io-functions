@@ -205,6 +205,7 @@ async function handleNotification(
 
   const eventName = "notification.email.delivery";
   const eventContent = {
+    addressSource: emailNotification.addressSource,
     mta: "sendgrid",
     senderOrganizationId: message.senderOrganizationId,
   };

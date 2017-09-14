@@ -159,6 +159,8 @@ definitions:
         $ref: '#/definitions/TimeToLive'
       content:
         $ref: '#/definitions/MessageContent'
+      default_addresses:
+        $ref: '#/definitions/NewMessageDefaultAddresses'
     required:
       - content
   MessageStatus:
@@ -237,6 +239,16 @@ definitions:
     maximum: 600
     exclusiveMaximum: true
     example: 503
+  NewMessageDefaultAddresses:
+    type: object
+    description: 'Default addresses for notifying the recipient of the message.'
+    properties:
+      email:
+        $ref: '#/definitions/EmailAddress'
+        description: 'The recipient will be notified to this email address in case no email is set in the recipient profile.'
+  EmailAddress:
+    type: string
+    format: email
 responses: {}
 parameters:
   PaginationRequest:

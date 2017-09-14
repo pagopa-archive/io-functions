@@ -5,8 +5,6 @@
 // tslint:disable:jsdoc-format
 // tslint:disable:interface-name
 
-import { Option } from "ts-option";
-
 
 
 /**
@@ -15,6 +13,7 @@ of the problem.
 
  */
 
+import { Option } from "ts-option";
 
 import { isWithinRangeNumber, toWithinRangeNumber, WithinRangeNumber } from "../../utils/numbers";
 

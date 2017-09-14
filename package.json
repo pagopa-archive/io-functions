@@ -24,6 +24,7 @@
     "@types/js-yaml": "^3.9.1",
     "@types/node": "^6.0.0",
     "@types/nodemailer": "^3.1.1",
+    "@types/validator": "^6.2.3",
     "@types/winston": "^2.3.1",
     "applicationinsights": "^0.22.0",
     "azure-function-express": "^1.2.2",
@@ -40,6 +41,7 @@
     "ts-option": "^1.1.4",
     "typescript": "^2.5.2",
     "ulid": "^1.0.0",
+    "validator": "^8.2.0",
     "winston": "^2.3.1"
   },
   "devDependencies": {
