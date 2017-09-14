@@ -12,9 +12,7 @@ describe("ContextMiddleware", () => {
     const middleware = ContextMiddleware<ITestBindings>();
 
     const context = {
-      context: {
-        log: () => true,
-      },
+      log: () => true,
     };
 
     const request = {
