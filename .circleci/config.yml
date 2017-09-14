@@ -37,6 +37,9 @@ jobs:
       - run: curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
       - run: chmod +x ./cc-test-reporter
 
+      # run build
+      - run: yarn build
+
       # run tests!
       - run: '[ -z "$CC_TEST_REPORTER_ID" ] || ./cc-test-reporter before-build'
       - run: yarn test
