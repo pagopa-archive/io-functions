@@ -2,6 +2,8 @@
 
 [![CircleCI](https://circleci.com/gh/teamdigitale/digital-citizenship-functions/tree/master.svg?style=svg)](https://circleci.com/gh/teamdigitale/digital-citizenship-functions/tree/master)
 
+[![codecov](https://codecov.io/gh/teamdigitale/digital-citizenship-functions/branch/master/graph/badge.svg)](https://codecov.io/gh/teamdigitale/digital-citizenship-functions)
+
 [![Code Climate](https://codeclimate.com/github/teamdigitale/digital-citizenship-functions/badges/gpa.svg)](https://codeclimate.com/github/teamdigitale/digital-citizenship-functions)
 
 [![Test Coverage](https://codeclimate.com/github/teamdigitale/digital-citizenship-functions/badges/coverage.svg)](https://codeclimate.com/github/teamdigitale/digital-citizenship-functions/coverage)
