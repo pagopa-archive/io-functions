@@ -11,23 +11,25 @@ import { IContext } from "azure-functions-types";
 
 import { DocumentClient as DocumentDBClient } from "documentdb";
 
-import { Option, option } from "ts-option";
-import { Either, left, right } from "./utils/either";
-import { toNonEmptyString } from "./utils/strings";
-
 import * as documentDbUtils from "./utils/documentdb";
 
-import { ICreatedMessageEvent, isICreatedMessageEvent } from "./models/created_message_event";
+import { Option, option } from "ts-option";
+
+import {
+  ICreatedMessageEvent,
+  isICreatedMessageEvent,
+} from "./models/created_message_event";
 import { IRetrievedMessage } from "./models/message";
 import {
   INewNotification,
   INotificationChannelEmail,
-  IRetrievedNotification,
-  NotificationChannelStatus,
+  IRetrievedNotification, NotificationChannelStatus,
   NotificationModel,
 } from "./models/notification";
 import { INotificationEvent } from "./models/notification_event";
 import { ProfileModel } from "./models/profile";
+import { Either, left, right } from "./utils/either";
+import { toNonEmptyString } from "./utils/strings";
 
 // Setup DocumentDB
 
@@ -38,10 +40,6 @@ const COSMOSDB_KEY: string = process.env.CUSTOMCONNSTR_COSMOSDB_KEY;
 const documentDbDatabaseUrl = documentDbUtils.getDatabaseUri("development");
 const profilesCollectionUrl = documentDbUtils.getCollectionUri(documentDbDatabaseUrl, "profiles");
 const notificationsCollectionUrl = documentDbUtils.getCollectionUri(documentDbDatabaseUrl, "notifications");
-
-//
-// Main function
-//
 
 /**
  * Input and output bindings for this function
@@ -63,7 +61,7 @@ interface IContextWithBindings extends IContext {
 /**
  * Bad things that can happen while we process the message
  */
-enum ProcessingError {
+export enum ProcessingError {
 
   // a transient error, e.g. database is not available
   TRANSIENT,
@@ -79,10 +77,10 @@ enum ProcessingError {
  *
  * TODO: emit to all channels (push notification, sms, etc...)
  */
-async function handleMessage(
-  profileModel: ProfileModel,
-  notificationModel: NotificationModel,
-  retrievedMessage: IRetrievedMessage,
+export async function handleMessage(
+    profileModel: ProfileModel,
+    notificationModel: NotificationModel,
+    retrievedMessage: IRetrievedMessage,
 ): Promise<Either<ProcessingError, IRetrievedNotification>> {
   // async fetch of profile data associated to the fiscal code the message
   // should be delivered to
@@ -139,8 +137,56 @@ async function handleMessage(
 
 }
 
+export function processResolve(errorOrNotification: Either<ProcessingError, IRetrievedNotification>,
+                               context: IContextWithBindings,
+                               retrievedMessage: IRetrievedMessage): void {
+  if (errorOrNotification.isRight) {
+    // the notification has been created
+    const notification = errorOrNotification.right;
+
+    if (notification.emailNotification) {
+      // the notification object has been created with an email channel
+      // we output a notification event to the email channel queue
+
+      // tslint:disable-next-line:no-object-mutation
+      context.bindings.emailNotification = {
+        messageId: notification.messageId,
+        notificationId: notification.id,
+      };
+    }
+
+    context.done();
+  } else {
+    // the processing failed
+    switch (errorOrNotification.left) {
+      case ProcessingError.NO_PROFILE: {
+        context.log.error(`Fiscal code has no associated profile|${retrievedMessage.fiscalCode}`);
+        context.done();
+        break;
+      }
+      case ProcessingError.TRANSIENT: {
+        context.log.error(`Transient error, retrying|${retrievedMessage.fiscalCode}`);
+        context.done("Transient error"); // here we trigger a retry by calling
+                                         // done(error)
+        break;
+      }
+    }
+  }
+}
+
+export function processReject(context: IContextWithBindings,
+                              retrievedMessage: IRetrievedMessage,
+                              error: Either<ProcessingError, IRetrievedNotification>): void {
+  // the promise failed
+  context.log.error(`Error while processing event, retrying|${retrievedMessage.fiscalCode}|${error}`);
+  // in case of error, we return a failure to trigger a retry (up to the
+  // configured max retries) TODO: schedule next retry with exponential
+  // backoff, see #150597257
+  context.done(error);
+}
+
 /**
- * Handler that gets triggerend on incoming event.
+ * Handler that gets triggered on incoming event.
  */
 export function index(context: IContextWithBindings): void {
   const createdMessageEvent = context.bindings.createdMessage;
@@ -162,56 +208,21 @@ export function index(context: IContextWithBindings): void {
   context.log(`A new message was created|${retrievedMessage.id}|${retrievedMessage.fiscalCode}`);
 
   // setup required models
-  const documentClient = new DocumentDBClient(COSMOSDB_URI, { masterKey: COSMOSDB_KEY });
+  const documentClient = new DocumentDBClient(COSMOSDB_URI, {masterKey: COSMOSDB_KEY});
   const profileModel = new ProfileModel(documentClient, profilesCollectionUrl);
   const notificationModel = new NotificationModel(documentClient, notificationsCollectionUrl);
 
   // now we can trigger the notifications for the message
-  handleMessage(
-    profileModel,
-    notificationModel,
-    retrievedMessage,
-  ).then((errorOrNotification) => {
-    if (errorOrNotification.isRight) {
-      // the notification has been created
-      const notification = errorOrNotification.right;
-
-      if (notification.emailNotification) {
-        // the notification object has been created with an email channel
-        // we output a notification event to the email channel queue
-
-        // tslint:disable-next-line:no-object-mutation
-        context.bindings.emailNotification = {
-          messageId: notification.messageId,
-          notificationId: notification.id,
-        };
-      }
-
-      context.done();
-    } else {
-      // the processing failed
-      switch (errorOrNotification.left) {
-        case ProcessingError.NO_PROFILE: {
-          context.log.error(`Fiscal code has no associated profile|${retrievedMessage.fiscalCode}`);
-          context.done();
-          break;
-        }
-        case ProcessingError.TRANSIENT: {
-          context.log.error(`Transient error, retrying|${retrievedMessage.fiscalCode}`);
-          context.done("Transient error"); // here we trigger a retry by calling done(error)
-          break;
-        }
-      }
-    }
-  },
-  (error) => {
-    // the promise failed
-    context.log.error(`Error while processing event, retrying|${retrievedMessage.fiscalCode}|${error}`);
-    // in case of error, we return a failure to trigger a retry (up to the configured max retries)
-    // TODO: schedule next retry with exponential backoff, see #150597257
-    context.done(error);
-  });
-
+  exports.handleMessage(
+      profileModel,
+      notificationModel,
+      retrievedMessage,
+  ).then((errorOrNotification: Either<ProcessingError, IRetrievedNotification>) => {
+        processResolve(errorOrNotification, context, retrievedMessage);
+      },
+      (error: Either<ProcessingError, IRetrievedNotification>) => {
+        processReject(context, retrievedMessage, error);
+      });
 }
 
 /*
