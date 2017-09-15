@@ -311,9 +311,13 @@ aws4@^1.2.1:
   version "1.6.0"
   resolved "https://registry.yarnpkg.com/aws4/-/aws4-1.6.0.tgz#83ef5ca860b2b32e4a0deedee8c771b9db57471e"
 
-azure-function-express-cloudify@^1.2.2-1:
-  version "1.2.2-1"
-  resolved "https://registry.yarnpkg.com/azure-function-express-cloudify/-/azure-function-express-cloudify-1.2.2-1.tgz#e121072320f3eafe2c82c9ffc0e7641117a0e179"
+azure-function-express@^1.2.2:
+  version "1.2.2"
+  resolved "https://registry.yarnpkg.com/azure-function-express/-/azure-function-express-1.2.2.tgz#e3ba4062e12c89e9144ba5b180f2b45dcd348cc7"
+
+azure-functions-types@^0.1.1:
+  version "0.1.1"
+  resolved "https://registry.yarnpkg.com/azure-functions-types/-/azure-functions-types-0.1.1.tgz#a244ad28192be94258e4cad9dfe73f50e412470b"
 
 azure-storage@^2.2.2:
   version "2.2.2"
