@@ -1,19 +1,36 @@
-import { right } from "../either";
+import * as express from "express";
+
+import { Option, option } from "ts-option";
+import { left, right } from "../either";
 
 import { IRequestMiddleware } from "../request_middleware";
 
-import { IContext, IRequestWithContext } from "azure-function-express-cloudify";
+import { IResponseErrorInternal, ResponseErrorInternal} from "../response";
+
+import { IContext } from "azure-function-express";
+
+const CONTEXT_IDENTIFIER = "context";
+
+export function setAppContext(app: express.Express, context: IContext<{}>): void {
+  app.set(CONTEXT_IDENTIFIER, context);
+}
+
+export function getAppContext<T>(request: express.Request): Option<IContext<T>> {
+  return option(request.app.get(CONTEXT_IDENTIFIER));
+}
 
 /**
  * Returns a request middleware that extracts the Azure request context
  * from the request.
  *
  * @param T The type of the bindings found in the context.
- *
- * TODO: validate that the context is indeed defined, respond with ResponseErrorInternal instead
  */
-export function ContextMiddleware<T>(): IRequestMiddleware<never, IContext<T>> {
-  return (request: IRequestWithContext<T>) => {
-    return Promise.resolve(right(request.context));
-  };
+export function ContextMiddleware<T>(): IRequestMiddleware<IResponseErrorInternal, IContext<T> | void> {
+  return (request) => new Promise((resolve) => (
+    getAppContext<T>(request)
+      .match({
+        none: () => resolve(left(ResponseErrorInternal("Cannot get context from request"))),
+        some: (context) => resolve(right(context)),
+      })
+    ));
 }

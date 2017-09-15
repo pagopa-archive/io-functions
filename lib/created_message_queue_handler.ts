@@ -5,14 +5,16 @@
  * to each configured channel.
  */
 
-import { IContext } from "./azure-functions-types";
+import * as ulid from "ulid";
+
+import { IContext } from "azure-functions-types";
 
 import { DocumentClient as DocumentDBClient } from "documentdb";
 
 import * as documentDbUtils from "./utils/documentdb";
 
 import { Option, option } from "ts-option";
-import ulid = require("ulid");
+
 import {
   ICreatedMessageEvent,
   isICreatedMessageEvent,
