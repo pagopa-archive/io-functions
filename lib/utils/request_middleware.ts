@@ -4,6 +4,8 @@ import * as winston from "winston";
 import { Either } from "./either";
 import { IResponse, ResponseErrorInternal } from "./response";
 
+import * as async from "async";
+
 export type RequestHandler<R extends IResponse> = (request: express.Request) => Promise<R>;
 
 /**
@@ -21,6 +23,7 @@ export function wrapRequestHandler<R extends IResponse>(handler: RequestHandler<
       (e) => {
         ResponseErrorInternal(e).apply(response);
         winston.log("debug", `wrapRequestHandler|ERROR|${request.url}|${e}`);
+        // winston.log("debug", `${e.stack}`);
       },
     );
   };
@@ -111,17 +114,6 @@ export function withRequestMiddlewares<
   v5: IRequestMiddleware<R5, T5>,
 ): (handler: (v1: T1, v2: T2, v3: T3, v4: T4, v5: T5) => Promise<RH>) => RequestHandler<RH | R1 | R2 | R3 | R4 | R5>;
 
-/**
- * Returns a request handler wrapped with the provided middlewares.
- *
- * The wrapper will process the request with each provided middleware in sequence.
- * Each middleware will return a response or a value.
- * When a response gets returned, the response gets sent back to the client and the
- * processing stops.
- * When all the provided middlewares complete by returning a value, all the values
- * gets passed to the custom handler that in turn will return a response.
- * That final response gets sent to the client.
- */
 export function withRequestMiddlewares<
   RH extends IResponse,
   R1 extends IResponse,
@@ -139,80 +131,37 @@ export function withRequestMiddlewares<
 ): (handler: (v1: T1, v2?: T2, v3?: T3, v4?: T4, v5?: T5) => Promise<RH>) =>
   RequestHandler<R1 | R2 | R3 | R4 | R5 | RH> {
   return (handler) => {
+    type IMiddlewareResponse = R1 | R2 | R3 | R4 | R5;
+    type IMiddlewareResult = T1 | T2 | T3 | T4 | T5;
 
     // The outer promise with resolve to a type that can either be the the type returned
     // by the handler or one of the types returned by any of the middlewares (i.e., when
     // a middleware returns an error response).
-    return (request) => new Promise<R1 | R2 | R3 | R4 | R5 | RH>((resolve, reject) => {
+    return (request) => new Promise<IMiddlewareResponse | RH>((resolve, reject) => {
+      const middlewares = [ v1, v2, v3, v4, v5].filter((v) => v !== undefined);
 
-      // we execute each middleware in sequence, stopping at the first middleware that is
-      // undefined or when a middleware returns an error response.
-      // when we find an undefined middleware, we call the handler with all the results of
-      // the executed middlewares
-      v1(request).then((r1) => {
-        if (r1.isLeft) {
-          // 1st middleware returned a response
-          // stop processing the middlewares
-          resolve(r1.left);
-        } else if (v2 !== undefined) {
-          // 1st middleware returned a value
-          // process 2nd middleware
-          v2(request).then((r2) => {
-            if (r2.isLeft) {
-              // 2nd middleware returned a response
-              // stop processing the middlewares
-              resolve(r2.left);
-            } else if (v3 !== undefined) {
-              // process 3rd middleware
-              v3(request).then((r3) => {
-                if (r3.isLeft) {
-                  // 3rd middleware returned a response
-                  // stop processing the middlewares
-                  resolve(r3.left);
-                } else if (v4 !== undefined) {
-                  v4(request).then((r4) => {
-                    if (r4.isLeft) {
-                      // 4th middleware returned a response
-                      // stop processing the middlewares
-                      resolve(r4.left);
-                    } else if (v5 !== undefined) {
-                      v5(request).then((r5) => {
-                        if (r5.isLeft) {
-                          // 5th middleware returned a response
-                          // stop processing the middlewares
-                          resolve(r5.left);
-                        } else {
-                          // 5th middleware returned a value
-                          // run handler
-                          handler(r1.right, r2.right, r3.right, r4.right, r5.right).then(resolve, reject);
-                        }
-                      }, reject);
-                    } else {
-                      // 4th middleware returned a value
-                      // run handler
-                      handler(r1.right, r2.right, r3.right, r4.right).then(resolve, reject);
-                    }
-                  }, reject);
-                } else {
-                  // 3rd middleware returned a value
-                  // run handler
-                  handler(r1.right, r2.right, r3.right).then(resolve, reject);
-                }
-              }, reject);
-            } else {
-              // 2nd middleware returned a value
-              // run handler
-              handler(r1.right, r2.right).then(resolve, reject);
-            }
-          }, reject);
-        } else {
-          // 1st middleware returned a value
-          // run handler
-          handler(r1.right).then(resolve, reject);
-        }
-      }, reject);
+      const task = <
+        R extends IMiddlewareResponse,
+        T extends IMiddlewareResult,
+        M extends IRequestMiddleware<R, T>
+      >
+        (middleware: M | undefined) => async (cb:
+        (err: Error | undefined, result?: T) => void) => {
+          const response = await (middleware as M)(request);
+          if (response.isLeft) {
+            resolve(response.left);
+            return cb(new Error(response.left.kind));
+          } else {
+            return cb(undefined, response.right);
+          }
+      };
+
+      async.series(middlewares.map((mw) => task(mw)),
+        (err: Error, results: [ T1, T2, T3, T4, T5 ]) =>
+          (err) ? reject(err) :
+            handler.apply(undefined, results)
+              .then(resolve, reject));
 
     });
-
   };
 }
