@@ -226,6 +226,7 @@ export function index(context: IContextWithBindings): void {
   configureAzureContextTransport(context, winston, "debug");
 
   const createdMessageEvent = context.bindings.createdMessage;
+  winston.debug("createdMessageEvent", createdMessageEvent);
 
   // since this function gets triggered by a queued message that gets
   // deserialized from a json object, we must first check that what we
