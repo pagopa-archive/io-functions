@@ -8,19 +8,20 @@ import * as DocumentDbUtils from "../documentdb";
 import { right } from "../either";
 
 describe("getDatabaseUri", () => {
+
   it("should generate a database Uri", () => {
     expect(DocumentDbUtils.getDatabaseUri("mydb").uri).toEqual("dbs/mydb");
   });
+
 });
 
 describe("getCollectionUri", () => {
   const dbUriFixture = DocumentDbUtils.getDatabaseUri("mydb");
 
   it("should generate a collection Uri", () => {
-    expect(
-      DocumentDbUtils.getCollectionUri(dbUriFixture, "mycoll").uri
-    ).toEqual("dbs/mydb/colls/mycoll");
+    expect(DocumentDbUtils.getCollectionUri(dbUriFixture, "mycoll").uri).toEqual("dbs/mydb/colls/mycoll");
   });
+
 });
 
 describe("readDatabase", () => {
@@ -29,12 +30,9 @@ describe("readDatabase", () => {
 
   it("should resolve a promise with the database", async () => {
     const clientMock = {
-      readDatabase: jest.fn((_, cb) => cb(undefined, dbFixture))
+      readDatabase: jest.fn((_, cb) => cb(undefined, dbFixture)),
     };
-    const result = await DocumentDbUtils.readDatabase(
-      (clientMock as any) as DocumentDb.DocumentClient,
-      dbUriFixture
-    );
+    const result = await DocumentDbUtils.readDatabase((clientMock as any) as DocumentDb.DocumentClient, dbUriFixture);
     expect(clientMock.readDatabase).toHaveBeenCalledTimes(1);
 
     expect(result.isRight).toBeTruthy();
@@ -45,35 +43,30 @@ describe("readDatabase", () => {
 
   it("should reject a promise with the error", async () => {
     const clientMock = {
-      readDatabase: jest.fn((_, cb) => cb("error"))
+      readDatabase: jest.fn((_, cb) => cb("error")),
     };
-    const result = await DocumentDbUtils.readDatabase(
-      (clientMock as any) as DocumentDb.DocumentClient,
-      dbUriFixture
-    );
+    const result = await DocumentDbUtils.readDatabase((clientMock as any) as DocumentDb.DocumentClient, dbUriFixture);
     expect(clientMock.readDatabase).toHaveBeenCalledTimes(1);
     expect(result.isLeft).toBeTruthy();
     if (result.isLeft) {
       expect(result.left).toEqual("error");
     }
   });
+
 });
 
 describe("readCollection", () => {
   const dbUriFixture = DocumentDbUtils.getDatabaseUri("mydb");
-  const collectionUriFixture = DocumentDbUtils.getCollectionUri(
-    dbUriFixture,
-    "mycollection"
-  );
+  const collectionUriFixture = DocumentDbUtils.getCollectionUri(dbUriFixture, "mycollection");
   const collectionFixture = {} as DocumentDb.CollectionMeta;
 
   it("should resolve a promise with the collection", async () => {
     const clientMock = {
-      readCollection: jest.fn((_, cb) => cb(undefined, collectionFixture))
+      readCollection: jest.fn((_, cb) => cb(undefined, collectionFixture)),
     };
     const result = await DocumentDbUtils.readCollection(
       (clientMock as any) as DocumentDb.DocumentClient,
-      collectionUriFixture
+      collectionUriFixture,
     );
     expect(clientMock.readCollection).toHaveBeenCalledTimes(1);
     expect(result.isRight).toBeTruthy();
@@ -84,11 +77,11 @@ describe("readCollection", () => {
 
   it("should reject a promise with the error", async () => {
     const clientMock = {
-      readCollection: jest.fn((_, cb) => cb("error"))
+      readCollection: jest.fn((_, cb) => cb("error")),
     };
     const result = await DocumentDbUtils.readCollection(
       (clientMock as any) as DocumentDb.DocumentClient,
-      collectionUriFixture
+      collectionUriFixture,
     );
     expect(clientMock.readCollection).toHaveBeenCalledTimes(1);
     expect(result.isLeft).toBeTruthy();
@@ -96,27 +89,23 @@ describe("readCollection", () => {
       expect(result.left).toEqual("error");
     }
   });
+
 });
 
 describe("createDocument", () => {
   const dbUriFixture = DocumentDbUtils.getDatabaseUri("mydb");
-  const collectionUriFixture = DocumentDbUtils.getCollectionUri(
-    dbUriFixture,
-    "mycollection"
-  );
+  const collectionUriFixture = DocumentDbUtils.getCollectionUri(dbUriFixture, "mycollection");
   const documentFixture = {} as DocumentDb.NewDocument;
 
   it("should resolve a promise with the created document", async () => {
     const clientMock = {
-      createDocument: jest.fn((_, __, ___, cb) =>
-        cb(undefined, documentFixture)
-      )
+      createDocument: jest.fn((_, __, ___, cb) => cb(undefined, documentFixture)),
     };
     const result = await DocumentDbUtils.createDocument(
       (clientMock as any) as DocumentDb.DocumentClient,
       collectionUriFixture,
       documentFixture,
-      "fiscalCode"
+      "fiscalCode",
     );
     expect(clientMock.createDocument).toHaveBeenCalledTimes(1);
     expect(result.isRight).toBeTruthy();
@@ -127,13 +116,13 @@ describe("createDocument", () => {
 
   it("should reject a promise with the error", async () => {
     const clientMock = {
-      createDocument: jest.fn((_, __, ___, cb) => cb("error"))
+      createDocument: jest.fn((_, __, ___, cb) => cb("error")),
     };
     const result = await DocumentDbUtils.createDocument(
       (clientMock as any) as DocumentDb.DocumentClient,
       collectionUriFixture,
       documentFixture,
-      "fiscalCode"
+      "fiscalCode",
     );
     expect(clientMock.createDocument).toHaveBeenCalledTimes(1);
     expect(result.isLeft).toBeTruthy();
@@ -141,33 +130,26 @@ describe("createDocument", () => {
       expect(result.left).toEqual("error");
     }
   });
+
 });
 
 describe("readDocument", () => {
   const dbUriFixture = DocumentDbUtils.getDatabaseUri("mydb");
-  const collectionUriFixture = DocumentDbUtils.getCollectionUri(
-    dbUriFixture,
-    "mycollection"
-  );
-  const documentUriFixture = DocumentDbUtils.getDocumentUri(
-    collectionUriFixture,
-    "mydoc"
-  );
+  const collectionUriFixture = DocumentDbUtils.getCollectionUri(dbUriFixture, "mycollection");
+  const documentUriFixture = DocumentDbUtils.getDocumentUri(collectionUriFixture, "mydoc");
   const documentFixture = {} as DocumentDb.RetrievedDocument;
 
   it("should resolve a promise with the created document (single partition key)", async () => {
     const clientMock = {
-      readDocument: jest.fn((__, ___, cb) => cb(undefined, documentFixture))
+      readDocument: jest.fn((__, ___, cb) => cb(undefined, documentFixture)),
     };
     const result = await DocumentDbUtils.readDocument(
       (clientMock as any) as DocumentDb.DocumentClient,
       documentUriFixture,
-      "k"
+      "k",
     );
     expect(clientMock.readDocument).toHaveBeenCalledTimes(1);
-    expect(clientMock.readDocument.mock.calls[0][1]).toEqual({
-      partitionKey: "k"
-    });
+    expect(clientMock.readDocument.mock.calls[0][1]).toEqual({ partitionKey: "k" });
     expect(result.isRight).toBeTruthy();
     if (result.isRight) {
       expect(result.right).toEqual(documentFixture);
@@ -195,12 +177,12 @@ describe("readDocument", () => {
 
   it("should reject a promise with the error", async () => {
     const clientMock = {
-      readDocument: jest.fn((__, ___, cb) => cb("error"))
+      readDocument: jest.fn((__, ___, cb) => cb("error")),
     };
     const result = await DocumentDbUtils.readDocument(
       (clientMock as any) as DocumentDb.DocumentClient,
       documentUriFixture,
-      "k"
+      "k",
     );
     expect(clientMock.readDocument).toHaveBeenCalledTimes(1);
     expect(result.isLeft).toBeTruthy();
@@ -208,32 +190,27 @@ describe("readDocument", () => {
       expect(result.left).toEqual("error");
     }
   });
+
 });
 
 describe("queryDocuments", () => {
   const dbUriFixture = DocumentDbUtils.getDatabaseUri("mydb");
-  const collectionUriFixture = DocumentDbUtils.getCollectionUri(
-    dbUriFixture,
-    "mycollection"
-  );
+  const collectionUriFixture = DocumentDbUtils.getCollectionUri(dbUriFixture, "mycollection");
 
   it("should return an iterator for the results of the query and iterate over values", async () => {
     const iteratorMock = {
-      executeNext: jest.fn(cb => cb(undefined, ["result"], undefined))
+      executeNext: jest.fn((cb) => cb(undefined, [ "result" ], undefined)),
     };
     const clientMock = {
-      queryDocuments: jest.fn((__, ___) => iteratorMock)
+      queryDocuments: jest.fn((__, ___) => iteratorMock),
     };
     const iterator = await DocumentDbUtils.queryDocuments(
       (clientMock as any) as DocumentDb.DocumentClient,
       collectionUriFixture,
-      "QUERY"
+      "QUERY",
     );
     expect(clientMock.queryDocuments).toHaveBeenCalledTimes(1);
-    expect(clientMock.queryDocuments).toBeCalledWith(
-      collectionUriFixture.uri,
-      "QUERY"
-    );
+    expect(clientMock.queryDocuments).toBeCalledWith(collectionUriFixture.uri, "QUERY");
     const result = await iterator.executeNext();
     expect(iteratorMock.executeNext).toBeCalled();
     expect(result.isRight).toBeTruthy();
@@ -245,21 +222,18 @@ describe("queryDocuments", () => {
 
   it("should return an iterator for the results of the query and reject the promise on failure", async () => {
     const iteratorMock = {
-      executeNext: jest.fn(cb => cb("error", undefined, undefined))
+      executeNext: jest.fn((cb) => cb("error", undefined, undefined)),
     };
     const clientMock = {
-      queryDocuments: jest.fn((__, ___) => iteratorMock)
+      queryDocuments: jest.fn((__, ___) => iteratorMock),
     };
     const iterator = await DocumentDbUtils.queryDocuments(
       (clientMock as any) as DocumentDb.DocumentClient,
       collectionUriFixture,
-      "QUERY"
+      "QUERY",
     );
     expect(clientMock.queryDocuments).toHaveBeenCalledTimes(1);
-    expect(clientMock.queryDocuments).toBeCalledWith(
-      collectionUriFixture.uri,
-      "QUERY"
-    );
+    expect(clientMock.queryDocuments).toBeCalledWith(collectionUriFixture.uri, "QUERY");
     const result = await iterator.executeNext();
     expect(iteratorMock.executeNext).toBeCalled();
     expect(result.isLeft).toBeTruthy();
@@ -267,34 +241,27 @@ describe("queryDocuments", () => {
       expect(result.left).toEqual("error");
     }
   });
+
 });
 
 describe("queryOneDocument", () => {
   const dbUriFixture = DocumentDbUtils.getDatabaseUri("mydb");
-  const collectionUriFixture = DocumentDbUtils.getCollectionUri(
-    dbUriFixture,
-    "mycollection"
-  );
+  const collectionUriFixture = DocumentDbUtils.getCollectionUri(dbUriFixture, "mycollection");
 
   it("should resolve a promise to the first result of the query", async () => {
     const iteratorMock = {
-      executeNext: jest.fn(cb =>
-        cb(undefined, ["result1", "result2"], undefined)
-      )
+      executeNext: jest.fn((cb) => cb(undefined, [ "result1", "result2" ], undefined)),
     };
     const clientMock = {
-      queryDocuments: jest.fn((__, ___) => iteratorMock)
+      queryDocuments: jest.fn((__, ___) => iteratorMock),
     };
     const result = await DocumentDbUtils.queryOneDocument(
       (clientMock as any) as DocumentDb.DocumentClient,
       collectionUriFixture,
-      "QUERY"
+      "QUERY",
     );
     expect(clientMock.queryDocuments).toHaveBeenCalledTimes(1);
-    expect(clientMock.queryDocuments).toBeCalledWith(
-      collectionUriFixture.uri,
-      "QUERY"
-    );
+    expect(clientMock.queryDocuments).toBeCalledWith(collectionUriFixture.uri, "QUERY");
     expect(iteratorMock.executeNext).toBeCalled();
     expect(result.isRight).toBeTruthy();
     if (result.isRight) {
@@ -305,21 +272,18 @@ describe("queryOneDocument", () => {
 
   it("should resolve a promise to null if the query has no results", async () => {
     const iteratorMock = {
-      executeNext: jest.fn(cb => cb(undefined, [], undefined))
+      executeNext: jest.fn((cb) => cb(undefined, [ ], undefined)),
     };
     const clientMock = {
-      queryDocuments: jest.fn((__, ___) => iteratorMock)
+      queryDocuments: jest.fn((__, ___) => iteratorMock),
     };
     const result = await DocumentDbUtils.queryOneDocument(
       (clientMock as any) as DocumentDb.DocumentClient,
       collectionUriFixture,
-      "QUERY"
+      "QUERY",
     );
     expect(clientMock.queryDocuments).toHaveBeenCalledTimes(1);
-    expect(clientMock.queryDocuments).toBeCalledWith(
-      collectionUriFixture.uri,
-      "QUERY"
-    );
+    expect(clientMock.queryDocuments).toBeCalledWith(collectionUriFixture.uri, "QUERY");
     expect(iteratorMock.executeNext).toBeCalled();
     expect(result.isRight).toBeTruthy();
     if (result.isRight) {
@@ -329,46 +293,39 @@ describe("queryOneDocument", () => {
 
   it("should reject a promise if the query has errors", async () => {
     const iteratorMock = {
-      executeNext: jest.fn(cb => cb("error", undefined, undefined))
+      executeNext: jest.fn((cb) => cb("error", undefined, undefined)),
     };
     const clientMock = {
-      queryDocuments: jest.fn((__, ___) => iteratorMock)
+      queryDocuments: jest.fn((__, ___) => iteratorMock),
     };
     const result = await DocumentDbUtils.queryOneDocument(
       (clientMock as any) as DocumentDb.DocumentClient,
       collectionUriFixture,
-      "QUERY"
+      "QUERY",
     );
     expect(clientMock.queryDocuments).toHaveBeenCalledTimes(1);
-    expect(clientMock.queryDocuments).toBeCalledWith(
-      collectionUriFixture.uri,
-      "QUERY"
-    );
+    expect(clientMock.queryDocuments).toBeCalledWith(collectionUriFixture.uri, "QUERY");
     expect(iteratorMock.executeNext).toBeCalled();
     expect(result.isLeft).toBeTruthy();
     if (result.isLeft) {
       expect(result.left).toEqual("error");
     }
   });
+
 });
 
 describe("mapResultIterator", () => {
+
   it("should map the documents or the wrapped iterator", async () => {
+
     const iteratorMock = {
-      executeNext: jest.fn()
+      executeNext: jest.fn(),
     };
 
-    iteratorMock.executeNext.mockImplementationOnce(() =>
-      Promise.resolve(right(some([1, 2])))
-    );
-    iteratorMock.executeNext.mockImplementationOnce(() =>
-      Promise.resolve(right(none))
-    );
+    iteratorMock.executeNext.mockImplementationOnce(() => Promise.resolve(right(some([1, 2]))));
+    iteratorMock.executeNext.mockImplementationOnce(() => Promise.resolve(right(none)));
 
-    const mappedIterator = DocumentDbUtils.mapResultIterator(
-      iteratorMock as any,
-      (n: number) => n * 2
-    );
+    const mappedIterator = DocumentDbUtils.mapResultIterator(iteratorMock as any, (n: number) => n * 2);
 
     const result1 = await mappedIterator.executeNext();
     await mappedIterator.executeNext();
@@ -384,27 +341,24 @@ describe("mapResultIterator", () => {
       expect(result1.right.isEmpty);
     }
   });
+
 });
 
 describe("iteratorToArray", () => {
+
   it("should consume an iterator", async () => {
     const iteratorMock = {
-      executeNext: jest.fn()
+      executeNext: jest.fn(),
     };
 
-    iteratorMock.executeNext.mockImplementationOnce(() =>
-      Promise.resolve(right(some([1, 2])))
-    );
-    iteratorMock.executeNext.mockImplementationOnce(() =>
-      Promise.resolve(right(some([3, 4])))
-    );
-    iteratorMock.executeNext.mockImplementationOnce(() =>
-      Promise.resolve(right(none))
-    );
+    iteratorMock.executeNext.mockImplementationOnce(() => Promise.resolve(right(some([1, 2]))));
+    iteratorMock.executeNext.mockImplementationOnce(() => Promise.resolve(right(some([3, 4]))));
+    iteratorMock.executeNext.mockImplementationOnce(() => Promise.resolve(right(none)));
 
     const result = await DocumentDbUtils.iteratorToArray(iteratorMock);
 
     expect(iteratorMock.executeNext).toHaveBeenCalledTimes(3);
     expect(result).toEqual([1, 2, 3, 4]);
   });
+
 });

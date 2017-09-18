@@ -15,6 +15,4 @@ export interface ICreatedMessageEvent {
 /**
  * Type guard for ICreatedMessageEvent objects
  */
-export const isICreatedMessageEvent = is<ICreatedMessageEvent>(arg =>
-  isIRetrievedMessage(arg.message)
-);
+export const isICreatedMessageEvent = is<ICreatedMessageEvent>((arg) => isIRetrievedMessage(arg.message));

@@ -18,17 +18,14 @@ interface INonNegativeNumberTag {
 /**
  * A number guaranteed to be within the range [L,H)
  */
-export type WithinRangeNumber<L extends number, H extends number> = number &
-  IWithinRangeNumberTag<L, H>;
+export type WithinRangeNumber<L extends number, H extends number> = number & IWithinRangeNumberTag<L, H>;
 
 /**
  * Type guard for numbers that are within a range.
  */
 export function isWithinRangeNumber<L extends number, H extends number>(
   // tslint:disable-next-line:no-any
-  arg: any,
-  l: L,
-  h: H
+  arg: any, l: L, h: H,
 ): arg is WithinRangeNumber<L, H> {
   return typeof arg === "number" && arg >= l && arg < h;
 }
@@ -38,11 +35,9 @@ export function isWithinRangeNumber<L extends number, H extends number>(
  */
 export function toWithinRangeNumber<L extends number, H extends number>(
   // tslint:disable-next-line:no-any
-  arg: any,
-  l: L,
-  h: H
+  arg: any, l: L, h: H,
 ): Option<WithinRangeNumber<L, H>> {
-  return option(arg).filter(_ => isWithinRangeNumber(_, l, h));
+  return option(arg).filter((_) => isWithinRangeNumber(_, l, h));
 }
 
 /**
@@ -53,9 +48,7 @@ export type NonNegativeNumber = number & INonNegativeNumberTag;
 /**
  * Type guard for numbers that are non-negative.
  */
-export const isNonNegativeNumber = is<NonNegativeNumber>(
-  n => typeof n === "number" && n >= 0
-);
+export const isNonNegativeNumber = is<NonNegativeNumber>((n) => typeof n === "number" && n >= 0);
 
 /**
  * Returns a defined option if the provided number is non-negative.

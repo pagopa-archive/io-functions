@@ -1,4 +1,5 @@
 declare module "codice-fiscale-italiano" {
+
   function CodiceFiscaleItaliano(cf: string): boolean;
 
   export = CodiceFiscaleItaliano;
@@ -6,4 +7,5 @@ declare module "codice-fiscale-italiano" {
   namespace CodiceFiscaleItaliano {
     function validateCF(cf: string): boolean;
   }
+
 }

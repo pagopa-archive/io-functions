@@ -8,16 +8,12 @@ import { none, option, Option, some } from "ts-option";
 import { left, right } from "../either";
 import { NonEmptyString } from "../strings";
 
-import {
-  IOrganization,
-  IRetrievedOrganization,
-  OrganizationModel
-} from "../../models/organization";
+import { IOrganization, IRetrievedOrganization, OrganizationModel } from "../../models/organization";
 import { IRequestMiddleware } from "../request_middleware";
 import {
   IResponseErrorForbiddenNotAuthorized,
   IResponseErrorInternal,
-  ResponseErrorInternal
+  ResponseErrorInternal,
 } from "../response";
 
 interface IAzureUserNote {
@@ -40,16 +36,14 @@ export interface IAzureUserAttributes {
  */
 async function getUserOrganization(
   organizationModel: OrganizationModel,
-  azureUserAttributes: IAzureUserNote
+  azureUserAttributes: IAzureUserNote,
 ): Promise<Option<IRetrievedOrganization>> {
   const organizationId = azureUserAttributes.organizationId;
   if (typeof organizationId !== "string" || organizationId.length === 0) {
     return Promise.resolve(none);
   }
 
-  const errorOrMaybeOrganization = await organizationModel.findByOrganizationId(
-    organizationId
-  );
+  const errorOrMaybeOrganization = await organizationModel.findByOrganizationId(organizationId);
 
   if (errorOrMaybeOrganization.isRight) {
     return errorOrMaybeOrganization.right;
@@ -76,69 +70,55 @@ async function getUserOrganization(
  *
  */
 export function AzureUserAttributesMiddleware(
-  organizationModel: OrganizationModel
-): IRequestMiddleware<
-  IResponseErrorForbiddenNotAuthorized | IResponseErrorInternal,
-  IAzureUserAttributes
-> {
-  return request =>
-    new Promise(resolve => {
-      // now we check whether some custom user attributes have been set
-      // through the x-user-note header (filled from the User Note attribute)
-      const userAttributes = option(request.header("x-user-note"))
-        // the header is a URI encoded string (since it may contain new lines
-        // and special chars), so we must first decode it.
-        .map(decodeURIComponent)
-        .flatMap<IAzureUserNote>(y => {
-          // then we try to parse the YAML string
-          try {
-            // all IUserAttributes are optional, so we can safely cast
-            // the object to it
-            // TODO: add type guard for IAzureUserNote
-            const yaml = jsYaml.safeLoad(y) as IAzureUserNote;
-            return some(yaml);
-          } catch (e) {
-            return none;
-          }
-        });
+  organizationModel: OrganizationModel,
+): IRequestMiddleware<IResponseErrorForbiddenNotAuthorized | IResponseErrorInternal, IAzureUserAttributes> {
+  return (request) => new Promise((resolve) => {
 
-      // now we can attempt to retrieve the Organization associated to the
-      // user, in case it was set in the custom attribute
-      const userOrg: Promise<
-        Option<IRetrievedOrganization>
-      > = new Promise((orgResolve, orgReject) => {
-        userAttributes
-          .map(a => {
-            getUserOrganization(organizationModel, a).then(
-              orgResolve,
-              orgReject
-            );
-          })
-          .getOrElse(() => orgResolve(none));
+    // now we check whether some custom user attributes have been set
+    // through the x-user-note header (filled from the User Note attribute)
+    const userAttributes = option(request.header("x-user-note"))
+      // the header is a URI encoded string (since it may contain new lines
+      // and special chars), so we must first decode it.
+      .map(decodeURIComponent)
+      .flatMap<IAzureUserNote>((y) => {
+        // then we try to parse the YAML string
+        try {
+          // all IUserAttributes are optional, so we can safely cast
+          // the object to it
+          // TODO: add type guard for IAzureUserNote
+          const yaml = jsYaml.safeLoad(y) as IAzureUserNote;
+          return some(yaml);
+        } catch (e) {
+          return none;
+        }
       });
 
-      userOrg.then(
-        o => {
-          // we have everything we need, we can now resolve the outer
-          // promise with an IAzureApiAuthorization object
-
-          const authInfo: IAzureUserAttributes = {
-            kind: "IAzureUserAttributes",
-            organization: o.isDefined ? o.get : undefined,
-            productionEnabled:
-              o.isDefined && userAttributes.get.productionEnabled ? true : false
-          };
-
-          resolve(right(authInfo));
-        },
-        error =>
-          resolve(
-            left(
-              ResponseErrorInternal(
-                `Error while fetching organization details: ${error}`
-              )
-            )
-          )
-      );
+    // now we can attempt to retrieve the Organization associated to the
+    // user, in case it was set in the custom attribute
+    const userOrg: Promise<Option<IRetrievedOrganization>> = new Promise((orgResolve, orgReject) => {
+      userAttributes
+        .map((a) => {
+          getUserOrganization(organizationModel, a)
+            .then(
+              orgResolve,
+              orgReject,
+            );
+        })
+        .getOrElse(() => orgResolve(none));
     });
+
+    userOrg.then((o) => {
+      // we have everything we need, we can now resolve the outer
+      // promise with an IAzureApiAuthorization object
+
+      const authInfo: IAzureUserAttributes = {
+        kind: "IAzureUserAttributes",
+        organization: o.isDefined ? o.get : undefined,
+        productionEnabled: o.isDefined && userAttributes.get.productionEnabled ? true : false,
+      };
+
+      resolve(right(authInfo));
+    }, (error) => resolve(left(ResponseErrorInternal(`Error while fetching organization details: ${error}`))));
+
+  });
 }

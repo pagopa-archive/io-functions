@@ -23,7 +23,7 @@ class AzureContextTransport extends winston.Transport {
     _: string,
     msg: string,
     __: object | undefined,
-    callback: (err: Error | undefined, cont: boolean) => void
+    callback: (err: Error | undefined, cont: boolean) => void,
   ): void {
     if (this.silent) {
       return callback(undefined, true);
@@ -33,21 +33,18 @@ class AzureContextTransport extends winston.Transport {
 
     callback(undefined, true);
   }
+
 }
 
 /**
  * Configures Winston to log through the Azure Context log function
  */
-export function configureAzureContextTransport(
-  context: IContext<{}>,
-  w: winston.Winston,
-  level: string
-): void {
+export function configureAzureContextTransport(context: IContext<{}>, w: winston.Winston, level: string): void {
   const azureContextTransport = new AzureContextTransport(context, {
-    level
+    level,
   });
   w.configure({
     level,
-    transports: [azureContextTransport]
+    transports: [ azureContextTransport ],
   });
 }

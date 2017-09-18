@@ -11,10 +11,7 @@ import { toNonEmptyString } from "../../utils/strings";
 import { IProfile, IRetrievedProfile, ProfileModel } from "../profile";
 
 const aDatabaseUri = DocumentDbUtils.getDatabaseUri("mockdb");
-const profilesCollectionUrl = DocumentDbUtils.getCollectionUri(
-  aDatabaseUri,
-  "profiles"
-);
+const profilesCollectionUrl = DocumentDbUtils.getCollectionUri(aDatabaseUri, "profiles");
 
 const aFiscalCode = toFiscalCode("FRLFRC74E04B157I").get;
 
@@ -24,23 +21,21 @@ const aRetrievedProfile: IRetrievedProfile = {
   fiscalCode: aFiscalCode,
   id: toNonEmptyString("xyz").get,
   kind: "IRetrievedProfile",
-  version: toNonNegativeNumber(0).get
+  version: toNonNegativeNumber(0).get,
 };
 
 describe("findOneProfileByFiscalCode", () => {
+
   it("should resolve a promise to an existing profile", async () => {
     const iteratorMock = {
-      executeNext: jest.fn(cb => cb(undefined, ["result"], undefined))
+      executeNext: jest.fn((cb) => cb(undefined, [ "result" ], undefined)),
     };
 
     const clientMock = {
-      queryDocuments: jest.fn((__, ___) => iteratorMock)
+        queryDocuments: jest.fn((__, ___) => iteratorMock),
     };
 
-    const model = new ProfileModel(
-      (clientMock as any) as DocumentDb.DocumentClient,
-      profilesCollectionUrl
-    );
+    const model = new ProfileModel((clientMock as any) as DocumentDb.DocumentClient, profilesCollectionUrl);
 
     const result = await model.findOneProfileByFiscalCode(aFiscalCode);
 
@@ -53,17 +48,14 @@ describe("findOneProfileByFiscalCode", () => {
 
   it("should resolve a promise to undefined if no profile is found", async () => {
     const iteratorMock = {
-      executeNext: jest.fn(cb => cb(undefined, [], undefined))
+      executeNext: jest.fn((cb) => cb(undefined, [ ], undefined)),
     };
 
     const clientMock = {
-      queryDocuments: jest.fn((__, ___) => iteratorMock)
+        queryDocuments: jest.fn((__, ___) => iteratorMock),
     };
 
-    const model = new ProfileModel(
-      (clientMock as any) as DocumentDb.DocumentClient,
-      profilesCollectionUrl
-    );
+    const model = new ProfileModel((clientMock as any) as DocumentDb.DocumentClient, profilesCollectionUrl);
 
     const result = await model.findOneProfileByFiscalCode(aFiscalCode);
 
@@ -72,32 +64,31 @@ describe("findOneProfileByFiscalCode", () => {
       expect(result.right.isEmpty).toBeTruthy();
     }
   });
+
 });
 
 describe("createProfile", () => {
+
   it("should create a new profile", async () => {
     const clientMock: any = {
       createDocument: jest.fn((_, newDocument, __, cb) => {
         cb(undefined, {
-          ...newDocument
+          ...newDocument,
         });
-      })
+      }),
     };
 
     const model = new ProfileModel(clientMock, profilesCollectionUrl);
 
     const newProfile: IProfile = {
-      fiscalCode: aFiscalCode
+      fiscalCode: aFiscalCode,
     };
 
     const result = await model.create(newProfile, newProfile.fiscalCode);
 
     expect(clientMock.createDocument).toHaveBeenCalledTimes(1);
     expect(clientMock.createDocument.mock.calls[0][1].kind).toBeUndefined();
-    expect(clientMock.createDocument.mock.calls[0][2]).toHaveProperty(
-      "partitionKey",
-      aFiscalCode
-    );
+    expect(clientMock.createDocument.mock.calls[0][2]).toHaveProperty("partitionKey", aFiscalCode);
     expect(result.isRight).toBeTruthy();
     if (result.isRight) {
       expect(result.right.fiscalCode).toEqual(newProfile.fiscalCode);
@@ -110,13 +101,13 @@ describe("createProfile", () => {
     const clientMock: any = {
       createDocument: jest.fn((_, __, ___, cb) => {
         cb("error");
-      })
+      }),
     };
 
     const model = new ProfileModel(clientMock, profilesCollectionUrl);
 
     const newProfile: IProfile = {
-      fiscalCode: aFiscalCode
+      fiscalCode: aFiscalCode,
     };
 
     const result = await model.create(newProfile, newProfile.fiscalCode);
@@ -128,17 +119,19 @@ describe("createProfile", () => {
       expect(result.left).toEqual("error");
     }
   });
+
 });
 
 describe("update", () => {
+
   it("should update an existing profile", async () => {
     const clientMock: any = {
       createDocument: jest.fn((_, newDocument, __, cb) => {
         cb(undefined, {
-          ...newDocument
+          ...newDocument,
         });
       }),
-      readDocument: jest.fn((_, __, cb) => cb(undefined, aRetrievedProfile))
+      readDocument: jest.fn((_, __, cb) => cb(undefined, aRetrievedProfile)),
     };
 
     const model = new ProfileModel(clientMock, profilesCollectionUrl);
@@ -146,20 +139,17 @@ describe("update", () => {
     const result = await model.update(
       aRetrievedProfile.fiscalCode,
       aRetrievedProfile.fiscalCode,
-      p => {
+      (p) => {
         return {
           ...p,
-          email: toNonEmptyString("new@example.com").get
+          email: toNonEmptyString("new@example.com").get,
         };
-      }
+      },
     );
 
     expect(clientMock.createDocument).toHaveBeenCalledTimes(1);
     expect(clientMock.createDocument.mock.calls[0][1].kind).toBeUndefined();
-    expect(clientMock.createDocument.mock.calls[0][2]).toHaveProperty(
-      "partitionKey",
-      aFiscalCode
-    );
+    expect(clientMock.createDocument.mock.calls[0][2]).toHaveProperty("partitionKey", aFiscalCode);
     expect(result.isRight).toBeTruthy();
     if (result.isRight) {
       expect(result.right.isDefined).toBeTruthy();
@@ -174,12 +164,12 @@ describe("update", () => {
   it("should reject the promise in case of error (read)", async () => {
     const clientMock: any = {
       createDocument: jest.fn(),
-      readDocument: jest.fn((_, __, cb) => cb("error"))
+      readDocument: jest.fn((_, __, cb) => cb("error")),
     };
 
     const model = new ProfileModel(clientMock, profilesCollectionUrl);
 
-    const result = await model.update(aFiscalCode, aFiscalCode, o => o);
+    const result = await model.update(aFiscalCode, aFiscalCode, (o) => o);
 
     expect(clientMock.readDocument).toHaveBeenCalledTimes(1);
     expect(clientMock.createDocument).not.toHaveBeenCalled();
@@ -193,12 +183,12 @@ describe("update", () => {
   it("should reject the promise in case of error (create)", async () => {
     const clientMock: any = {
       createDocument: jest.fn((_, __, ___, cb) => cb("error")),
-      readDocument: jest.fn((_, __, cb) => cb(undefined, aRetrievedProfile))
+      readDocument: jest.fn((_, __, cb) => cb(undefined, aRetrievedProfile)),
     };
 
     const model = new ProfileModel(clientMock, profilesCollectionUrl);
 
-    const result = await model.update(aFiscalCode, aFiscalCode, o => o);
+    const result = await model.update(aFiscalCode, aFiscalCode, (o) => o);
 
     expect(clientMock.readDocument).toHaveBeenCalledTimes(1);
     expect(clientMock.createDocument).toHaveBeenCalledTimes(1);
@@ -208,4 +198,5 @@ describe("update", () => {
       expect(result.left).toEqual("error");
     }
   });
+
 });

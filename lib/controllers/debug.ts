@@ -6,72 +6,63 @@ import * as express from "express";
 
 import { right } from "../utils/either";
 
-import {
-  IRequestMiddleware,
-  withRequestMiddlewares,
-  wrapRequestHandler
-} from "../utils/request_middleware";
+import { IRequestMiddleware, withRequestMiddlewares, wrapRequestHandler } from "../utils/request_middleware";
 
 import {
   AzureApiAuthMiddleware,
   IAzureApiAuthorization,
-  UserGroup
+  UserGroup,
 } from "../utils/middlewares/azure_api_auth";
 
 import {
   AzureUserAttributesMiddleware,
-  IAzureUserAttributes
+  IAzureUserAttributes,
 } from "../utils/middlewares/azure_user_attributes";
 
 import { OrganizationModel } from "../models/organization";
 
-import { IResponseSuccessJson, ResponseSuccessJson } from "../utils/response";
+import {
+  IResponseSuccessJson,
+  ResponseSuccessJson,
+} from "../utils/response";
 
 // simle request middleware that passes the request object for debug purposes
-const ExpressRequestMiddleware: IRequestMiddleware<
-  never,
-  express.Request
-> = request => Promise.resolve(right(request));
+const ExpressRequestMiddleware: IRequestMiddleware<never, express.Request> =
+  (request) => Promise.resolve(right(request));
 
 // type definition of the debug endpoint
 type GetDebug = (
   request: express.Request,
   auth: IAzureApiAuthorization,
-  attributes: IAzureUserAttributes
+  attributes: IAzureUserAttributes,
 ) => Promise<IResponseSuccessJson<object>>;
 
 const getDebugHandler: GetDebug = (request, auth, userAttributes) => {
   return new Promise((resolve, _) => {
-    resolve(
-      ResponseSuccessJson({
-        auth: {
-          ...auth,
-          // must convert the Set to an Array
-          // see https://stackoverflow.com/questions/31190885/json-stringify-a-set
-          groups: Array.from(auth.groups.values())
-        },
-        body: request.body,
-        headers: request.headers,
-        params: request.params,
-        user: userAttributes
-      })
-    );
+    resolve(ResponseSuccessJson({
+      auth: {
+        ...auth,
+        // must convert the Set to an Array
+        // see https://stackoverflow.com/questions/31190885/json-stringify-a-set
+        groups: Array.from(auth.groups.values()),
+      },
+      body: request.body,
+      headers: request.headers,
+      params: request.params,
+      user: userAttributes,
+    }));
   });
 };
 
-export function GetDebug(
-  organizationModel: OrganizationModel
-): express.RequestHandler {
-  const azureApiMiddleware = AzureApiAuthMiddleware(
-    new Set([UserGroup.ApiDebugRead])
-  );
-  const azureUserAttributesMiddleware = AzureUserAttributesMiddleware(
-    organizationModel
-  );
+export function GetDebug(organizationModel: OrganizationModel): express.RequestHandler {
+  const azureApiMiddleware = AzureApiAuthMiddleware(new Set([
+    UserGroup.ApiDebugRead,
+  ]));
+  const azureUserAttributesMiddleware = AzureUserAttributesMiddleware(organizationModel);
   const middlewaresWrap = withRequestMiddlewares(
     ExpressRequestMiddleware,
     azureApiMiddleware,
-    azureUserAttributesMiddleware
+    azureUserAttributesMiddleware,
   );
   return wrapRequestHandler(middlewaresWrap(getDebugHandler));
 }

@@ -25,8 +25,8 @@ export interface IMessage {
 /**
  * Type guard for IMessage objects
  */
-export const isIMessage = is<IMessage>(
-  arg => arg && isFiscalCode(arg.fiscalCode) && isBodyShort(arg.bodyShort)
+export const isIMessage = is<IMessage>((arg) =>
+  arg && isFiscalCode(arg.fiscalCode) && isBodyShort(arg.bodyShort),
 );
 
 /**
@@ -40,9 +40,7 @@ export interface INewMessage extends IMessage, DocumentDb.NewDocument {
 /**
  * Interface for retrieved Message objects
  */
-export interface IRetrievedMessage
-  extends Readonly<IMessage>,
-    Readonly<DocumentDb.RetrievedDocument> {
+export interface IRetrievedMessage extends Readonly<IMessage>, Readonly<DocumentDb.RetrievedDocument> {
   readonly id: NonEmptyString;
   readonly kind: "IRetrievedMessage";
 }
@@ -50,54 +48,49 @@ export interface IRetrievedMessage
 /**
  * Message objects shared with trusted applications (i.e. client apps).
  */
-export interface IPublicExtendedMessage
-  extends LimitedFields<
-      IRetrievedMessage,
-      "fiscalCode" | "bodyShort" | "senderOrganizationId"
-    > {
+export interface IPublicExtendedMessage extends
+  LimitedFields<IRetrievedMessage, "fiscalCode" | "bodyShort" | "senderOrganizationId"> {
   readonly kind: "IPublicExtendedMessage";
 }
 
 /**
  * Converts a Message to an IPublicExtendedMessage
  */
-export function asPublicExtendedMessage<T extends IMessage>(
-  message: T
-): IPublicExtendedMessage {
-  const { fiscalCode, bodyShort, senderOrganizationId } = message;
+export function asPublicExtendedMessage<T extends IMessage>(message: T): IPublicExtendedMessage {
+  const {
+    fiscalCode,
+    bodyShort,
+    senderOrganizationId,
+  } = message;
   return {
     bodyShort,
     fiscalCode,
     kind: "IPublicExtendedMessage",
-    senderOrganizationId
+    senderOrganizationId,
   };
 }
 
 /**
  * Type guard for IRetrievedMessage objects
  */
-export const isIRetrievedMessage = is<IRetrievedMessage>(
-  arg =>
-    isNonEmptyString(arg.id) &&
-    typeof arg._self === "string" &&
-    typeof arg._ts === "string" &&
-    isIMessage(arg)
+export const isIRetrievedMessage = is<IRetrievedMessage>((arg) =>
+  isNonEmptyString(arg.id) &&
+  (typeof arg._self === "string") &&
+  (typeof arg._ts === "string") &&
+  isIMessage(arg),
 );
 
 function toRetrieved(result: DocumentDb.RetrievedDocument): IRetrievedMessage {
-  return {
+  return ({
     ...result,
-    kind: "IRetrievedMessage"
-  } as IRetrievedMessage;
+    kind: "IRetrievedMessage",
+  } as IRetrievedMessage);
 }
 
 /**
  * A model for handling Messages
  */
-export class MessageModel extends DocumentDbModel<
-  INewMessage,
-  IRetrievedMessage
-> {
+export class MessageModel extends DocumentDbModel<INewMessage, IRetrievedMessage> {
   protected dbClient: DocumentDb.DocumentClient;
   protected collectionUri: DocumentDbUtils.IDocumentDbCollectionUri;
 
@@ -107,10 +100,7 @@ export class MessageModel extends DocumentDbModel<
    * @param dbClient the DocumentDB client
    * @param collectionUrl the collection URL
    */
-  constructor(
-    dbClient: DocumentDb.DocumentClient,
-    collectionUrl: DocumentDbUtils.IDocumentDbCollectionUri
-  ) {
+  constructor(dbClient: DocumentDb.DocumentClient, collectionUrl: DocumentDbUtils.IDocumentDbCollectionUri) {
     super();
     // tslint:disable-next-line:no-object-mutation
     this.toRetrieved = toRetrieved;
@@ -127,13 +117,12 @@ export class MessageModel extends DocumentDbModel<
    * @param messageId The ID of the message
    */
   public async findMessageForRecipient(
-    fiscalCode: FiscalCode,
-    messageId: string
+    fiscalCode: FiscalCode, messageId: string,
   ): Promise<Either<DocumentDb.QueryError, Option<IRetrievedMessage>>> {
     const errorOrMaybeMessage = await this.find(messageId, fiscalCode);
 
-    return errorOrMaybeMessage.mapRight(maybeMessage =>
-      maybeMessage.filter(m => m.fiscalCode === fiscalCode)
+    return errorOrMaybeMessage.mapRight((maybeMessage) =>
+      maybeMessage.filter((m) => m.fiscalCode === fiscalCode),
     );
   }
 
@@ -142,17 +131,18 @@ export class MessageModel extends DocumentDbModel<
    *
    * @param fiscalCode The fiscal code of the recipient
    */
-  public findMessages(
-    fiscalCode: FiscalCode
-  ): DocumentDbUtils.IResultIterator<IRetrievedMessage> {
-    return DocumentDbUtils.queryDocuments(this.dbClient, this.collectionUri, {
-      parameters: [
-        {
+  public findMessages(fiscalCode: FiscalCode): DocumentDbUtils.IResultIterator<IRetrievedMessage> {
+    return DocumentDbUtils.queryDocuments(
+      this.dbClient,
+      this.collectionUri,
+      {
+        parameters: [{
           name: "@fiscalCode",
-          value: fiscalCode
-        }
-      ],
-      query: "SELECT * FROM messages m WHERE (m.fiscalCode = @fiscalCode)"
-    });
+          value: fiscalCode,
+        }],
+        query: "SELECT * FROM messages m WHERE (m.fiscalCode = @fiscalCode)",
+      },
+    );
   }
+
 }

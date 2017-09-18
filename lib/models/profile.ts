@@ -1,10 +1,6 @@
 import * as DocumentDb from "documentdb";
 import * as DocumentDbUtils from "../utils/documentdb";
-import {
-  DocumentDbModelVersioned,
-  IVersionedModel,
-  ModelId
-} from "../utils/documentdb_model_versioned";
+import { DocumentDbModelVersioned, IVersionedModel, ModelId } from "../utils/documentdb_model_versioned";
 
 import { Option } from "ts-option";
 import { Either } from "../utils/either";
@@ -26,10 +22,7 @@ export interface IProfile {
 /**
  * Interface for new Profile objects
  */
-export interface INewProfile
-  extends IProfile,
-    DocumentDb.NewDocument,
-    IVersionedModel {
+export interface INewProfile extends IProfile, DocumentDb.NewDocument, IVersionedModel {
   readonly kind: "INewProfile";
 }
 
@@ -38,10 +31,7 @@ export interface INewProfile
  *
  * Existing profile records have a version number.
  */
-export interface IRetrievedProfile
-  extends IProfile,
-    DocumentDb.RetrievedDocument,
-    IVersionedModel {
+export interface IRetrievedProfile extends IProfile, DocumentDb.RetrievedDocument, IVersionedModel {
   readonly id: NonEmptyString;
   readonly kind: "IRetrievedProfile";
 }
@@ -49,70 +39,65 @@ export interface IRetrievedProfile
 /**
  * A profile that can be shared with user apps.
  */
-export interface IPublicExtendedProfile
-  extends Readonly<
-      LimitedFields<IRetrievedProfile, "fiscalCode" | "email" | "version">
-    > {
-  readonly kind: "IPublicExtendedProfile";
+export interface IPublicExtendedProfile extends
+  Readonly<LimitedFields<IRetrievedProfile, "fiscalCode" | "email" | "version">> {
+    readonly kind: "IPublicExtendedProfile";
 }
 
 /**
  * Converts a Profile to a PublicExtendedProfile
  */
-export function asPublicExtendedProfile<T extends IRetrievedProfile>(
-  profile: T
-): IPublicExtendedProfile {
-  const { email, fiscalCode, version } = profile;
+export function asPublicExtendedProfile<T extends IRetrievedProfile>(profile: T): IPublicExtendedProfile {
+  const {
+    email,
+    fiscalCode,
+    version,
+  } = profile;
   return {
     email,
     fiscalCode,
     kind: "IPublicExtendedProfile",
-    version
+    version,
   };
 }
 
 /**
  * A profile that can be shared with 3rd parties.
  */
-export interface IPublicLimitedProfile
-  extends LimitedFields<IPublicExtendedProfile, "fiscalCode"> {
+export interface IPublicLimitedProfile extends LimitedFields<IPublicExtendedProfile, "fiscalCode"> {
   readonly kind: "IPublicLimitedProfile";
 }
 
 /**
  * Converts a Profile to a PublicLimitedProfile
  */
-export function asPublicLimitedProfile<T extends IProfile>(
-  profile: T
-): IPublicLimitedProfile {
-  const { fiscalCode } = profile;
+export function asPublicLimitedProfile<T extends IProfile>(profile: T): IPublicLimitedProfile {
+  const {
+    fiscalCode,
+  } = profile;
   return {
     fiscalCode,
-    kind: "IPublicLimitedProfile"
+    kind: "IPublicLimitedProfile",
   };
 }
 
 function toRetrieved(result: DocumentDb.RetrievedDocument): IRetrievedProfile {
-  return {
+  return ({
     ...result,
-    kind: "IRetrievedProfile"
-  } as IRetrievedProfile;
+    kind: "IRetrievedProfile",
+  } as IRetrievedProfile);
 }
 
 function getModelId(o: IProfile): ModelId {
   return fiscalCodeToModelId(o.fiscalCode);
 }
 
-function updateModelId(
-  o: IProfile,
-  id: string,
-  version: NonNegativeNumber
-): INewProfile {
+function updateModelId(o: IProfile, id: string, version: NonNegativeNumber): INewProfile {
   const newProfile: INewProfile = {
     ...o,
     id,
     kind: "INewProfile",
-    version
+    version,
   };
 
   return newProfile;
@@ -121,18 +106,14 @@ function updateModelId(
 function toBaseType(o: IRetrievedProfile): IProfile {
   return {
     email: o.email,
-    fiscalCode: o.fiscalCode
+    fiscalCode: o.fiscalCode,
   };
 }
 
 /**
  * A model for handling Profiles
  */
-export class ProfileModel extends DocumentDbModelVersioned<
-  IProfile,
-  INewProfile,
-  IRetrievedProfile
-> {
+export class ProfileModel extends DocumentDbModelVersioned<IProfile, INewProfile, IRetrievedProfile> {
   protected dbClient: DocumentDb.DocumentClient;
   protected collectionUri: DocumentDbUtils.IDocumentDbCollectionUri;
 
@@ -142,10 +123,7 @@ export class ProfileModel extends DocumentDbModelVersioned<
    * @param dbClient the DocumentDB client
    * @param collectionUrl the collection URL
    */
-  constructor(
-    dbClient: DocumentDb.DocumentClient,
-    collectionUrl: DocumentDbUtils.IDocumentDbCollectionUri
-  ) {
+  constructor(dbClient: DocumentDb.DocumentClient, collectionUrl: DocumentDbUtils.IDocumentDbCollectionUri) {
     super();
     // tslint:disable-next-line:no-object-mutation
     this.toRetrieved = toRetrieved;
@@ -167,8 +145,13 @@ export class ProfileModel extends DocumentDbModelVersioned<
    * @param fiscalCode
    */
   public findOneProfileByFiscalCode(
-    fiscalCode: FiscalCode
+    fiscalCode: FiscalCode,
   ): Promise<Either<DocumentDb.QueryError, Option<IRetrievedProfile>>> {
-    return super.findLastVersionByModelId("profiles", "fiscalCode", fiscalCode);
+    return super.findLastVersionByModelId(
+      "profiles",
+      "fiscalCode",
+      fiscalCode,
+    );
   }
+
 }

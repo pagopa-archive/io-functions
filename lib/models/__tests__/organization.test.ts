@@ -3,20 +3,17 @@
 import * as DocumentDb from "documentdb";
 
 import * as DocumentDbUtils from "../../utils/documentdb";
-import { ModelId } from "../../utils/documentdb_model_versioned";
-import { toNonNegativeNumber } from "../../utils/numbers";
+import {ModelId} from "../../utils/documentdb_model_versioned";
+import {toNonNegativeNumber} from "../../utils/numbers";
 
 import {
   IOrganization,
   IRetrievedOrganization,
-  OrganizationModel
+  OrganizationModel,
 } from "../organization";
 
 const aDatabaseUri = DocumentDbUtils.getDatabaseUri("mockdb");
-const organizationsCollectionUrl = DocumentDbUtils.getCollectionUri(
-  aDatabaseUri,
-  "organizations"
-);
+const organizationsCollectionUrl = DocumentDbUtils.getCollectionUri(aDatabaseUri, "organizations");
 
 const aOrganizationId = "xyz" as ModelId;
 
@@ -27,23 +24,21 @@ const aRetrievedOrganization: IRetrievedOrganization = {
   kind: "IRetrievedOrganization",
   name: "MyOrganization",
   organizationId: aOrganizationId,
-  version: toNonNegativeNumber(0).get
+  version: toNonNegativeNumber(0).get,
 };
 
 describe("findOneOrganizationById", () => {
+
   it("should resolve a promise to an existing organization", async () => {
     const iteratorMock = {
-      executeNext: jest.fn(cb => cb(undefined, ["result"], undefined))
+      executeNext: jest.fn((cb) => cb(undefined, ["result"], undefined)),
     };
 
     const clientMock = {
-      queryDocuments: jest.fn((__, ___) => iteratorMock)
+      queryDocuments: jest.fn((__, ___) => iteratorMock),
     };
 
-    const model = new OrganizationModel(
-      (clientMock as any) as DocumentDb.DocumentClient,
-      organizationsCollectionUrl
-    );
+    const model = new OrganizationModel((clientMock as any)as DocumentDb.DocumentClient, organizationsCollectionUrl);
 
     const result = await model.findByOrganizationId("id");
 
@@ -56,17 +51,14 @@ describe("findOneOrganizationById", () => {
 
   it("should resolve a promise to an empty value if no organization is found", async () => {
     const iteratorMock = {
-      executeNext: jest.fn(cb => cb(undefined, [], undefined))
+      executeNext: jest.fn((cb) => cb(undefined, [], undefined)),
     };
 
     const clientMock = {
-      queryDocuments: jest.fn((__, ___) => iteratorMock)
+      queryDocuments: jest.fn((__, ___) => iteratorMock),
     };
 
-    const model = new OrganizationModel(
-      (clientMock as any) as DocumentDb.DocumentClient,
-      organizationsCollectionUrl
-    );
+    const model = new OrganizationModel((clientMock as any) as DocumentDb.DocumentClient, organizationsCollectionUrl);
 
     const result = await model.findByOrganizationId("id");
 
@@ -75,16 +67,18 @@ describe("findOneOrganizationById", () => {
       expect(result.right.isEmpty).toBeTruthy();
     }
   });
+
 });
 
 describe("createOrganization", () => {
+
   it("should create a new organization", async () => {
     const clientMock: any = {
       createDocument: jest.fn((_, newDocument, __, cb) => {
         cb(undefined, {
-          ...newDocument
+          ...newDocument,
         });
-      })
+      }),
     };
 
     const model = new OrganizationModel(clientMock, organizationsCollectionUrl);
@@ -94,22 +88,14 @@ describe("createOrganization", () => {
       name: "MyOrganization"
     };
 
-    const result = await model.create(
-      newOrganization,
-      newOrganization.organizationId
-    );
+    const result = await model.create(newOrganization, newOrganization.organizationId);
 
     expect(clientMock.createDocument).toHaveBeenCalledTimes(1);
     expect(clientMock.createDocument.mock.calls[0][1].kind).toBeUndefined();
-    expect(clientMock.createDocument.mock.calls[0][2]).toHaveProperty(
-      "partitionKey",
-      aOrganizationId
-    );
+    expect(clientMock.createDocument.mock.calls[0][2]).toHaveProperty("partitionKey", aOrganizationId);
     expect(result.isRight).toBeTruthy();
     if (result.isRight) {
-      expect(result.right.organizationId).toEqual(
-        newOrganization.organizationId
-      );
+      expect(result.right.organizationId).toEqual(newOrganization.organizationId);
       expect(result.right.id).toEqual(`${aOrganizationId}-${"0".repeat(16)}`);
       expect(result.right.version).toEqual(0);
     }
@@ -119,20 +105,17 @@ describe("createOrganization", () => {
     const clientMock: any = {
       createDocument: jest.fn((_, __, ___, cb) => {
         cb("error");
-      })
+      }),
     };
 
     const model = new OrganizationModel(clientMock, organizationsCollectionUrl);
 
     const newOrganization: IOrganization = {
       name: "MyOrganization",
-      organizationId: aOrganizationId
+      organizationId: aOrganizationId,
     };
 
-    const result = await model.create(
-      newOrganization,
-      newOrganization.organizationId
-    );
+    const result = await model.create(newOrganization, newOrganization.organizationId);
 
     expect(clientMock.createDocument).toHaveBeenCalledTimes(1);
 
@@ -141,49 +124,42 @@ describe("createOrganization", () => {
       expect(result.left).toEqual("error");
     }
   });
+
 });
 
 describe("update", () => {
+
   it("should update an existing organization", async () => {
     const clientMock: any = {
       createDocument: jest.fn((_, newDocument, __, cb) => {
         cb(undefined, {
-          ...newDocument
+          ...newDocument,
         });
       }),
-      readDocument: jest.fn((_, __, cb) =>
-        cb(undefined, aRetrievedOrganization)
-      )
+      readDocument: jest.fn((_, __, cb) => cb(undefined, aRetrievedOrganization)),
     };
 
     const model = new OrganizationModel(clientMock, organizationsCollectionUrl);
 
     const result = await model.update(
-      aRetrievedOrganization.organizationId,
-      aRetrievedOrganization.organizationId,
-      p => {
-        return {
-          ...p
-        };
-      }
+        aRetrievedOrganization.organizationId,
+        aRetrievedOrganization.organizationId,
+        (p) => {
+          return {
+            ...p,
+          };
+        },
     );
 
     expect(clientMock.createDocument).toHaveBeenCalledTimes(1);
     expect(clientMock.createDocument.mock.calls[0][1].kind).toBeUndefined();
-    expect(clientMock.createDocument.mock.calls[0][2]).toHaveProperty(
-      "partitionKey",
-      aOrganizationId
-    );
+    expect(clientMock.createDocument.mock.calls[0][2]).toHaveProperty("partitionKey", aOrganizationId);
     expect(result.isRight).toBeTruthy();
     if (result.isRight) {
       expect(result.right.isDefined).toBeTruthy();
       const updatedOrganization = result.right.get;
-      expect(updatedOrganization.organizationId).toEqual(
-        aRetrievedOrganization.organizationId
-      );
-      expect(updatedOrganization.id).toEqual(
-        `${aOrganizationId}-${"0".repeat(15)}1`
-      );
+      expect(updatedOrganization.organizationId).toEqual(aRetrievedOrganization.organizationId);
+      expect(updatedOrganization.id).toEqual(`${aOrganizationId}-${"0".repeat(15)}1`);
       expect(updatedOrganization.version).toEqual(1);
       expect(updatedOrganization.name).toEqual("MyOrganization");
     }
@@ -192,12 +168,12 @@ describe("update", () => {
   it("should resolve the promise to an error value in case of a readDocument error", async () => {
     const clientMock: any = {
       createDocument: jest.fn(),
-      readDocument: jest.fn((_, __, cb) => cb("error"))
+      readDocument: jest.fn((_, __, cb) => cb("error")),
     };
 
     const model = new OrganizationModel(clientMock, organizationsCollectionUrl);
 
-    const result = await model.update(aOrganizationId, aOrganizationId, o => o);
+    const result = await model.update(aOrganizationId, aOrganizationId, (o) => o);
 
     expect(clientMock.readDocument).toHaveBeenCalledTimes(1);
     expect(clientMock.createDocument).not.toHaveBeenCalled();
@@ -211,14 +187,12 @@ describe("update", () => {
   it("should resolve the promise to an error value in case of a createDocument error", async () => {
     const clientMock: any = {
       createDocument: jest.fn((_, __, ___, cb) => cb("error")),
-      readDocument: jest.fn((_, __, cb) =>
-        cb(undefined, aRetrievedOrganization)
-      )
+      readDocument: jest.fn((_, __, cb) => cb(undefined, aRetrievedOrganization)),
     };
 
     const model = new OrganizationModel(clientMock, organizationsCollectionUrl);
 
-    const result = await model.update(aOrganizationId, aOrganizationId, o => o);
+    const result = await model.update(aOrganizationId, aOrganizationId, (o) => o);
 
     expect(clientMock.readDocument).toHaveBeenCalledTimes(1);
     expect(clientMock.createDocument).toHaveBeenCalledTimes(1);
@@ -228,4 +202,5 @@ describe("update", () => {
       expect(result.left).toEqual("error");
     }
   });
+
 });

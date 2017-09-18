@@ -1,10 +1,6 @@
 import * as DocumentDb from "documentdb";
 import * as DocumentDbUtils from "../utils/documentdb";
-import {
-  DocumentDbModelVersioned,
-  IVersionedModel,
-  ModelId
-} from "../utils/documentdb_model_versioned";
+import { DocumentDbModelVersioned, IVersionedModel, ModelId } from "../utils/documentdb_model_versioned";
 
 import { Option } from "ts-option";
 import { Either } from "../utils/either";
@@ -22,10 +18,7 @@ export interface IOrganization {
 /**
  * Interface for new Organization objects
  */
-export interface INewOrganization
-  extends IOrganization,
-    DocumentDb.NewDocument,
-    IVersionedModel {
+export interface INewOrganization extends IOrganization, DocumentDb.NewDocument, IVersionedModel {
   readonly kind: "INewOrganization";
 }
 
@@ -34,37 +27,28 @@ export interface INewOrganization
  *
  * Existing Organization records have a version number.
  */
-export interface IRetrievedOrganization
-  extends IOrganization,
-    DocumentDb.RetrievedDocument,
-    IVersionedModel {
+export interface IRetrievedOrganization extends IOrganization, DocumentDb.RetrievedDocument, IVersionedModel {
   readonly kind: "IRetrievedOrganization";
   readonly organizationId: ModelId; // organizationId should never change
 }
 
-function toRetrieved(
-  result: DocumentDb.RetrievedDocument
-): IRetrievedOrganization {
-  return {
+function toRetrieved(result: DocumentDb.RetrievedDocument): IRetrievedOrganization {
+  return ({
     ...result,
-    kind: "IRetrievedOrganization"
-  } as IRetrievedOrganization;
+    kind: "IRetrievedOrganization",
+  } as IRetrievedOrganization);
 }
 
 function getModelId(o: IOrganization): ModelId {
-  return o.organizationId;
+    return o.organizationId;
 }
 
-function updateModelId(
-  o: IOrganization,
-  id: string,
-  version: NonNegativeNumber
-): INewOrganization {
+function updateModelId(o: IOrganization, id: string, version: NonNegativeNumber): INewOrganization {
   const newOrganization: INewOrganization = {
     ...o,
     id,
     kind: "INewOrganization",
-    version
+    version,
   };
 
   return newOrganization;
@@ -73,7 +57,7 @@ function updateModelId(
 function toBaseType(o: IRetrievedOrganization): IOrganization {
   return {
     name: o.name,
-    organizationId: o.organizationId
+    organizationId: o.organizationId,
   };
 }
 
@@ -94,10 +78,7 @@ export class OrganizationModel extends DocumentDbModelVersioned<
    * @param dbClient the DocumentDB client
    * @param collectionUrl the collection URL
    */
-  constructor(
-    dbClient: DocumentDb.DocumentClient,
-    collectionUrl: DocumentDbUtils.IDocumentDbCollectionUri
-  ) {
+  constructor(dbClient: DocumentDb.DocumentClient, collectionUrl: DocumentDbUtils.IDocumentDbCollectionUri) {
     super();
     // tslint:disable-next-line:no-object-mutation
     this.toRetrieved = toRetrieved;
@@ -119,12 +100,13 @@ export class OrganizationModel extends DocumentDbModelVersioned<
    * @param fiscalCode
    */
   public findByOrganizationId(
-    organizationId: string
+    organizationId: string,
   ): Promise<Either<DocumentDb.QueryError, Option<IRetrievedOrganization>>> {
     return super.findLastVersionByModelId(
       "organizations",
       "organizationId",
-      organizationId
+      organizationId,
     );
   }
+
 }

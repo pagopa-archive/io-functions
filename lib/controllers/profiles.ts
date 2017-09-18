@@ -11,7 +11,7 @@ import { FiscalCode } from "../api/definitions/FiscalCode";
 import {
   AzureApiAuthMiddleware,
   IAzureApiAuthorization,
-  UserGroup
+  UserGroup,
 } from "../utils/middlewares/azure_api_auth";
 import { FiscalCodeMiddleware } from "../utils/middlewares/fiscalcode";
 import { isNonEmptyString, NonEmptyString } from "../utils/strings";
@@ -19,7 +19,7 @@ import { isNonEmptyString, NonEmptyString } from "../utils/strings";
 import {
   IRequestMiddleware,
   withRequestMiddlewares,
-  wrapRequestHandler
+  wrapRequestHandler,
 } from "../utils/request_middleware";
 
 import {
@@ -32,7 +32,7 @@ import {
   ResponseErrorNotFound,
   ResponseErrorQuery,
   ResponseErrorValidation,
-  ResponseSuccessJson
+  ResponseSuccessJson,
 } from "../utils/response";
 
 import {
@@ -42,7 +42,7 @@ import {
   IPublicExtendedProfile,
   IPublicLimitedProfile,
   IRetrievedProfile,
-  ProfileModel
+  ProfileModel,
 } from "../models/profile";
 
 /**
@@ -53,12 +53,12 @@ import {
  */
 type IGetProfileHandler = (
   auth: IAzureApiAuthorization,
-  fiscalCode: FiscalCode
+  fiscalCode: FiscalCode,
 ) => Promise<
-  | IResponseSuccessJson<IPublicLimitedProfile>
-  | IResponseSuccessJson<IPublicExtendedProfile>
-  | IResponseErrorNotFound
-  | IResponseErrorQuery
+  IResponseSuccessJson<IPublicLimitedProfile> |
+  IResponseSuccessJson<IPublicExtendedProfile> |
+  IResponseErrorNotFound |
+  IResponseErrorQuery
 >;
 
 /**
@@ -70,24 +70,20 @@ type IGetProfileHandler = (
 type IUpsertProfileHandler = (
   auth: IAzureApiAuthorization,
   fiscalCode: FiscalCode,
-  profileModelPayload: IProfilePayload
+  profileModelPayload: IProfilePayload,
 ) => Promise<
-  | IResponseSuccessJson<IPublicExtendedProfile>
-  | IResponseErrorValidation
-  | IResponseErrorQuery
-  | IResponseErrorInternal
+  IResponseSuccessJson<IPublicExtendedProfile> |
+  IResponseErrorValidation |
+  IResponseErrorQuery |
+  IResponseErrorInternal
 >;
 
 /**
  * Return a type safe GetProfile handler.
  */
-export function GetProfileHandler(
-  profileModel: ProfileModel
-): IGetProfileHandler {
+export function GetProfileHandler(profileModel: ProfileModel): IGetProfileHandler {
   return async (auth, fiscalCode) => {
-    const errorOrMaybeProfile = await profileModel.findOneProfileByFiscalCode(
-      fiscalCode
-    );
+    const errorOrMaybeProfile = await profileModel.findOneProfileByFiscalCode(fiscalCode);
     if (errorOrMaybeProfile.isRight) {
       const maybeProfile = errorOrMaybeProfile.right;
       if (maybeProfile.isDefined) {
@@ -95,22 +91,16 @@ export function GetProfileHandler(
         if (auth.groups.has(UserGroup.ApiFullProfileRead)) {
           // if the client is a trusted application we return the
           // extended profile
-          return ResponseSuccessJson(asPublicExtendedProfile(profile));
+          return(ResponseSuccessJson(asPublicExtendedProfile(profile)));
         } else {
           // or else, we return a limited profile
-          return ResponseSuccessJson(asPublicLimitedProfile(profile));
+          return(ResponseSuccessJson(asPublicLimitedProfile(profile)));
         }
       } else {
-        return ResponseErrorNotFound(
-          "Profile not found",
-          "The profile you requested was not found in the system."
-        );
+        return(ResponseErrorNotFound("Profile not found", "The profile you requested was not found in the system."));
       }
     } else {
-      return ResponseErrorQuery(
-        "Error while retrieving the profile",
-        errorOrMaybeProfile.left
-      );
+      return(ResponseErrorQuery("Error while retrieving the profile", errorOrMaybeProfile.left));
     }
   };
 }
@@ -118,13 +108,16 @@ export function GetProfileHandler(
 /**
  * Wraps a GetProfile handler inside an Express request handler.
  */
-export function GetProfile(profileModel: ProfileModel): express.RequestHandler {
+export function GetProfile(
+  profileModel: ProfileModel,
+): express.RequestHandler {
   const handler = GetProfileHandler(profileModel);
   const middlewaresWrap = withRequestMiddlewares(
-    AzureApiAuthMiddleware(
-      new Set([UserGroup.ApiLimitedProfileRead, UserGroup.ApiFullProfileRead])
-    ),
-    FiscalCodeMiddleware
+    AzureApiAuthMiddleware(new Set([
+      UserGroup.ApiLimitedProfileRead,
+      UserGroup.ApiFullProfileRead,
+    ])),
+    FiscalCodeMiddleware,
   );
   return wrapRequestHandler(middlewaresWrap(handler));
 }
@@ -143,78 +136,55 @@ interface IProfilePayload {
  *
  * TODO: validate the payload against a schema.
  */
-export const ProfilePayloadMiddleware: IRequestMiddleware<
-  IResponseErrorValidation,
-  IProfilePayload
-> = request => {
-  const email = request.body.email;
-  if (email && !isNonEmptyString(email)) {
-    return Promise.resolve(
-      left(
-        ResponseErrorValidation(
-          "Invalid email",
-          "email must be a non-empty string"
-        )
-      )
-    );
-  }
+export const ProfilePayloadMiddleware: IRequestMiddleware<IResponseErrorValidation, IProfilePayload> =
+  (request) => {
+    const email = request.body.email;
+    if (email && !isNonEmptyString(email)) {
+      return(Promise.resolve(left(ResponseErrorValidation("Invalid email", "email must be a non-empty string"))));
+    }
 
-  return Promise.resolve(
-    right({
-      email
-    })
-  );
-};
+    return Promise.resolve(right({
+      email,
+    }));
+  };
 
 async function createNewProfileFromPayload(
   profileModel: ProfileModel,
   fiscalCode: FiscalCode,
-  profileModelPayload: IProfilePayload
+  profileModelPayload: IProfilePayload,
 ): Promise<IResponseSuccessJson<IPublicExtendedProfile> | IResponseErrorQuery> {
   // create a new profile
   const profile: IProfile = {
     email: profileModelPayload.email,
-    fiscalCode
+    fiscalCode,
   };
   const errorOrProfile = await profileModel.create(profile, profile.fiscalCode);
-  const errorOrProfileAsPublicExtendedProfile = errorOrProfile.mapRight(
-    asPublicExtendedProfile
-  );
+  const errorOrProfileAsPublicExtendedProfile = errorOrProfile.mapRight(asPublicExtendedProfile);
   if (errorOrProfileAsPublicExtendedProfile.isRight) {
-    return ResponseSuccessJson(errorOrProfileAsPublicExtendedProfile.right);
+    return(ResponseSuccessJson(errorOrProfileAsPublicExtendedProfile.right));
   } else {
-    return ResponseErrorQuery(
-      "Error while creating a new profile",
-      errorOrProfileAsPublicExtendedProfile.left
-    );
+    return(ResponseErrorQuery("Error while creating a new profile", errorOrProfileAsPublicExtendedProfile.left));
   }
 }
 
 async function updateExistingProfileFromPayload(
   profileModel: ProfileModel,
   existingProfile: IRetrievedProfile,
-  profileModelPayload: IProfilePayload
-): Promise<
-  | IResponseSuccessJson<IPublicExtendedProfile>
-  | IResponseErrorQuery
-  | IResponseErrorInternal
-> {
+  profileModelPayload: IProfilePayload,
+): Promise<IResponseSuccessJson<IPublicExtendedProfile> | IResponseErrorQuery | IResponseErrorInternal> {
   const errorOrMaybeProfile = await profileModel.update(
     existingProfile.fiscalCode,
     existingProfile.fiscalCode,
-    p => {
+    (p) => {
       return {
         ...p,
-        email: profileModelPayload.email
+        email: profileModelPayload.email,
       };
-    }
+    },
   );
 
   if (errorOrMaybeProfile.isLeft) {
-    return ResponseErrorQuery(
-      "Error while updating the existing profile",
-      errorOrMaybeProfile.left
-    );
+    return(ResponseErrorQuery("Error while updating the existing profile", errorOrMaybeProfile.left));
   }
 
   const maybeProfile = errorOrMaybeProfile.right;
@@ -222,9 +192,7 @@ async function updateExistingProfileFromPayload(
   if (maybeProfile.isEmpty) {
     // this should never happen since if the profile doesn't exist this function
     // will never be called, but let's deal with this anyway, you never know
-    return ResponseErrorInternal(
-      "Error while updating the existing profile, the profile does not exist!"
-    );
+    return(ResponseErrorInternal("Error while updating the existing profile, the profile does not exist!"));
   }
 
   const profile = maybeProfile.get;
@@ -239,32 +207,20 @@ async function updateExistingProfileFromPayload(
  * profile with those attributes if the profile does not yet exist or
  * update the profile with it already exist.
  */
-export function UpsertProfileHandler(
-  profileModel: ProfileModel
-): IUpsertProfileHandler {
+export function UpsertProfileHandler(profileModel: ProfileModel): IUpsertProfileHandler {
   return async (_, fiscalCode, profileModelPayload) => {
-    const errorOrMaybeProfile = await profileModel.findOneProfileByFiscalCode(
-      fiscalCode
-    );
+    const errorOrMaybeProfile = await profileModel.findOneProfileByFiscalCode(fiscalCode);
     if (errorOrMaybeProfile.isRight) {
       const maybeProfile = errorOrMaybeProfile.right;
       if (maybeProfile.isEmpty) {
         // create a new profile
-        return createNewProfileFromPayload(
-          profileModel,
-          fiscalCode,
-          profileModelPayload
-        );
+        return createNewProfileFromPayload(profileModel, fiscalCode, profileModelPayload);
       } else {
         // update existing profile
-        return updateExistingProfileFromPayload(
-          profileModel,
-          maybeProfile.get,
-          profileModelPayload
-        );
+        return updateExistingProfileFromPayload(profileModel, maybeProfile.get, profileModelPayload);
       }
     } else {
-      return ResponseErrorQuery("Error", errorOrMaybeProfile.left);
+      return(ResponseErrorQuery("Error", errorOrMaybeProfile.left));
     }
   };
 }
@@ -273,13 +229,15 @@ export function UpsertProfileHandler(
  * Wraps an UpsertProfile handler inside an Express request handler.
  */
 export function UpsertProfile(
-  profileModel: ProfileModel
+  profileModel: ProfileModel,
 ): express.RequestHandler {
   const handler = UpsertProfileHandler(profileModel);
   const middlewaresWrap = withRequestMiddlewares(
-    AzureApiAuthMiddleware(new Set([UserGroup.ApiProfileWrite])),
+    AzureApiAuthMiddleware(new Set([
+      UserGroup.ApiProfileWrite,
+    ])),
     FiscalCodeMiddleware,
-    ProfilePayloadMiddleware
+    ProfilePayloadMiddleware,
   );
   return wrapRequestHandler(middlewaresWrap(handler));
 }
