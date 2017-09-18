@@ -27,7 +27,6 @@
       // "no-this": true,
       // "no-class": true,
       "no-mixed-interface": true,
-
       "prettier": true
     },
     "rulesDirectory": []
