@@ -80,7 +80,7 @@ export const isIRetrievedMessage = is<IRetrievedMessage>(
   arg =>
     isNonEmptyString(arg.id) &&
     typeof arg._self === "string" &&
-    typeof (arg._ts === "string" || arg._ts === "number") &&
+    (typeof arg._ts === "string" || typeof arg._ts === "number") &&
     isIMessage(arg)
 );
 
