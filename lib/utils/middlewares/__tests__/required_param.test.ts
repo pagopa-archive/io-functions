@@ -5,14 +5,13 @@ import { left, right } from "../../either";
 import { RequiredParamMiddleware } from "../required_param";
 
 describe("RequiredParamMiddleware", () => {
-
   it("should extract the required parameter from the request", async () => {
-    const middleware = RequiredParamMiddleware((params) => right(params.param));
+    const middleware = RequiredParamMiddleware(params => right(params.param));
 
     const result = await middleware({
       params: {
-        param: "hello",
-      },
+        param: "hello"
+      }
     } as any);
 
     expect(result.isRight).toBeTruthy();
@@ -22,10 +21,10 @@ describe("RequiredParamMiddleware", () => {
   });
 
   it("should respond with a validation error if the required parameter is missing", async () => {
-    const middleware = RequiredParamMiddleware((_) => left("param not found"));
+    const middleware = RequiredParamMiddleware(_ => left("param not found"));
 
     const result = await middleware({
-      params: { },
+      params: {}
     } as any);
 
     expect(result.isLeft).toBeTruthy();
@@ -33,5 +32,4 @@ describe("RequiredParamMiddleware", () => {
       expect(result.left.kind).toBe("IResponseErrorValidation");
     }
   });
-
 });

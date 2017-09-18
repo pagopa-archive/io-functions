@@ -2,39 +2,41 @@
 
 import {
   IRequestMiddleware,
-  withRequestMiddlewares,
+  withRequestMiddlewares
 } from "../request_middleware";
 import {
   IResponse,
   IResponseErrorValidation,
-  ResponseErrorValidation,
+  ResponseErrorValidation
 } from "../response";
 
 import { left, right } from "../either";
 
-const ResolvingMiddleware: IRequestMiddleware<never, string> = (req) => {
+const ResolvingMiddleware: IRequestMiddleware<never, string> = req => {
   return Promise.resolve(right(req.params.dummy));
 };
 
-const RejectingMiddleware: IRequestMiddleware<IResponseErrorValidation, string> = (_) => {
+const RejectingMiddleware: IRequestMiddleware<
+  IResponseErrorValidation,
+  string
+> = _ => {
   return Promise.resolve(left(ResponseErrorValidation("NOK", "NOT")));
 };
 
 const request = {
   params: {
-    dummy: "dummy",
-  },
+    dummy: "dummy"
+  }
 };
 
 const response = {} as IResponse;
 
 describe("withRequestMiddlewares", () => {
-
   it("should process a request with a resolving middleware (1)", () => {
     const mockHandler = jest.fn(() => Promise.resolve(response));
     const handler = withRequestMiddlewares(ResolvingMiddleware)(mockHandler);
 
-    return handler(request as any).then((r) => {
+    return handler(request as any).then(r => {
       expect(mockHandler).toHaveBeenCalledWith("dummy");
       expect(r).toEqual(response);
     });
@@ -42,9 +44,12 @@ describe("withRequestMiddlewares", () => {
 
   it("should process a request with a resolving middleware (2)", () => {
     const mockHandler = jest.fn(() => Promise.resolve(response));
-    const handler = withRequestMiddlewares(ResolvingMiddleware, ResolvingMiddleware)(mockHandler);
+    const handler = withRequestMiddlewares(
+      ResolvingMiddleware,
+      ResolvingMiddleware
+    )(mockHandler);
 
-    return handler(request as any).then((r) => {
+    return handler(request as any).then(r => {
       expect(mockHandler).toHaveBeenCalledWith("dummy", "dummy");
       expect(r).toEqual(response);
     });
@@ -52,9 +57,13 @@ describe("withRequestMiddlewares", () => {
 
   it("should process a request with a resolving middleware (3)", () => {
     const mockHandler = jest.fn(() => Promise.resolve(response));
-    const handler = withRequestMiddlewares(ResolvingMiddleware, ResolvingMiddleware, ResolvingMiddleware)(mockHandler);
+    const handler = withRequestMiddlewares(
+      ResolvingMiddleware,
+      ResolvingMiddleware,
+      ResolvingMiddleware
+    )(mockHandler);
 
-    return handler(request as any).then((r) => {
+    return handler(request as any).then(r => {
       expect(mockHandler).toHaveBeenCalledWith("dummy", "dummy", "dummy");
       expect(r).toEqual(response);
     });
@@ -64,7 +73,7 @@ describe("withRequestMiddlewares", () => {
     const mockHandler = jest.fn(() => Promise.resolve(response));
     const handler = withRequestMiddlewares(RejectingMiddleware)(mockHandler);
 
-    return handler(request as any).then((r) => {
+    return handler(request as any).then(r => {
       expect(mockHandler).not.toHaveBeenCalled();
       expect(r.kind).toBe("IResponseErrorValidation");
     });
@@ -72,12 +81,14 @@ describe("withRequestMiddlewares", () => {
 
   it("should stop processing middlewares after a rejecting middleware", () => {
     const mockHandler = jest.fn(() => Promise.resolve(response));
-    const handler = withRequestMiddlewares(RejectingMiddleware, ResolvingMiddleware)(mockHandler);
+    const handler = withRequestMiddlewares(
+      RejectingMiddleware,
+      ResolvingMiddleware
+    )(mockHandler);
 
-    return handler(request as any).then((r) => {
+    return handler(request as any).then(r => {
       expect(mockHandler).not.toHaveBeenCalled();
       expect(r.kind).toBe("IResponseErrorValidation");
     });
   });
-
 });

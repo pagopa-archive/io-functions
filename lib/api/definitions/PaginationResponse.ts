@@ -4,8 +4,7 @@
 // tslint:disable:max-line-length
 // tslint:disable:jsdoc-format
 // tslint:disable:interface-name
-
-
+// tslint:disable:no-any
 
 /**
  * Pagination response parameters.
@@ -14,29 +13,22 @@
 import { option, Option } from "ts-option";
 
 export interface PaginationResponse {
-
   readonly page_size?: number;
 
   readonly next?: string;
-
 }
 
 // tslint:disable-next-line:no-any
 export function isPaginationResponse(arg: any): arg is PaginationResponse {
-  return arg &&
-
+  return (
+    arg &&
     typeof arg.page_size === "number" &&
-  
-
     typeof arg.next === "string" &&
-  
-
-    true;
+    true
+  );
 }
 
 // tslint:disable-next-line:no-any
 export function toPaginationResponse(arg: any): Option<PaginationResponse> {
   return option(arg).filter(isPaginationResponse);
 }
-
-

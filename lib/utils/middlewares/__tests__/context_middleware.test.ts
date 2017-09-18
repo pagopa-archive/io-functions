@@ -7,24 +7,21 @@ interface ITestBindings {
 }
 
 describe("ContextMiddleware", () => {
-
   it("should extract the context from the request", async () => {
     const middleware = ContextMiddleware<ITestBindings>();
 
     const context = {
-      log: () => true,
+      log: () => true
     };
 
     const request = {
       app: {
-        get: (s) => (context),
-      },
+        get: s => context
+      }
     };
 
     const response = await middleware(request as any);
 
-    response.mapRight((c) => expect(c).toEqual(context));
-
+    response.mapRight(c => expect(c).toEqual(context));
   });
-
 });

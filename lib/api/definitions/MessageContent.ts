@@ -4,10 +4,10 @@
 // tslint:disable:max-line-length
 // tslint:disable:jsdoc-format
 // tslint:disable:interface-name
+// tslint:disable:no-any
 
 import { isBodyShort, BodyShort } from "./BodyShort";
 import { isBodyLong, BodyLong } from "./BodyLong";
-
 
 /**
  * 
@@ -16,29 +16,19 @@ import { isBodyLong, BodyLong } from "./BodyLong";
 import { option, Option } from "ts-option";
 
 export interface MessageContent {
-
   readonly body_short: BodyShort;
 
   readonly body_long?: BodyLong;
-
 }
 
 // tslint:disable-next-line:no-any
 export function isMessageContent(arg: any): arg is MessageContent {
-  return arg &&
-
-    isBodyShort(arg.body_short) &&
-  
-
-    isBodyLong(arg.body_long) &&
-  
-
-    true;
+  return (
+    arg && isBodyShort(arg.body_short) && isBodyLong(arg.body_long) && true
+  );
 }
 
 // tslint:disable-next-line:no-any
 export function toMessageContent(arg: any): Option<MessageContent> {
   return option(arg).filter(isMessageContent);
 }
-
-

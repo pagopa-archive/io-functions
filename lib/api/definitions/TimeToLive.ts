@@ -4,8 +4,7 @@
 // tslint:disable:max-line-length
 // tslint:disable:jsdoc-format
 // tslint:disable:interface-name
-
-
+// tslint:disable:no-any
 
 /**
  * This parameter specifies for how long (in seconds) the system will try to deliver the message to the channels configured by the user.
@@ -13,9 +12,12 @@
 
 import { Option } from "ts-option";
 
-import { isWithinRangeNumber, toWithinRangeNumber, WithinRangeNumber } from "../../utils/numbers";
+import {
+  isWithinRangeNumber,
+  toWithinRangeNumber,
+  WithinRangeNumber
+} from "../../utils/numbers";
 
-  
 export type TimeToLive = WithinRangeNumber<3600, 31536000>;
 
 // tslint:disable-next-line:no-any
@@ -27,5 +29,3 @@ export function isTimeToLive(arg: any): arg is TimeToLive {
 export function toTimeToLive(arg: any): Option<TimeToLive> {
   return toWithinRangeNumber(arg, 3600, 31536000);
 }
-  
-

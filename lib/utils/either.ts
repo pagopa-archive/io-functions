@@ -2,7 +2,7 @@
  * A simple Either type
  */
 
-interface IEitherAttributes  {
+interface IEitherAttributes {
   readonly isLeft: boolean;
   readonly isRight: boolean;
 }
@@ -37,7 +37,7 @@ export function left<L, R>(v: L): ILeft<L, R> {
     isRight: false,
     left: v,
     mapLeft: <V>(f: (l: L) => V): ILeft<V, R> => left(f(v)),
-    mapRight: <V>(_: (r: R) => V): ILeft<L, V> => left(v),
+    mapRight: <V>(_: (r: R) => V): ILeft<L, V> => left(v)
   };
 }
 
@@ -50,7 +50,7 @@ export function right<L, R>(v: R): IRight<L, R> {
     isRight: true,
     mapLeft: <V>(_: (l: L) => V): IRight<V, R> => right(v),
     mapRight: <V>(f: (r: R) => V): IRight<L, V> => right(f(v)),
-    right: v,
+    right: v
   };
 }
 

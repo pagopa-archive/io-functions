@@ -38,9 +38,14 @@ export interface IVersionedModel {
  * @param modelId The base model ID
  * @param version The version of the model
  */
-export function generateVersionedModelId(modelId: ModelId, version: NonNegativeNumber): string {
+export function generateVersionedModelId(
+  modelId: ModelId,
+  version: NonNegativeNumber
+): string {
   const paddingLength = 16; // length of Number.MAX_SAFE_INTEGER == 9007199254740991
-  const paddedVersion = ("0".repeat(paddingLength) + version).slice(-paddingLength);
+  const paddedVersion = ("0".repeat(paddingLength) + version).slice(
+    -paddingLength
+  );
   return `${modelId}-${paddedVersion}`;
 }
 
@@ -49,16 +54,19 @@ export abstract class DocumentDbModelVersioned<
   TN extends T & IVersionedModel & DocumentDb.NewDocument,
   TR extends DocumentDb.RetrievedDocument & IVersionedModel
 > extends DocumentDbModel<TN, TR> {
-
   protected getModelId: (o: T) => ModelId;
 
-  protected versionateModel: (o: T, id: string, version: NonNegativeNumber) => TN;
+  protected versionateModel: (
+    o: T,
+    id: string,
+    version: NonNegativeNumber
+  ) => TN;
 
   protected toBaseType: (o: TR) => T;
 
   public async create(
     document: T,
-    partitionKey: string,
+    partitionKey: string
   ): Promise<Either<DocumentDb.QueryError, TR>> {
     // the first version of a profile is 0
     const initialVersion = toNonNegativeNumber(0).get;
@@ -76,7 +84,11 @@ export abstract class DocumentDbModelVersioned<
     //   version: initialVersion,
     // };
 
-    const newDocument = this.versionateModel(document, versionedModelId, initialVersion);
+    const newDocument = this.versionateModel(
+      document,
+      versionedModelId,
+      initialVersion
+    );
 
     return super.create(newDocument, partitionKey);
   }
@@ -84,7 +96,7 @@ export abstract class DocumentDbModelVersioned<
   public async update(
     objectId: string,
     partitionKey: string,
-    f: (current: T) => T,
+    f: (current: T) => T
   ): Promise<Either<DocumentDb.QueryError, Option<TR>>> {
     // fetch the notification
     const errorOrMaybeCurrent = await this.find(objectId, partitionKey);
@@ -105,10 +117,16 @@ export abstract class DocumentDbModelVersioned<
     const updatedObject = f(currentObject);
 
     const modelId = this.getModelId(updatedObject);
-    const nextVersion = toNonNegativeNumber(currentRetrievedDocument.version + 1).get;
+    const nextVersion = toNonNegativeNumber(
+      currentRetrievedDocument.version + 1
+    ).get;
     const versionedModelId = generateVersionedModelId(modelId, nextVersion);
 
-    const newDocument = this.versionateModel(updatedObject, versionedModelId, nextVersion);
+    const newDocument = this.versionateModel(
+      updatedObject,
+      versionedModelId,
+      nextVersion
+    );
 
     const createdDocument = await super.create(newDocument, partitionKey);
 
@@ -118,19 +136,16 @@ export abstract class DocumentDbModelVersioned<
   protected findLastVersionByModelId<V>(
     collectionName: string,
     modelIdField: string,
-    modelIdValue: V,
+    modelIdValue: V
   ): Promise<Either<DocumentDb.QueryError, Option<TR>>> {
-    return DocumentDbUtils.queryOneDocument(
-      this.dbClient,
-      this.collectionUri,
-      {
-        parameters: [{
+    return DocumentDbUtils.queryOneDocument(this.dbClient, this.collectionUri, {
+      parameters: [
+        {
           name: "@modelId",
-          value: modelIdValue,
-        }],
-        query: `SELECT * FROM ${collectionName} m WHERE (m.${modelIdField} = @modelId) ORDER BY m.version DESC`,
-      },
-    );
+          value: modelIdValue
+        }
+      ],
+      query: `SELECT * FROM ${collectionName} m WHERE (m.${modelIdField} = @modelId) ORDER BY m.version DESC`
+    });
   }
-
 }

@@ -2,7 +2,7 @@ import is from "ts-is";
 
 import {
   isNewMessageDefaultAddresses,
-  NewMessageDefaultAddresses,
+  NewMessageDefaultAddresses
 } from "../api/definitions/NewMessageDefaultAddresses";
 
 import { IRetrievedMessage, isIRetrievedMessage } from "./message";
@@ -21,7 +21,9 @@ export interface ICreatedMessageEvent {
 /**
  * Type guard for ICreatedMessageEvent objects
  */
-export const isICreatedMessageEvent = is<ICreatedMessageEvent>((arg) =>
-  isIRetrievedMessage(arg.message) &&
-  (!arg.defaultAddresses || isNewMessageDefaultAddresses(arg.defaultAddresses)),
+export const isICreatedMessageEvent = is<ICreatedMessageEvent>(
+  arg =>
+    isIRetrievedMessage(arg.message) &&
+    (!arg.defaultAddresses ||
+      isNewMessageDefaultAddresses(arg.defaultAddresses))
 );
