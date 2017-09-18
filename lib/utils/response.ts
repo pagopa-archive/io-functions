@@ -186,14 +186,14 @@ export const ResponseErrorForbiddenNotAuthorized: IResponseErrorForbiddenNotAuth
 };
 
 /**
- * The user is not allowed here.
+ * The user is not allowed to issue production requests.
  */
 export interface IResponseErrorForbiddenNotAuthorizedForProduction extends IResponse {
   readonly kind: "IResponseErrorForbiddenNotAuthorizedForProduction";
 }
 
 /**
- * The user is not allowed here.
+ * The user is not allowed to issue production requests.
  */
 export const ResponseErrorForbiddenNotAuthorizedForProduction: IResponseErrorForbiddenNotAuthorizedForProduction = {
   ...ResponseErrorGeneric(
@@ -202,6 +202,26 @@ export const ResponseErrorForbiddenNotAuthorizedForProduction: IResponseErrorFor
     "You are not allowed to issue production calls, set 'dry_run' to true or ask to be enabled for production.",
   ),
   kind: "IResponseErrorForbiddenNotAuthorizedForProduction",
+};
+
+/**
+ * The user is not allowed to send messages with default addresses.
+ */
+export interface IResponseErrorForbiddenNotAuthorizedForDefaultAddresses extends IResponse {
+  readonly kind: "IResponseErrorForbiddenNotAuthorizedForDefaultAddresses";
+}
+
+/**
+ * The user is not allowed to send messages with default addresses.
+ */
+export const ResponseErrorForbiddenNotAuthorizedForDefaultAddresses:
+  IResponseErrorForbiddenNotAuthorizedForDefaultAddresses = {
+  ...ResponseErrorGeneric(
+    HTTP_STATUS_403,
+    "Call forbidden",
+    "You are not allowed to send messages by providing default addresses.",
+  ),
+  kind: "IResponseErrorForbiddenNotAuthorizedForDefaultAddresses",
 };
 
 /**

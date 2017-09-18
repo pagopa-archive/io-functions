@@ -5,8 +5,6 @@
 // tslint:disable:jsdoc-format
 // tslint:disable:interface-name
 
-import { Option } from "ts-option";
-
 
 
 /**
@@ -14,6 +12,8 @@ import { Option } from "ts-option";
  */
 
   
+import { Option } from "ts-option";
+
 import { isPatternString, toPatternString, PatternString } from "../../utils/strings";
 
 export type FiscalCode = PatternString<"^[A-Z]{6}[0-9LMNPQRSTUV]{2}[ABCDEHLMPRST][0-9LMNPQRSTUV]{2}[A-Z][0-9LMNPQRSTUV]{3}[A-Z]$">;

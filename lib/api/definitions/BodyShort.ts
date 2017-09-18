@@ -5,8 +5,6 @@
 // tslint:disable:jsdoc-format
 // tslint:disable:interface-name
 
-import { Option } from "ts-option";
-
 
 
 /**
@@ -15,6 +13,8 @@ The caller should assume that only the content in "body_short" may be delivered 
  */
 
   
+import { Option } from "ts-option";
+
 import { isWithinRangeString, toWithinRangeString, WithinRangeString } from "../../utils/strings";
 
 export type BodyShort = WithinRangeString<3, 100>;

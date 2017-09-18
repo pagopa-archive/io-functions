@@ -5,14 +5,13 @@
 // tslint:disable:jsdoc-format
 // tslint:disable:interface-name
 
-import { Option } from "ts-option";
-
 
 
 /**
  * This parameter specifies for how long (in seconds) the system will try to deliver the message to the channels configured by the user.
  */
 
+import { Option } from "ts-option";
 
 import { isWithinRangeNumber, toWithinRangeNumber, WithinRangeNumber } from "../../utils/numbers";
 

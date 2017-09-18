@@ -1,5 +1,10 @@
 import is from "ts-is";
 
+import {
+  isNewMessageDefaultAddresses,
+  NewMessageDefaultAddresses,
+} from "../api/definitions/NewMessageDefaultAddresses";
+
 import { IRetrievedMessage, isIRetrievedMessage } from "./message";
 
 /**
@@ -10,9 +15,13 @@ import { IRetrievedMessage, isIRetrievedMessage } from "./message";
  */
 export interface ICreatedMessageEvent {
   readonly message: IRetrievedMessage;
+  readonly defaultAddresses?: NewMessageDefaultAddresses;
 }
 
 /**
  * Type guard for ICreatedMessageEvent objects
  */
-export const isICreatedMessageEvent = is<ICreatedMessageEvent>((arg) => isIRetrievedMessage(arg.message));
+export const isICreatedMessageEvent = is<ICreatedMessageEvent>((arg) =>
+  isIRetrievedMessage(arg.message) &&
+  (!arg.defaultAddresses || isNewMessageDefaultAddresses(arg.defaultAddresses)),
+);

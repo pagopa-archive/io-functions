@@ -8,6 +8,7 @@ import { left, right } from "../../utils/either";
 import { ModelId } from "../../utils/documentdb_model_versioned";
 
 import { toBodyShort } from "../../api/definitions/BodyShort";
+import { toEmailAddress } from "../../api/definitions/EmailAddress";
 import { toFiscalCode } from "../../api/definitions/FiscalCode";
 import { NewMessage } from "../../api/definitions/NewMessage";
 
@@ -16,7 +17,11 @@ import { IAzureUserAttributes } from "../../utils/middlewares/azure_user_attribu
 import { toNonEmptyString } from "../../utils/strings";
 
 import { INewMessage, IPublicExtendedMessage, IRetrievedMessage } from "../../models/message";
-import { IRetrievedNotification, NotificationChannelStatus } from "../../models/notification";
+import {
+  IRetrievedNotification,
+  NotificationAddressSource,
+  NotificationChannelStatus,
+} from "../../models/notification";
 import {
   CreateMessageHandler,
   GetMessageHandler,
@@ -173,6 +178,7 @@ describe("CreateMessageHandler", () => {
       name: "api.messages.create",
       properties: {
         dryRun: "false",
+        hasDefaultEmail: "false",
         senderOrganizationId: "agid",
         success: "true",
       },
@@ -184,6 +190,117 @@ describe("CreateMessageHandler", () => {
       result.apply(response);
       expect(response.redirect).toBeCalledWith(202, `/api/v1/messages/${aFiscalCode}/${messageDocument.id}`);
     }
+  });
+
+  it("should handle default addresses when creating a new message", async () => {
+    const mockAppInsights = {
+      trackEvent: jest.fn(),
+    };
+
+    const mockMessageModel = {
+      create: jest.fn(() => right(aRetrievedMessage)),
+    };
+
+    const createMessageHandler = CreateMessageHandler(mockAppInsights as any, mockMessageModel as any);
+
+    const mockContext = {
+      bindings: {},
+      log: jest.fn(),
+    };
+
+    const messagePayload: NewMessage = {
+      ...aMessagePayload,
+      default_addresses: {
+        email: toEmailAddress("test@example.com").get,
+      },
+    };
+
+    const result = await createMessageHandler(
+      mockContext as any,
+      {
+        ...aUserAuthenticationDeveloper,
+        groups: new Set([UserGroup.ApiMessageWriteDefaultAddress]),
+      },
+      someUserAttributes,
+      aFiscalCode,
+      messagePayload,
+    );
+
+    expect(mockMessageModel.create).toHaveBeenCalledTimes(1);
+
+    const messageDocument: INewMessage = mockMessageModel.create.mock.calls[0][0];
+    expect(messageDocument.bodyShort).toEqual(aMessagePayload.content.body_short);
+
+    expect(mockMessageModel.create.mock.calls[0][1]).toEqual(aFiscalCode);
+
+    expect(mockContext.bindings).toEqual({
+      createdMessage: {
+        defaultAddresses: {
+          email: toEmailAddress("test@example.com").get,
+        },
+        message: aRetrievedMessage,
+      },
+    });
+
+    expect(mockAppInsights.trackEvent).toHaveBeenCalledTimes(1);
+    expect(mockAppInsights.trackEvent).toHaveBeenCalledWith({
+      name: "api.messages.create",
+      properties: {
+        dryRun: "false",
+        hasDefaultEmail: "true",
+        senderOrganizationId: "agid",
+        success: "true",
+      },
+    });
+
+    expect(result.kind).toBe("IResponseSuccessRedirectToResource");
+    if (result.kind === "IResponseSuccessRedirectToResource") {
+      const response = MockResponse();
+      result.apply(response);
+      expect(response.redirect).toBeCalledWith(202, `/api/v1/messages/${aFiscalCode}/${messageDocument.id}`);
+    }
+  });
+
+  it("should require the user to be enabled for providing default addresses when creating a new message", async () => {
+    const mockAppInsights = {
+      trackEvent: jest.fn(),
+    };
+
+    const mockMessageModel = {
+      create: jest.fn(() => right(aRetrievedMessage)),
+    };
+
+    const createMessageHandler = CreateMessageHandler(mockAppInsights as any, mockMessageModel as any);
+
+    const mockContext = {
+      bindings: {},
+      log: jest.fn(),
+    };
+
+    const messagePayload: NewMessage = {
+      ...aMessagePayload,
+      default_addresses: {
+        email: toEmailAddress("test@example.com").get,
+      },
+    };
+
+    const result = await createMessageHandler(
+      mockContext as any,
+      aUserAuthenticationDeveloper,
+      someUserAttributes,
+      aFiscalCode,
+      messagePayload,
+    );
+
+    expect(mockMessageModel.create).not.toHaveBeenCalled();
+
+    expect(mockContext.bindings).toEqual({
+      createdMessage: undefined,
+    });
+
+    expect(mockAppInsights.trackEvent).not.toHaveBeenCalled();
+
+    expect(result.kind).toBe("IResponseErrorForbiddenNotAuthorizedForDefaultAddresses");
   });
 
   it("should require the user to be enable for production to create a new message", async () => {
@@ -371,6 +488,7 @@ describe("GetMessageHandler", () => {
       _self: "xyz",
       _ts: "xyz",
       emailNotification: {
+        addressSource: NotificationAddressSource.PROFILE_ADDRESS,
         status: NotificationChannelStatus.NOTIFICATION_SENT_TO_CHANNEL,
         toAddress: toNonEmptyString("x@example.com").get,
       },

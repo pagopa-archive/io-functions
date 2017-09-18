@@ -98,6 +98,10 @@
   version "2.0.6"
   resolved "https://registry.yarnpkg.com/@types/swagger-schema-official/-/swagger-schema-official-2.0.6.tgz#d2ca46728e32004a16e8c6c7fc8305b7cedf31b5"
 
+"@types/validator@^6.2.3":
+  version "6.2.3"
+  resolved "https://registry.yarnpkg.com/@types/validator/-/validator-6.2.3.tgz#fb81874176bd6402583688ae56e69b2bc25fb187"
+
 "@types/winston@^2.3.1":
   version "2.3.5"
   resolved "https://registry.yarnpkg.com/@types/winston/-/winston-2.3.5.tgz#d8063460a7881e55a9dbfc41fcdfb5063312f3fb"
@@ -3710,7 +3714,7 @@ validate-npm-package-license@^3.0.1:
     spdx-correct "~1.0.0"
     spdx-expression-parse "~1.0.0"
 
-validator@^8.0.0:
+validator@^8.0.0, validator@^8.2.0:
   version "8.2.0"
   resolved "https://registry.yarnpkg.com/validator/-/validator-8.2.0.tgz#3c1237290e37092355344fef78c231249dab77b9"
 

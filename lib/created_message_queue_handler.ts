@@ -6,15 +6,19 @@
  */
 
 import * as ulid from "ulid";
+import * as winston from "winston";
 
 import { IContext } from "azure-functions-types";
 
 import { DocumentClient as DocumentDBClient } from "documentdb";
 
+import { configureAzureContextTransport } from "./utils/logging";
+
 import * as documentDbUtils from "./utils/documentdb";
 
 import { Option, option } from "ts-option";
 
+import { NewMessageDefaultAddresses } from "./api/definitions/NewMessageDefaultAddresses";
 import {
   ICreatedMessageEvent,
   isICreatedMessageEvent,
@@ -23,13 +27,16 @@ import { IRetrievedMessage } from "./models/message";
 import {
   INewNotification,
   INotificationChannelEmail,
-  IRetrievedNotification, NotificationChannelStatus,
+  IRetrievedNotification,
+  NotificationAddressSource,
+  NotificationChannelStatus,
   NotificationModel,
 } from "./models/notification";
 import { INotificationEvent } from "./models/notification_event";
 import { ProfileModel } from "./models/profile";
 import { Either, left, right } from "./utils/either";
 import { toNonEmptyString } from "./utils/strings";
+import { Tuple2 } from "./utils/tuples";
 
 // Setup DocumentDB
 
@@ -66,8 +73,9 @@ export enum ProcessingError {
   // a transient error, e.g. database is not available
   TRANSIENT,
 
-  // user has no profile, can't deliver a notification
-  NO_PROFILE,
+  // user has no profile and no default addresses have been provided,
+  // we can't deliver a notification
+  NO_ADDRESSES,
 
 }
 
@@ -81,34 +89,41 @@ export async function handleMessage(
     profileModel: ProfileModel,
     notificationModel: NotificationModel,
     retrievedMessage: IRetrievedMessage,
+    defaultAddresses: Option<NewMessageDefaultAddresses>,
 ): Promise<Either<ProcessingError, IRetrievedNotification>> {
   // async fetch of profile data associated to the fiscal code the message
   // should be delivered to
   const errorOrMaybeProfile = await profileModel.findOneProfileByFiscalCode(retrievedMessage.fiscalCode);
 
   if (errorOrMaybeProfile.isRight) {
-    // query succeeded, let's see if we have a result
+    // query succeeded, we may have a profile
     const maybeProfile = errorOrMaybeProfile.right;
-    if (maybeProfile.isDefined) {
-      // yes we have a matching profile
-      const profile = maybeProfile.get;
-      // we got a valid profile associated to the message, we can trigger
-      // notifications on the configured channels.
 
-      const maybeEmailNotification: Option<INotificationChannelEmail> = option(profile.email).map((email) => {
-        // in case an email address is configured in the profile, we can
-        // trigger an email notification event
-        const emailNotification: INotificationChannelEmail = {
-          status: NotificationChannelStatus.NOTIFICATION_QUEUED,
-          toAddress: email,
-        };
-        return emailNotification;
-      });
+    //
+    // attempt to resolve an email notification
+    //
+    const maybeProfileEmail = maybeProfile
+      .flatMap((profile) => option(profile.email))
+      .map((email) => Tuple2(email, NotificationAddressSource.PROFILE_ADDRESS));
+    const maybeDefaultEmail = defaultAddresses
+      .flatMap((addresses) => option(addresses.email))
+      .map((email) => Tuple2(email, NotificationAddressSource.DEFAULT_ADDRESS));
+    const maybeEmail = maybeProfileEmail.orElse(() => maybeDefaultEmail);
+    const maybeEmailNotification: Option<INotificationChannelEmail> = maybeEmail.map(
+      ({ e1: toAddress, e2: addressSource }) => {
+      return {
+        addressSource,
+        status: NotificationChannelStatus.NOTIFICATION_QUEUED,
+        toAddress,
+      };
+    });
 
+    // check whether there's at least a channel we can send the notification to
+    if (maybeEmailNotification.isDefined) {
       // create a new Notification object with the configured notifications
       const notification: INewNotification = {
         emailNotification: maybeEmailNotification.isDefined ? maybeEmailNotification.get : undefined,
-        fiscalCode: profile.fiscalCode,
+        fiscalCode: retrievedMessage.fiscalCode,
         id: toNonEmptyString(ulid()).get,
         kind: "INewNotification",
         messageId: retrievedMessage.id,
@@ -128,7 +143,7 @@ export async function handleMessage(
 
     } else {
       // query succeeded but no profile was found
-      return(left(ProcessingError.NO_PROFILE));
+      return(left(ProcessingError.NO_ADDRESSES));
     }
   } else {
     // query failed
@@ -159,13 +174,15 @@ export function processResolve(errorOrNotification: Either<ProcessingError, IRet
   } else {
     // the processing failed
     switch (errorOrNotification.left) {
-      case ProcessingError.NO_PROFILE: {
-        context.log.error(`Fiscal code has no associated profile|${retrievedMessage.fiscalCode}`);
+      case ProcessingError.NO_ADDRESSES: {
+        winston.error(
+          `Fiscal code has no associated profile and no default addresses provided|${retrievedMessage.fiscalCode}`,
+        );
         context.done();
         break;
       }
       case ProcessingError.TRANSIENT: {
-        context.log.error(`Transient error, retrying|${retrievedMessage.fiscalCode}`);
+        winston.error(`Transient error, retrying|${retrievedMessage.fiscalCode}`);
         context.done("Transient error"); // here we trigger a retry by calling
                                          // done(error)
         break;
@@ -178,7 +195,7 @@ export function processReject(context: IContextWithBindings,
                               retrievedMessage: IRetrievedMessage,
                               error: Either<ProcessingError, IRetrievedNotification>): void {
   // the promise failed
-  context.log.error(`Error while processing event, retrying|${retrievedMessage.fiscalCode}|${error}`);
+  winston.error(`Error while processing event, retrying|${retrievedMessage.fiscalCode}|${error}`);
   // in case of error, we return a failure to trigger a retry (up to the
   // configured max retries) TODO: schedule next retry with exponential
   // backoff, see #150597257
@@ -189,13 +206,16 @@ export function processReject(context: IContextWithBindings,
  * Handler that gets triggered on incoming event.
  */
 export function index(context: IContextWithBindings): void {
+  // redirect winston logs to Azure Functions log
+  configureAzureContextTransport(context, winston, "debug");
+
   const createdMessageEvent = context.bindings.createdMessage;
 
   // since this function gets triggered by a queued message that gets
   // deserialized from a json object, we must first check that what we
   // got is what we expect.
   if (createdMessageEvent === undefined || !isICreatedMessageEvent(createdMessageEvent)) {
-    context.log.error(`Fatal! No valid message found in bindings.`);
+    winston.error(`Fatal! No valid message found in bindings.`);
     // we will never be able to recover from this, so don't trigger an error
     // TODO: perhaps forward this message to a failed events queue for review
     context.done();
@@ -204,8 +224,9 @@ export function index(context: IContextWithBindings): void {
 
   // it is an ICreatedMessageEvent
   const retrievedMessage = createdMessageEvent.message;
+  const defaultAddresses = option(createdMessageEvent.defaultAddresses);
 
-  context.log(`A new message was created|${retrievedMessage.id}|${retrievedMessage.fiscalCode}`);
+  winston.info(`A new message was created|${retrievedMessage.id}|${retrievedMessage.fiscalCode}`);
 
   // setup required models
   const documentClient = new DocumentDBClient(COSMOSDB_URI, {masterKey: COSMOSDB_KEY});
@@ -213,10 +234,11 @@ export function index(context: IContextWithBindings): void {
   const notificationModel = new NotificationModel(documentClient, notificationsCollectionUrl);
 
   // now we can trigger the notifications for the message
-  exports.handleMessage(
+  handleMessage(
       profileModel,
       notificationModel,
       retrievedMessage,
+      defaultAddresses,
   ).then((errorOrNotification: Either<ProcessingError, IRetrievedNotification>) => {
         processResolve(errorOrNotification, context, retrievedMessage);
       },
