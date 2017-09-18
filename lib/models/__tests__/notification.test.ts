@@ -12,11 +12,14 @@ import {
   INotificationChannelEmail,
   IRetrievedNotification,
   NotificationChannelStatus,
-  NotificationModel,
+  NotificationModel
 } from "../notification";
 
 const aDatabaseUri = DocumentDbUtils.getDatabaseUri("mockdb");
-const aNotificationsCollectionUri = DocumentDbUtils.getCollectionUri(aDatabaseUri, "notifications");
+const aNotificationsCollectionUri = DocumentDbUtils.getCollectionUri(
+  aDatabaseUri,
+  "notifications"
+);
 
 const aFiscalCode = toFiscalCode("FRLFRC74E04B157I").get;
 
@@ -24,26 +27,33 @@ const aNewNotification: INewNotification = {
   fiscalCode: aFiscalCode,
   id: toNonEmptyString("A_NOTIFICATION_ID").get,
   kind: "INewNotification",
-  messageId: toNonEmptyString("A_MESSAGE_ID").get,
+  messageId: toNonEmptyString("A_MESSAGE_ID").get
 };
 
 const aRetrievedNotification: IRetrievedNotification = {
   ...aNewNotification,
   _self: "xyz",
   _ts: "xyz",
-  kind: "IRetrievedNotification",
+  kind: "IRetrievedNotification"
 };
 
 describe("createNotification", () => {
-
   it("should create a new Notification", async () => {
     const clientMock = {
-      createDocument: jest.fn((_, __, ___, cb) => cb(undefined, aRetrievedNotification)),
+      createDocument: jest.fn((_, __, ___, cb) =>
+        cb(undefined, aRetrievedNotification)
+      )
     };
 
-    const model = new NotificationModel((clientMock as any) as DocumentDb.DocumentClient, aNotificationsCollectionUri);
+    const model = new NotificationModel(
+      (clientMock as any) as DocumentDb.DocumentClient,
+      aNotificationsCollectionUri
+    );
 
-    const result = await model.create(aNewNotification, aNewNotification.messageId);
+    const result = await model.create(
+      aNewNotification,
+      aNewNotification.messageId
+    );
 
     expect(clientMock.createDocument.mock.calls[0][1].kind).toBeUndefined();
     expect(result.isRight).toBeTruthy();
@@ -54,45 +64,61 @@ describe("createNotification", () => {
 
   it("should return the error if creation fails", async () => {
     const clientMock = {
-      createDocument: jest.fn((_, __, ___, cb) => cb("error")),
+      createDocument: jest.fn((_, __, ___, cb) => cb("error"))
     };
 
-    const model = new NotificationModel((clientMock as any) as DocumentDb.DocumentClient, aNotificationsCollectionUri);
+    const model = new NotificationModel(
+      (clientMock as any) as DocumentDb.DocumentClient,
+      aNotificationsCollectionUri
+    );
 
-    const result = await model.create(aNewNotification, aNewNotification.messageId);
+    const result = await model.create(
+      aNewNotification,
+      aNewNotification.messageId
+    );
 
     expect(clientMock.createDocument).toHaveBeenCalledTimes(1);
-    expect(clientMock.createDocument.mock.calls[0][0]).toEqual("dbs/mockdb/colls/notifications");
+    expect(clientMock.createDocument.mock.calls[0][0]).toEqual(
+      "dbs/mockdb/colls/notifications"
+    );
     expect(clientMock.createDocument.mock.calls[0][1]).toEqual({
       ...aNewNotification,
-      kind: undefined,
+      kind: undefined
     });
     expect(clientMock.createDocument.mock.calls[0][2]).toEqual({
-      partitionKey: aNewNotification.messageId,
+      partitionKey: aNewNotification.messageId
     });
     expect(result.isLeft).toBeTruthy();
     if (result.isLeft) {
       expect(result.left).toEqual("error");
     }
   });
-
 });
 
 describe("find", () => {
-
   it("should return an existing message", async () => {
     const clientMock = {
-      readDocument: jest.fn((_, __, cb) => cb(undefined, aRetrievedNotification)),
+      readDocument: jest.fn((_, __, cb) =>
+        cb(undefined, aRetrievedNotification)
+      )
     };
 
-    const model = new NotificationModel((clientMock as any) as DocumentDb.DocumentClient, aNotificationsCollectionUri);
+    const model = new NotificationModel(
+      (clientMock as any) as DocumentDb.DocumentClient,
+      aNotificationsCollectionUri
+    );
 
-    const result = await model.find(aRetrievedNotification.id, aRetrievedNotification.messageId);
+    const result = await model.find(
+      aRetrievedNotification.id,
+      aRetrievedNotification.messageId
+    );
 
     expect(clientMock.readDocument).toHaveBeenCalledTimes(1);
-    expect(clientMock.readDocument.mock.calls[0][0]).toEqual("dbs/mockdb/colls/notifications/docs/A_NOTIFICATION_ID");
+    expect(clientMock.readDocument.mock.calls[0][0]).toEqual(
+      "dbs/mockdb/colls/notifications/docs/A_NOTIFICATION_ID"
+    );
     expect(clientMock.readDocument.mock.calls[0][1]).toEqual({
-      partitionKey: aRetrievedNotification.messageId,
+      partitionKey: aRetrievedNotification.messageId
     });
     expect(result.isRight).toBeTruthy();
     if (result.isRight) {
@@ -103,32 +129,36 @@ describe("find", () => {
 
   it("should return the error", async () => {
     const clientMock = {
-      readDocument: jest.fn((_, __, cb) => cb("error")),
+      readDocument: jest.fn((_, __, cb) => cb("error"))
     };
 
-    const model = new NotificationModel((clientMock as any) as DocumentDb.DocumentClient, aNotificationsCollectionUri);
+    const model = new NotificationModel(
+      (clientMock as any) as DocumentDb.DocumentClient,
+      aNotificationsCollectionUri
+    );
 
-    const result = await model.find(aRetrievedNotification.id, aRetrievedNotification.fiscalCode);
+    const result = await model.find(
+      aRetrievedNotification.id,
+      aRetrievedNotification.fiscalCode
+    );
 
     expect(result.isLeft).toBeTruthy();
     if (result.isLeft) {
       expect(result.left).toEqual("error");
     }
   });
-
 });
 
 describe("update", () => {
-
   const anEmailNotification: INotificationChannelEmail = {
     status: NotificationChannelStatus.NOTIFICATION_SENT_TO_CHANNEL,
-    toAddress: toNonEmptyString("to@example.com").get,
+    toAddress: toNonEmptyString("to@example.com").get
   };
 
-  const updateFunction = jest.fn((n) => {
+  const updateFunction = jest.fn(n => {
     return {
       ...n,
-      emailNotification: anEmailNotification,
+      emailNotification: anEmailNotification
     };
   });
 
@@ -136,28 +166,37 @@ describe("update", () => {
     updateFunction.mockReset();
 
     const clientMock = {
-      readDocument: jest.fn((_, __, cb) => cb(undefined, aRetrievedNotification)),
-      replaceDocument: jest.fn((_, __, ___, cb) => cb(undefined, {
-        ...aRetrievedNotification,
-        emailNotification: anEmailNotification,
-      })),
+      readDocument: jest.fn((_, __, cb) =>
+        cb(undefined, aRetrievedNotification)
+      ),
+      replaceDocument: jest.fn((_, __, ___, cb) =>
+        cb(undefined, {
+          ...aRetrievedNotification,
+          emailNotification: anEmailNotification
+        })
+      )
     };
 
-    const model = new NotificationModel((clientMock as any) as DocumentDb.DocumentClient, aNotificationsCollectionUri);
+    const model = new NotificationModel(
+      (clientMock as any) as DocumentDb.DocumentClient,
+      aNotificationsCollectionUri
+    );
 
     const result = await model.update(
       aRetrievedNotification.id,
       aRetrievedNotification.messageId,
-      updateFunction,
+      updateFunction
     );
 
     expect(clientMock.readDocument).toHaveBeenCalledTimes(1);
-    expect(clientMock.readDocument.mock.calls[0][0]).toEqual("dbs/mockdb/colls/notifications/docs/A_NOTIFICATION_ID");
+    expect(clientMock.readDocument.mock.calls[0][0]).toEqual(
+      "dbs/mockdb/colls/notifications/docs/A_NOTIFICATION_ID"
+    );
 
     expect(updateFunction).toHaveBeenCalledTimes(1);
     expect(updateFunction).toHaveBeenCalledWith({
       fiscalCode: aRetrievedNotification.fiscalCode,
-      messageId: aRetrievedNotification.messageId,
+      messageId: aRetrievedNotification.messageId
     });
 
     expect(clientMock.replaceDocument.mock.calls[0][1].kind).toBeUndefined();
@@ -167,7 +206,7 @@ describe("update", () => {
       expect(result.right.isDefined).toBeTruthy();
       expect(result.right.get).toEqual({
         ...aRetrievedNotification,
-        emailNotification: anEmailNotification,
+        emailNotification: anEmailNotification
       });
     }
   });
@@ -177,15 +216,18 @@ describe("update", () => {
 
     const clientMock = {
       readDocument: jest.fn((_, __, cb) => cb("error")),
-      replaceDocument: jest.fn(),
+      replaceDocument: jest.fn()
     };
 
-    const model = new NotificationModel((clientMock as any) as DocumentDb.DocumentClient, aNotificationsCollectionUri);
+    const model = new NotificationModel(
+      (clientMock as any) as DocumentDb.DocumentClient,
+      aNotificationsCollectionUri
+    );
 
     const result = await model.update(
       aRetrievedNotification.messageId,
       aRetrievedNotification.id,
-      updateFunction,
+      updateFunction
     );
 
     expect(clientMock.readDocument).toHaveBeenCalledTimes(1);
@@ -202,16 +244,21 @@ describe("update", () => {
     updateFunction.mockReset();
 
     const clientMock = {
-      readDocument: jest.fn((_, __, cb) => cb(undefined, aRetrievedNotification)),
-      replaceDocument: jest.fn((_, __, ___, cb) => cb("error")),
+      readDocument: jest.fn((_, __, cb) =>
+        cb(undefined, aRetrievedNotification)
+      ),
+      replaceDocument: jest.fn((_, __, ___, cb) => cb("error"))
     };
 
-    const model = new NotificationModel((clientMock as any) as DocumentDb.DocumentClient, aNotificationsCollectionUri);
+    const model = new NotificationModel(
+      (clientMock as any) as DocumentDb.DocumentClient,
+      aNotificationsCollectionUri
+    );
 
     const result = await model.update(
       aRetrievedNotification.messageId,
       aRetrievedNotification.id,
-      updateFunction,
+      updateFunction
     );
 
     expect(clientMock.readDocument).toHaveBeenCalledTimes(1);
@@ -223,5 +270,4 @@ describe("update", () => {
       expect(result.left).toEqual("error");
     }
   });
-
 });

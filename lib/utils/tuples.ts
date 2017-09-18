@@ -10,7 +10,8 @@ export interface Tuple2<A, B> {
 
 export function Tuple2<A, B>(e1: A, e2: B): Tuple2<A, B> {
   return {
-    e1, e2,
+    e1,
+    e2
   };
 }
 
@@ -21,6 +22,8 @@ export interface Tuple3<A, B, C> extends Tuple2<A, B> {
 
 export function Tuple3<A, B, C>(e1: A, e2: B, e3: C): Tuple3<A, B, C> {
   return {
-    e1, e2, e3,
+    e1,
+    e2,
+    e3
   };
 }

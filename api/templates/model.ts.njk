@@ -4,6 +4,7 @@
 // tslint:disable:max-line-length
 // tslint:disable:jsdoc-format
 // tslint:disable:interface-name
+// tslint:disable:no-any
 
 {% for propName, prop in definition.properties %}{% if prop.$ref -%}
 {%- set realPropName = prop.$ref | replace("#/definitions/", "") -%}

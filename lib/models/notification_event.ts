@@ -16,8 +16,9 @@ export interface INotificationEvent {
 /**
  * Type guard for INotificationEvent objects
  */
-export const isNotificationEvent = is<INotificationEvent>((arg) =>
-  arg &&
-  isNonEmptyString(arg.notificationId) &&
-  isNonEmptyString(arg.messageId),
+export const isNotificationEvent = is<INotificationEvent>(
+  arg =>
+    arg &&
+    isNonEmptyString(arg.notificationId) &&
+    isNonEmptyString(arg.messageId)
 );

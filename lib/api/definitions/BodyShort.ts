@@ -4,18 +4,20 @@
 // tslint:disable:max-line-length
 // tslint:disable:jsdoc-format
 // tslint:disable:interface-name
-
-
+// tslint:disable:no-any
 
 /**
  * An abstract of the message, in plain text. The content of this field will be delivered to channels that support a limited amount of characters (e.g. SMS, mobile notifications, etc...).
 The caller should assume that only the content in "body_short" may be delivered so the value of this field MUST contain *all* the required information.
  */
 
-  
 import { Option } from "ts-option";
 
-import { isWithinRangeString, toWithinRangeString, WithinRangeString } from "../../utils/strings";
+import {
+  isWithinRangeString,
+  toWithinRangeString,
+  WithinRangeString
+} from "../../utils/strings";
 
 export type BodyShort = WithinRangeString<3, 100>;
 
@@ -28,5 +30,3 @@ export function isBodyShort(arg: any): arg is BodyShort {
 export function toBodyShort(arg: any): Option<BodyShort> {
   return toWithinRangeString(arg, 3, 100);
 }
-  
-

@@ -2,7 +2,9 @@
     "defaultSeverity": "error",
     "extends": [
       "tslint:recommended",
-      "tslint-immutable"
+      "tslint-immutable",
+      "tslint-plugin-prettier",
+      "tslint-config-prettier"
     ],
     "jsRules": {},
     "rules": {
@@ -24,7 +26,8 @@
       // tslint-immutable: Functional style rules
       // "no-this": true,
       // "no-class": true,
-      "no-mixed-interface": true
+      "no-mixed-interface": true,
+      "prettier": true
     },
     "rulesDirectory": []
 }

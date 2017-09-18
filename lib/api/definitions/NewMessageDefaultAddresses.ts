@@ -4,9 +4,9 @@
 // tslint:disable:max-line-length
 // tslint:disable:jsdoc-format
 // tslint:disable:interface-name
+// tslint:disable:no-any
 
 import { isEmailAddress, EmailAddress } from "./EmailAddress";
-
 
 /**
  * Default addresses for notifying the recipient of the message.
@@ -15,24 +15,19 @@ import { isEmailAddress, EmailAddress } from "./EmailAddress";
 import { option, Option } from "ts-option";
 
 export interface NewMessageDefaultAddresses {
-
   readonly email?: EmailAddress;
-
 }
 
 // tslint:disable-next-line:no-any
-export function isNewMessageDefaultAddresses(arg: any): arg is NewMessageDefaultAddresses {
-  return arg &&
-
-    isEmailAddress(arg.email) &&
-  
-
-    true;
+export function isNewMessageDefaultAddresses(
+  arg: any
+): arg is NewMessageDefaultAddresses {
+  return arg && isEmailAddress(arg.email) && true;
 }
 
 // tslint:disable-next-line:no-any
-export function toNewMessageDefaultAddresses(arg: any): Option<NewMessageDefaultAddresses> {
+export function toNewMessageDefaultAddresses(
+  arg: any
+): Option<NewMessageDefaultAddresses> {
   return option(arg).filter(isNewMessageDefaultAddresses);
 }
-
-
