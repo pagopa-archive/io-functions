@@ -224,9 +224,10 @@ export function processReject(
 export function index(context: IContextWithBindings): void {
   // redirect winston logs to Azure Functions log
   configureAzureContextTransport(context, winston, "debug");
+  winston.debug(`bindings|${JSON.stringify(context.bindings)}`);
 
   const createdMessageEvent = context.bindings.createdMessage;
-  winston.debug("createdMessageEvent", createdMessageEvent);
+  winston.debug(`createdMessageEvent|${JSON.stringify(createdMessageEvent)}`);
 
   // since this function gets triggered by a queued message that gets
   // deserialized from a json object, we must first check that what we
