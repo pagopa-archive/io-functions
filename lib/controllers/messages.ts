@@ -29,6 +29,7 @@ import { RequiredIdParamMiddleware } from "../utils/middlewares/required_id_para
 import { IRequestMiddleware, withRequestMiddlewares, wrapRequestHandler } from "../utils/request_middleware";
 import {
   IResponseErrorForbiddenNotAuthorized,
+  IResponseErrorForbiddenNotAuthorizedForDefaultAddresses,
   IResponseErrorForbiddenNotAuthorizedForProduction,
   IResponseErrorNotFound,
   IResponseErrorQuery,
@@ -37,6 +38,7 @@ import {
   IResponseSuccessJsonIterator,
   IResponseSuccessRedirectToResource,
   ResponseErrorForbiddenNotAuthorized,
+  ResponseErrorForbiddenNotAuthorizedForDefaultAddresses,
   ResponseErrorForbiddenNotAuthorizedForProduction,
   ResponseErrorNotFound,
   ResponseErrorQuery,
@@ -126,7 +128,8 @@ type ICreateMessageHandler = (
   IResponseErrorQuery |
   IResponseErrorValidation |
   IResponseErrorForbiddenNotAuthorized |
-  IResponseErrorForbiddenNotAuthorizedForProduction
+  IResponseErrorForbiddenNotAuthorizedForProduction |
+  IResponseErrorForbiddenNotAuthorizedForDefaultAddresses
 >;
 
 /**
@@ -173,7 +176,7 @@ export function CreateMessageHandler(
   applicationInsightsClient: ApplicationInsights.TelemetryClient,
   messageModel: MessageModel,
 ): ICreateMessageHandler {
-  return async (context, _, userAttributes, fiscalCode, messagePayload) => {
+  return async (context, auth, userAttributes, fiscalCode, messagePayload) => {
     const userOrganization = userAttributes.organization;
     if (!userOrganization) {
       // to be able to send a message the user musy be part of an organization
@@ -207,6 +210,12 @@ export function CreateMessageHandler(
       return(ResponseErrorForbiddenNotAuthorizedForProduction);
     }
 
+    if (messagePayload.default_addresses && !auth.groups.has(UserGroup.ApiMessageWriteDefaultAddress)) {
+      // the user is sending a message by providing default addresses but he's
+      // not allowed to do so.
+      return(ResponseErrorForbiddenNotAuthorizedForDefaultAddresses);
+    }
+
     // we need the user to be associated to a valid organization for him
     // to be able to send a message
     const message: INewMessage = {
@@ -225,17 +234,26 @@ export function CreateMessageHandler(
       const retrievedMessage = errorOrMessage.right;
       context.log(`>> message created|${fiscalCode}|${userOrganization.organizationId}|${retrievedMessage.id}`);
 
+      // when tracking the message creation event we want to know whether a
+      // default email address was provided
+      const hasDefaultEmail = messagePayload.default_addresses &&
+        messagePayload.default_addresses.email ?
+        "true" : "false";
+
+      // track the event that a message has been created
       applicationInsightsClient.trackEvent({
         name: eventName,
         properties: {
           ...eventData,
           dryRun: "false",
+          hasDefaultEmail,
           success: "true",
         },
       });
 
       // prepare the created message event
       const createdMessageEvent: ICreatedMessageEvent = {
+        defaultAddresses: messagePayload.default_addresses,
         message: retrievedMessage,
       };
 

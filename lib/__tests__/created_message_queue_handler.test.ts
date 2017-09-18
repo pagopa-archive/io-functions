@@ -16,6 +16,7 @@ import { FiscalCode, toFiscalCode } from "../api/definitions/FiscalCode";
 import {
   INewNotification,
   INotificationChannelEmail,
+  NotificationAddressSource,
   NotificationChannelStatus,
 } from "../models/notification";
 import { IRetrievedProfile } from "../models/profile";
@@ -31,6 +32,7 @@ const aCorrectFiscalCode = toFiscalCode("FRLFRC74E04B157I").get;
 const aWrongFiscalCode = "FRLFRC74E04B157" as FiscalCode;
 const anEmail = toNonEmptyString("x@example.com").get;
 const anEmailNotification: INotificationChannelEmail = {
+  addressSource: NotificationAddressSource.PROFILE_ADDRESS,
   status: NotificationChannelStatus.NOTIFICATION_QUEUED,
   toAddress: anEmail,
 };
@@ -204,7 +206,7 @@ describe("test handleMessage function", () => {
       fiscalCode: aCorrectFiscalCode,
     };
 
-    const response = await handleMessage(profileModelMock as any, {} as any, retrievedMessageMock as any);
+    const response = await handleMessage(profileModelMock as any, {} as any, retrievedMessageMock as any, none);
 
     expect(profileModelMock.findOneProfileByFiscalCode).toHaveBeenCalledWith(aCorrectFiscalCode);
     expect(response.isLeft).toBeTruthy();
@@ -224,17 +226,17 @@ describe("test handleMessage function", () => {
       fiscalCode: aCorrectFiscalCode,
     };
 
-    const response = await handleMessage(profileModelMock as any, {} as any, retrievedMessageMock as any);
+    const response = await handleMessage(profileModelMock as any, {} as any, retrievedMessageMock as any, none);
 
     expect(profileModelMock.findOneProfileByFiscalCode).toHaveBeenCalledWith(aCorrectFiscalCode);
     expect(response.isLeft).toBeTruthy();
     if (response.isLeft) {
-      expect(response.left).toEqual(ProcessingError.NO_PROFILE);
+      expect(response.left).toEqual(ProcessingError.NO_ADDRESSES);
     }
   });
 
-  it("should create a notification with undefined email if a profile exists" +
-      "for fiscal code but the email field is empty", async () => {
+  it("should not create a notification if a profile exists " +
+     "but the email field is empty and no default email was provided", async () => {
     const profileModelMock = {
       findOneProfileByFiscalCode: jest.fn(() => {
         return Promise.resolve(right(some(aRetrievedProfileWithoutEmail)));
@@ -252,14 +254,16 @@ describe("test handleMessage function", () => {
     };
 
     const response = await handleMessage(
-        profileModelMock as any,
-        notificationModelMock as any,
-        retrievedMessageMock as any);
+      profileModelMock as any,
+      notificationModelMock as any,
+      retrievedMessageMock as any,
+      none,
+    );
 
     expect(profileModelMock.findOneProfileByFiscalCode).toHaveBeenCalledWith(aCorrectFiscalCode);
-    expect(response.isRight).toBeTruthy();
-    if (response.isRight) {
-      expect(response.right.emailNotification).toBe(undefined);
+    expect(response.isLeft).toBeTruthy();
+    if (response.isLeft) {
+      expect(response.left).toBe(ProcessingError.NO_ADDRESSES);
     }
   });
 
@@ -282,14 +286,90 @@ describe("test handleMessage function", () => {
     };
 
     const response = await handleMessage(
-        profileModelMock as any,
-        notificationModelMock as any,
-        retrievedMessageMock as any);
+      profileModelMock as any,
+      notificationModelMock as any,
+      retrievedMessageMock as any,
+      none,
+    );
 
     expect(profileModelMock.findOneProfileByFiscalCode).toHaveBeenCalledWith(aCorrectFiscalCode);
     expect(response.isRight).toBeTruthy();
     if (response.isRight) {
       expect(response.right.emailNotification.toAddress).toBe(anEmail);
+      expect(response.right.emailNotification.addressSource).toBe(NotificationAddressSource.PROFILE_ADDRESS);
+    }
+  });
+
+  it("should create a notification with an email if a profile exists for" +
+  "fiscal code, the email field is empty but a default email was provided", async () => {
+    const profileModelMock = {
+      findOneProfileByFiscalCode: jest.fn(() => {
+        return Promise.resolve(right(some({
+          ...aRetrievedProfileWithEmail,
+          email: undefined,
+        })));
+      }),
+    };
+
+    const notificationModelMock = {
+      create: jest.fn((document, _) => {
+        return Promise.resolve(right(document));
+      }),
+    };
+
+    const retrievedMessageMock = {
+      fiscalCode: aCorrectFiscalCode,
+    };
+
+    const response = await handleMessage(
+      profileModelMock as any,
+      notificationModelMock as any,
+      retrievedMessageMock as any,
+      some({
+        email: anEmail,
+      }),
+    );
+
+    expect(profileModelMock.findOneProfileByFiscalCode).toHaveBeenCalledWith(aCorrectFiscalCode);
+    expect(response.isRight).toBeTruthy();
+    if (response.isRight) {
+      expect(response.right.emailNotification.toAddress).toBe(anEmail);
+      expect(response.right.emailNotification.addressSource).toBe(NotificationAddressSource.DEFAULT_ADDRESS);
+    }
+  });
+
+  it("should create a notification with an email if a profile does not exists for" +
+  "fiscal code but a default email was provided", async () => {
+    const profileModelMock = {
+      findOneProfileByFiscalCode: jest.fn(() => {
+        return Promise.resolve(right(none));
+      }),
+    };
+
+    const notificationModelMock = {
+      create: jest.fn((document, _) => {
+        return Promise.resolve(right(document));
+      }),
+    };
+
+    const retrievedMessageMock = {
+      fiscalCode: aCorrectFiscalCode,
+    };
+
+    const response = await handleMessage(
+      profileModelMock as any,
+      notificationModelMock as any,
+      retrievedMessageMock as any,
+      some({
+        email: anEmail,
+      }),
+    );
+
+    expect(profileModelMock.findOneProfileByFiscalCode).toHaveBeenCalledWith(aCorrectFiscalCode);
+    expect(response.isRight).toBeTruthy();
+    if (response.isRight) {
+      expect(response.right.emailNotification.toAddress).toBe(anEmail);
+      expect(response.right.emailNotification.addressSource).toBe(NotificationAddressSource.DEFAULT_ADDRESS);
     }
   });
 
@@ -311,9 +391,11 @@ describe("test handleMessage function", () => {
     };
 
     const response = await handleMessage(
-        profileModelMock as any,
-        notificationModelMock as any,
-        retrievedMessageMock as any);
+      profileModelMock as any,
+      notificationModelMock as any,
+      retrievedMessageMock as any,
+      none,
+    );
 
     expect(profileModelMock.findOneProfileByFiscalCode).toHaveBeenCalledWith(aCorrectFiscalCode);
     expect(response.isLeft).toBeTruthy();
@@ -385,10 +467,10 @@ describe("test processResolve function", () => {
     expect(contextMock.bindings.emailNotification).toEqual(undefined);
   });
 
-  it("should not enqueue notification on error (no profile)", async () => {
+  it("should not enqueue email notification on error (no profile and no default email)", async () => {
     const errorOrNotificationMock = {
       isLeft: () => true,
-      left: ProcessingError.NO_PROFILE,
+      left: ProcessingError.NO_ADDRESSES,
     };
 
     const loggersMock = {
@@ -413,7 +495,7 @@ describe("test processResolve function", () => {
     expect(contextMock.done).toHaveBeenCalledTimes(1);
     expect(
         contextMock.log.error.mock.calls[0][0]).toEqual(
-        `Fiscal code has no associated profile|${retrievedMessageMock.fiscalCode}`);
+        `Fiscal code has no associated profile and no default addresses provided|${retrievedMessageMock.fiscalCode}`);
     expect(contextMock.bindings.emailNotification).toEqual(undefined);
   });
 

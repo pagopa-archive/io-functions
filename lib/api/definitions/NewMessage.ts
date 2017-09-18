@@ -5,17 +5,16 @@
 // tslint:disable:jsdoc-format
 // tslint:disable:interface-name
 
-import { Option } from "ts-option";
-
 import { isTimeToLive, TimeToLive } from "./TimeToLive";
 import { isMessageContent, MessageContent } from "./MessageContent";
+import { isNewMessageDefaultAddresses, NewMessageDefaultAddresses } from "./NewMessageDefaultAddresses";
 
 
 /**
  * 
  */
 
-import { option } from "ts-option";
+import { option, Option } from "ts-option";
 
 export interface NewMessage {
 
@@ -24,6 +23,8 @@ export interface NewMessage {
   readonly time_to_live?: TimeToLive;
 
   readonly content: MessageContent;
+
+  readonly default_addresses?: NewMessageDefaultAddresses;
 
 }
 
@@ -38,6 +39,9 @@ export function isNewMessage(arg: any): arg is NewMessage {
   
 
     isMessageContent(arg.content) &&
+  
+
+    isNewMessageDefaultAddresses(arg.default_addresses) &&
   
 
     true;

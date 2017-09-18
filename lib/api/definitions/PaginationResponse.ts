@@ -5,15 +5,13 @@
 // tslint:disable:jsdoc-format
 // tslint:disable:interface-name
 
-import { Option } from "ts-option";
-
 
 
 /**
  * Pagination response parameters.
  */
 
-import { option } from "ts-option";
+import { option, Option } from "ts-option";
 
 export interface PaginationResponse {
 

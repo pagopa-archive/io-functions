@@ -15,6 +15,7 @@ import * as documentDbUtils from "./utils/documentdb";
 
 import { Option, option } from "ts-option";
 
+import { NewMessageDefaultAddresses } from "./api/definitions/NewMessageDefaultAddresses";
 import {
   ICreatedMessageEvent,
   isICreatedMessageEvent,
@@ -23,13 +24,16 @@ import { IRetrievedMessage } from "./models/message";
 import {
   INewNotification,
   INotificationChannelEmail,
-  IRetrievedNotification, NotificationChannelStatus,
+  IRetrievedNotification,
+  NotificationAddressSource,
+  NotificationChannelStatus,
   NotificationModel,
 } from "./models/notification";
 import { INotificationEvent } from "./models/notification_event";
 import { ProfileModel } from "./models/profile";
 import { Either, left, right } from "./utils/either";
 import { toNonEmptyString } from "./utils/strings";
+import { Tuple2 } from "./utils/tuples";
 
 // Setup DocumentDB
 
@@ -66,8 +70,9 @@ export enum ProcessingError {
   // a transient error, e.g. database is not available
   TRANSIENT,
 
-  // user has no profile, can't deliver a notification
-  NO_PROFILE,
+  // user has no profile and no default addresses have been provided,
+  // we can't deliver a notification
+  NO_ADDRESSES,
 
 }
 
@@ -81,34 +86,41 @@ export async function handleMessage(
     profileModel: ProfileModel,
     notificationModel: NotificationModel,
     retrievedMessage: IRetrievedMessage,
+    defaultAddresses: Option<NewMessageDefaultAddresses>,
 ): Promise<Either<ProcessingError, IRetrievedNotification>> {
   // async fetch of profile data associated to the fiscal code the message
   // should be delivered to
   const errorOrMaybeProfile = await profileModel.findOneProfileByFiscalCode(retrievedMessage.fiscalCode);
 
   if (errorOrMaybeProfile.isRight) {
-    // query succeeded, let's see if we have a result
+    // query succeeded, we may have a profile
     const maybeProfile = errorOrMaybeProfile.right;
-    if (maybeProfile.isDefined) {
-      // yes we have a matching profile
-      const profile = maybeProfile.get;
-      // we got a valid profile associated to the message, we can trigger
-      // notifications on the configured channels.
 
-      const maybeEmailNotification: Option<INotificationChannelEmail> = option(profile.email).map((email) => {
-        // in case an email address is configured in the profile, we can
-        // trigger an email notification event
-        const emailNotification: INotificationChannelEmail = {
-          status: NotificationChannelStatus.NOTIFICATION_QUEUED,
-          toAddress: email,
-        };
-        return emailNotification;
-      });
+    //
+    // attempt to resolve an email notification
+    //
+    const maybeProfileEmail = maybeProfile
+      .flatMap((profile) => option(profile.email))
+      .map((email) => Tuple2(email, NotificationAddressSource.PROFILE_ADDRESS));
+    const maybeDefaultEmail = defaultAddresses
+      .flatMap((addresses) => option(addresses.email))
+      .map((email) => Tuple2(email, NotificationAddressSource.DEFAULT_ADDRESS));
+    const maybeEmail = maybeProfileEmail.orElse(() => maybeDefaultEmail);
+    const maybeEmailNotification: Option<INotificationChannelEmail> = maybeEmail.map(
+      ({ e1: toAddress, e2: addressSource }) => {
+      return {
+        addressSource,
+        status: NotificationChannelStatus.NOTIFICATION_QUEUED,
+        toAddress,
+      };
+    });
 
+    // check whether there's at least a channel we can send the notification to
+    if (maybeEmailNotification.isDefined) {
       // create a new Notification object with the configured notifications
       const notification: INewNotification = {
         emailNotification: maybeEmailNotification.isDefined ? maybeEmailNotification.get : undefined,
-        fiscalCode: profile.fiscalCode,
+        fiscalCode: retrievedMessage.fiscalCode,
         id: toNonEmptyString(ulid()).get,
         kind: "INewNotification",
         messageId: retrievedMessage.id,
@@ -128,7 +140,7 @@ export async function handleMessage(
 
     } else {
       // query succeeded but no profile was found
-      return(left(ProcessingError.NO_PROFILE));
+      return(left(ProcessingError.NO_ADDRESSES));
     }
   } else {
     // query failed
@@ -159,8 +171,10 @@ export function processResolve(errorOrNotification: Either<ProcessingError, IRet
   } else {
     // the processing failed
     switch (errorOrNotification.left) {
-      case ProcessingError.NO_PROFILE: {
-        context.log.error(`Fiscal code has no associated profile|${retrievedMessage.fiscalCode}`);
+      case ProcessingError.NO_ADDRESSES: {
+        context.log.error(
+          `Fiscal code has no associated profile and no default addresses provided|${retrievedMessage.fiscalCode}`,
+        );
         context.done();
         break;
       }
@@ -204,6 +218,7 @@ export function index(context: IContextWithBindings): void {
 
   // it is an ICreatedMessageEvent
   const retrievedMessage = createdMessageEvent.message;
+  const defaultAddresses = option(createdMessageEvent.defaultAddresses);
 
   context.log(`A new message was created|${retrievedMessage.id}|${retrievedMessage.fiscalCode}`);
 
@@ -213,10 +228,11 @@ export function index(context: IContextWithBindings): void {
   const notificationModel = new NotificationModel(documentClient, notificationsCollectionUrl);
 
   // now we can trigger the notifications for the message
-  exports.handleMessage(
+  handleMessage(
       profileModel,
       notificationModel,
       retrievedMessage,
+      defaultAddresses,
   ).then((errorOrNotification: Either<ProcessingError, IRetrievedNotification>) => {
         processResolve(errorOrNotification, context, retrievedMessage);
       },
