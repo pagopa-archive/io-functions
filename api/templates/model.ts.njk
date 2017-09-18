@@ -32,7 +32,7 @@ export function is{{ definitionName }}(arg: any): arg is {{ definitionName }} {
   {% else %}
     {% set isPropRequired = false %}
   {% endif %}
-  {% if not isPropRequired %}(!arg.{{propName}} ||{% endif %}
+  {% if not isPropRequired %}(arg.{{propName}} === undefined || arg.{{propName}} === null ||{% endif %}
   {% if prop.$ref %}
     is{{ prop.$ref | replace("#/definitions/", "") }}(arg.{{propName}})
   {% else %}

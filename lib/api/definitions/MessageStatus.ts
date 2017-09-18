@@ -21,8 +21,12 @@ export interface MessageStatus {
 export function isMessageStatus(arg: any): arg is MessageStatus {
   return (
     arg &&
-    (!arg.created_at || typeof arg.created_at === "string") &&
-    (!arg.read_at || typeof arg.read_at === "string") &&
+    (arg.created_at === undefined ||
+      arg.created_at === null ||
+      typeof arg.created_at === "string") &&
+    (arg.read_at === undefined ||
+      arg.read_at === null ||
+      typeof arg.read_at === "string") &&
     true
   );
 }

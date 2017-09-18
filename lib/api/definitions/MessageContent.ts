@@ -25,7 +25,9 @@ export function isMessageContent(arg: any): arg is MessageContent {
   return (
     arg &&
     isBodyShort(arg.body_short) &&
-    (!arg.body_long || isBodyLong(arg.body_long)) &&
+    (arg.body_long === undefined ||
+      arg.body_long === null ||
+      isBodyLong(arg.body_long)) &&
     true
   );
 }

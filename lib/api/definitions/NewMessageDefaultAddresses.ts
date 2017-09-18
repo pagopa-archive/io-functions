@@ -21,7 +21,13 @@ export interface NewMessageDefaultAddresses {
 export function isNewMessageDefaultAddresses(
   arg: any
 ): arg is NewMessageDefaultAddresses {
-  return arg && (!arg.email || isEmailAddress(arg.email)) && true;
+  return (
+    arg &&
+    (arg.email === undefined ||
+      arg.email === null ||
+      isEmailAddress(arg.email)) &&
+    true
+  );
 }
 
 export function toNewMessageDefaultAddresses(
