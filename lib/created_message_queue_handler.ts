@@ -6,10 +6,13 @@
  */
 
 import * as ulid from "ulid";
+import * as winston from "winston";
 
 import { IContext } from "azure-functions-types";
 
 import { DocumentClient as DocumentDBClient } from "documentdb";
+
+import { configureAzureContextTransport } from "./utils/logging";
 
 import * as documentDbUtils from "./utils/documentdb";
 
@@ -172,14 +175,14 @@ export function processResolve(errorOrNotification: Either<ProcessingError, IRet
     // the processing failed
     switch (errorOrNotification.left) {
       case ProcessingError.NO_ADDRESSES: {
-        context.log.error(
+        winston.error(
           `Fiscal code has no associated profile and no default addresses provided|${retrievedMessage.fiscalCode}`,
         );
         context.done();
         break;
       }
       case ProcessingError.TRANSIENT: {
-        context.log.error(`Transient error, retrying|${retrievedMessage.fiscalCode}`);
+        winston.error(`Transient error, retrying|${retrievedMessage.fiscalCode}`);
         context.done("Transient error"); // here we trigger a retry by calling
                                          // done(error)
         break;
@@ -192,7 +195,7 @@ export function processReject(context: IContextWithBindings,
                               retrievedMessage: IRetrievedMessage,
                               error: Either<ProcessingError, IRetrievedNotification>): void {
   // the promise failed
-  context.log.error(`Error while processing event, retrying|${retrievedMessage.fiscalCode}|${error}`);
+  winston.error(`Error while processing event, retrying|${retrievedMessage.fiscalCode}|${error}`);
   // in case of error, we return a failure to trigger a retry (up to the
   // configured max retries) TODO: schedule next retry with exponential
   // backoff, see #150597257
@@ -203,13 +206,16 @@ export function processReject(context: IContextWithBindings,
  * Handler that gets triggered on incoming event.
  */
 export function index(context: IContextWithBindings): void {
+  // redirect winston logs to Azure Functions log
+  configureAzureContextTransport(context, winston, "debug");
+
   const createdMessageEvent = context.bindings.createdMessage;
 
   // since this function gets triggered by a queued message that gets
   // deserialized from a json object, we must first check that what we
   // got is what we expect.
   if (createdMessageEvent === undefined || !isICreatedMessageEvent(createdMessageEvent)) {
-    context.log.error(`Fatal! No valid message found in bindings.`);
+    winston.error(`Fatal! No valid message found in bindings.`);
     // we will never be able to recover from this, so don't trigger an error
     // TODO: perhaps forward this message to a failed events queue for review
     context.done();
@@ -220,7 +226,7 @@ export function index(context: IContextWithBindings): void {
   const retrievedMessage = createdMessageEvent.message;
   const defaultAddresses = option(createdMessageEvent.defaultAddresses);
 
-  context.log(`A new message was created|${retrievedMessage.id}|${retrievedMessage.fiscalCode}`);
+  winston.info(`A new message was created|${retrievedMessage.id}|${retrievedMessage.fiscalCode}`);
 
   // setup required models
   const documentClient = new DocumentDBClient(COSMOSDB_URI, {masterKey: COSMOSDB_KEY});

@@ -20,10 +20,8 @@ import {
   NotificationChannelStatus,
 } from "../models/notification";
 import { IRetrievedProfile } from "../models/profile";
-// import {
-//   handleMessage,
-//   ProcessingError,
-// } from "../queue_handlers/queued_message_handler";
+
+import * as winston from "winston";
 import { left, right } from "../utils/either";
 import { toNonNegativeNumber } from "../utils/numbers";
 import { toNonEmptyString } from "../utils/strings";
@@ -79,19 +77,16 @@ function flushPromises<T>(): Promise<T> {
 describe("test index function", () => {
 
   it("should return failure if createdMessage is undefined", async () => {
-    const loggersMock = {
-      error: jest.fn(),
-      info: jest.fn(),
-    };
-
     const contextMock = {
       bindings: {
         createdMessage: undefined,
         emailNotification: undefined,
       },
       done: jest.fn(),
-      log: loggersMock,
+      log: jest.fn(),
     };
+
+    const spy = jest.spyOn(winston, "error");
 
     index(contextMock as any);
 
@@ -99,8 +94,11 @@ describe("test index function", () => {
 
     expect(contextMock.done).toHaveBeenCalledTimes(1);
     expect(contextMock.bindings.emailNotification).toBeUndefined();
-    expect(contextMock.log.error).toHaveBeenCalledTimes(1);
-    expect(contextMock.log.error.mock.calls[0][0]).toEqual(`Fatal! No valid message found in bindings.`);
+    expect(spy).toHaveBeenCalledTimes(1);
+    expect(spy.mock.calls[0][0]).toEqual(`Fatal! No valid message found in bindings.`);
+
+    spy.mockReset();
+    spy.mockRestore();
   });
 
   it("should return failure if createdMessage is invalid (wrong fiscal code)", async () => {
@@ -118,19 +116,16 @@ describe("test index function", () => {
       message: aMessage,
     };
 
-    const loggersMock = {
-      error: jest.fn(),
-      info: jest.fn(),
-    };
-
     const contextMock = {
       bindings: {
         createdMessage: aMessageEvent,
         emailNotification: undefined,
       },
       done: jest.fn(),
-      log: loggersMock,
+      log: jest.fn(),
     };
+
+    const spy = jest.spyOn(winston, "error");
 
     index(contextMock as any);
 
@@ -138,8 +133,11 @@ describe("test index function", () => {
 
     expect(contextMock.done).toHaveBeenCalledTimes(1);
     expect(contextMock.bindings.emailNotification).toBeUndefined();
-    expect(contextMock.log.error).toHaveBeenCalledTimes(1);
-    expect(contextMock.log.error.mock.calls[0][0]).toEqual(`Fatal! No valid message found in bindings.`);
+    expect(spy).toHaveBeenCalledTimes(1);
+    expect(spy.mock.calls[0][0]).toEqual(`Fatal! No valid message found in bindings.`);
+
+    spy.mockReset();
+    spy.mockRestore();
   });
 
   /*
@@ -158,24 +156,20 @@ describe("test index function", () => {
       message: aMessage,
     };
 
-    const loggersMock = {
-      error: jest.fn(),
-      info: jest.fn(),
-    };
-
     const contextMock = {
       bindings: {
         createdMessage: aMessageEvent,
         emailNotification: undefined,
       },
       done: jest.fn(),
-      log: loggersMock,
     };
 
     const originalHandleMessage = handleMessage;
     handleMessage = jest.fn(() => {
       return Promise.resolve(right(none));
     });
+
+    const spy = jest.spyOn(winston, "log");
 
     index(contextMock);
 
@@ -184,10 +178,13 @@ describe("test index function", () => {
     expect(contextMock.done).toHaveBeenCalledTimes(1);
     expect(handleMessage).toHaveBeenCalledTimes(1);
     expect(contextMock.bindings.emailNotification).toBeUndefined();
-    expect(contextMock.log).toHaveBeenCalledTimes(1);
-    expect(contextMock.log.mock.calls[0][0]).toEqual(`A new message was created|${aMessage.id}|${aMessage.fiscalCode}`);
+    expect(spy).toHaveBeenCalledTimes(1);
+    expect(spy.mock.calls[0][0]).toEqual(`A new message was created|${aMessage.id}|${aMessage.fiscalCode}`);
 
     handleMessage = originalHandleMessage;
+
+    spy.mockReset();
+    spy.mockRestore();
   });
   */
 
@@ -414,17 +411,11 @@ describe("test processResolve function", () => {
       right: aCreatedNotificationWithEmail,
     };
 
-    const loggersMock = {
-      error: jest.fn(),
-      info: jest.fn(),
-    };
-
     const contextMock = {
       bindings: {
         emailNotification: undefined,
       },
       done: jest.fn(),
-      log: loggersMock,
     };
 
     const retrievedMessageMock = {
@@ -444,17 +435,11 @@ describe("test processResolve function", () => {
       right: aCreatedNotificationWithoutEmail,
     };
 
-    const loggersMock = {
-      error: jest.fn(),
-      info: jest.fn(),
-    };
-
     const contextMock = {
       bindings: {
         emailNotification: undefined,
       },
       done: jest.fn(),
-      log: loggersMock,
     };
 
     const retrievedMessageMock = {
@@ -473,30 +458,30 @@ describe("test processResolve function", () => {
       left: ProcessingError.NO_ADDRESSES,
     };
 
-    const loggersMock = {
-      error: jest.fn(),
-      info: jest.fn(),
-    };
-
     const contextMock = {
       bindings: {
         emailNotification: undefined,
       },
       done: jest.fn(),
-      log: loggersMock,
+      log: jest.fn(),
     };
 
     const retrievedMessageMock = {
       fiscalCode: aWrongFiscalCode,
     };
 
+    const spy = jest.spyOn(winston, "error");
+
     processResolve(errorOrNotificationMock as any, contextMock as any, retrievedMessageMock as any);
 
     expect(contextMock.done).toHaveBeenCalledTimes(1);
     expect(
-        contextMock.log.error.mock.calls[0][0]).toEqual(
+        spy.mock.calls[0][0]).toEqual(
         `Fiscal code has no associated profile and no default addresses provided|${retrievedMessageMock.fiscalCode}`);
     expect(contextMock.bindings.emailNotification).toEqual(undefined);
+
+    spy.mockReset();
+    spy.mockRestore();
   });
 
   it("should not enqueue notification on error (generic)", async () => {
@@ -505,30 +490,30 @@ describe("test processResolve function", () => {
       left: ProcessingError.TRANSIENT,
     };
 
-    const loggersMock = {
-      error: jest.fn(),
-      info: jest.fn(),
-    };
-
     const contextMock = {
       bindings: {
         emailNotification: undefined,
       },
       done: jest.fn(),
-      log: loggersMock,
+      log: jest.fn(),
     };
 
     const retrievedMessageMock = {
       fiscalCode: aWrongFiscalCode,
     };
 
+    const spy = jest.spyOn(winston, "error");
+
     processResolve(errorOrNotificationMock as any, contextMock as any, retrievedMessageMock as any);
 
     expect(contextMock.done).toHaveBeenCalledTimes(1);
     expect(
-        contextMock.log.error.mock.calls[0][0]).toEqual(
+        spy.mock.calls[0][0]).toEqual(
         `Transient error, retrying|${retrievedMessageMock.fiscalCode}`);
     expect(contextMock.bindings.emailNotification).toEqual(undefined);
+
+    spy.mockReset();
+    spy.mockRestore();
   });
 
 });
@@ -538,30 +523,31 @@ describe("test processReject function", () => {
   it("should log error on failure", async () => {
     const errorMock = jest.fn();
 
-    const loggersMock = {
-      error: jest.fn(),
-      info: jest.fn(),
-    };
-
     const contextMock = {
       bindings: {
         emailNotification: undefined,
       },
       done: jest.fn(),
-      log: loggersMock,
+      log: jest.fn(),
     };
 
     const retrievedMessageMock = {
       fiscalCode: aCorrectFiscalCode,
     };
 
+    const spy = jest.spyOn(winston, "error");
+
     processReject(contextMock as any, retrievedMessageMock as any, errorMock as any);
 
     expect(contextMock.done).toHaveBeenCalledTimes(1);
+    expect(spy).toHaveBeenCalledTimes(1);
     expect(
-        contextMock.log.error.mock.calls[0][0]).toEqual(
+        spy.mock.calls[0][0]).toEqual(
         `Error while processing event, retrying|${retrievedMessageMock.fiscalCode}|${errorMock}`);
     expect(contextMock.bindings.emailNotification).toEqual(undefined);
+
+    spy.mockReset();
+    spy.mockRestore();
   });
 
 });
