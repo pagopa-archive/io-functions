@@ -29,11 +29,11 @@ export interface ProblemJson {
 export function isProblemJson(arg: any): arg is ProblemJson {
   return (
     arg &&
-    typeof arg.type === "string" &&
-    typeof arg.title === "string" &&
-    isHttpStatusCode(arg.status) &&
-    typeof arg.detail === "string" &&
-    typeof arg.instance === "string" &&
+    (!arg.type || typeof arg.type === "string") &&
+    (!arg.title || typeof arg.title === "string") &&
+    (!arg.status || isHttpStatusCode(arg.status)) &&
+    (!arg.detail || typeof arg.detail === "string") &&
+    (!arg.instance || typeof arg.instance === "string") &&
     true
   );
 }

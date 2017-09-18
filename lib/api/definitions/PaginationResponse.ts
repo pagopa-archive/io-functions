@@ -21,8 +21,8 @@ export interface PaginationResponse {
 export function isPaginationResponse(arg: any): arg is PaginationResponse {
   return (
     arg &&
-    typeof arg.page_size === "number" &&
-    typeof arg.next === "string" &&
+    (!arg.page_size || typeof arg.page_size === "number") &&
+    (!arg.next || typeof arg.next === "string") &&
     true
   );
 }

@@ -23,7 +23,10 @@ export interface MessageContent {
 
 export function isMessageContent(arg: any): arg is MessageContent {
   return (
-    arg && isBodyShort(arg.body_short) && isBodyLong(arg.body_long) && true
+    arg &&
+    isBodyShort(arg.body_short) &&
+    (!arg.body_long || isBodyLong(arg.body_long)) &&
+    true
   );
 }
 
