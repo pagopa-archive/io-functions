@@ -221,6 +221,26 @@ export const ResponseErrorForbiddenNotAuthorizedForProduction: IResponseErrorFor
 };
 
 /**
+ * The user is not allowed to issue dry run requests.
+ */
+export interface IResponseErrorForbiddenNotAuthorizedForDryRun
+  extends IResponse {
+  readonly kind: "IResponseErrorForbiddenNotAuthorizedForDryRun";
+}
+
+/**
+ * The user is not allowed to issue dry run requests.
+ */
+export const ResponseErrorForbiddenNotAuthorizedForDryRun: IResponseErrorForbiddenNotAuthorizedForDryRun = {
+  ...ResponseErrorGeneric(
+    HTTP_STATUS_403,
+    "Dry run call forbidden",
+    "You are not allowed to issue dry run calls."
+  ),
+  kind: "IResponseErrorForbiddenNotAuthorizedForDryRun"
+};
+
+/**
  * The user is not allowed to send messages with default addresses.
  */
 export interface IResponseErrorForbiddenNotAuthorizedForDefaultAddresses

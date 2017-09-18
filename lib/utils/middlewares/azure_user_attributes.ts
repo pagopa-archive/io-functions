@@ -22,16 +22,12 @@ import {
 
 interface IAzureUserNote {
   readonly organizationId?: NonEmptyString;
-  readonly productionEnabled?: NonEmptyString;
 }
 
 export interface IAzureUserAttributes {
   readonly kind: "IAzureUserAttributes";
   // the organization associated to the user
   readonly organization?: IOrganization;
-  // whether this user can do production API calls (when true) or
-  // do only dry run calls (when false)
-  readonly productionEnabled: boolean;
 }
 
 /**
@@ -124,9 +120,7 @@ export function AzureUserAttributesMiddleware(
 
           const authInfo: IAzureUserAttributes = {
             kind: "IAzureUserAttributes",
-            organization: o.isDefined ? o.get : undefined,
-            productionEnabled:
-              o.isDefined && userAttributes.get.productionEnabled ? true : false
+            organization: o.isDefined ? o.get : undefined
           };
 
           resolve(right(authInfo));
