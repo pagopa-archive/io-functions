@@ -27,11 +27,19 @@ export interface {{ definitionName }} {
 export function is{{ definitionName }}(arg: any): arg is {{ definitionName }} {
   return arg &&
 {% for propName, prop in definition.properties -%}
-  {% if prop.$ref %}
-    is{{ prop.$ref | replace("#/definitions/", "") }}(arg.{{propName}}) &&
+  {% if definition.required and (definition.required | contains(propName)) %}
+    {% set isPropRequired = true %}
   {% else %}
-    typeof arg.{{propName}} === "{{ prop.type | replace("integer", "number") }}" &&
+    {% set isPropRequired = false %}
   {% endif %}
+  {% if not isPropRequired %}(!arg.{{propName}} ||{% endif %}
+  {% if prop.$ref %}
+    is{{ prop.$ref | replace("#/definitions/", "") }}(arg.{{propName}})
+  {% else %}
+    typeof arg.{{propName}} === "{{ prop.type | replace("integer", "number") }}"
+  {% endif %}
+  {% if not isPropRequired %}){% endif %}
+  &&
 {% endfor %}
     true;
 }

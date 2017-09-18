@@ -28,8 +28,9 @@ export function isPreferences(arg: any): arg is Preferences {
   return (
     arg &&
     isFiscalCode(arg.fiscal_code) &&
-    isEmailAddress(arg.email) &&
-    isPreferredLanguages(arg.preferred_languages) &&
+    (!arg.email || isEmailAddress(arg.email)) &&
+    (!arg.preferred_languages ||
+      isPreferredLanguages(arg.preferred_languages)) &&
     true
   );
 }

@@ -14,7 +14,7 @@ import {
 } from "./NewMessageDefaultAddresses";
 
 /**
- * 
+ *
  */
 
 import { option, Option } from "ts-option";
@@ -32,10 +32,11 @@ export interface NewMessage {
 export function isNewMessage(arg: any): arg is NewMessage {
   return (
     arg &&
-    typeof arg.dry_run === "boolean" &&
-    isTimeToLive(arg.time_to_live) &&
+    (!arg.dry_run || typeof arg.dry_run === "boolean") &&
+    (!arg.time_to_live || isTimeToLive(arg.time_to_live)) &&
     isMessageContent(arg.content) &&
-    isNewMessageDefaultAddresses(arg.default_addresses) &&
+    (!arg.default_addresses ||
+      isNewMessageDefaultAddresses(arg.default_addresses)) &&
     true
   );
 }
