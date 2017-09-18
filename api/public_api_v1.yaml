@@ -1,8 +1,8 @@
 swagger: '2.0'
 info:
   version: 0.0.1
-  title: Communication API
-  description: Communication API.
+  title: Digital Citizenship API
+  description: Digital Citizenship API.
 host: localhost
 basePath: /api/v1
 schemes:
@@ -104,6 +104,29 @@ paths:
           description: The message cannot be delivered.
           schema:
             $ref: '#/definitions/ProblemJson'
+  '/preferences/{fiscal_code}':
+    x-swagger-router-controller: Preferences
+    get:
+      operationId: getUserPreferences
+      summary: Get User's Preferences
+      description: Returns the preferences for the user identified by the provided fiscal code.
+      responses:
+        '200':
+          description: Found.
+          schema:
+            $ref: '#/definitions/Preferences'
+          examples: {}
+        '404':
+          description: No user found for the provided fiscal code.
+    parameters:
+      - name: fiscal_code
+        in: path
+        type: string
+        required: true
+        pattern: '[A-Z]{6}[0-9LMNPQRSTUV]{2}[ABCDEHLMPRST][0-9LMNPQRSTUV]{2}[A-Z][0-9LMNPQRSTUV]{3}[A-Z]'
+        maxLength: 16
+        minLength: 16
+        description: 'User''s fiscal code, all upper case.'
 definitions:
   ProblemJson:
     title: Problem Type
@@ -224,6 +247,21 @@ definitions:
         type: string
         description: 'Contains an URL to GET the next #<page_size> results in the retrieved collection of items.'
         format: uri
+  Preferences:
+    title: Preferences
+    description: Describes the user's preferences .
+    type: object
+    properties:
+      fiscal_code:
+        $ref: '#/definitions/FiscalCode'
+      email:
+        description: The user's preferred email address.
+        $ref: '#/definitions/EmailAddress'
+      preferred_languages:
+        description: 'Indicates the User''s preferred written or spoken language. Generally used for selecting a localized User interface. Valid values are concatenation of the ISO 639-1 two letter language code, an underscore, and the ISO 3166-1 2 letter country code; e.g., ''en_US'' specifies the language English and country US.'
+        $ref: "#/definitions/PreferredLanguages"
+    required:
+      - fiscal_code
   TimeToLive:
     type: integer
     minimum: 3600
@@ -249,6 +287,16 @@ definitions:
   EmailAddress:
     type: string
     format: email
+  PreferredLanguages:
+    type: array
+    x-extensible-enum:
+      - it_IT
+      - en_GB
+      - es_ES
+      - de_DE
+      - fr_FR
+    items:
+      type: string
 responses: {}
 parameters:
   PaginationRequest:

@@ -22,12 +22,10 @@ import {
 
 export type HttpStatusCode = WithinRangeNumber<100, 600>;
 
-// tslint:disable-next-line:no-any
 export function isHttpStatusCode(arg: any): arg is HttpStatusCode {
   return isWithinRangeNumber(arg, 100, 600);
 }
 
-// tslint:disable-next-line:no-any
 export function toHttpStatusCode(arg: any): Option<HttpStatusCode> {
   return toWithinRangeNumber(arg, 100, 600);
 }

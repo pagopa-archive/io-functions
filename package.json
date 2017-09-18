@@ -48,6 +48,7 @@
   "devDependencies": {
     "@types/jest": "^20.0.8",
     "@types/nunjucks": "^0.0.33",
+    "@types/prettier": "^1.6.1",
     "@types/swagger-parser": "^4.0.2",
     "@types/swagger-schema-official": "^2.0.6",
     "jest": "^21.0.2",

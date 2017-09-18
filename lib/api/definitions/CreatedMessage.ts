@@ -29,7 +29,6 @@ export interface CreatedMessage {
   readonly status: MessageStatus;
 }
 
-// tslint:disable-next-line:no-any
 export function isCreatedMessage(arg: any): arg is CreatedMessage {
   return (
     arg &&
@@ -42,7 +41,6 @@ export function isCreatedMessage(arg: any): arg is CreatedMessage {
   );
 }
 
-// tslint:disable-next-line:no-any
 export function toCreatedMessage(arg: any): Option<CreatedMessage> {
   return option(arg).filter(isCreatedMessage);
 }

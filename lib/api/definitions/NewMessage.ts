@@ -29,7 +29,6 @@ export interface NewMessage {
   readonly default_addresses?: NewMessageDefaultAddresses;
 }
 
-// tslint:disable-next-line:no-any
 export function isNewMessage(arg: any): arg is NewMessage {
   return (
     arg &&
@@ -41,7 +40,6 @@ export function isNewMessage(arg: any): arg is NewMessage {
   );
 }
 
-// tslint:disable-next-line:no-any
 export function toNewMessage(arg: any): Option<NewMessage> {
   return option(arg).filter(isNewMessage);
 }

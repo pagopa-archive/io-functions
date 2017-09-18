@@ -21,12 +21,10 @@ import {
 
 export type BodyShort = WithinRangeString<3, 100>;
 
-// tslint:disable-next-line:no-any
 export function isBodyShort(arg: any): arg is BodyShort {
   return isWithinRangeString(arg, 3, 100);
 }
 
-// tslint:disable-next-line:no-any
 export function toBodyShort(arg: any): Option<BodyShort> {
   return toWithinRangeString(arg, 3, 100);
 }

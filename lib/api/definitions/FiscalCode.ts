@@ -22,7 +22,6 @@ export type FiscalCode = PatternString<
   "^[A-Z]{6}[0-9LMNPQRSTUV]{2}[ABCDEHLMPRST][0-9LMNPQRSTUV]{2}[A-Z][0-9LMNPQRSTUV]{3}[A-Z]$"
 >;
 
-// tslint:disable-next-line:no-any
 export function isFiscalCode(arg: any): arg is FiscalCode {
   return isPatternString(
     arg,
@@ -30,7 +29,6 @@ export function isFiscalCode(arg: any): arg is FiscalCode {
   );
 }
 
-// tslint:disable-next-line:no-any
 export function toFiscalCode(arg: any): Option<FiscalCode> {
   return toPatternString(
     arg,

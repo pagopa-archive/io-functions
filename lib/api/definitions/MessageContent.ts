@@ -21,14 +21,12 @@ export interface MessageContent {
   readonly body_long?: BodyLong;
 }
 
-// tslint:disable-next-line:no-any
 export function isMessageContent(arg: any): arg is MessageContent {
   return (
     arg && isBodyShort(arg.body_short) && isBodyLong(arg.body_long) && true
   );
 }
 
-// tslint:disable-next-line:no-any
 export function toMessageContent(arg: any): Option<MessageContent> {
   return option(arg).filter(isMessageContent);
 }

@@ -18,7 +18,6 @@ export interface MessageStatus {
   readonly read_at?: string;
 }
 
-// tslint:disable-next-line:no-any
 export function isMessageStatus(arg: any): arg is MessageStatus {
   return (
     arg &&
@@ -28,7 +27,6 @@ export function isMessageStatus(arg: any): arg is MessageStatus {
   );
 }
 
-// tslint:disable-next-line:no-any
 export function toMessageStatus(arg: any): Option<MessageStatus> {
   return option(arg).filter(isMessageStatus);
 }
