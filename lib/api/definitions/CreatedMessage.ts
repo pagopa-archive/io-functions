@@ -12,7 +12,6 @@ import { isTimeToLive, TimeToLive } from "./TimeToLive";
 import { isMessageContent, MessageContent } from "./MessageContent";
 import { isMessageStatus, MessageStatus } from "./MessageStatus";
 
-
 /**
  * 
  */
@@ -20,7 +19,6 @@ import { isMessageStatus, MessageStatus } from "./MessageStatus";
 import { option } from "ts-option";
 
 export interface CreatedMessage {
-
   readonly id: string;
 
   readonly fiscal_code: FiscalCode;
@@ -30,34 +28,22 @@ export interface CreatedMessage {
   readonly content: MessageContent;
 
   readonly status: MessageStatus;
-
 }
 
 // tslint:disable-next-line:no-any
 export function isCreatedMessage(arg: any): arg is CreatedMessage {
-  return arg &&
-
+  return (
+    arg &&
     typeof arg.id === "string" &&
-  
-
     isFiscalCode(arg.fiscal_code) &&
-  
-
     isTimeToLive(arg.time_to_live) &&
-  
-
     isMessageContent(arg.content) &&
-  
-
     isMessageStatus(arg.status) &&
-  
-
-    true;
+    true
+  );
 }
 
 // tslint:disable-next-line:no-any
 export function toCreatedMessage(arg: any): Option<CreatedMessage> {
   return option(arg).filter(isCreatedMessage);
 }
-
-

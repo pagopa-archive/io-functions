@@ -3,12 +3,11 @@
 import { RequiredIdParamMiddleware } from "../required_id_param";
 
 describe("RequiredIdParamMiddleware", () => {
-
   it("should extract the required parameter from the request", async () => {
     const result = await RequiredIdParamMiddleware({
       params: {
-        id: "hello",
-      },
+        id: "hello"
+      }
     } as any);
 
     expect(result.isRight).toBeTruthy();
@@ -19,7 +18,7 @@ describe("RequiredIdParamMiddleware", () => {
 
   it("should respond with a validation error if the required parameter is missing", async () => {
     const result = await RequiredIdParamMiddleware({
-      params: { },
+      params: {}
     } as any);
 
     expect(result.isLeft).toBeTruthy();
@@ -31,8 +30,8 @@ describe("RequiredIdParamMiddleware", () => {
   it("should respond with a validation error if the required parameter is empty", async () => {
     const result = await RequiredIdParamMiddleware({
       params: {
-        id: "",
-      },
+        id: ""
+      }
     } as any);
 
     expect(result.isLeft).toBeTruthy();
@@ -40,5 +39,4 @@ describe("RequiredIdParamMiddleware", () => {
       expect(result.left.kind).toBe("IResponseErrorValidation");
     }
   });
-
 });

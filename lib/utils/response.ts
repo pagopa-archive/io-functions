@@ -38,11 +38,13 @@ export interface IResponseSuccessJson<T> extends IResponse {
  * @param o The object to return to the client
  */
 export function ResponseSuccessJson<T>(o: T): IResponseSuccessJson<T> {
-  const kindlessObject = Object.assign(Object.assign({}, o), { kind: undefined });
+  const kindlessObject = Object.assign(Object.assign({}, o), {
+    kind: undefined
+  });
   return {
-    apply: (res) => res.status(200).json(kindlessObject),
+    apply: res => res.status(200).json(kindlessObject),
     kind: "IResponseSuccessJson",
-    value: o,
+    value: o
   };
 }
 
@@ -57,17 +59,20 @@ export interface IResponseSuccessJsonIterator<T> extends IResponse {
 /**
  * A successful response that consumes and return the documentdb iterator as a json array
  */
-export function ResponseSuccessJsonIterator<T>(i: IResultIterator<T>): IResponseSuccessJsonIterator<T> {
-
+export function ResponseSuccessJsonIterator<T>(
+  i: IResultIterator<T>
+): IResponseSuccessJsonIterator<T> {
   return {
-    apply: (res) => iteratorToArray(i).then((documents) => {
-      const kindlessDocuments = documents.map((d) => Object.assign(Object.assign({}, d), { kind: undefined }));
-      res.status(200).json(kindlessDocuments);
-    }),
+    apply: res =>
+      iteratorToArray(i).then(documents => {
+        const kindlessDocuments = documents.map(d =>
+          Object.assign(Object.assign({}, d), { kind: undefined })
+        );
+        res.status(200).json(kindlessDocuments);
+      }),
     kind: "IResponseSuccessJsonIterator",
-    value: {} as T,
+    value: {} as T
   };
-
 }
 
 /**
@@ -81,11 +86,14 @@ export interface IResponseSuccessRedirectToResource<T> extends IResponse {
 /**
  * Returns a successful response returning a redirect to a resource.
  */
-export function ResponseSuccessRedirectToResource<T>(resource: T, url: string): IResponseSuccessRedirectToResource<T> {
+export function ResponseSuccessRedirectToResource<T>(
+  resource: T,
+  url: string
+): IResponseSuccessRedirectToResource<T> {
   return {
-    apply: (res) => res.redirect(202, url),
+    apply: res => res.redirect(202, url),
     kind: "IResponseSuccessRedirectToResource",
-    resource,
+    resource
   };
 }
 
@@ -111,20 +119,21 @@ function ResponseErrorGeneric(
   status: HttpStatusCode,
   title: string,
   detail: string,
-  problemType?: string,
+  problemType?: string
 ): IResponseErrorGeneric {
   const problem: ProblemJson = {
     detail,
     status,
     title,
-    type: problemType,
+    type: problemType
   };
   return {
-    apply: (res) => res
-      .status(status)
-      .contentType("application/problem+json")
-      .json(problem),
-    kind: "IResponseErrorGeneric",
+    apply: res =>
+      res
+        .status(status)
+        .contentType("application/problem+json")
+        .json(problem),
+    kind: "IResponseErrorGeneric"
   };
 }
 
@@ -140,10 +149,13 @@ export interface IResponseErrorNotFound extends IResponse {
  *
  * @param title The error message
  */
-export function ResponseErrorNotFound(title: string, detail: string): IResponseErrorNotFound {
+export function ResponseErrorNotFound(
+  title: string,
+  detail: string
+): IResponseErrorNotFound {
   return {
     ...ResponseErrorGeneric(HTTP_STATUS_404, title, detail),
-    kind: "IResponseErrorNotFound",
+    kind: "IResponseErrorNotFound"
   };
 }
 
@@ -159,10 +171,13 @@ export interface IResponseErrorValidation extends IResponse {
  *
  * @param message The error message
  */
-export function ResponseErrorValidation(title: string, detail: string): IResponseErrorValidation {
+export function ResponseErrorValidation(
+  title: string,
+  detail: string
+): IResponseErrorValidation {
   return {
     ...ResponseErrorGeneric(HTTP_STATUS_400, title, detail),
-    kind: "IResponseErrorValidation",
+    kind: "IResponseErrorValidation"
   };
 }
 
@@ -180,15 +195,16 @@ export const ResponseErrorForbiddenNotAuthorized: IResponseErrorForbiddenNotAuth
   ...ResponseErrorGeneric(
     HTTP_STATUS_403,
     "You are not allowed here",
-    "You do not have enough permission to complete the operation you requested",
+    "You do not have enough permission to complete the operation you requested"
   ),
-  kind: "IResponseErrorForbiddenNotAuthorized",
+  kind: "IResponseErrorForbiddenNotAuthorized"
 };
 
 /**
  * The user is not allowed here.
  */
-export interface IResponseErrorForbiddenNotAuthorizedForProduction extends IResponse {
+export interface IResponseErrorForbiddenNotAuthorizedForProduction
+  extends IResponse {
   readonly kind: "IResponseErrorForbiddenNotAuthorizedForProduction";
 }
 
@@ -199,15 +215,16 @@ export const ResponseErrorForbiddenNotAuthorizedForProduction: IResponseErrorFor
   ...ResponseErrorGeneric(
     HTTP_STATUS_403,
     "Production call forbidden",
-    "You are not allowed to issue production calls, set 'dry_run' to true or ask to be enabled for production.",
+    "You are not allowed to issue production calls, set 'dry_run' to true or ask to be enabled for production."
   ),
-  kind: "IResponseErrorForbiddenNotAuthorizedForProduction",
+  kind: "IResponseErrorForbiddenNotAuthorizedForProduction"
 };
 
 /**
  * The user is not part of any valid authorization groups.
  */
-export interface IResponseErrorForbiddenNoAuthorizationGroups extends IResponse {
+export interface IResponseErrorForbiddenNoAuthorizationGroups
+  extends IResponse {
   readonly kind: "IResponseErrorForbiddenNoAuthorizationGroups";
 }
 
@@ -218,9 +235,9 @@ export const ResponseErrorForbiddenNoAuthorizationGroups: IResponseErrorForbidde
   ...ResponseErrorGeneric(
     HTTP_STATUS_403,
     "User has no valid scopes",
-    "You are not part of any valid scope, you should ask the administrator to give you the required permissions.",
+    "You are not part of any valid scope, you should ask the administrator to give you the required permissions."
   ),
-  kind: "IResponseErrorForbiddenNoAuthorizationGroups",
+  kind: "IResponseErrorForbiddenNoAuthorizationGroups"
 };
 
 /**
@@ -236,10 +253,17 @@ export interface IResponseErrorQuery extends IResponse {
  * @param detail The error message
  * @param error  The QueryError object
  */
-export function ResponseErrorQuery(detail: string, error: DocumentDb.QueryError): IResponseErrorQuery {
+export function ResponseErrorQuery(
+  detail: string,
+  error: DocumentDb.QueryError
+): IResponseErrorQuery {
   return {
-    ...ResponseErrorGeneric(HTTP_STATUS_500, `Query error (${error.code})`, detail),
-    kind: "IResponseErrorQuery",
+    ...ResponseErrorGeneric(
+      HTTP_STATUS_500,
+      `Query error (${error.code})`,
+      detail
+    ),
+    kind: "IResponseErrorQuery"
   };
 }
 
@@ -258,6 +282,6 @@ export interface IResponseErrorInternal extends IResponse {
 export function ResponseErrorInternal(detail: string): IResponseErrorInternal {
   return {
     ...ResponseErrorGeneric(HTTP_STATUS_500, "Internal server error", detail),
-    kind: "IResponseErrorInternal",
+    kind: "IResponseErrorInternal"
   };
 }

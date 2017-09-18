@@ -7,25 +7,32 @@
 
 import { Option } from "ts-option";
 
-
-
 /**
  * User's fiscal code.
  */
 
-  
-import { isPatternString, toPatternString, PatternString } from "../../utils/strings";
+import {
+  isPatternString,
+  toPatternString,
+  PatternString
+} from "../../utils/strings";
 
-export type FiscalCode = PatternString<"^[A-Z]{6}[0-9LMNPQRSTUV]{2}[ABCDEHLMPRST][0-9LMNPQRSTUV]{2}[A-Z][0-9LMNPQRSTUV]{3}[A-Z]$">;
+export type FiscalCode = PatternString<
+  "^[A-Z]{6}[0-9LMNPQRSTUV]{2}[ABCDEHLMPRST][0-9LMNPQRSTUV]{2}[A-Z][0-9LMNPQRSTUV]{3}[A-Z]$"
+>;
 
 // tslint:disable-next-line:no-any
 export function isFiscalCode(arg: any): arg is FiscalCode {
-  return isPatternString(arg, "^[A-Z]{6}[0-9LMNPQRSTUV]{2}[ABCDEHLMPRST][0-9LMNPQRSTUV]{2}[A-Z][0-9LMNPQRSTUV]{3}[A-Z]$");
+  return isPatternString(
+    arg,
+    "^[A-Z]{6}[0-9LMNPQRSTUV]{2}[ABCDEHLMPRST][0-9LMNPQRSTUV]{2}[A-Z][0-9LMNPQRSTUV]{3}[A-Z]$"
+  );
 }
 
 // tslint:disable-next-line:no-any
 export function toFiscalCode(arg: any): Option<FiscalCode> {
-  return toPatternString(arg, "^[A-Z]{6}[0-9LMNPQRSTUV]{2}[ABCDEHLMPRST][0-9LMNPQRSTUV]{2}[A-Z][0-9LMNPQRSTUV]{3}[A-Z]$");
+  return toPatternString(
+    arg,
+    "^[A-Z]{6}[0-9LMNPQRSTUV]{2}[ABCDEHLMPRST][0-9LMNPQRSTUV]{2}[A-Z][0-9LMNPQRSTUV]{3}[A-Z]$"
+  );
 }
-  
-

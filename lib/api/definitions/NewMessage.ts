@@ -10,7 +10,6 @@ import { Option } from "ts-option";
 import { isTimeToLive, TimeToLive } from "./TimeToLive";
 import { isMessageContent, MessageContent } from "./MessageContent";
 
-
 /**
  * 
  */
@@ -18,34 +17,25 @@ import { isMessageContent, MessageContent } from "./MessageContent";
 import { option } from "ts-option";
 
 export interface NewMessage {
-
   readonly dry_run?: boolean;
 
   readonly time_to_live?: TimeToLive;
 
   readonly content: MessageContent;
-
 }
 
 // tslint:disable-next-line:no-any
 export function isNewMessage(arg: any): arg is NewMessage {
-  return arg &&
-
+  return (
+    arg &&
     typeof arg.dry_run === "boolean" &&
-  
-
     isTimeToLive(arg.time_to_live) &&
-  
-
     isMessageContent(arg.content) &&
-  
-
-    true;
+    true
+  );
 }
 
 // tslint:disable-next-line:no-any
 export function toNewMessage(arg: any): Option<NewMessage> {
   return option(arg).filter(isNewMessage);
 }
-
-

@@ -7,8 +7,6 @@
 
 import { Option } from "ts-option";
 
-
-
 /**
  * Pagination response parameters.
  */
@@ -16,29 +14,22 @@ import { Option } from "ts-option";
 import { option } from "ts-option";
 
 export interface PaginationResponse {
-
   readonly page_size?: number;
 
   readonly next?: string;
-
 }
 
 // tslint:disable-next-line:no-any
 export function isPaginationResponse(arg: any): arg is PaginationResponse {
-  return arg &&
-
+  return (
+    arg &&
     typeof arg.page_size === "number" &&
-  
-
     typeof arg.next === "string" &&
-  
-
-    true;
+    true
+  );
 }
 
 // tslint:disable-next-line:no-any
 export function toPaginationResponse(arg: any): Option<PaginationResponse> {
   return option(arg).filter(isPaginationResponse);
 }
-
-
