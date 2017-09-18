@@ -34,6 +34,7 @@ import {
 import {
   IResponseErrorForbiddenNotAuthorized,
   IResponseErrorForbiddenNotAuthorizedForDefaultAddresses,
+  IResponseErrorForbiddenNotAuthorizedForDryRun,
   IResponseErrorForbiddenNotAuthorizedForProduction,
   IResponseErrorNotFound,
   IResponseErrorQuery,
@@ -43,6 +44,7 @@ import {
   IResponseSuccessRedirectToResource,
   ResponseErrorForbiddenNotAuthorized,
   ResponseErrorForbiddenNotAuthorizedForDefaultAddresses,
+  ResponseErrorForbiddenNotAuthorizedForDryRun,
   ResponseErrorForbiddenNotAuthorizedForProduction,
   ResponseErrorNotFound,
   ResponseErrorQuery,
@@ -144,6 +146,7 @@ type ICreateMessageHandler = (
   | IResponseErrorQuery
   | IResponseErrorValidation
   | IResponseErrorForbiddenNotAuthorized
+  | IResponseErrorForbiddenNotAuthorizedForDryRun
   | IResponseErrorForbiddenNotAuthorizedForProduction
   | IResponseErrorForbiddenNotAuthorizedForDefaultAddresses
 >;
@@ -208,23 +211,33 @@ export function CreateMessageHandler(
     };
 
     if (messagePayload.dry_run) {
-      // if the user requested a dry run, we respond with the attributes
-      // that we received
-      applicationInsightsClient.trackEvent({
-        name: eventName,
-        properties: {
-          ...eventData,
-          dryRun: "true",
-          success: "true"
-        }
-      });
-      const response: IResponseDryRun = {
-        bodyShort: messagePayload.content.body_short,
-        senderOrganizationId: userOrganization.organizationId,
-        status: "DRY_RUN_SUCCESS"
-      };
-      return ResponseSuccessJson(response);
-    } else if (!userAttributes.productionEnabled) {
+      // the user requested a dry run
+
+      if (auth.groups.has(UserGroup.ApiMessageWriteDryRun)) {
+        // the user is authorized for dry run calls, we respond with the
+        // data that he just sent
+        applicationInsightsClient.trackEvent({
+          name: eventName,
+          properties: {
+            ...eventData,
+            dryRun: "true",
+            success: "true"
+          }
+        });
+        const response: IResponseDryRun = {
+          bodyShort: messagePayload.content.body_short,
+          senderOrganizationId: userOrganization.organizationId,
+          status: "DRY_RUN_SUCCESS"
+        };
+        return ResponseSuccessJson(response);
+      } else {
+        // the user is not authorized for dry run calls
+        return ResponseErrorForbiddenNotAuthorizedForDryRun;
+      }
+    }
+
+    // the user is doing a production call
+    if (!auth.groups.has(UserGroup.ApiMessageWrite)) {
       // the user is doing a production call but he's not enabled
       return ResponseErrorForbiddenNotAuthorizedForProduction;
     }

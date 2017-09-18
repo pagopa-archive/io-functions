@@ -42,8 +42,7 @@ const someUserAttributes: IAzureUserAttributes = {
   organization: {
     name: "AgID",
     organizationId: "agid" as ModelId
-  },
-  productionEnabled: true
+  }
 };
 
 const aUserAuthenticationDeveloper: IAzureApiAuthorization = {
@@ -126,7 +125,10 @@ describe("CreateMessageHandler", () => {
 
     const result = await createMessageHandler(
       mockContext as any,
-      {} as any,
+      {
+        ...aUserAuthenticationDeveloper,
+        groups: new Set([UserGroup.ApiMessageWriteDryRun])
+      },
       someUserAttributes,
       {} as any,
       aDryRunMessagePayload
@@ -176,7 +178,10 @@ describe("CreateMessageHandler", () => {
 
     const result = await createMessageHandler(
       mockContext as any,
-      {} as any,
+      {
+        ...aUserAuthenticationDeveloper,
+        groups: new Set([UserGroup.ApiMessageWrite])
+      },
       someUserAttributes,
       aFiscalCode,
       aMessagePayload
@@ -250,7 +255,10 @@ describe("CreateMessageHandler", () => {
       mockContext as any,
       {
         ...aUserAuthenticationDeveloper,
-        groups: new Set([UserGroup.ApiMessageWriteDefaultAddress])
+        groups: new Set([
+          UserGroup.ApiMessageWrite,
+          UserGroup.ApiMessageWriteDefaultAddress
+        ])
       },
       someUserAttributes,
       aFiscalCode,
@@ -366,11 +374,11 @@ describe("CreateMessageHandler", () => {
 
     const result = await createMessageHandler(
       mockContext as any,
-      {} as any,
       {
-        ...someUserAttributes,
-        productionEnabled: false
+        ...aUserAuthenticationDeveloper,
+        groups: new Set()
       },
+      someUserAttributes,
       aFiscalCode,
       aMessagePayload
     );
@@ -403,7 +411,10 @@ describe("CreateMessageHandler", () => {
 
     const result = await createMessageHandler(
       mockContext as any,
-      {} as any,
+      {
+        ...aUserAuthenticationDeveloper,
+        groups: new Set([UserGroup.ApiMessageWrite])
+      },
       someUserAttributes,
       aFiscalCode,
       aMessagePayload
