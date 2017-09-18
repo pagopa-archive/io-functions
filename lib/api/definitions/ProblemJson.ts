@@ -26,7 +26,6 @@ export interface ProblemJson {
   readonly instance?: string;
 }
 
-// tslint:disable-next-line:no-any
 export function isProblemJson(arg: any): arg is ProblemJson {
   return (
     arg &&
@@ -39,7 +38,6 @@ export function isProblemJson(arg: any): arg is ProblemJson {
   );
 }
 
-// tslint:disable-next-line:no-any
 export function toProblemJson(arg: any): Option<ProblemJson> {
   return option(arg).filter(isProblemJson);
 }

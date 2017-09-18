@@ -20,12 +20,10 @@ import {
 
 export type TimeToLive = WithinRangeNumber<3600, 31536000>;
 
-// tslint:disable-next-line:no-any
 export function isTimeToLive(arg: any): arg is TimeToLive {
   return isWithinRangeNumber(arg, 3600, 31536000);
 }
 
-// tslint:disable-next-line:no-any
 export function toTimeToLive(arg: any): Option<TimeToLive> {
   return toWithinRangeNumber(arg, 3600, 31536000);
 }

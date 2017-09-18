@@ -2,6 +2,10 @@
 # yarn lockfile v1
 
 
+"@types/babel-types@*":
+  version "6.25.1"
+  resolved "https://registry.yarnpkg.com/@types/babel-types/-/babel-types-6.25.1.tgz#ce8f126a4403e11e1b0033a424f11638afac7889"
+
 "@types/documentdb@^1.10.2":
   version "1.10.2"
   resolved "https://registry.yarnpkg.com/@types/documentdb/-/documentdb-1.10.2.tgz#6795025cdc51577af5ed531b6f03bd44404f5350"
@@ -80,6 +84,12 @@
 "@types/nunjucks@^0.0.33":
   version "0.0.33"
   resolved "https://registry.yarnpkg.com/@types/nunjucks/-/nunjucks-0.0.33.tgz#1fbe19a294e0452e204d5aace9dc160da44b2acc"
+
+"@types/prettier@^1.6.1":
+  version "1.6.1"
+  resolved "https://registry.yarnpkg.com/@types/prettier/-/prettier-1.6.1.tgz#b92e866b098e5d37b2d4dd2402291a8eb6072bf8"
+  dependencies:
+    "@types/babel-types" "*"
 
 "@types/serve-static@*":
   version "1.7.31"

@@ -18,7 +18,6 @@ export interface PaginationResponse {
   readonly next?: string;
 }
 
-// tslint:disable-next-line:no-any
 export function isPaginationResponse(arg: any): arg is PaginationResponse {
   return (
     arg &&
@@ -28,7 +27,6 @@ export function isPaginationResponse(arg: any): arg is PaginationResponse {
   );
 }
 
-// tslint:disable-next-line:no-any
 export function toPaginationResponse(arg: any): Option<PaginationResponse> {
   return option(arg).filter(isPaginationResponse);
 }

@@ -18,14 +18,12 @@ export interface NewMessageDefaultAddresses {
   readonly email?: EmailAddress;
 }
 
-// tslint:disable-next-line:no-any
 export function isNewMessageDefaultAddresses(
   arg: any
 ): arg is NewMessageDefaultAddresses {
   return arg && isEmailAddress(arg.email) && true;
 }
 
-// tslint:disable-next-line:no-any
 export function toNewMessageDefaultAddresses(
   arg: any
 ): Option<NewMessageDefaultAddresses> {

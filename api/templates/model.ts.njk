@@ -24,7 +24,6 @@ export interface {{ definitionName }} {
 {% endfor %}
 }
 
-// tslint:disable-next-line:no-any
 export function is{{ definitionName }}(arg: any): arg is {{ definitionName }} {
   return arg &&
 {% for propName, prop in definition.properties -%}
@@ -37,7 +36,6 @@ export function is{{ definitionName }}(arg: any): arg is {{ definitionName }} {
     true;
 }
 
-// tslint:disable-next-line:no-any
 export function to{{ definitionName }}(arg: any): Option<{{ definitionName }}> {
   return option(arg).filter(is{{ definitionName }});
 }
@@ -50,12 +48,10 @@ import { isWithinRangeNumber, toWithinRangeNumber, WithinRangeNumber } from "../
   {% if definition.minimum and definition.maximum %}
 export type {{ definitionName }} = WithinRangeNumber<{{ definition.minimum }}, {{ definition.maximum }}>;
 
-// tslint:disable-next-line:no-any
 export function is{{ definitionName }}(arg: any): arg is {{ definitionName }} {
   return isWithinRangeNumber(arg, {{ definition.minimum }}, {{ definition.maximum }});
 }
 
-// tslint:disable-next-line:no-any
 export function to{{ definitionName }}(arg: any): Option<{{ definitionName }}> {
   return toWithinRangeNumber(arg, {{ definition.minimum }}, {{ definition.maximum }});
 }
@@ -70,12 +66,10 @@ import { isPatternString, toPatternString, PatternString } from "../../utils/str
 
 export type {{ definitionName }} = PatternString<"{{ definition.pattern }}">;
 
-// tslint:disable-next-line:no-any
 export function is{{ definitionName }}(arg: any): arg is {{ definitionName }} {
   return isPatternString(arg, "{{ definition.pattern }}");
 }
 
-// tslint:disable-next-line:no-any
 export function to{{ definitionName }}(arg: any): Option<{{ definitionName }}> {
   return toPatternString(arg, "{{ definition.pattern }}");
 }
@@ -86,12 +80,10 @@ import { isWithinRangeString, toWithinRangeString, WithinRangeString } from "../
 
 export type {{ definitionName }} = WithinRangeString<{{ definition.minLength }}, {{ definition.maxLength }}>;
 
-// tslint:disable-next-line:no-any
 export function is{{ definitionName }}(arg: any): arg is {{ definitionName }} {
   return isWithinRangeString(arg, {{ definition.minLength }}, {{ definition.maxLength }});
 }
 
-// tslint:disable-next-line:no-any
 export function to{{ definitionName }}(arg: any): Option<{{ definitionName }}> {
   return toWithinRangeString(arg, {{ definition.minLength }}, {{ definition.maxLength }});
 }
@@ -106,4 +98,48 @@ export const to{{ definitionName }} = toEmailString;
   {% else %}
 export type {{ definitionName }} = string;
   {% endif %}
+{% elif definition.type == "array" %}
+import { option, Option } from "ts-option";
+
+  {% if definition["x-extensible-enum"] %}
+
+export enum {{ definitionName }}Enum {
+    {% for enum in definition["x-extensible-enum"] %}
+      "{{ enum }}" = "{{ enum }}",
+    {% endfor %}
+}
+
+export type {{ definitionName }} = ReadonlyArray<{{ definitionName }}Enum>;
+
+export function is{{ definitionName }}Enum(arg: any): arg is {{ definitionName }}Enum {
+  return {{ definitionName }}Enum[arg] !== undefined;
+}
+
+export function to{{ definitionName }}Enum(arg: any): Option<{{ definitionName }}Enum> {
+  return option(arg).filter(is{{ definitionName }}Enum);
+}
+
+export function is{{ definitionName }}(arg: any): arg is {{ definitionName }} {
+  return Array.isArray(arg) && arg.every((e) => is{{ definitionName }}Enum(e));
+}
+
+  {% else %}
+
+export type {{ definitionName }} = ReadonlyArray<{{ definition.items.type | replace("integer", "number") }}>;
+
+export function is{{ definitionName }}(arg: any): arg is {{ definitionName }} {
+  return Array.isArray(arg) && arg.every((e) => typeof e === "{{ definition.items.type | replace("integer", "number") }}");
+}
+
+  {% endif %}
+
+
+export function to{{ definitionName }}(arg: any): Option<{{ definitionName }}> {
+  return option(arg).filter(is{{ definitionName }});
+}
+
+{% else %}
+
+// TODO: generate model for definition "{{ definitionName }}"
+
 {% endif %}

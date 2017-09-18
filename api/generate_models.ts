@@ -2,6 +2,7 @@
 
 import * as fs from "fs-extra";
 import * as nunjucks from "nunjucks";
+import * as prettier from "prettier";
 import * as SwaggerParser from "swagger-parser";
 import { Spec } from "swagger-schema-official";
 
@@ -21,12 +22,17 @@ async function generateModelsFromApi(
       const definition = definitions[definitionName];
       console.log("-------", definitionName);
       console.log(definition);
-      const res = e.render("model.ts.njk", {
+      const code = e.render("model.ts.njk", {
         definition,
         definitionName
       });
-      // TODO: autofix lint errors with tslint
-      await fs.writeFile(`${root}/definitions/${definitionName}.ts`, res);
+      const prettifiedCode = prettier.format(code, {
+        parser: "typescript"
+      });
+      await fs.writeFile(
+        `${root}/definitions/${definitionName}.ts`,
+        prettifiedCode
+      );
     }
   }
 }
@@ -42,7 +48,7 @@ env.addFilter("contains", <T>(a: ReadonlyArray<T>, item: T) => {
   return a.indexOf(item) !== -1;
 });
 
-generateModelsFromApi(env, "api/messages.yaml", "lib/api").then(
+generateModelsFromApi(env, "api/public_api_v1.yaml", "lib/api").then(
   () => console.log("done"),
   err => console.log(`Error: ${err}`)
 );

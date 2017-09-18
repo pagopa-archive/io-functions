@@ -20,12 +20,10 @@ import {
 
 export type BodyLong = WithinRangeString<100, 100000>;
 
-// tslint:disable-next-line:no-any
 export function isBodyLong(arg: any): arg is BodyLong {
   return isWithinRangeString(arg, 100, 100000);
 }
 
-// tslint:disable-next-line:no-any
 export function toBodyLong(arg: any): Option<BodyLong> {
   return toWithinRangeString(arg, 100, 100000);
 }
