@@ -27,7 +27,10 @@ import { ProfileModel } from "./models/profile";
 import { GetDebug } from "./controllers/debug";
 import { GetInfo } from "./controllers/info";
 import { CreateMessage, GetMessage, GetMessages } from "./controllers/messages";
+import { GetOpenapi } from "./controllers/openapi";
 import { GetProfile, UpsertProfile } from "./controllers/profiles";
+
+import { specs as publicApiV1Specs } from "./api/public_api_v1";
 
 // Setup Express
 
@@ -93,6 +96,8 @@ app.post(
   "/api/v1/messages/:fiscalcode",
   CreateMessage(appInsightsClient, organizationModel, messageModel)
 );
+
+app.get("/swagger.json", GetOpenapi(publicApiV1Specs));
 
 app.get("/api/v1/info", GetInfo());
 
