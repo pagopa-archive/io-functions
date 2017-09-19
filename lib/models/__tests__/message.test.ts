@@ -4,7 +4,9 @@ import * as DocumentDb from "documentdb";
 
 import * as DocumentDbUtils from "../../utils/documentdb";
 
+import { toBodyShort } from "../../api/definitions/BodyShort";
 import { toFiscalCode } from "../../api/definitions/FiscalCode";
+
 import { toNonEmptyString } from "../../utils/strings";
 
 import { INewMessage, IRetrievedMessage, MessageModel } from "../message";
@@ -20,11 +22,12 @@ const aMessagesCollectionUrl = DocumentDbUtils.getCollectionUri(
 const aFiscalCode = toFiscalCode("FRLFRC74E04B157I").get;
 
 const aNewMessage: INewMessage = {
-  bodyShort: toNonEmptyString("some text").get,
+  bodyShort: toBodyShort("some text").get,
   fiscalCode: aFiscalCode,
   id: toNonEmptyString("A_MESSAGE_ID").get,
   kind: "INewMessage",
-  senderOrganizationId: "agid" as ModelId
+  senderOrganizationId: "agid" as ModelId,
+  senderUserId: toNonEmptyString("u123").get
 };
 
 const aRetrievedMessage: IRetrievedMessage = {

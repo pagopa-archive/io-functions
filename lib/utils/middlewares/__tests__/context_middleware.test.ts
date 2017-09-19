@@ -16,7 +16,7 @@ describe("ContextMiddleware", () => {
 
     const request = {
       app: {
-        get: s => context
+        get: (_: any) => context
       }
     };
 

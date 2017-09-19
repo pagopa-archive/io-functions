@@ -10,6 +10,14 @@ const someHeaders = {
   "x-user-id": "u123"
 };
 
+interface IHeaders {
+  readonly [key: string]: string | undefined;
+}
+
+function lookup(h: IHeaders): (k: string) => string | undefined {
+  return (k: string) => h[k];
+}
+
 describe("AzureApiAuthMiddleware", () => {
   it("should fail if no x-user-id header is present", async () => {
     const headers = {
@@ -17,7 +25,7 @@ describe("AzureApiAuthMiddleware", () => {
       "x-user-id": undefined
     };
     const mockRequest = {
-      header: jest.fn(h => headers[h])
+      header: jest.fn(lookup(headers))
     };
 
     const middleware = AzureApiAuthMiddleware(anAllowedGroupSet);
@@ -36,7 +44,7 @@ describe("AzureApiAuthMiddleware", () => {
       "x-user-id": ""
     };
     const mockRequest = {
-      header: jest.fn(h => headers[h])
+      header: jest.fn(lookup(headers))
     };
 
     const middleware = AzureApiAuthMiddleware(anAllowedGroupSet);
@@ -55,7 +63,7 @@ describe("AzureApiAuthMiddleware", () => {
       "x-subscription-id": undefined
     };
     const mockRequest = {
-      header: jest.fn(h => headers[h])
+      header: jest.fn(lookup(headers))
     };
 
     const middleware = AzureApiAuthMiddleware(anAllowedGroupSet);
@@ -74,7 +82,7 @@ describe("AzureApiAuthMiddleware", () => {
       "x-subscription-id": ""
     };
     const mockRequest = {
-      header: jest.fn(h => headers[h])
+      header: jest.fn(lookup(headers))
     };
 
     const middleware = AzureApiAuthMiddleware(anAllowedGroupSet);
@@ -93,7 +101,7 @@ describe("AzureApiAuthMiddleware", () => {
       "x-user-groups": undefined
     };
     const mockRequest = {
-      header: jest.fn(h => headers[h])
+      header: jest.fn(lookup(headers))
     };
 
     const middleware = AzureApiAuthMiddleware(anAllowedGroupSet);
@@ -115,7 +123,7 @@ describe("AzureApiAuthMiddleware", () => {
     };
 
     const mockRequest = {
-      header: jest.fn(h => headers[h])
+      header: jest.fn(lookup(headers))
     };
 
     const middleware = AzureApiAuthMiddleware(anAllowedGroupSet);
@@ -137,7 +145,7 @@ describe("AzureApiAuthMiddleware", () => {
     };
 
     const mockRequest = {
-      header: jest.fn(h => headers[h])
+      header: jest.fn(lookup(headers))
     };
 
     const middleware = AzureApiAuthMiddleware(anAllowedGroupSet);
@@ -159,7 +167,7 @@ describe("AzureApiAuthMiddleware", () => {
     };
 
     const mockRequest = {
-      header: jest.fn(h => headers[h])
+      header: jest.fn(lookup(headers))
     };
 
     const middleware = AzureApiAuthMiddleware(anAllowedGroupSet);
@@ -179,7 +187,7 @@ describe("AzureApiAuthMiddleware", () => {
     };
 
     const mockRequest = {
-      header: jest.fn(h => headers[h])
+      header: jest.fn(lookup(headers))
     };
 
     const middleware = AzureApiAuthMiddleware(anAllowedGroupSet);
@@ -206,7 +214,7 @@ describe("AzureApiAuthMiddleware", () => {
     };
 
     const mockRequest = {
-      header: jest.fn(h => headers[h])
+      header: jest.fn(lookup(headers))
     };
 
     const middleware = AzureApiAuthMiddleware(anAllowedGroupSet);
@@ -230,7 +238,7 @@ describe("AzureApiAuthMiddleware", () => {
     };
 
     const mockRequest = {
-      header: jest.fn(h => headers[h])
+      header: jest.fn(lookup(headers))
     };
 
     const middleware = AzureApiAuthMiddleware(anAllowedGroupSet);

@@ -160,7 +160,7 @@ describe("UpsertProfile", () => {
 
 it("should update an existing profile", async () => {
   // tslint:disable-next-line:no-let
-  let updatedProfile;
+  let updatedProfile: any;
 
   const profileModelMock = {
     create: jest.fn(),
