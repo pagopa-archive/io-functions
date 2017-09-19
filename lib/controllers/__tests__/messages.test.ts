@@ -47,12 +47,16 @@ const someUserAttributes: IAzureUserAttributes = {
 
 const aUserAuthenticationDeveloper: IAzureApiAuthorization = {
   groups: new Set([UserGroup.ApiMessageRead, UserGroup.ApiMessageWrite]),
-  kind: "IAzureApiAuthorization"
+  kind: "IAzureApiAuthorization",
+  subscriptionId: toNonEmptyString("s123").get,
+  userId: toNonEmptyString("u123").get
 };
 
 const aUserAuthenticationTrustedApplication: IAzureApiAuthorization = {
   groups: new Set([UserGroup.ApiMessageRead, UserGroup.ApiMessageList]),
-  kind: "IAzureApiAuthorization"
+  kind: "IAzureApiAuthorization",
+  subscriptionId: toNonEmptyString("s123").get,
+  userId: toNonEmptyString("u123").get
 };
 
 const aMessagePayload: NewMessage = {
@@ -67,7 +71,8 @@ const aNewMessage: INewMessage = {
   fiscalCode: aFiscalCode,
   id: toNonEmptyString("A_MESSAGE_ID").get,
   kind: "INewMessage",
-  senderOrganizationId: "agid" as ModelId
+  senderOrganizationId: "agid" as ModelId,
+  senderUserId: toNonEmptyString("u123").get
 };
 
 const aRetrievedMessage: IRetrievedMessage = {
@@ -142,6 +147,7 @@ describe("CreateMessageHandler", () => {
       properties: {
         dryRun: "true",
         senderOrganizationId: "agid",
+        senderUserId: "u123",
         success: "true"
       }
     });
@@ -210,6 +216,7 @@ describe("CreateMessageHandler", () => {
         dryRun: "false",
         hasDefaultEmail: "false",
         senderOrganizationId: "agid",
+        senderUserId: "u123",
         success: "true"
       }
     });
@@ -291,6 +298,7 @@ describe("CreateMessageHandler", () => {
         dryRun: "false",
         hasDefaultEmail: "true",
         senderOrganizationId: "agid",
+        senderUserId: "u123",
         success: "true"
       }
     });

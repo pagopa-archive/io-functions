@@ -207,7 +207,8 @@ export function CreateMessageHandler(
 
     const eventName = "api.messages.create";
     const eventData = {
-      senderOrganizationId: userOrganization.organizationId
+      senderOrganizationId: userOrganization.organizationId,
+      senderUserId: auth.userId
     };
 
     if (messagePayload.dry_run) {
@@ -258,7 +259,8 @@ export function CreateMessageHandler(
       fiscalCode,
       id: toNonEmptyString(ulid()).get,
       kind: "INewMessage",
-      senderOrganizationId: userOrganization.organizationId
+      senderOrganizationId: userOrganization.organizationId,
+      senderUserId: auth.userId
     };
 
     // attempt to create the message

@@ -261,6 +261,25 @@ export const ResponseErrorForbiddenNotAuthorizedForDefaultAddresses: IResponseEr
 };
 
 /**
+ * The user is anonymous.
+ */
+export interface IResponseErrorForbiddenAnonymousUser extends IResponse {
+  readonly kind: "IResponseErrorForbiddenAnonymousUser";
+}
+
+/**
+ * The user is anonymous.
+ */
+export const ResponseErrorForbiddenAnonymousUser: IResponseErrorForbiddenAnonymousUser = {
+  ...ResponseErrorGeneric(
+    HTTP_STATUS_403,
+    "Anonymous user",
+    "The request could not be associated to a user, missing userId or subscriptionId."
+  ),
+  kind: "IResponseErrorForbiddenAnonymousUser"
+};
+
+/**
  * The user is not part of any valid authorization groups.
  */
 export interface IResponseErrorForbiddenNoAuthorizationGroups
