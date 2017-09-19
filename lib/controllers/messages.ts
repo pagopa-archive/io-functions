@@ -330,7 +330,9 @@ export function CreateMessage(
   const handler = CreateMessageHandler(applicationInsightsClient, messageModel);
   const middlewaresWrap = withRequestMiddlewares(
     ContextMiddleware<IBindings>(),
-    AzureApiAuthMiddleware(new Set([UserGroup.ApiMessageWrite])),
+    AzureApiAuthMiddleware(
+      new Set([UserGroup.ApiMessageWrite, UserGroup.ApiMessageWriteDryRun])
+    ),
     AzureUserAttributesMiddleware(organizationModel),
     FiscalCodeMiddleware,
     MessagePayloadMiddleware
