@@ -12,34 +12,12 @@
 
 import { option, Option } from "ts-option";
 
-export enum PreferredLanguagesEnum {
-  "it_IT" = "it_IT",
+import { isPreferredLanguage, PreferredLanguage } from "./PreferredLanguage";
 
-  "en_GB" = "en_GB",
-
-  "es_ES" = "es_ES",
-
-  "de_DE" = "de_DE",
-
-  "fr_FR" = "fr_FR"
-}
-
-export type PreferredLanguages = ReadonlyArray<PreferredLanguagesEnum>;
-
-export function isPreferredLanguagesEnum(
-  arg: any
-): arg is PreferredLanguagesEnum {
-  return PreferredLanguagesEnum[arg] !== undefined;
-}
-
-export function toPreferredLanguagesEnum(
-  arg: any
-): Option<PreferredLanguagesEnum> {
-  return option(arg).filter(isPreferredLanguagesEnum);
-}
+export type PreferredLanguages = ReadonlyArray<PreferredLanguage>;
 
 export function isPreferredLanguages(arg: any): arg is PreferredLanguages {
-  return Array.isArray(arg) && arg.every(e => isPreferredLanguagesEnum(e));
+  return Array.isArray(arg) && arg.every(e => isPreferredLanguage(e));
 }
 
 export function toPreferredLanguages(arg: any): Option<PreferredLanguages> {

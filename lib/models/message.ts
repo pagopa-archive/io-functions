@@ -11,8 +11,6 @@ import { isNonEmptyString, NonEmptyString } from "../utils/strings";
 import { BodyShort, isBodyShort } from "../api/definitions/BodyShort";
 import { FiscalCode, isFiscalCode } from "../api/definitions/FiscalCode";
 
-import { LimitedFields } from "../utils/types";
-
 /**
  * Base interface for Message objects
  */
@@ -51,32 +49,6 @@ export interface IRetrievedMessage
     Readonly<DocumentDb.RetrievedDocument> {
   readonly id: NonEmptyString;
   readonly kind: "IRetrievedMessage";
-}
-
-/**
- * Message objects shared with trusted applications (i.e. client apps).
- */
-export interface IPublicExtendedMessage
-  extends LimitedFields<
-      IRetrievedMessage,
-      "fiscalCode" | "bodyShort" | "senderOrganizationId"
-    > {
-  readonly kind: "IPublicExtendedMessage";
-}
-
-/**
- * Converts a Message to an IPublicExtendedMessage
- */
-export function asPublicExtendedMessage<T extends IMessage>(
-  message: T
-): IPublicExtendedMessage {
-  const { fiscalCode, bodyShort, senderOrganizationId } = message;
-  return {
-    bodyShort,
-    fiscalCode,
-    kind: "IPublicExtendedMessage",
-    senderOrganizationId
-  };
 }
 
 /**

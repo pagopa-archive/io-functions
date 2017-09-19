@@ -8,9 +8,11 @@ import { left, right } from "../../utils/either";
 import { ModelId } from "../../utils/documentdb_model_versioned";
 
 import { toBodyShort } from "../../api/definitions/BodyShort";
+import { CreatedMessage } from "../../api/definitions/CreatedMessage";
 import { toEmailAddress } from "../../api/definitions/EmailAddress";
 import { toFiscalCode } from "../../api/definitions/FiscalCode";
 import { NewMessage } from "../../api/definitions/NewMessage";
+import { NotificationChannelStatus } from "../../api/definitions/NotificationChannelStatus";
 
 import {
   IAzureApiAuthorization,
@@ -19,15 +21,10 @@ import {
 import { IAzureUserAttributes } from "../../utils/middlewares/azure_user_attributes";
 import { toNonEmptyString } from "../../utils/strings";
 
-import {
-  INewMessage,
-  IPublicExtendedMessage,
-  IRetrievedMessage
-} from "../../models/message";
+import { INewMessage, IRetrievedMessage } from "../../models/message";
 import {
   IRetrievedNotification,
-  NotificationAddressSource,
-  NotificationChannelStatus
+  NotificationAddressSource
 } from "../../models/notification";
 import {
   CreateMessageHandler,
@@ -82,11 +79,13 @@ const aRetrievedMessage: IRetrievedMessage = {
   kind: "IRetrievedMessage"
 };
 
-const aPublicExtendedMessage: IPublicExtendedMessage = {
-  bodyShort: aNewMessage.bodyShort,
-  fiscalCode: aNewMessage.fiscalCode,
-  kind: "IPublicExtendedMessage",
-  senderOrganizationId: aNewMessage.senderOrganizationId
+const aPublicExtendedMessage: CreatedMessage = {
+  content: {
+    body_short: aNewMessage.bodyShort
+  },
+  fiscal_code: aNewMessage.fiscalCode,
+  id: "A_MESSAGE_ID",
+  sender_organization_id: aNewMessage.senderOrganizationId
 };
 
 describe("CreateMessageHandler", () => {
@@ -571,7 +570,7 @@ describe("GetMessageHandler", () => {
       _ts: "xyz",
       emailNotification: {
         addressSource: NotificationAddressSource.PROFILE_ADDRESS,
-        status: NotificationChannelStatus.NOTIFICATION_SENT_TO_CHANNEL,
+        status: NotificationChannelStatus.SENT_TO_CHANNEL,
         toAddress: toNonEmptyString("x@example.com").get
       },
       fiscalCode: aFiscalCode,

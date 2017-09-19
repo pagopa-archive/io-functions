@@ -14,26 +14,13 @@ import { Option, some } from "ts-option";
 
 import { EmailAddress, isEmailAddress } from "../api/definitions/EmailAddress";
 import { FiscalCode, isFiscalCode } from "../api/definitions/FiscalCode";
+import {
+  isNotificationChannelStatus,
+  NotificationChannelStatus
+} from "../api/definitions/NotificationChannelStatus";
+
 import { Either, right } from "../utils/either";
 import { isNonEmptyString, NonEmptyString } from "../utils/strings";
-
-/**
- * A notification can be sent over multiple channels and each channel
- * can be in a certain status describing.
- */
-export enum NotificationChannelStatus {
-  // still processing the notification
-  NOTIFICATION_QUEUED = "QUEUED",
-  // the email has been sent to the channel
-  NOTIFICATION_SENT_TO_CHANNEL = "SENT_TO_CHANNEL"
-}
-
-/**
- * Type guard for NotificationChannelStatus
- */
-export const isNotificationChannelStatus = is<NotificationChannelStatus>(
-  arg => NotificationChannelStatus[arg] !== undefined
-);
 
 /**
  * All possible sources that can provide the address of the recipient.

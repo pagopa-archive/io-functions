@@ -5,13 +5,15 @@ import * as DocumentDb from "documentdb";
 import * as DocumentDbUtils from "../../utils/documentdb";
 
 import { toFiscalCode } from "../../api/definitions/FiscalCode";
+import { NotificationChannelStatus } from "../../api/definitions/NotificationChannelStatus";
+
 import { toNonEmptyString } from "../../utils/strings";
 
 import {
   INewNotification,
   INotificationChannelEmail,
   IRetrievedNotification,
-  NotificationChannelStatus,
+  NotificationAddressSource,
   NotificationModel
 } from "../notification";
 
@@ -151,7 +153,8 @@ describe("find", () => {
 
 describe("update", () => {
   const anEmailNotification: INotificationChannelEmail = {
-    status: NotificationChannelStatus.NOTIFICATION_SENT_TO_CHANNEL,
+    addressSource: NotificationAddressSource.DEFAULT_ADDRESS,
+    status: NotificationChannelStatus.SENT_TO_CHANNEL,
     toAddress: toNonEmptyString("to@example.com").get
   };
 

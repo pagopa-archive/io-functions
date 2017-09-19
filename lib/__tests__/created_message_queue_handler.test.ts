@@ -13,11 +13,12 @@ import { IRetrievedMessage } from "../models/message";
 import { none, some } from "ts-option";
 import { toBodyShort } from "../api/definitions/BodyShort";
 import { FiscalCode, toFiscalCode } from "../api/definitions/FiscalCode";
+import { NotificationChannelStatus } from "../api/definitions/NotificationChannelStatus";
+
 import {
   INewNotification,
   INotificationChannelEmail,
-  NotificationAddressSource,
-  NotificationChannelStatus
+  NotificationAddressSource
 } from "../models/notification";
 import { IRetrievedProfile } from "../models/profile";
 
@@ -31,7 +32,7 @@ const aWrongFiscalCode = "FRLFRC74E04B157" as FiscalCode;
 const anEmail = toNonEmptyString("x@example.com").get;
 const anEmailNotification: INotificationChannelEmail = {
   addressSource: NotificationAddressSource.PROFILE_ADDRESS,
-  status: NotificationChannelStatus.NOTIFICATION_QUEUED,
+  status: NotificationChannelStatus.QUEUED,
   toAddress: anEmail
 };
 
