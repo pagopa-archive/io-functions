@@ -20,13 +20,19 @@ export interface IMessage {
   readonly fiscalCode: FiscalCode;
   readonly bodyShort: BodyShort;
   readonly senderOrganizationId: string;
+  readonly senderUserId: NonEmptyString;
 }
 
 /**
  * Type guard for IMessage objects
  */
 export const isIMessage = is<IMessage>(
-  arg => arg && isFiscalCode(arg.fiscalCode) && isBodyShort(arg.bodyShort)
+  arg =>
+    arg &&
+    isFiscalCode(arg.fiscalCode) &&
+    isBodyShort(arg.bodyShort) &&
+    isNonEmptyString(arg.senderOrganizationId) &&
+    isNonEmptyString(arg.senderUserId)
 );
 
 /**

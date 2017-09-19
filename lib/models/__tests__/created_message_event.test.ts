@@ -17,7 +17,8 @@ describe("", () => {
           fiscalCode: "FRLFRC73E04B157I",
           id: "01BTAZ2HS1PWDJERA510FDXYV4",
           kind: "IRetrievedMessage",
-          senderOrganizationId: "agid"
+          senderOrganizationId: "agid",
+          senderUserId: "u123"
         }
       }
     ];

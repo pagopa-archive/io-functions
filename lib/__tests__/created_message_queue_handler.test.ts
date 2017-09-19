@@ -110,7 +110,8 @@ describe("test index function", () => {
       fiscalCode: aWrongFiscalCode,
       id: toNonEmptyString("xyz").get,
       kind: "IRetrievedMessage",
-      senderOrganizationId: ""
+      senderOrganizationId: "",
+      senderUserId: toNonEmptyString("u123").get
     };
 
     const aMessageEvent: ICreatedMessageEvent = {
