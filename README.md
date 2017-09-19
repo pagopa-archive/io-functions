@@ -27,6 +27,16 @@ repository.
 
 ## Architecture
 
+### Design principles
+
+The design of the system strives to follow the functional paradigm as much as possible.
+
+Most data structures are immutable and the vast majority of data models are versioned and immutably stored in the database.
+
+The business logic is designed to be purely functional and segregated from the non-functional, non-typesafe parts (interface to the Azure Functions framework, the database and the Express framework). 
+
+### Azure
+
 The API is built on top of the services provided by the Microsoft Azure cloud.
 The application logic has been developer on the Azure Functions framework.
 
@@ -84,33 +94,33 @@ The high level flow of the data is the following.
 
 [Edit diagram](https://www.draw.io/#G0By3amPPe9r4udnZUN01uLXRrTWs)
 
-  1. An API client sends a request to the public endpoint of the API.
-  1. The public endpoint forwards the request to the Azure API Management
-  system.
-  1. The Azure API Management system looks up the credentials provided by the
-  client and validates them, it will also lookup the groups associated with the
-  client.
-  1. The Azure API Management system forwards the request to the API Function
-  implementing the REST API, enriching it with authentication data (e.g., the
-  client user ID and the associated groups).
-  1. The API Function processes the requests. Most CRUD requests will need to
-  interact with the data store.
-  1. If the request created a new `Message`, a _new message_ event gets pushed
-  to the _new messages_ queue.
-  1. A function that maps the _new message_ to the _notifications_ gets
-  triggered for each new event consumed from the _new messages_ queue.
-  1. For each new `Message`, the function will lookup the notification
-  preferences for the `Profile` associated to the recipient of the `Message`
-  and create a pending `Notification`.
-  1. In case one or more notification channels have been configured in the
-  `Profile` preferences, a _new notification_ gets pushed to each configured
-  channel queue (e.g., email, SMS, push notification, etc...).
-  1. A function responsible for handling _new notification_ for a specific
-  notification channel gets triggered.
-  1. Each _new notification_ event triggers a call to a _channel endpoint_
-  (e.g., an MTA, a 3rd party API, etc...) that will send the content of the
-  `Notification` to the recipient through the channel.
-  1. The result of the call is stored in the `Notification`.
+    1. An API client sends a request to the public endpoint of the API.
+    2. The public endpoint forwards the request to the Azure API Management
+      system.
+    3. The Azure API Management system looks up the credentials provided by the
+      client and validates them, it will also lookup the groups associated with the
+        client.
+    4. The Azure API Management system forwards the request to the API Function
+      implementing the REST API, enriching it with authentication data (e.g., the
+        client user ID and the associated groups).
+    5. The API Function processes the requests. Most CRUD requests will need to
+      interact with the data store.
+    6. If the request created a new `Message`, a _new message_ event gets pushed
+      to the _new messages_ queue.
+    7. A function that maps the _new message_ to the _notifications_ gets
+      triggered for each new event consumed from the _new messages_ queue.
+    8. For each new `Message`, the function will lookup the notification
+      preferences for the `Profile` associated to the recipient of the `Message`
+        and create a pending `Notification`.
+    9. In case one or more notification channels have been configured in the
+      `Profile` preferences, a _new notification_ gets pushed to each configured
+        channel queue (e.g., email, SMS, push notification, etc...).
+    10. A function responsible for handling _new notification_ for a specific
+      notification channel gets triggered.
+    11. Each _new notification_ event triggers a call to a _channel endpoint_
+       (e.g., an MTA, a 3rd party API, etc...) that will send the content of the
+         `Notification` to the recipient through the channel.
+    12. The result of the call is stored in the `Notification`.
 
 ## Project structure
 
