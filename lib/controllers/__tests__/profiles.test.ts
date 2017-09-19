@@ -4,23 +4,24 @@ import { none, some } from "ts-option";
 import { right } from "../../utils/either";
 import { toNonEmptyString } from "../../utils/strings";
 
-import {
-  IPublicExtendedProfile,
-  IPublicLimitedProfile,
-  IRetrievedProfile
-} from "../../models/profile";
+import { IRetrievedProfile } from "../../models/profile";
 import {
   IAzureApiAuthorization,
   UserGroup
 } from "../../utils/middlewares/azure_api_auth";
 import { GetProfileHandler, UpsertProfileHandler } from "../profiles";
 
+import { ExtendedProfile } from "../../api/definitions/ExtendedProfile";
 import { toFiscalCode } from "../../api/definitions/FiscalCode";
+import { LimitedProfile } from "../../api/definitions/LimitedProfile";
+
 import { toNonNegativeNumber } from "../../utils/numbers";
 
 const anAzureAuthorization: IAzureApiAuthorization = {
   groups: new Set([UserGroup.ApiLimitedProfileRead]),
-  kind: "IAzureApiAuthorization"
+  kind: "IAzureApiAuthorization",
+  subscriptionId: toNonEmptyString("s123").get,
+  userId: toNonEmptyString("u123").get
 };
 
 const aFiscalCode = toFiscalCode("FRLFRC74E04B157I").get;
@@ -39,17 +40,12 @@ const aRetrievedProfile: IRetrievedProfile = {
   version: toNonNegativeNumber(1).get
 };
 
-const aPublicExtendedProfile: IPublicExtendedProfile = {
+const aPublicExtendedProfile: ExtendedProfile = {
   email: aRetrievedProfile.email,
-  fiscalCode: aRetrievedProfile.fiscalCode,
-  kind: "IPublicExtendedProfile",
   version: aRetrievedProfile.version
 };
 
-const aPublicLimitedProfile: IPublicLimitedProfile = {
-  fiscalCode: aPublicExtendedProfile.fiscalCode,
-  kind: "IPublicLimitedProfile"
-};
+const aPublicLimitedProfile: LimitedProfile = {};
 
 describe("GetProfileHandler", () => {
   it("should find an existing profile", async () => {

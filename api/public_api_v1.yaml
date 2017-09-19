@@ -9,7 +9,6 @@ schemes:
   - https
 paths:
   '/messages/{id}':
-    x-swagger-router-controller: Messages
     parameters:
       - name: id
         in: path
@@ -29,7 +28,6 @@ paths:
         '404':
           description: No message found for the provided ID.
   '/users/{fiscal_code}/messages':
-    x-swagger-router-controller: Messages
     parameters:
       - $ref: '#/parameters/PaginationRequest'
       - name: fiscal_code
@@ -77,18 +75,7 @@ paths:
         '201':
           description: Message created.
           schema:
-            allOf:
-              - properties:
-                  id:
-                    type: string
-                    format: uuid
-                  status:
-                    $ref: '#/definitions/NotificationStatus'
-                required:
-                  - id
-                  - status
-            description: ''
-            type: object
+            $ref: '#/definitions/CreatedMessageResponse'
           headers:
             Location:
               type: string
@@ -104,17 +91,18 @@ paths:
           description: The message cannot be delivered.
           schema:
             $ref: '#/definitions/ProblemJson'
-  '/preferences/{fiscal_code}':
-    x-swagger-router-controller: Preferences
+  '/profiles/{fiscal_code}':
     get:
-      operationId: getUserPreferences
+      operationId: getProfile
       summary: Get User's Preferences
       description: Returns the preferences for the user identified by the provided fiscal code.
       responses:
         '200':
           description: Found.
           schema:
-            $ref: '#/definitions/Preferences'
+            oneOf:
+              - $ref: '#/definitions/LimitedProfile'
+              - $ref: '#/definitions/ExtendedProfile'
           examples: {}
         '404':
           description: No user found for the provided fiscal code.
@@ -212,10 +200,16 @@ definitions:
       sender_organization_id:
         type: string
     required:
-      - id
       - fiscal_code
       - content
       - sender_organization_id
+  CreatedMessageResponse:
+    type: object
+    properties:
+      dry_run:
+        type: boolean
+    required:
+      - dry_run
   MessageResponse:
     type: object
     properties:
@@ -254,21 +248,26 @@ definitions:
         type: string
         description: 'Contains an URL to GET the next #<page_size> results in the retrieved collection of items.'
         format: uri
-  Preferences:
-    title: Preferences
-    description: Describes the user's preferences .
+  LimitedProfile:
+    title: A citizen's profile
+    description: Describes the citizen's profile, mostly interesting for preferences attributes.
     type: object
     properties:
-      fiscal_code:
-        $ref: '#/definitions/FiscalCode'
-      email:
-        description: The user's preferred email address.
-        $ref: '#/definitions/EmailAddress'
       preferred_languages:
         description: 'Indicates the User''s preferred written or spoken language. Generally used for selecting a localized User interface. Valid values are concatenation of the ISO 639-1 two letter language code, an underscore, and the ISO 3166-1 2 letter country code; e.g., ''en_US'' specifies the language English and country US.'
         $ref: "#/definitions/PreferredLanguages"
-    required:
-      - fiscal_code
+  ExtendedProfile:
+    title: A citizen's profile
+    description: Describes the citizen's profile, mostly interesting for preferences attributes.
+    type: object
+    properties:
+      email:
+        $ref: "#/definitions/EmailAddress"
+      preferred_languages:
+        description: 'Indicates the User''s preferred written or spoken language. Generally used for selecting a localized User interface. Valid values are concatenation of the ISO 639-1 two letter language code, an underscore, and the ISO 3166-1 2 letter country code; e.g., ''en_US'' specifies the language English and country US.'
+        $ref: "#/definitions/PreferredLanguages"
+      version:
+        type: integer
   TimeToLive:
     type: integer
     minimum: 3600
