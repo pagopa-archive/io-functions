@@ -6,7 +6,9 @@ import * as express from "express";
 
 import { left, right } from "../utils/either";
 
+import { ExtendedProfile } from "../api/definitions/ExtendedProfile";
 import { FiscalCode } from "../api/definitions/FiscalCode";
+import { LimitedProfile } from "../api/definitions/LimitedProfile";
 
 import {
   AzureApiAuthMiddleware,
@@ -35,15 +37,18 @@ import {
   ResponseSuccessJson
 } from "../utils/response";
 
-import {
-  asPublicExtendedProfile,
-  asPublicLimitedProfile,
-  IProfile,
-  IPublicExtendedProfile,
-  IPublicLimitedProfile,
-  IRetrievedProfile,
-  ProfileModel
-} from "../models/profile";
+import { IProfile, IRetrievedProfile, ProfileModel } from "../models/profile";
+
+function toExtendedProfile(profile: IRetrievedProfile): ExtendedProfile {
+  return {
+    email: profile.email,
+    version: profile.version
+  };
+}
+
+function toLimitedProfile(_: IRetrievedProfile): LimitedProfile {
+  return {};
+}
 
 /**
  * Type of a GetProfile handler.
@@ -55,8 +60,8 @@ type IGetProfileHandler = (
   auth: IAzureApiAuthorization,
   fiscalCode: FiscalCode
 ) => Promise<
-  | IResponseSuccessJson<IPublicLimitedProfile>
-  | IResponseSuccessJson<IPublicExtendedProfile>
+  | IResponseSuccessJson<LimitedProfile>
+  | IResponseSuccessJson<ExtendedProfile>
   | IResponseErrorNotFound
   | IResponseErrorQuery
 >;
@@ -72,7 +77,7 @@ type IUpsertProfileHandler = (
   fiscalCode: FiscalCode,
   profileModelPayload: IProfilePayload
 ) => Promise<
-  | IResponseSuccessJson<IPublicExtendedProfile>
+  | IResponseSuccessJson<ExtendedProfile>
   | IResponseErrorValidation
   | IResponseErrorQuery
   | IResponseErrorInternal
@@ -95,10 +100,10 @@ export function GetProfileHandler(
         if (auth.groups.has(UserGroup.ApiFullProfileRead)) {
           // if the client is a trusted application we return the
           // extended profile
-          return ResponseSuccessJson(asPublicExtendedProfile(profile));
+          return ResponseSuccessJson(toExtendedProfile(profile));
         } else {
           // or else, we return a limited profile
-          return ResponseSuccessJson(asPublicLimitedProfile(profile));
+          return ResponseSuccessJson(toLimitedProfile(profile));
         }
       } else {
         return ResponseErrorNotFound(
@@ -170,7 +175,7 @@ async function createNewProfileFromPayload(
   profileModel: ProfileModel,
   fiscalCode: FiscalCode,
   profileModelPayload: IProfilePayload
-): Promise<IResponseSuccessJson<IPublicExtendedProfile> | IResponseErrorQuery> {
+): Promise<IResponseSuccessJson<ExtendedProfile> | IResponseErrorQuery> {
   // create a new profile
   const profile: IProfile = {
     email: profileModelPayload.email,
@@ -178,7 +183,7 @@ async function createNewProfileFromPayload(
   };
   const errorOrProfile = await profileModel.create(profile, profile.fiscalCode);
   const errorOrProfileAsPublicExtendedProfile = errorOrProfile.mapRight(
-    asPublicExtendedProfile
+    toExtendedProfile
   );
   if (errorOrProfileAsPublicExtendedProfile.isRight) {
     return ResponseSuccessJson(errorOrProfileAsPublicExtendedProfile.right);
@@ -195,7 +200,7 @@ async function updateExistingProfileFromPayload(
   existingProfile: IRetrievedProfile,
   profileModelPayload: IProfilePayload
 ): Promise<
-  | IResponseSuccessJson<IPublicExtendedProfile>
+  | IResponseSuccessJson<ExtendedProfile>
   | IResponseErrorQuery
   | IResponseErrorInternal
 > {
@@ -229,7 +234,7 @@ async function updateExistingProfileFromPayload(
 
   const profile = maybeProfile.get;
 
-  const publicExtendedProfile = asPublicExtendedProfile(profile);
+  const publicExtendedProfile = toExtendedProfile(profile);
 
   return ResponseSuccessJson(publicExtendedProfile);
 }

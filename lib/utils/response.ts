@@ -78,21 +78,24 @@ export function ResponseSuccessJsonIterator<T>(
 /**
  * Interface for a successful response returning a redirect to a resource.
  */
-export interface IResponseSuccessRedirectToResource<T> extends IResponse {
+export interface IResponseSuccessRedirectToResource<T, V> extends IResponse {
   readonly kind: "IResponseSuccessRedirectToResource";
   readonly resource: T; // type checks the right kind of resource
+  readonly payload: V;
 }
 
 /**
  * Returns a successful response returning a redirect to a resource.
  */
-export function ResponseSuccessRedirectToResource<T>(
+export function ResponseSuccessRedirectToResource<T, V>(
   resource: T,
-  url: string
-): IResponseSuccessRedirectToResource<T> {
+  url: string,
+  payload: V
+): IResponseSuccessRedirectToResource<T, V> {
   return {
-    apply: res => res.redirect(202, url),
+    apply: res => res.json(payload).redirect(202, url),
     kind: "IResponseSuccessRedirectToResource",
+    payload,
     resource
   };
 }

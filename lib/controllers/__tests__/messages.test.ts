@@ -152,13 +152,7 @@ describe("CreateMessageHandler", () => {
     });
     expect(result.kind).toBe("IResponseSuccessJson");
     if (result.kind === "IResponseSuccessJson") {
-      expect(result.value.bodyShort).toEqual(
-        aDryRunMessagePayload.content.body_short
-      );
-      expect(result.value.senderOrganizationId).toEqual(
-        someUserAttributes.organization.organizationId
-      );
-      expect(result.value.status).toEqual("DRY_RUN_SUCCESS");
+      expect(result.value.dry_run).toBeTruthy();
     }
   });
 

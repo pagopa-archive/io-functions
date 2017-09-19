@@ -12,6 +12,7 @@ import { IContext } from "azure-function-express";
 import { left, right } from "../utils/either";
 
 import { CreatedMessage } from "../api/definitions/CreatedMessage";
+import { CreatedMessageResponse } from "../api/definitions/CreatedMessageResponse";
 import { FiscalCode } from "../api/definitions/FiscalCode";
 import { MessageResponse } from "../api/definitions/MessageResponse";
 import { isNewMessage, NewMessage } from "../api/definitions/NewMessage";
@@ -81,15 +82,6 @@ interface IBindings {
 }
 
 /**
- * Response for successful dry run requests
- */
-export interface IResponseDryRun {
-  readonly status: "DRY_RUN_SUCCESS";
-  readonly bodyShort: string;
-  readonly senderOrganizationId: string;
-}
-
-/**
  * A request middleware that validates the Message payload.
  */
 export const MessagePayloadMiddleware: IRequestMiddleware<
@@ -143,8 +135,8 @@ type ICreateMessageHandler = (
   fiscalCode: FiscalCode,
   messagePayload: NewMessage
 ) => Promise<
-  | IResponseSuccessRedirectToResource<IMessage>
-  | IResponseSuccessJson<IResponseDryRun>
+  | IResponseSuccessRedirectToResource<IMessage, CreatedMessageResponse>
+  | IResponseSuccessJson<CreatedMessageResponse>
   | IResponseErrorQuery
   | IResponseErrorValidation
   | IResponseErrorForbiddenNotAuthorized
@@ -227,12 +219,10 @@ export function CreateMessageHandler(
             success: "true"
           }
         });
-        const response: IResponseDryRun = {
-          bodyShort: messagePayload.content.body_short,
-          senderOrganizationId: userOrganization.organizationId,
-          status: "DRY_RUN_SUCCESS"
+        const responsePayload: CreatedMessageResponse = {
+          dry_run: true
         };
-        return ResponseSuccessJson(response);
+        return ResponseSuccessJson(responsePayload);
       } else {
         // the user is not authorized for dry run calls
         return ResponseErrorForbiddenNotAuthorizedForDryRun;
@@ -308,10 +298,15 @@ export function CreateMessageHandler(
       // tslint:disable-next-line:no-object-mutation
       context.bindings.createdMessage = createdMessageEvent;
 
+      const responsePayload: CreatedMessageResponse = {
+        dry_run: false
+      };
+
       // redirect the client to the message resource
       return ResponseSuccessRedirectToResource(
         retrievedMessage,
-        `/api/v1/messages/${fiscalCode}/${message.id}`
+        `/api/v1/messages/${fiscalCode}/${message.id}`,
+        responsePayload
       );
     } else {
       // we got an error while creating the message

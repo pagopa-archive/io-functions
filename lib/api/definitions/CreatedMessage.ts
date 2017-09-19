@@ -17,7 +17,7 @@ import { isMessageContent, MessageContent } from "./MessageContent";
 import { option, Option } from "ts-option";
 
 export interface CreatedMessage {
-  readonly id: string;
+  readonly id?: string;
 
   readonly fiscal_code: FiscalCode;
 
@@ -31,7 +31,7 @@ export interface CreatedMessage {
 export function isCreatedMessage(arg: any): arg is CreatedMessage {
   return (
     arg &&
-    typeof arg.id === "string" &&
+    (arg.id === undefined || arg.id === null || typeof arg.id === "string") &&
     isFiscalCode(arg.fiscal_code) &&
     (arg.time_to_live === undefined ||
       arg.time_to_live === null ||

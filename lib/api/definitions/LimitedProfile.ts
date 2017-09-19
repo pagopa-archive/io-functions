@@ -6,31 +6,21 @@
 // tslint:disable:interface-name
 // tslint:disable:no-any
 
-import { isFiscalCode, FiscalCode } from "./FiscalCode";
-import { isEmailAddress, EmailAddress } from "./EmailAddress";
 import { isPreferredLanguages, PreferredLanguages } from "./PreferredLanguages";
 
 /**
- * Describes the user's preferences .
+ * Describes the citizen's profile, mostly interesting for preferences attributes.
  */
 
 import { option, Option } from "ts-option";
 
-export interface Preferences {
-  readonly fiscal_code: FiscalCode;
-
-  readonly email?: EmailAddress;
-
+export interface LimitedProfile {
   readonly preferred_languages?: PreferredLanguages;
 }
 
-export function isPreferences(arg: any): arg is Preferences {
+export function isLimitedProfile(arg: any): arg is LimitedProfile {
   return (
     arg &&
-    isFiscalCode(arg.fiscal_code) &&
-    (arg.email === undefined ||
-      arg.email === null ||
-      isEmailAddress(arg.email)) &&
     (arg.preferred_languages === undefined ||
       arg.preferred_languages === null ||
       isPreferredLanguages(arg.preferred_languages)) &&
@@ -38,6 +28,6 @@ export function isPreferences(arg: any): arg is Preferences {
   );
 }
 
-export function toPreferences(arg: any): Option<Preferences> {
-  return option(arg).filter(isPreferences);
+export function toLimitedProfile(arg: any): Option<LimitedProfile> {
+  return option(arg).filter(isLimitedProfile);
 }
