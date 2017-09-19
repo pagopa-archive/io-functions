@@ -11,7 +11,9 @@ import { IContext } from "azure-function-express";
 
 import { left, right } from "../utils/either";
 
+import { CreatedMessage } from "../api/definitions/CreatedMessage";
 import { FiscalCode } from "../api/definitions/FiscalCode";
+import { MessageResponse } from "../api/definitions/MessageResponse";
 import { isNewMessage, NewMessage } from "../api/definitions/NewMessage";
 
 import {
@@ -59,17 +61,13 @@ import { mapResultIterator } from "../utils/documentdb";
 
 import { ICreatedMessageEvent } from "../models/created_message_event";
 
-import {
-  NotificationChannelStatus,
-  NotificationModel
-} from "../models/notification";
+import { NotificationModel } from "../models/notification";
 import { OrganizationModel } from "../models/organization";
 
 import {
-  asPublicExtendedMessage,
   IMessage,
   INewMessage,
-  IPublicExtendedMessage,
+  IRetrievedMessage,
   MessageModel
 } from "../models/message";
 
@@ -89,18 +87,6 @@ export interface IResponseDryRun {
   readonly status: "DRY_RUN_SUCCESS";
   readonly bodyShort: string;
   readonly senderOrganizationId: string;
-}
-
-/**
- * Response for public message data
- */
-export interface IResponsePublicMessage {
-  readonly message: IPublicExtendedMessage;
-  readonly notification:
-    | undefined
-    | {
-        readonly email: undefined | NotificationChannelStatus;
-      };
 }
 
 /**
@@ -125,6 +111,22 @@ export const MessagePayloadMiddleware: IRequestMiddleware<
     );
   }
 };
+
+/**
+ * Converts a retrieved message to a message that can be shared via API
+ */
+function retrievedMessageToPublic(
+  retrievedMessage: IRetrievedMessage
+): CreatedMessage {
+  return {
+    content: {
+      body_short: retrievedMessage.bodyShort
+    },
+    fiscal_code: retrievedMessage.fiscalCode,
+    id: retrievedMessage.id,
+    sender_organization_id: retrievedMessage.senderOrganizationId
+  };
+}
 
 /**
  * Type of a CreateMessage handler.
@@ -164,7 +166,7 @@ type IGetMessageHandler = (
   fiscalCode: FiscalCode,
   messageId: string
 ) => Promise<
-  | IResponseSuccessJson<IResponsePublicMessage>
+  | IResponseSuccessJson<MessageResponse>
   | IResponseErrorNotFound
   | IResponseErrorQuery
   | IResponseErrorValidation
@@ -183,7 +185,7 @@ type IGetMessagesHandler = (
   auth: IAzureApiAuthorization,
   fiscalCode: FiscalCode
 ) => Promise<
-  | IResponseSuccessJsonIterator<IPublicExtendedMessage>
+  | IResponseSuccessJsonIterator<CreatedMessage>
   | IResponseErrorValidation
   | IResponseErrorQuery
 >;
@@ -418,14 +420,14 @@ export function GetMessageHandler(
       };
     });
 
-    const publicMessageJson: IResponsePublicMessage = {
-      message: asPublicExtendedMessage(retrievedMessage),
+    const messageStatus: MessageResponse = {
+      message: retrievedMessageToPublic(retrievedMessage),
       notification: maybeNotificationStatus.isDefined
         ? maybeNotificationStatus.get
         : undefined
     };
 
-    return ResponseSuccessJson(publicMessageJson);
+    return ResponseSuccessJson(messageStatus);
   };
 }
 
@@ -461,7 +463,7 @@ export function GetMessagesHandler(
     );
     const publicExtendedMessagesIterator = mapResultIterator(
       retrievedMessagesIterator,
-      asPublicExtendedMessage
+      retrievedMessageToPublic
     );
     return ResponseSuccessJsonIterator(publicExtendedMessagesIterator);
   };

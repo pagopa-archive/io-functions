@@ -24,7 +24,7 @@ paths:
         '200':
           description: Message found.
           schema:
-            $ref: '#/definitions/CreatedMessage'
+            $ref: '#/definitions/MessageResponse'
           examples: {}
         '404':
           description: No message found for the provided ID.
@@ -83,7 +83,7 @@ paths:
                     type: string
                     format: uuid
                   status:
-                    $ref: '#/definitions/MessageStatus'
+                    $ref: '#/definitions/NotificationStatus'
                 required:
                   - id
                   - status
@@ -186,18 +186,17 @@ definitions:
         $ref: '#/definitions/NewMessageDefaultAddresses'
     required:
       - content
-  MessageStatus:
-    title: MessageStatus
+  NotificationChannelStatus:
+    type: string
+    x-extensible-enum:
+      - QUEUED
+      - SENT_TO_CHANNEL
+  NotificationStatus:
+    title: NotificationStatus
     type: object
     properties:
-      created_at:
-        type: string
-        format: date-time
-        description: 'The date-time the message has been created (delivered to the user''s inbox). The format is defined by RFC 3339, for example 2015-05-28T14:07:17Z.'
-      read_at:
-        type: string
-        format: date-time
-        description: 'The date-time the message has been read by the user. The format is defined by RFC 3339, for example 2015-05-28T14:07:17Z.'
+      email:
+        $ref: '#/definitions/NotificationChannelStatus'
   CreatedMessage:
     title: CreatedMessage
     type: object
@@ -210,14 +209,22 @@ definitions:
         $ref: '#/definitions/TimeToLive'
       content:
         $ref: '#/definitions/MessageContent'
-      status:
-        $ref: '#/definitions/MessageStatus'
+      sender_organization_id:
+        type: string
     required:
       - id
       - fiscal_code
-      - time_to_live
       - content
-      - status
+      - sender_organization_id
+  MessageResponse:
+    type: object
+    properties:
+      message:
+        $ref: '#/definitions/CreatedMessage'
+      notification:
+        $ref: '#/definitions/NotificationStatus'
+    required:
+      - message
   FiscalCode:
     type: string
     description: User's fiscal code.
@@ -287,16 +294,18 @@ definitions:
   EmailAddress:
     type: string
     format: email
-  PreferredLanguages:
-    type: array
+  PreferredLanguage:
+    type: string
     x-extensible-enum:
       - it_IT
       - en_GB
       - es_ES
       - de_DE
       - fr_FR
+  PreferredLanguages:
+    type: array
     items:
-      type: string
+      $ref: '#/definitions/PreferredLanguage'
 responses: {}
 parameters:
   PaginationRequest:

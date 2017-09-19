@@ -22,17 +22,14 @@ import { IContext } from "azure-functions-types";
 import * as NodeMailer from "nodemailer";
 import * as sendGridTransport from "nodemailer-sendgrid-transport";
 
+import { NotificationChannelStatus } from "./api/definitions/NotificationChannelStatus";
+
+import { MessageModel } from "./models/message";
+import { INotification, NotificationModel } from "./models/notification";
 import {
   INotificationEvent,
   isNotificationEvent
 } from "./models/notification_event";
-
-import { MessageModel } from "./models/message";
-import {
-  INotification,
-  NotificationChannelStatus,
-  NotificationModel
-} from "./models/notification";
 
 // Setup DocumentDB
 
@@ -124,7 +121,7 @@ function setEmailNotificationSend(notification: INotification): INotification {
     ...notification,
     emailNotification: {
       ...emailNotification,
-      status: NotificationChannelStatus.NOTIFICATION_SENT_TO_CHANNEL
+      status: NotificationChannelStatus.SENT_TO_CHANNEL
     }
   };
 }

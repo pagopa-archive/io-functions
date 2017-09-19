@@ -9,7 +9,6 @@
 import { isFiscalCode, FiscalCode } from "./FiscalCode";
 import { isTimeToLive, TimeToLive } from "./TimeToLive";
 import { isMessageContent, MessageContent } from "./MessageContent";
-import { isMessageStatus, MessageStatus } from "./MessageStatus";
 
 /**
  * 
@@ -22,11 +21,11 @@ export interface CreatedMessage {
 
   readonly fiscal_code: FiscalCode;
 
-  readonly time_to_live: TimeToLive;
+  readonly time_to_live?: TimeToLive;
 
   readonly content: MessageContent;
 
-  readonly status: MessageStatus;
+  readonly sender_organization_id: string;
 }
 
 export function isCreatedMessage(arg: any): arg is CreatedMessage {
@@ -34,9 +33,11 @@ export function isCreatedMessage(arg: any): arg is CreatedMessage {
     arg &&
     typeof arg.id === "string" &&
     isFiscalCode(arg.fiscal_code) &&
-    isTimeToLive(arg.time_to_live) &&
+    (arg.time_to_live === undefined ||
+      arg.time_to_live === null ||
+      isTimeToLive(arg.time_to_live)) &&
     isMessageContent(arg.content) &&
-    isMessageStatus(arg.status) &&
+    typeof arg.sender_organization_id === "string" &&
     true
   );
 }

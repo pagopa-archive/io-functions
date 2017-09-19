@@ -19,6 +19,8 @@ import * as documentDbUtils from "./utils/documentdb";
 import { Option, option } from "ts-option";
 
 import { NewMessageDefaultAddresses } from "./api/definitions/NewMessageDefaultAddresses";
+import { NotificationChannelStatus } from "./api/definitions/NotificationChannelStatus";
+
 import {
   ICreatedMessageEvent,
   isICreatedMessageEvent
@@ -29,7 +31,6 @@ import {
   INotificationChannelEmail,
   IRetrievedNotification,
   NotificationAddressSource,
-  NotificationChannelStatus,
   NotificationModel
 } from "./models/notification";
 import { INotificationEvent } from "./models/notification_event";
@@ -118,7 +119,7 @@ export async function handleMessage(
     > = maybeEmail.map(({ e1: toAddress, e2: addressSource }) => {
       return {
         addressSource,
-        status: NotificationChannelStatus.NOTIFICATION_QUEUED,
+        status: NotificationChannelStatus.QUEUED,
         toAddress
       };
     });

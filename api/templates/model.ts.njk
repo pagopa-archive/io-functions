@@ -96,6 +96,7 @@ export function to{{ definitionName }}(arg: any): Option<{{ definitionName }}> {
   return toWithinRangeString(arg, {{ definition.minLength }}, {{ definition.maxLength }});
 }
   {% elif definition.format == "email" %}
+
 import { isEmailString, toEmailString, EmailString } from "../../utils/strings";
 
 export type {{ definitionName }} = EmailString;
@@ -103,32 +104,41 @@ export type {{ definitionName }} = EmailString;
 export const is{{ definitionName }} = isEmailString;
 
 export const to{{ definitionName }} = toEmailString;
-  {% else %}
-export type {{ definitionName }} = string;
-  {% endif %}
-{% elif definition.type == "array" %}
+
+  {% elif definition["x-extensible-enum"] %}
+
 import { option, Option } from "ts-option";
 
-  {% if definition["x-extensible-enum"] %}
-
-export enum {{ definitionName }}Enum {
+export enum {{ definitionName }} {
     {% for enum in definition["x-extensible-enum"] %}
       "{{ enum }}" = "{{ enum }}",
     {% endfor %}
 }
 
-export type {{ definitionName }} = ReadonlyArray<{{ definitionName }}Enum>;
-
-export function is{{ definitionName }}Enum(arg: any): arg is {{ definitionName }}Enum {
-  return {{ definitionName }}Enum[arg] !== undefined;
+export function is{{ definitionName }}(arg: any): arg is {{ definitionName }} {
+  return {{ definitionName }}[arg] !== undefined;
 }
 
-export function to{{ definitionName }}Enum(arg: any): Option<{{ definitionName }}Enum> {
-  return option(arg).filter(is{{ definitionName }}Enum);
+export function to{{ definitionName }}(arg: any): Option<{{ definitionName }}> {
+  return option(arg).filter(is{{ definitionName }});
 }
+
+  {% else %}
+export type {{ definitionName }} = string;
+  {% endif %}
+{% elif definition.type == "array" %}
+
+import { option, Option } from "ts-option";
+
+  {% if definition.items.$ref %}
+
+    {%- set realPropName = definition.items.$ref | replace("#/definitions/", "") -%}
+import { is{{ realPropName }}, {{ realPropName }} } from "./{{ realPropName }}";
+
+export type {{ definitionName }} = ReadonlyArray<{{ realPropName }}>;
 
 export function is{{ definitionName }}(arg: any): arg is {{ definitionName }} {
-  return Array.isArray(arg) && arg.every((e) => is{{ definitionName }}Enum(e));
+  return Array.isArray(arg) && arg.every((e) => is{{ realPropName }}(e));
 }
 
   {% else %}
@@ -140,7 +150,6 @@ export function is{{ definitionName }}(arg: any): arg is {{ definitionName }} {
 }
 
   {% endif %}
-
 
 export function to{{ definitionName }}(arg: any): Option<{{ definitionName }}> {
   return option(arg).filter(is{{ definitionName }});
