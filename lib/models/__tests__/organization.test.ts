@@ -90,8 +90,8 @@ describe("createOrganization", () => {
     const model = new OrganizationModel(clientMock, organizationsCollectionUrl);
 
     const newOrganization: IOrganization = {
-      organizationId: aOrganizationId,
-      name: "MyOrganization"
+      name: "MyOrganization",
+      organizationId: aOrganizationId
     };
 
     const result = await model.create(

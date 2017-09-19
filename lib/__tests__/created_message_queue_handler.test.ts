@@ -318,10 +318,13 @@ describe("test handleMessage function", () => {
       );
       expect(response.isRight).toBeTruthy();
       if (response.isRight) {
-        expect(response.right.emailNotification.toAddress).toBe(anEmail);
-        expect(response.right.emailNotification.addressSource).toBe(
-          NotificationAddressSource.PROFILE_ADDRESS
-        );
+        expect(response.right.emailNotification).not.toBeUndefined();
+        if (response.right.emailNotification !== undefined) {
+          expect(response.right.emailNotification.toAddress).toBe(anEmail);
+          expect(response.right.emailNotification.addressSource).toBe(
+            NotificationAddressSource.PROFILE_ADDRESS
+          );
+        }
       }
     }
   );
@@ -367,10 +370,13 @@ describe("test handleMessage function", () => {
       );
       expect(response.isRight).toBeTruthy();
       if (response.isRight) {
-        expect(response.right.emailNotification.toAddress).toBe(anEmail);
-        expect(response.right.emailNotification.addressSource).toBe(
-          NotificationAddressSource.DEFAULT_ADDRESS
-        );
+        expect(response.right.emailNotification).not.toBeUndefined();
+        if (response.right.emailNotification !== undefined) {
+          expect(response.right.emailNotification.toAddress).toBe(anEmail);
+          expect(response.right.emailNotification.addressSource).toBe(
+            NotificationAddressSource.DEFAULT_ADDRESS
+          );
+        }
       }
     }
   );
@@ -409,10 +415,13 @@ describe("test handleMessage function", () => {
       );
       expect(response.isRight).toBeTruthy();
       if (response.isRight) {
-        expect(response.right.emailNotification.toAddress).toBe(anEmail);
-        expect(response.right.emailNotification.addressSource).toBe(
-          NotificationAddressSource.DEFAULT_ADDRESS
-        );
+        expect(response.right.emailNotification).not.toBeUndefined();
+        if (response.right.emailNotification !== undefined) {
+          expect(response.right.emailNotification.toAddress).toBe(anEmail);
+          expect(response.right.emailNotification.addressSource).toBe(
+            NotificationAddressSource.DEFAULT_ADDRESS
+          );
+        }
       }
     }
   );
@@ -459,9 +468,7 @@ describe("test processResolve function", () => {
     };
 
     const contextMock = {
-      bindings: {
-        emailNotification: undefined
-      },
+      bindings: {},
       done: jest.fn()
     };
 
@@ -476,12 +483,17 @@ describe("test processResolve function", () => {
     );
 
     expect(contextMock.done).toHaveBeenCalledTimes(1);
-    expect(contextMock.bindings.emailNotification.messageId).toEqual(
-      aCreatedNotificationWithEmail.messageId
-    );
-    expect(contextMock.bindings.emailNotification.notificationId).toEqual(
-      aCreatedNotificationWithEmail.id
-    );
+    expect(contextMock.bindings).not.toBeUndefined();
+    const emailNotification = (contextMock.bindings as any).emailNotification;
+    expect(emailNotification).not.toBeUndefined();
+    if (emailNotification !== undefined) {
+      expect(emailNotification.messageId).toEqual(
+        aCreatedNotificationWithEmail.messageId
+      );
+      expect(emailNotification.notificationId).toEqual(
+        aCreatedNotificationWithEmail.id
+      );
+    }
   });
 
   it("should not enqueue notification to the email queue if no email is present", async () => {
