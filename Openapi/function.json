@@ -8,7 +8,7 @@
       "direction" : "in",
       "name"      : "req",
       "methods"   : [ "get" ],
-      "route"     : "/swagger.json"
+      "route"     : "swagger.json"
     }, {
       "type"      : "http",
       "direction" : "out",
