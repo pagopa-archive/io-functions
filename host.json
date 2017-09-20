@@ -8,6 +8,7 @@
   },
   "functions": [
     "PublicApiV1",
+    "Openapi",
     "CreatedMessageQueueHandler",
     "EmailNotificationsQueueHandler"
   ],
