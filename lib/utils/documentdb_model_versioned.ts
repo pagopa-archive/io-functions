@@ -51,9 +51,9 @@ export function generateVersionedModelId(
 
 export abstract class DocumentDbModelVersioned<
   T,
-  TN extends T & IVersionedModel & DocumentDb.NewDocument,
-  TR extends DocumentDb.RetrievedDocument & IVersionedModel
-> extends DocumentDbModel<TN, TR> {
+  TN extends T & DocumentDb.NewDocument & IVersionedModel,
+  TR extends T & DocumentDb.RetrievedDocument & IVersionedModel
+> extends DocumentDbModel<T, TN, TR> {
   protected getModelId: (o: T) => ModelId;
 
   protected versionateModel: (
@@ -61,8 +61,6 @@ export abstract class DocumentDbModelVersioned<
     id: string,
     version: NonNegativeNumber
   ) => TN;
-
-  protected toBaseType: (o: TR) => T;
 
   public async create(
     document: T,

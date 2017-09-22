@@ -67,8 +67,10 @@ import { OrganizationModel } from "../models/organization";
 
 import {
   IMessage,
-  INewMessage,
+  IMessageContent,
+  INewMessageWithoutContent,
   IRetrievedMessage,
+  IRetrievedMessageWithoutContent,
   MessageModel
 } from "../models/message";
 
@@ -246,11 +248,10 @@ export function CreateMessageHandler(
 
     // we need the user to be associated to a valid organization for him
     // to be able to send a message
-    const message: INewMessage = {
-      bodyShort: messagePayload.content.body_short,
+    const message: INewMessageWithoutContent = {
       fiscalCode,
       id: toNonEmptyString(ulid()).get,
-      kind: "INewMessage",
+      kind: "INewMessageWithoutContent",
       senderOrganizationId: userOrganization.organizationId,
       senderUserId: auth.userId
     };
@@ -287,10 +288,21 @@ export function CreateMessageHandler(
         }
       });
 
+      const messageContent: IMessageContent = {
+        bodyShort: messagePayload.content.body_short
+      };
+
+      const retrievedMessageWithoutContent: IRetrievedMessageWithoutContent = {
+        ...retrievedMessage,
+        content: undefined,
+        kind: "IRetrievedMessageWithoutContent"
+      };
+
       // prepare the created message event
       const createdMessageEvent: ICreatedMessageEvent = {
         defaultAddresses: messagePayload.default_addresses,
-        message: retrievedMessage
+        message: retrievedMessageWithoutContent,
+        messageContent
       };
 
       // queue the message to the created messages queue by setting

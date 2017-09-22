@@ -8,7 +8,10 @@ import {
   processResolve
 } from "../created_message_queue_handler";
 import { ICreatedMessageEvent } from "../models/created_message_event";
-import { IRetrievedMessage } from "../models/message";
+import {
+  IMessageContent,
+  IRetrievedMessageWithoutContent
+} from "../models/message";
 
 import { none, some } from "ts-option";
 import { toBodyShort } from "../api/definitions/BodyShort";
@@ -104,19 +107,21 @@ describe("test index function", () => {
   });
 
   it("should return failure if createdMessage is invalid (wrong fiscal code)", async () => {
-    const aMessage: IRetrievedMessage = {
+    const aMessage: IRetrievedMessageWithoutContent = {
       _self: "",
       _ts: "",
-      bodyShort: toBodyShort("xyz").get,
       fiscalCode: aWrongFiscalCode,
       id: toNonEmptyString("xyz").get,
-      kind: "IRetrievedMessage",
+      kind: "IRetrievedMessageWithoutContent",
       senderOrganizationId: "",
       senderUserId: toNonEmptyString("u123").get
     };
 
     const aMessageEvent: ICreatedMessageEvent = {
-      message: aMessage
+      message: aMessage,
+      messageContent: {
+        bodyShort: toBodyShort("xyz").get
+      }
     };
 
     const contextMock = {
@@ -209,7 +214,9 @@ describe("test handleMessage function", () => {
     const response = await handleMessage(
       profileModelMock as any,
       {} as any,
+      {} as any,
       retrievedMessageMock as any,
+      {} as any,
       none
     );
 
@@ -222,7 +229,7 @@ describe("test handleMessage function", () => {
     }
   });
 
-  it("should return NO_PROFILE error if no profile exists for fiscal code", async () => {
+  it("should return NO_ADDRESSES error if no channels can be resolved", async () => {
     const profileModelMock = {
       findOneProfileByFiscalCode: jest.fn(() => {
         return Promise.resolve(right(none));
@@ -236,7 +243,9 @@ describe("test handleMessage function", () => {
     const response = await handleMessage(
       profileModelMock as any,
       {} as any,
+      {} as any,
       retrievedMessageMock as any,
+      {} as any,
       none
     );
 
@@ -271,8 +280,10 @@ describe("test handleMessage function", () => {
 
       const response = await handleMessage(
         profileModelMock as any,
+        {} as any,
         notificationModelMock as any,
         retrievedMessageMock as any,
+        {} as any,
         none
       );
 
@@ -308,8 +319,10 @@ describe("test handleMessage function", () => {
 
       const response = await handleMessage(
         profileModelMock as any,
+        {} as any,
         notificationModelMock as any,
         retrievedMessageMock as any,
+        {} as any,
         none
       );
 
@@ -358,8 +371,10 @@ describe("test handleMessage function", () => {
 
       const response = await handleMessage(
         profileModelMock as any,
+        {} as any,
         notificationModelMock as any,
         retrievedMessageMock as any,
+        {} as any,
         some({
           email: anEmail
         })
@@ -403,8 +418,10 @@ describe("test handleMessage function", () => {
 
       const response = await handleMessage(
         profileModelMock as any,
+        {} as any,
         notificationModelMock as any,
         retrievedMessageMock as any,
+        {} as any,
         some({
           email: anEmail
         })
@@ -426,6 +443,146 @@ describe("test handleMessage function", () => {
     }
   );
 
+  it("should save the message content if the user enabled the feature in its profile", async () => {
+    const profileModelMock = {
+      findOneProfileByFiscalCode: jest.fn(() => {
+        return Promise.resolve(
+          right(
+            some({
+              ...aRetrievedProfileWithEmail,
+              isStorageOfMessageContentEnabled: true
+            })
+          )
+        );
+      })
+    };
+
+    const retrievedMessageMock = {
+      fiscalCode: aCorrectFiscalCode,
+      id: "A_MESSAGE_ID"
+    };
+
+    const messageModelMock = {
+      update: jest.fn(() => {
+        return Promise.resolve(right(some(retrievedMessageMock)));
+      })
+    };
+
+    const notificationModelMock = {
+      create: jest.fn((document, _) => {
+        return Promise.resolve(right(document));
+      })
+    };
+
+    const messageContent: IMessageContent = {
+      bodyShort: toBodyShort("some content").get
+    };
+
+    const response = await handleMessage(
+      profileModelMock as any,
+      messageModelMock as any,
+      notificationModelMock as any,
+      retrievedMessageMock as any,
+      messageContent,
+      some({
+        email: anEmail
+      })
+    );
+
+    expect(profileModelMock.findOneProfileByFiscalCode).toHaveBeenCalledWith(
+      aCorrectFiscalCode
+    );
+    expect(messageModelMock.update.mock.calls[0][0]).toBe(
+      retrievedMessageMock.id
+    );
+    expect(messageModelMock.update.mock.calls[0][1]).toBe(
+      retrievedMessageMock.fiscalCode
+    );
+    expect(
+      messageModelMock.update.mock.calls[0][2](retrievedMessageMock)
+    ).toEqual({
+      ...retrievedMessageMock,
+      content: messageContent
+    });
+    expect(response.isRight).toBeTruthy();
+    if (response.isRight) {
+      expect(response.right.emailNotification).not.toBeUndefined();
+      if (response.right.emailNotification !== undefined) {
+        expect(response.right.emailNotification.toAddress).toBe(anEmail);
+        expect(response.right.emailNotification.addressSource).toBe(
+          NotificationAddressSource.PROFILE_ADDRESS
+        );
+      }
+    }
+  });
+
+  it("should return a TRANSIENT error if saving the message content errors", async () => {
+    const profileModelMock = {
+      findOneProfileByFiscalCode: jest.fn(() => {
+        return Promise.resolve(
+          right(
+            some({
+              ...aRetrievedProfileWithEmail,
+              isStorageOfMessageContentEnabled: true
+            })
+          )
+        );
+      })
+    };
+
+    const retrievedMessageMock = {
+      fiscalCode: aCorrectFiscalCode,
+      id: "A_MESSAGE_ID"
+    };
+
+    const messageModelMock = {
+      update: jest.fn(() => {
+        return Promise.resolve(left("error"));
+      })
+    };
+
+    const notificationModelMock = {
+      create: jest.fn((document, _) => {
+        return Promise.resolve(right(document));
+      })
+    };
+
+    const messageContent: IMessageContent = {
+      bodyShort: toBodyShort("some content").get
+    };
+
+    const response = await handleMessage(
+      profileModelMock as any,
+      messageModelMock as any,
+      notificationModelMock as any,
+      retrievedMessageMock as any,
+      messageContent,
+      some({
+        email: anEmail
+      })
+    );
+
+    expect(profileModelMock.findOneProfileByFiscalCode).toHaveBeenCalledWith(
+      aCorrectFiscalCode
+    );
+    expect(messageModelMock.update.mock.calls[0][0]).toBe(
+      retrievedMessageMock.id
+    );
+    expect(messageModelMock.update.mock.calls[0][1]).toBe(
+      retrievedMessageMock.fiscalCode
+    );
+    expect(
+      messageModelMock.update.mock.calls[0][2](retrievedMessageMock)
+    ).toEqual({
+      ...retrievedMessageMock,
+      content: messageContent
+    });
+    expect(response.isLeft).toBeTruthy();
+    if (response.isLeft) {
+      expect(response.left).toBe(ProcessingError.TRANSIENT);
+    }
+  });
+
   it("should return TRANSIENT error if saving notification returns error", async () => {
     const profileModelMock = {
       findOneProfileByFiscalCode: jest.fn(() => {
@@ -445,8 +602,10 @@ describe("test handleMessage function", () => {
 
     const response = await handleMessage(
       profileModelMock as any,
+      {} as any,
       notificationModelMock as any,
       retrievedMessageMock as any,
+      {} as any,
       none
     );
 
@@ -479,7 +638,8 @@ describe("test processResolve function", () => {
     processResolve(
       errorOrNotificationMock as any,
       contextMock as any,
-      retrievedMessageMock as any
+      retrievedMessageMock as any,
+      {} as any
     );
 
     expect(contextMock.done).toHaveBeenCalledTimes(1);
@@ -516,7 +676,8 @@ describe("test processResolve function", () => {
     processResolve(
       errorOrNotificationMock as any,
       contextMock as any,
-      retrievedMessageMock as any
+      retrievedMessageMock as any,
+      {} as any
     );
 
     expect(contextMock.done).toHaveBeenCalledTimes(1);
@@ -546,7 +707,8 @@ describe("test processResolve function", () => {
     processResolve(
       errorOrNotificationMock as any,
       contextMock as any,
-      retrievedMessageMock as any
+      retrievedMessageMock as any,
+      {} as any
     );
 
     expect(contextMock.done).toHaveBeenCalledTimes(1);
@@ -582,7 +744,8 @@ describe("test processResolve function", () => {
     processResolve(
       errorOrNotificationMock as any,
       contextMock as any,
-      retrievedMessageMock as any
+      retrievedMessageMock as any,
+      {} as any
     );
 
     expect(contextMock.done).toHaveBeenCalledTimes(1);

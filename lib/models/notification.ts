@@ -10,7 +10,7 @@ import is from "ts-is";
 import * as DocumentDbUtils from "../utils/documentdb";
 import { DocumentDbModel } from "../utils/documentdb_model";
 
-import { Option, some } from "ts-option";
+import { Option } from "ts-option";
 
 import { EmailAddress, isEmailAddress } from "../api/definitions/EmailAddress";
 import { FiscalCode, isFiscalCode } from "../api/definitions/FiscalCode";
@@ -19,7 +19,7 @@ import {
   NotificationChannelStatus
 } from "../api/definitions/NotificationChannelStatus";
 
-import { Either, right } from "../utils/either";
+import { Either } from "../utils/either";
 import { isNonEmptyString, NonEmptyString } from "../utils/strings";
 
 /**
@@ -100,6 +100,14 @@ export interface IRetrievedNotification
   readonly kind: "IRetrievedNotification";
 }
 
+function toBaseType(o: IRetrievedNotification): INotification {
+  return {
+    emailNotification: o.emailNotification,
+    fiscalCode: o.fiscalCode,
+    messageId: o.messageId
+  };
+}
+
 function toRetrieved(
   result: DocumentDb.RetrievedDocument
 ): IRetrievedNotification {
@@ -113,6 +121,7 @@ function toRetrieved(
  * A model for handling Notifications
  */
 export class NotificationModel extends DocumentDbModel<
+  INotification,
   INewNotification,
   IRetrievedNotification
 > {
@@ -131,71 +140,13 @@ export class NotificationModel extends DocumentDbModel<
   ) {
     super();
     // tslint:disable-next-line:no-object-mutation
+    this.toBaseType = toBaseType;
+    // tslint:disable-next-line:no-object-mutation
     this.toRetrieved = toRetrieved;
     // tslint:disable-next-line:no-object-mutation
     this.dbClient = dbClient;
     // tslint:disable-next-line:no-object-mutation
     this.collectionUri = collectionUrl;
-  }
-
-  /**
-   * Updates an existing Notification
-   */
-  public async update(
-    notificationId: string,
-    messageId: string,
-    f: (current: INotification) => INotification
-  ): Promise<Either<DocumentDb.QueryError, Option<IRetrievedNotification>>> {
-    // fetch the notification
-    const errorOrMaybeCurrent = await this.find(notificationId, messageId);
-    if (errorOrMaybeCurrent.isLeft) {
-      // if the query returned an error, forward it
-      return errorOrMaybeCurrent;
-    }
-
-    const maybeCurrent = errorOrMaybeCurrent.right;
-
-    if (maybeCurrent.isEmpty) {
-      return right(maybeCurrent);
-    }
-
-    const currentNotification = maybeCurrent.get;
-
-    const updatedNotification = f({
-      emailNotification: currentNotification.emailNotification,
-      fiscalCode: currentNotification.fiscalCode,
-      messageId: currentNotification.messageId
-    });
-
-    const newNotificationDocument: INewNotification = {
-      ...updatedNotification,
-      id: currentNotification.id,
-      kind: "INewNotification"
-    };
-
-    const kindlessNewNotificationDocument = Object.assign(
-      Object.assign({}, newNotificationDocument),
-      { kind: undefined }
-    );
-
-    const maybeReplacedDocument = await DocumentDbUtils.replaceDocument<
-      INotification
-    >(
-      this.dbClient,
-      DocumentDbUtils.getDocumentUri(
-        this.collectionUri,
-        currentNotification.id
-      ),
-      kindlessNewNotificationDocument,
-      messageId
-    );
-
-    return maybeReplacedDocument.mapRight(replacedDocument =>
-      some({
-        ...replacedDocument,
-        kind: "IRetrievedNotification"
-      } as IRetrievedNotification)
-    );
   }
 
   /**

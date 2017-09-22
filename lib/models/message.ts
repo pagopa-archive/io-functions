@@ -12,67 +12,213 @@ import { BodyShort, isBodyShort } from "../api/definitions/BodyShort";
 import { FiscalCode, isFiscalCode } from "../api/definitions/FiscalCode";
 
 /**
- * Base interface for Message objects
+ * The content of a Message
  */
-export interface IMessage {
-  readonly fiscalCode: FiscalCode;
+export interface IMessageContent {
   readonly bodyShort: BodyShort;
+}
+
+/**
+ * Type guard for IMessageContent
+ */
+export const isIMessageContent = is<IMessageContent>(
+  arg => arg && isBodyShort(arg.bodyShort)
+);
+
+/**
+ * The attributes common to all types of Message
+ */
+interface IMessageBase {
+  // the fiscal code of the recipient
+  readonly fiscalCode: FiscalCode;
+
+  // the identifier of the Organization of the sender
   readonly senderOrganizationId: string;
+
+  // the userId of the sender (this is opaque and depends on the API gateway)
   readonly senderUserId: NonEmptyString;
 }
 
 /**
- * Type guard for IMessage objects
+ * A Message without content.
+ *
+ * A Message gets stored without content if the recipient didn't opt-in
+ * to have the content of the messages permanently stored in his inbox.
  */
-export const isIMessage = is<IMessage>(
+export type IMessageWithoutContent = IMessageBase;
+
+/**
+ * A Message with content
+ *
+ * A Message gets stored with content if the recipient opted-in
+ * to have the content of the messages permanently stored in his inbox.
+ */
+export interface IMessageWithContent extends IMessageBase {
+  readonly content: IMessageContent;
+}
+
+/**
+ * A Message can be with our without content
+ */
+export type IMessage = IMessageWithoutContent | IMessageWithContent;
+
+/**
+ * Type guard for IMessageBase
+ */
+const isIMessageBase = is<IMessageBase>(
   arg =>
     arg &&
     isFiscalCode(arg.fiscalCode) &&
-    isBodyShort(arg.bodyShort) &&
     isNonEmptyString(arg.senderOrganizationId) &&
     isNonEmptyString(arg.senderUserId)
 );
 
 /**
- * Interface for new Message objects
+ * Type guard for IMessageWithContent
  */
-export interface INewMessage extends IMessage, DocumentDb.NewDocument {
-  readonly kind: "INewMessage";
+export const isIMessageWithContent = is<IMessageWithContent>(
+  arg => arg && isIMessageContent(arg.content) && isIMessageBase(arg)
+);
+
+/**
+ * Type guard for IMessageWithoutContent
+ */
+export const isIMessageWithoutContent = is<IMessageWithoutContent>(
+  arg => arg && arg.content === undefined && isIMessageBase(arg)
+);
+
+/**
+ * Type guard for IMessage
+ */
+export const isIMessage = is<IMessage>(
+  arg => isIMessageWithContent(arg) || isIMessageWithoutContent(arg)
+);
+
+/**
+ * A (yet to be saved) Message with content
+ */
+export interface INewMessageWithContent
+  extends IMessageWithContent,
+    DocumentDb.NewDocument {
+  readonly kind: "INewMessageWithContent";
   readonly id: NonEmptyString;
 }
 
 /**
- * Interface for retrieved Message objects
+ * A (yet to be saved) Message without content
  */
-export interface IRetrievedMessage
-  extends Readonly<IMessage>,
+export interface INewMessageWithoutContent
+  extends IMessageWithoutContent,
+    DocumentDb.NewDocument {
+  readonly kind: "INewMessageWithoutContent";
+  readonly id: NonEmptyString;
+}
+
+/**
+ * A (yet to be saved) Message
+ */
+export type INewMessage = INewMessageWithContent | INewMessageWithoutContent;
+
+/**
+ * A (previously saved) retrieved Message with content
+ */
+export interface IRetrievedMessageWithContent
+  extends Readonly<IMessageWithContent>,
     Readonly<DocumentDb.RetrievedDocument> {
   readonly id: NonEmptyString;
-  readonly kind: "IRetrievedMessage";
+  readonly kind: "IRetrievedMessageWithContent";
 }
 
 /**
- * Type guard for IRetrievedMessage objects
+ * A (previously saved) retrieved Message without content
  */
-export const isIRetrievedMessage = is<IRetrievedMessage>(
+export interface IRetrievedMessageWithoutContent
+  extends Readonly<IMessageWithoutContent>,
+    Readonly<DocumentDb.RetrievedDocument> {
+  readonly id: NonEmptyString;
+  readonly kind: "IRetrievedMessageWithoutContent";
+}
+
+/**
+ * A (previously saved) retrieved Message
+ */
+export type IRetrievedMessage =
+  | IRetrievedMessageWithContent
+  | IRetrievedMessageWithoutContent;
+
+/**
+ * Type guard for IRetrievedMessageWithContent
+ */
+export const isIRetrievedMessageWithContent = is<IRetrievedMessageWithContent>(
   arg =>
     isNonEmptyString(arg.id) &&
     typeof arg._self === "string" &&
     (typeof arg._ts === "string" || typeof arg._ts === "number") &&
-    isIMessage(arg)
+    isIMessageWithContent(arg)
 );
 
-function toRetrieved(result: DocumentDb.RetrievedDocument): IRetrievedMessage {
-  return {
-    ...result,
-    kind: "IRetrievedMessage"
-  } as IRetrievedMessage;
+/**
+ * Type guard for IRetrievedMessageWithoutContent
+ */
+export const isIRetrievedMessageWithoutContent = is<
+  IRetrievedMessageWithoutContent
+>(
+  arg =>
+    isNonEmptyString(arg.id) &&
+    typeof arg._self === "string" &&
+    (typeof arg._ts === "string" || typeof arg._ts === "number") &&
+    isIMessageWithoutContent(arg)
+);
+
+/**
+ * Type guard for IRetrievedMessage
+ */
+export const isIRetrievedMessage = is<IRetrievedMessage>(
+  arg =>
+    isIRetrievedMessageWithContent(arg) ||
+    isIRetrievedMessageWithoutContent(arg)
+);
+
+function toBaseType(o: IRetrievedMessage): IMessage {
+  if (isIRetrievedMessageWithContent(o)) {
+    return {
+      content: o.content,
+      fiscalCode: o.fiscalCode,
+      senderOrganizationId: o.senderOrganizationId,
+      senderUserId: o.senderUserId
+    };
+  } else {
+    return {
+      fiscalCode: o.fiscalCode,
+      senderOrganizationId: o.senderOrganizationId,
+      senderUserId: o.senderUserId
+    };
+  }
+}
+
+function toRetrieved(
+  result: DocumentDb.RetrievedDocument
+): IRetrievedMessageWithContent | IRetrievedMessageWithoutContent {
+  if (isIRetrievedMessageWithContent(result)) {
+    return {
+      ...result,
+      kind: "IRetrievedMessageWithContent"
+    } as IRetrievedMessageWithContent;
+  } else {
+    // TODO: we kind of trusting the data storage that this is indeed valid
+    // TODO: possibly return an Option in case result fails validation
+    return {
+      ...result,
+      kind: "IRetrievedMessageWithoutContent"
+    } as IRetrievedMessageWithoutContent;
+  }
 }
 
 /**
  * A model for handling Messages
  */
 export class MessageModel extends DocumentDbModel<
+  IMessage,
   INewMessage,
   IRetrievedMessage
 > {
@@ -90,6 +236,8 @@ export class MessageModel extends DocumentDbModel<
     collectionUrl: DocumentDbUtils.IDocumentDbCollectionUri
   ) {
     super();
+    // tslint:disable-next-line:no-object-mutation
+    this.toBaseType = toBaseType;
     // tslint:disable-next-line:no-object-mutation
     this.toRetrieved = toRetrieved;
     // tslint:disable-next-line:no-object-mutation
@@ -122,7 +270,7 @@ export class MessageModel extends DocumentDbModel<
    */
   public findMessages(
     fiscalCode: FiscalCode
-  ): DocumentDbUtils.IResultIterator<IRetrievedMessage> {
+  ): DocumentDbUtils.IResultIterator<IRetrievedMessageWithContent> {
     return DocumentDbUtils.queryDocuments(this.dbClient, this.collectionUri, {
       parameters: [
         {

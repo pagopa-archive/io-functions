@@ -6,12 +6,14 @@ import { none, Option, some } from "ts-option";
 import { Either, right } from "./either";
 
 export abstract class DocumentDbModel<
-  TN extends DocumentDb.NewDocument,
-  TR extends DocumentDb.RetrievedDocument
+  T,
+  TN extends T & DocumentDb.NewDocument,
+  TR extends T & DocumentDb.RetrievedDocument
 > {
   protected dbClient: DocumentDb.DocumentClient;
   protected collectionUri: DocumentDbUtils.IDocumentDbCollectionUri;
 
+  protected toBaseType: (o: TR) => T;
   protected toRetrieved: (result: DocumentDb.RetrievedDocument) => TR;
 
   /**
@@ -61,5 +63,44 @@ export abstract class DocumentDbModel<
     // for any other error (errorOrDocument is a left), we return it as is
     // or in case of success, we map the result to a retrieved interface
     return errorOrDocument.mapRight(r => some(this.toRetrieved(r)));
+  }
+
+  public async update(
+    documentId: string,
+    partitionKey: string,
+    f: (current: T) => T
+  ): Promise<Either<DocumentDb.QueryError, Option<TR>>> {
+    // fetch the notification
+    const errorOrMaybeCurrent = await this.find(documentId, partitionKey);
+    if (errorOrMaybeCurrent.isLeft) {
+      // if the query returned an error, forward it
+      return errorOrMaybeCurrent;
+    }
+
+    const maybeCurrent = errorOrMaybeCurrent.right;
+
+    if (maybeCurrent.isEmpty) {
+      return right(maybeCurrent);
+    }
+
+    const currentRetrievedDocument = maybeCurrent.get;
+    const currentObject = this.toBaseType(currentRetrievedDocument);
+
+    const updatedObject = f(currentObject);
+
+    const kindlessNewDocument: T &
+      DocumentDb.NewDocument = Object.assign(Object.assign({}, updatedObject), {
+      id: documentId,
+      kind: undefined
+    });
+
+    const updatedDocument = await DocumentDbUtils.replaceDocument(
+      this.dbClient,
+      DocumentDbUtils.getDocumentUri(this.collectionUri, documentId),
+      kindlessNewDocument,
+      partitionKey
+    );
+
+    return updatedDocument.mapRight(this.toRetrieved).mapRight(some);
   }
 }

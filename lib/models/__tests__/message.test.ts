@@ -9,7 +9,11 @@ import { toFiscalCode } from "../../api/definitions/FiscalCode";
 
 import { toNonEmptyString } from "../../utils/strings";
 
-import { INewMessage, IRetrievedMessage, MessageModel } from "../message";
+import {
+  INewMessageWithContent,
+  IRetrievedMessageWithContent,
+  MessageModel
+} from "../message";
 
 import { ModelId } from "../../utils/documentdb_model_versioned";
 
@@ -21,27 +25,29 @@ const aMessagesCollectionUrl = DocumentDbUtils.getCollectionUri(
 
 const aFiscalCode = toFiscalCode("FRLFRC74E04B157I").get;
 
-const aNewMessage: INewMessage = {
-  bodyShort: toBodyShort("some text").get,
+const aNewMessageWithContent: INewMessageWithContent = {
+  content: {
+    bodyShort: toBodyShort("some text").get
+  },
   fiscalCode: aFiscalCode,
   id: toNonEmptyString("A_MESSAGE_ID").get,
-  kind: "INewMessage",
+  kind: "INewMessageWithContent",
   senderOrganizationId: "agid" as ModelId,
   senderUserId: toNonEmptyString("u123").get
 };
 
-const aRetrievedMessage: IRetrievedMessage = {
-  ...aNewMessage,
+const aRetrievedMessageWithContent: IRetrievedMessageWithContent = {
+  ...aNewMessageWithContent,
   _self: "xyz",
   _ts: "xyz",
-  kind: "IRetrievedMessage"
+  kind: "IRetrievedMessageWithContent"
 };
 
 describe("createMessage", () => {
   it("should create a new Message", async () => {
     const clientMock = {
       createDocument: jest.fn((_, __, ___, cb) =>
-        cb(undefined, aRetrievedMessage)
+        cb(undefined, aRetrievedMessageWithContent)
       )
     };
 
@@ -50,13 +56,16 @@ describe("createMessage", () => {
       aMessagesCollectionUrl
     );
 
-    const result = await model.create(aNewMessage, aNewMessage.fiscalCode);
+    const result = await model.create(
+      aNewMessageWithContent,
+      aNewMessageWithContent.fiscalCode
+    );
 
     expect(clientMock.createDocument.mock.calls[0][1].kind).toBeUndefined();
 
     expect(result.isRight).toBeTruthy();
     if (result.isRight) {
-      expect(result.right).toEqual(aRetrievedMessage);
+      expect(result.right).toEqual(aRetrievedMessageWithContent);
     }
   });
 
@@ -70,18 +79,21 @@ describe("createMessage", () => {
       aMessagesCollectionUrl
     );
 
-    const result = await model.create(aNewMessage, aNewMessage.fiscalCode);
+    const result = await model.create(
+      aNewMessageWithContent,
+      aNewMessageWithContent.fiscalCode
+    );
 
     expect(clientMock.createDocument).toHaveBeenCalledTimes(1);
     expect(clientMock.createDocument.mock.calls[0][0]).toEqual(
       "dbs/mockdb/colls/messages"
     );
     expect(clientMock.createDocument.mock.calls[0][1]).toEqual({
-      ...aNewMessage,
+      ...aNewMessageWithContent,
       kind: undefined
     });
     expect(clientMock.createDocument.mock.calls[0][2]).toEqual({
-      partitionKey: aNewMessage.fiscalCode
+      partitionKey: aNewMessageWithContent.fiscalCode
     });
     expect(result.isLeft).toBeTruthy();
     if (result.isLeft) {
@@ -93,7 +105,9 @@ describe("createMessage", () => {
 describe("find", () => {
   it("should return an existing message", async () => {
     const clientMock = {
-      readDocument: jest.fn((_, __, cb) => cb(undefined, aRetrievedMessage))
+      readDocument: jest.fn((_, __, cb) =>
+        cb(undefined, aRetrievedMessageWithContent)
+      )
     };
 
     const model = new MessageModel(
@@ -102,8 +116,8 @@ describe("find", () => {
     );
 
     const result = await model.find(
-      aRetrievedMessage.id,
-      aRetrievedMessage.fiscalCode
+      aRetrievedMessageWithContent.id,
+      aRetrievedMessageWithContent.fiscalCode
     );
 
     expect(clientMock.readDocument).toHaveBeenCalledTimes(1);
@@ -111,12 +125,12 @@ describe("find", () => {
       "dbs/mockdb/colls/messages/docs/A_MESSAGE_ID"
     );
     expect(clientMock.readDocument.mock.calls[0][1]).toEqual({
-      partitionKey: aRetrievedMessage.fiscalCode
+      partitionKey: aRetrievedMessageWithContent.fiscalCode
     });
     expect(result.isRight).toBeTruthy();
     if (result.isRight) {
       expect(result.right.isDefined).toBeTruthy();
-      expect(result.right.get).toEqual(aRetrievedMessage);
+      expect(result.right.get).toEqual(aRetrievedMessageWithContent);
     }
   });
 
@@ -131,8 +145,8 @@ describe("find", () => {
     );
 
     const result = await model.find(
-      aRetrievedMessage.id,
-      aRetrievedMessage.fiscalCode
+      aRetrievedMessageWithContent.id,
+      aRetrievedMessageWithContent.fiscalCode
     );
 
     expect(result.isLeft).toBeTruthy();
@@ -152,8 +166,8 @@ describe("find", () => {
     );
 
     const result = await model.find(
-      aRetrievedMessage.id,
-      aRetrievedMessage.fiscalCode
+      aRetrievedMessageWithContent.id,
+      aRetrievedMessageWithContent.fiscalCode
     );
 
     expect(result.isRight).toBeTruthy();
@@ -179,7 +193,7 @@ describe("findMessages", () => {
     );
 
     const resultIterator = await model.findMessages(
-      aRetrievedMessage.fiscalCode
+      aRetrievedMessageWithContent.fiscalCode
     );
 
     expect(clientMock.queryDocuments).toHaveBeenCalledTimes(1);
@@ -197,7 +211,9 @@ describe("findMessages", () => {
 describe("findMessageForRecipient", () => {
   it("should return the messages if the recipient matches", async () => {
     const clientMock = {
-      readDocument: jest.fn((_, __, cb) => cb(undefined, aRetrievedMessage))
+      readDocument: jest.fn((_, __, cb) =>
+        cb(undefined, aRetrievedMessageWithContent)
+      )
     };
 
     const model = new MessageModel(
@@ -206,8 +222,8 @@ describe("findMessageForRecipient", () => {
     );
 
     const result = await model.findMessageForRecipient(
-      aRetrievedMessage.fiscalCode,
-      aRetrievedMessage.id
+      aRetrievedMessageWithContent.fiscalCode,
+      aRetrievedMessageWithContent.id
     );
 
     expect(clientMock.readDocument).toHaveBeenCalledTimes(1);
@@ -215,18 +231,20 @@ describe("findMessageForRecipient", () => {
       "dbs/mockdb/colls/messages/docs/A_MESSAGE_ID"
     );
     expect(clientMock.readDocument.mock.calls[0][1]).toEqual({
-      partitionKey: aRetrievedMessage.fiscalCode
+      partitionKey: aRetrievedMessageWithContent.fiscalCode
     });
     expect(result.isRight).toBeTruthy();
     if (result.isRight) {
       expect(result.right.isDefined).toBeTruthy();
-      expect(result.right.get).toEqual(aRetrievedMessage);
+      expect(result.right.get).toEqual(aRetrievedMessageWithContent);
     }
   });
 
   it("should return an empty value if the recipient doesn't match", async () => {
     const clientMock = {
-      readDocument: jest.fn((_, __, cb) => cb(undefined, aRetrievedMessage))
+      readDocument: jest.fn((_, __, cb) =>
+        cb(undefined, aRetrievedMessageWithContent)
+      )
     };
 
     const model = new MessageModel(
@@ -236,7 +254,7 @@ describe("findMessageForRecipient", () => {
 
     const result = await model.findMessageForRecipient(
       toFiscalCode("FRLFRC73E04B157I").get,
-      aRetrievedMessage.id
+      aRetrievedMessageWithContent.id
     );
 
     expect(clientMock.readDocument).toHaveBeenCalledTimes(1);
@@ -258,7 +276,7 @@ describe("findMessageForRecipient", () => {
 
     const result = await model.findMessageForRecipient(
       toFiscalCode("FRLFRC73E04B157I").get,
-      aRetrievedMessage.id
+      aRetrievedMessageWithContent.id
     );
 
     expect(clientMock.readDocument).toHaveBeenCalledTimes(1);
