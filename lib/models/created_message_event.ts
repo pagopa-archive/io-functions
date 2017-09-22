@@ -5,7 +5,12 @@ import {
   NewMessageDefaultAddresses
 } from "../api/definitions/NewMessageDefaultAddresses";
 
-import { IRetrievedMessage, isIRetrievedMessage } from "./message";
+import {
+  IMessageContent,
+  IRetrievedMessageWithoutContent,
+  isIMessageContent,
+  isIRetrievedMessageWithoutContent
+} from "./message";
 
 /**
  * Payload of a created message event.
@@ -14,7 +19,8 @@ import { IRetrievedMessage, isIRetrievedMessage } from "./message";
  * Messages API.
  */
 export interface ICreatedMessageEvent {
-  readonly message: IRetrievedMessage;
+  readonly messageContent: IMessageContent;
+  readonly message: IRetrievedMessageWithoutContent;
   readonly defaultAddresses?: NewMessageDefaultAddresses;
 }
 
@@ -23,7 +29,8 @@ export interface ICreatedMessageEvent {
  */
 export const isICreatedMessageEvent = is<ICreatedMessageEvent>(
   arg =>
-    isIRetrievedMessage(arg.message) &&
+    isIRetrievedMessageWithoutContent(arg.message) &&
+    isIMessageContent(arg.messageContent) &&
     (!arg.defaultAddresses ||
       isNewMessageDefaultAddresses(arg.defaultAddresses))
 );

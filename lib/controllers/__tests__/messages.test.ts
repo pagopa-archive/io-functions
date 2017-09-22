@@ -21,7 +21,11 @@ import {
 import { IAzureUserAttributes } from "../../utils/middlewares/azure_user_attributes";
 import { toNonEmptyString } from "../../utils/strings";
 
-import { INewMessage, IRetrievedMessage } from "../../models/message";
+import {
+  INewMessage,
+  INewMessageWithoutContent,
+  IRetrievedMessageWithoutContent
+} from "../../models/message";
 import {
   IRetrievedNotification,
   NotificationAddressSource
@@ -63,29 +67,28 @@ const aMessagePayload: NewMessage = {
   dry_run: false
 };
 
-const aNewMessage: INewMessage = {
-  bodyShort: toBodyShort("some text").get,
+const aNewMessageWithoutContent: INewMessageWithoutContent = {
   fiscalCode: aFiscalCode,
   id: toNonEmptyString("A_MESSAGE_ID").get,
-  kind: "INewMessage",
+  kind: "INewMessageWithoutContent",
   senderOrganizationId: "agid" as ModelId,
   senderUserId: toNonEmptyString("u123").get
 };
 
-const aRetrievedMessage: IRetrievedMessage = {
-  ...aNewMessage,
+const aRetrievedMessageWithoutContent: IRetrievedMessageWithoutContent = {
+  ...aNewMessageWithoutContent,
   _self: "xyz",
   _ts: "xyz",
-  kind: "IRetrievedMessage"
+  kind: "IRetrievedMessageWithoutContent"
 };
 
 const aPublicExtendedMessage: CreatedMessage = {
   content: {
-    body_short: aNewMessage.bodyShort
+    body_short: aNewMessageWithoutContent.bodyShort
   },
-  fiscal_code: aNewMessage.fiscalCode,
+  fiscal_code: aNewMessageWithoutContent.fiscalCode,
   id: "A_MESSAGE_ID",
-  sender_organization_id: aNewMessage.senderOrganizationId
+  sender_organization_id: aNewMessageWithoutContent.senderOrganizationId
 };
 
 describe("CreateMessageHandler", () => {
@@ -162,7 +165,7 @@ describe("CreateMessageHandler", () => {
     };
 
     const mockMessageModel = {
-      create: jest.fn(() => right(aRetrievedMessage))
+      create: jest.fn(() => right(aRetrievedMessageWithoutContent))
     };
 
     const createMessageHandler = CreateMessageHandler(
@@ -190,15 +193,16 @@ describe("CreateMessageHandler", () => {
 
     const messageDocument: INewMessage =
       mockMessageModel.create.mock.calls[0][0];
-    expect(messageDocument.bodyShort).toEqual(
-      aMessagePayload.content.body_short
-    );
+    expect(messageDocument.content).toBeUndefined();
 
     expect(mockMessageModel.create.mock.calls[0][1]).toEqual(aFiscalCode);
 
     expect(mockContext.bindings).toEqual({
       createdMessage: {
-        message: aRetrievedMessage
+        message: aRetrievedMessageWithoutContent,
+        messageContent: {
+          bodyShort: aMessagePayload.content.body_short
+        }
       }
     });
 
@@ -231,7 +235,7 @@ describe("CreateMessageHandler", () => {
     };
 
     const mockMessageModel = {
-      create: jest.fn(() => right(aRetrievedMessage))
+      create: jest.fn(() => right(aRetrievedMessageWithoutContent))
     };
 
     const createMessageHandler = CreateMessageHandler(
@@ -269,9 +273,7 @@ describe("CreateMessageHandler", () => {
 
     const messageDocument: INewMessage =
       mockMessageModel.create.mock.calls[0][0];
-    expect(messageDocument.bodyShort).toEqual(
-      aMessagePayload.content.body_short
-    );
+    expect(messageDocument.content).toBeUndefined();
 
     expect(mockMessageModel.create.mock.calls[0][1]).toEqual(aFiscalCode);
 
@@ -280,7 +282,10 @@ describe("CreateMessageHandler", () => {
         defaultAddresses: {
           email: toEmailAddress("test@example.com").get
         },
-        message: aRetrievedMessage
+        message: aRetrievedMessageWithoutContent,
+        messageContent: {
+          bodyShort: messagePayload.content.body_short
+        }
       }
     });
 
@@ -313,7 +318,7 @@ describe("CreateMessageHandler", () => {
     };
 
     const mockMessageModel = {
-      create: jest.fn(() => right(aRetrievedMessage))
+      create: jest.fn(() => right(aRetrievedMessageWithoutContent))
     };
 
     const createMessageHandler = CreateMessageHandler(
@@ -360,7 +365,7 @@ describe("CreateMessageHandler", () => {
     };
 
     const mockMessageModel = {
-      create: jest.fn(() => right(aRetrievedMessage))
+      create: jest.fn(() => right(aRetrievedMessageWithoutContent))
     };
 
     const createMessageHandler = CreateMessageHandler(
@@ -432,7 +437,9 @@ describe("CreateMessageHandler", () => {
 describe("GetMessageHandler", () => {
   it("should respond with a message if requesting user is the sender", async () => {
     const mockMessageModel = {
-      findMessageForRecipient: jest.fn(() => right(some(aRetrievedMessage)))
+      findMessageForRecipient: jest.fn(() =>
+        right(some(aRetrievedMessageWithoutContent))
+      )
     };
 
     const mockNotificationModel = {
@@ -448,13 +455,13 @@ describe("GetMessageHandler", () => {
       aUserAuthenticationDeveloper,
       someUserAttributes,
       aFiscalCode,
-      aRetrievedMessage.id
+      aRetrievedMessageWithoutContent.id
     );
 
     expect(mockMessageModel.findMessageForRecipient).toHaveBeenCalledTimes(1);
     expect(mockMessageModel.findMessageForRecipient).toHaveBeenCalledWith(
-      aRetrievedMessage.fiscalCode,
-      aRetrievedMessage.id
+      aRetrievedMessageWithoutContent.fiscalCode,
+      aRetrievedMessageWithoutContent.id
     );
 
     expect(result.kind).toBe("IResponseSuccessJson");
@@ -467,7 +474,9 @@ describe("GetMessageHandler", () => {
 
   it("should respond with a message if requesting user is a trusted application", async () => {
     const mockMessageModel = {
-      findMessageForRecipient: jest.fn(() => right(some(aRetrievedMessage)))
+      findMessageForRecipient: jest.fn(() =>
+        right(some(aRetrievedMessageWithoutContent))
+      )
     };
 
     const mockNotificationModel = {
@@ -488,13 +497,13 @@ describe("GetMessageHandler", () => {
       aUserAuthenticationTrustedApplication,
       userAttributes,
       aFiscalCode,
-      aRetrievedMessage.id
+      aRetrievedMessageWithoutContent.id
     );
 
     expect(mockMessageModel.findMessageForRecipient).toHaveBeenCalledTimes(1);
     expect(mockMessageModel.findMessageForRecipient).toHaveBeenCalledWith(
-      aRetrievedMessage.fiscalCode,
-      aRetrievedMessage.id
+      aRetrievedMessageWithoutContent.fiscalCode,
+      aRetrievedMessageWithoutContent.id
     );
 
     expect(result.kind).toBe("IResponseSuccessJson");
@@ -507,7 +516,7 @@ describe("GetMessageHandler", () => {
 
   it("should respond with forbidden if requesting user is not the sender", async () => {
     const message = {
-      ...aRetrievedMessage,
+      ...aRetrievedMessageWithoutContent,
       senderOrganizationId: "anotherOrg"
     };
 
@@ -524,13 +533,13 @@ describe("GetMessageHandler", () => {
       aUserAuthenticationDeveloper,
       someUserAttributes,
       aFiscalCode,
-      aRetrievedMessage.id
+      aRetrievedMessageWithoutContent.id
     );
 
     expect(mockMessageModel.findMessageForRecipient).toHaveBeenCalledTimes(1);
     expect(mockMessageModel.findMessageForRecipient).toHaveBeenCalledWith(
-      aRetrievedMessage.fiscalCode,
-      aRetrievedMessage.id
+      aRetrievedMessageWithoutContent.fiscalCode,
+      aRetrievedMessageWithoutContent.id
     );
 
     expect(result.kind).toBe("IResponseErrorForbiddenNotAuthorized");
@@ -550,7 +559,7 @@ describe("GetMessageHandler", () => {
       aUserAuthenticationDeveloper,
       someUserAttributes,
       aFiscalCode,
-      aRetrievedMessage.id
+      aRetrievedMessageWithoutContent.id
     );
 
     expect(mockMessageModel.findMessageForRecipient).toHaveBeenCalledTimes(1);
@@ -574,7 +583,9 @@ describe("GetMessageHandler", () => {
     };
 
     const mockMessageModel = {
-      findMessageForRecipient: jest.fn(() => right(some(aRetrievedMessage)))
+      findMessageForRecipient: jest.fn(() =>
+        right(some(aRetrievedMessageWithoutContent))
+      )
     };
 
     const mockNotificationModel = {
@@ -597,13 +608,13 @@ describe("GetMessageHandler", () => {
       aUserAuthenticationTrustedApplication,
       userAttributes,
       aFiscalCode,
-      aRetrievedMessage.id
+      aRetrievedMessageWithoutContent.id
     );
 
     expect(mockMessageModel.findMessageForRecipient).toHaveBeenCalledTimes(1);
     expect(mockMessageModel.findMessageForRecipient).toHaveBeenCalledWith(
-      aRetrievedMessage.fiscalCode,
-      aRetrievedMessage.id
+      aRetrievedMessageWithoutContent.fiscalCode,
+      aRetrievedMessageWithoutContent.id
     );
 
     expect(result.kind).toBe("IResponseSuccessJson");

@@ -19,8 +19,16 @@ import { NonEmptyString } from "../utils/strings";
  * Base interface for Profile objects
  */
 export interface IProfile {
+  // the fiscal code of the citized associated to this profile
   readonly fiscalCode: FiscalCode;
+
+  // the preferred email for receiving email notifications
+  // if defined, will override the default email provided by the API client
+  // if defined, will enable email notifications for the citizen
   readonly email?: EmailAddress;
+
+  // whether to store the content of messages sent to this citizen
+  readonly isStorageOfMessageContentEnabled?: boolean;
 }
 
 /**

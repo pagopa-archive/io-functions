@@ -25,7 +25,11 @@ import {
   ICreatedMessageEvent,
   isICreatedMessageEvent
 } from "./models/created_message_event";
-import { IRetrievedMessage } from "./models/message";
+import {
+  IMessageContent,
+  IRetrievedMessageWithoutContent,
+  MessageModel
+} from "./models/message";
 import {
   INewNotification,
   INotificationChannelEmail,
@@ -49,6 +53,10 @@ const documentDbDatabaseUrl = documentDbUtils.getDatabaseUri("development");
 const profilesCollectionUrl = documentDbUtils.getCollectionUri(
   documentDbDatabaseUrl,
   "profiles"
+);
+const messagesCollectionUrl = documentDbUtils.getCollectionUri(
+  documentDbDatabaseUrl,
+  "messages"
 );
 const notificationsCollectionUrl = documentDbUtils.getCollectionUri(
   documentDbDatabaseUrl,
@@ -90,8 +98,10 @@ export enum ProcessingError {
  */
 export async function handleMessage(
   profileModel: ProfileModel,
+  messageModel: MessageModel,
   notificationModel: NotificationModel,
-  retrievedMessage: IRetrievedMessage,
+  retrievedMessage: IRetrievedMessageWithoutContent,
+  messageContent: IMessageContent,
   defaultAddresses: Option<NewMessageDefaultAddresses>
 ): Promise<Either<ProcessingError, IRetrievedNotification>> {
   // async fetch of profile data associated to the fiscal code the message
@@ -100,71 +110,98 @@ export async function handleMessage(
     retrievedMessage.fiscalCode
   );
 
-  if (errorOrMaybeProfile.isRight) {
-    // query succeeded, we may have a profile
-    const maybeProfile = errorOrMaybeProfile.right;
-
-    //
-    // attempt to resolve an email notification
-    //
-    const maybeProfileEmail = maybeProfile
-      .flatMap(profile => option(profile.email))
-      .map(email => Tuple2(email, NotificationAddressSource.PROFILE_ADDRESS));
-    const maybeDefaultEmail = defaultAddresses
-      .flatMap(addresses => option(addresses.email))
-      .map(email => Tuple2(email, NotificationAddressSource.DEFAULT_ADDRESS));
-    const maybeEmail = maybeProfileEmail.orElse(() => maybeDefaultEmail);
-    const maybeEmailNotification: Option<
-      INotificationChannelEmail
-    > = maybeEmail.map(({ e1: toAddress, e2: addressSource }) => {
-      return {
-        addressSource,
-        status: NotificationChannelStatus.QUEUED,
-        toAddress
-      };
-    });
-
-    // check whether there's at least a channel we can send the notification to
-    if (maybeEmailNotification.isDefined) {
-      // create a new Notification object with the configured notifications
-      const notification: INewNotification = {
-        emailNotification: maybeEmailNotification.isDefined
-          ? maybeEmailNotification.get
-          : undefined,
-        fiscalCode: retrievedMessage.fiscalCode,
-        id: toNonEmptyString(ulid()).get,
-        kind: "INewNotification",
-        messageId: retrievedMessage.id
-      };
-
-      // save the Notification
-      const result = await notificationModel.create(
-        notification,
-        notification.messageId
-      );
-
-      if (result.isRight) {
-        // save succeeded, return the saved Notification
-        return right(result.right);
-      } else {
-        // saved failed, fail with a transient error
-        // TODO: we could check the error to see if it's actually transient
-        return left(ProcessingError.TRANSIENT);
-      }
-    } else {
-      // query succeeded but no profile was found
-      return left(ProcessingError.NO_ADDRESSES);
-    }
-  } else {
+  if (errorOrMaybeProfile.isLeft) {
     // query failed
     return left(ProcessingError.TRANSIENT);
   }
+
+  // query succeeded, we may have a profile
+  const maybeProfile = errorOrMaybeProfile.right;
+
+  // whether the recipient wants us to store the message content
+  const isMessageStorageEnabled =
+    maybeProfile
+      .map(profile => profile.isStorageOfMessageContentEnabled)
+      .getOrElse(false) || false;
+
+  if (isMessageStorageEnabled) {
+    // if the recipient wants to store the messages
+    // we add the content of the message to the message record
+    const errorOrUpdatedMessage = await messageModel.update(
+      retrievedMessage.id,
+      retrievedMessage.fiscalCode,
+      m => {
+        return { ...m, content: messageContent };
+      }
+    );
+
+    if (errorOrUpdatedMessage.isLeft) {
+      // we consider errors while updating message as transient
+      return left(ProcessingError.TRANSIENT);
+    }
+  }
+
+  //
+  // attempt to resolve an email notification
+  //
+  const maybeProfileEmail = maybeProfile
+    .flatMap(profile => option(profile.email))
+    .map(email => Tuple2(email, NotificationAddressSource.PROFILE_ADDRESS));
+  const maybeDefaultEmail = defaultAddresses
+    .flatMap(addresses => option(addresses.email))
+    .map(email => Tuple2(email, NotificationAddressSource.DEFAULT_ADDRESS));
+  const maybeEmail = maybeProfileEmail.orElse(() => maybeDefaultEmail);
+  const maybeEmailNotification: Option<
+    INotificationChannelEmail
+  > = maybeEmail.map(({ e1: toAddress, e2: addressSource }) => {
+    return {
+      addressSource,
+      status: NotificationChannelStatus.QUEUED,
+      toAddress
+    };
+  });
+
+  // check whether there's at least a channel we can send the notification to
+  if (maybeEmailNotification.isEmpty) {
+    // no channells to notify the user
+    return left(ProcessingError.NO_ADDRESSES);
+  }
+
+  // create a new Notification object with the configured notification channels
+  // only some of the channels may be configured, for the channel that have not
+  // generated a notification, we set the field to undefined
+  const notification: INewNotification = {
+    // if we have an emailNotification, we initialize its status
+    emailNotification: maybeEmailNotification.isDefined
+      ? maybeEmailNotification.get
+      : undefined,
+    fiscalCode: retrievedMessage.fiscalCode,
+    id: toNonEmptyString(ulid()).get,
+    kind: "INewNotification",
+    messageId: retrievedMessage.id
+  };
+
+  // save the Notification
+  const result = await notificationModel.create(
+    notification,
+    notification.messageId
+  );
+
+  if (result.isLeft) {
+    // saved failed, fail with a transient error
+    // TODO: we could check the error to see if it's actually transient
+    return left(ProcessingError.TRANSIENT);
+  }
+
+  // save succeeded, return the saved Notification
+  return right(result.right);
 }
 
 export function processResolve(
   errorOrNotification: Either<ProcessingError, IRetrievedNotification>,
   context: IContextWithBindings,
-  retrievedMessage: IRetrievedMessage
+  retrievedMessage: IRetrievedMessageWithoutContent,
+  messageContent: IMessageContent
 ): void {
   if (errorOrNotification.isRight) {
     // the notification has been created
@@ -176,6 +213,7 @@ export function processResolve(
 
       // tslint:disable-next-line:no-object-mutation
       context.bindings.emailNotification = {
+        messageContent,
         messageId: notification.messageId,
         notificationId: notification.id
       };
@@ -206,7 +244,7 @@ export function processResolve(
 
 export function processReject(
   context: IContextWithBindings,
-  retrievedMessage: IRetrievedMessage,
+  retrievedMessage: IRetrievedMessageWithoutContent,
   error: Either<ProcessingError, IRetrievedNotification>
 ): void {
   // the promise failed
@@ -246,6 +284,7 @@ export function index(context: IContextWithBindings): void {
 
   // it is an ICreatedMessageEvent
   const retrievedMessage = createdMessageEvent.message;
+  const messageContent = createdMessageEvent.messageContent;
   const defaultAddresses = option(createdMessageEvent.defaultAddresses);
 
   winston.info(
@@ -257,6 +296,7 @@ export function index(context: IContextWithBindings): void {
     masterKey: COSMOSDB_KEY
   });
   const profileModel = new ProfileModel(documentClient, profilesCollectionUrl);
+  const messageModel = new MessageModel(documentClient, messagesCollectionUrl);
   const notificationModel = new NotificationModel(
     documentClient,
     notificationsCollectionUrl
@@ -265,12 +305,19 @@ export function index(context: IContextWithBindings): void {
   // now we can trigger the notifications for the message
   handleMessage(
     profileModel,
+    messageModel,
     notificationModel,
     retrievedMessage,
+    messageContent,
     defaultAddresses
   ).then(
     (errorOrNotification: Either<ProcessingError, IRetrievedNotification>) => {
-      processResolve(errorOrNotification, context, retrievedMessage);
+      processResolve(
+        errorOrNotification,
+        context,
+        retrievedMessage,
+        messageContent
+      );
     },
     (error: Either<ProcessingError, IRetrievedNotification>) => {
       processReject(context, retrievedMessage, error);

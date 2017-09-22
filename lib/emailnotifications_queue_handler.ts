@@ -24,7 +24,7 @@ import * as sendGridTransport from "nodemailer-sendgrid-transport";
 
 import { NotificationChannelStatus } from "./api/definitions/NotificationChannelStatus";
 
-import { MessageModel } from "./models/message";
+import { IMessageContent } from "./models/message";
 import { INotification, NotificationModel } from "./models/notification";
 import {
   INotificationEvent,
@@ -38,10 +38,6 @@ const COSMOSDB_KEY: string = process.env.CUSTOMCONNSTR_COSMOSDB_KEY;
 
 // TODO: read from env vars
 const documentDbDatabaseUrl = documentDbUtils.getDatabaseUri("development");
-const messagesCollectionUrl = documentDbUtils.getCollectionUri(
-  documentDbDatabaseUrl,
-  "messages"
-);
 const notificationsCollectionUrl = documentDbUtils.getCollectionUri(
   documentDbDatabaseUrl,
   "notifications"
@@ -135,9 +131,9 @@ function setEmailNotificationSend(notification: INotification): INotification {
 async function handleNotification(
   appInsightsClient: ApplicationInsights.TelemetryClient,
   notificationModel: NotificationModel,
-  messageModel: MessageModel,
   messageId: string,
-  notificationId: string
+  notificationId: string,
+  messageContent: IMessageContent
 ): Promise<Either<ProcessingError, ProcessingResult>> {
   // fetch the notification
   const errorOrMaybeNotification = await notificationModel.find(
@@ -177,33 +173,6 @@ async function handleNotification(
     return left(ProcessingError.PERMANENT);
   }
 
-  // fetch the message
-  const errorOrMaybeMessage = await messageModel.find(
-    notification.messageId,
-    notification.fiscalCode
-  );
-
-  if (errorOrMaybeMessage.isLeft) {
-    const error = errorOrMaybeMessage.left;
-    // we got an error while fetching the message
-    winston.warn(
-      `Error while fetching the message|notification=${notificationId}|message=${messageId}|error=${error.code}`
-    );
-    return left(ProcessingError.TRANSIENT);
-  }
-
-  const maybeMessage = errorOrMaybeMessage.right;
-
-  if (maybeMessage.isEmpty) {
-    // race condition?
-    winston.warn(
-      `Message not found|notification=${notificationId}|message=${messageId}`
-    );
-    return left(ProcessingError.TRANSIENT);
-  }
-
-  const message = maybeMessage.get;
-
   // trigger email delivery
   // TODO: use fromAddress from the emailNotification object
   // TODO: make everything configurable via settings
@@ -212,13 +181,13 @@ async function handleNotification(
   const sendResult = await sendMail(mailerTransporter, {
     from: "no-reply@italia.it",
     headers: {
-      "X-Italia-Messages-MessageId": message.id,
+      "X-Italia-Messages-MessageId": messageId,
       "X-Italia-Messages-NotificationId": notification.id
     },
-    html: message.bodyShort,
-    messageId: message.id,
+    html: messageContent.bodyShort,
+    messageId,
     subject: "Un nuovo avviso per te.",
-    text: message.bodyShort,
+    text: messageContent.bodyShort,
     to: emailNotification.toAddress
     // priority: "high", // TODO: set based on kind of notification
     // disableFileAccess: true,
@@ -228,8 +197,9 @@ async function handleNotification(
   const eventName = "notification.email.delivery";
   const eventContent = {
     addressSource: emailNotification.addressSource,
+    messageId,
     mta: "sendgrid",
-    senderOrganizationId: message.senderOrganizationId
+    notificationId
   };
 
   if (sendResult.isLeft) {
@@ -262,7 +232,7 @@ async function handleNotification(
   // see #150597597
   const updateResult = await notificationModel.update(
     notification.id,
-    message.id,
+    messageId,
     setEmailNotificationSend
   );
 
@@ -322,14 +292,13 @@ export function index(context: IContextWithBindings): void {
     documentClient,
     notificationsCollectionUrl
   );
-  const messageModel = new MessageModel(documentClient, messagesCollectionUrl);
 
   handleNotification(
     appInsightsClient,
     notificationModel,
-    messageModel,
     emailNotificationEvent.messageId,
-    emailNotificationEvent.notificationId
+    emailNotificationEvent.notificationId,
+    emailNotificationEvent.messageContent
   ).then(
     result => {
       if (result.isLeft) {

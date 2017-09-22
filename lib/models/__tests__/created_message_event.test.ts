@@ -13,12 +13,14 @@ describe("", () => {
           _self:
             "dbs/LgNRAA==/colls/LgNRANj9nwA=/docs/LgNRANj9nwBgAAAAAAAAAA==/",
           _ts: 1505754168,
-          bodyShort: "Hello, world! This works! 15",
           fiscalCode: "FRLFRC73E04B157I",
           id: "01BTAZ2HS1PWDJERA510FDXYV4",
           kind: "IRetrievedMessage",
           senderOrganizationId: "agid",
           senderUserId: "u123"
+        },
+        messageContent: {
+          bodyShort: "Hello, world! This works! 15"
         }
       }
     ];
