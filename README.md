@@ -31,9 +31,12 @@ repository.
 
 The design of the system strives to follow the functional paradigm as much as possible.
 
-Most data structures are immutable and the vast majority of data models are versioned and immutably stored in the database.
+Most data structures are immutable and the vast majority of data models are
+versioned and immutably stored in the database.
 
-The business logic is designed to be purely functional and segregated from the non-functional, non-typesafe parts (interface to the Azure Functions framework, the database and the Express framework). 
+The business logic is designed to be purely functional and segregated from
+the non-functional, non-typesafe parts (interface to the Azure Functions
+framework, the database and the Express framework).
 
 ### Azure
 
@@ -111,7 +114,9 @@ The high level flow of the data is the following.
       triggered for each new event consumed from the _new messages_ queue.
     8. For each new `Message`, the function will lookup the notification
       preferences for the `Profile` associated to the recipient of the `Message`
-        and create a pending `Notification`.
+        and create a pending `Notification`. If the user enabled the
+        _message inbox_, the content of the `Message` will also be persisted
+        and associated to the `Message` record.
     9. In case one or more notification channels have been configured in the
       `Profile` preferences, a _new notification_ gets pushed to each configured
         channel queue (e.g., email, SMS, push notification, etc...).
