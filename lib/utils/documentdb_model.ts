@@ -5,19 +5,52 @@ import { none, Option, some } from "ts-option";
 
 import { Either, right } from "./either";
 
+/**
+ * A persisted data model backed by a DocumentDB client: this base class
+ * abstracts the semantics of the DocumentDB API, by providing the shared code
+ * for persisting, retrieving and updating a document model.
+ * To create a new DocumentDB backed model, define a concrete class by extending
+ * this abstract class.
+ *
+ * @param T   The base document type (i.e. an interface that defined the
+ *            document attributes).
+ * @param TN  The type of new documents (i.e. T & NewDocument)
+ * @param TR  The type of retrieved documents (i.e. T & RetrievedDocument)
+ */
 export abstract class DocumentDbModel<
   T,
   TN extends T & DocumentDb.NewDocument,
   TR extends T & DocumentDb.RetrievedDocument
 > {
+  // instance of a DocumentDB client
   protected dbClient: DocumentDb.DocumentClient;
+
+  // the URI of the collection associated to this model
   protected collectionUri: DocumentDbUtils.IDocumentDbCollectionUri;
 
+  /**
+   * An helper that converts a retrieved document to the base document type
+   */
   protected toBaseType: (o: TR) => T;
+
+  /**
+   * An helper that converts the result of a query (a plain DocumentDB document
+   * to the retrieved type).
+   */
   protected toRetrieved: (result: DocumentDb.RetrievedDocument) => TR;
 
   /**
-   * Creates a new object
+   * Creates a new document in the data store.
+   *
+   * For an explanation on how the data store gets partitioned, see
+   * https://docs.microsoft.com/en-us/azure/cosmos-db/partition-data
+   *
+   * @param   {TN}      document        The new document to store.
+   * @param   {string}  partitionKey    Documents will be partitioned using this
+   *     key.
+   * @return  {Promise<Either<DocumentDb.QueryError, TR>>} A Promise that
+   *     resolves to either an error or the retrieved version of the persisted
+   *     document.
    */
   public async create(
     document: TN,
@@ -28,24 +61,33 @@ export abstract class DocumentDbModel<
       kind: undefined
     });
 
+    // attempt to persist the document
     const maybeCreatedDocument = await DocumentDbUtils.createDocument(
       this.dbClient,
       this.collectionUri,
       kindlessDocument,
       partitionKey
     );
+
+    // if the result is successful we map it to a TR type
     return maybeCreatedDocument.mapRight(this.toRetrieved);
   }
 
   /**
-   * Looks for a specific object
+   * Retrieves a document from the document ID.
+   *
+   * @param documentId    The ID of the document to retrieve.
+   * @param partitionKey  The partitionKey associated to this model.
    */
   public async find(
-    id: string,
+    documentId: string,
     partitionKey: string
   ): Promise<Either<DocumentDb.QueryError, Option<TR>>> {
     // compose the URI of the document we're looking for
-    const documentUri = DocumentDbUtils.getDocumentUri(this.collectionUri, id);
+    const documentUri = DocumentDbUtils.getDocumentUri(
+      this.collectionUri,
+      documentId
+    );
 
     // attemp to retrieve the document by its URI
     // the result with be either a QueryError or the retrieved document
@@ -65,10 +107,18 @@ export abstract class DocumentDbModel<
     return errorOrDocument.mapRight(r => some(this.toRetrieved(r)));
   }
 
+  /**
+   * Updates (i.e. replaces) a document.
+   *
+   * @param documentId    The ID of the document to retrieve.
+   * @param partitionKey  The partitionKey associated to this model.
+   * @param updater       A function that gets called with the current document
+   *    and should return the updated document.
+   */
   public async update(
     documentId: string,
     partitionKey: string,
-    f: (current: T) => T
+    updater: (current: T) => T
   ): Promise<Either<DocumentDb.QueryError, Option<TR>>> {
     // fetch the notification
     const errorOrMaybeCurrent = await this.find(documentId, partitionKey);
@@ -86,7 +136,7 @@ export abstract class DocumentDbModel<
     const currentRetrievedDocument = maybeCurrent.get;
     const currentObject = this.toBaseType(currentRetrievedDocument);
 
-    const updatedObject = f(currentObject);
+    const updatedObject = updater(currentObject);
 
     const kindlessNewDocument: T &
       DocumentDb.NewDocument = Object.assign(Object.assign({}, updatedObject), {
