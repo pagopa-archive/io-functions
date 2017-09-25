@@ -127,6 +127,18 @@ The high level flow of the data is the following.
          `Notification` to the recipient through the channel.
     12. The result of the call is stored in the `Notification`.
 
+### Application events
+
+For monitoring and auditing purposes, the system emits application events to
+the Azure Application Insights service.
+
+Currently the system emits the following events:
+
+* `api.messages.create`: when a message gets created (metadata includes
+  `senderOrganizationId`, `senderUserId`, `dryRun` and `success` status).
+* `notification.email.delivery`: when an email notification gets delivered (
+  metadata includes `addressSource`, `messageId`, `notificationId` and `mta`).
+
 ## Project structure
 
 The API is developed in TypeScript, all code is under the `lib` directory.
