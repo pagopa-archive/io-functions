@@ -131,7 +131,7 @@ export async function handleMessage(
   if (isMessageStorageEnabled) {
     // if the recipient wants to store the messages
     // we add the content of the message to the blob storage for later retrieval
-    const errorOrRetrievedMessage = await messageModel.attachStoredContent(
+    const errorOrAttachment = await messageModel.attachStoredContent(
       blobService,
       retrievedMessage.id,
       retrievedMessage.fiscalCode,
@@ -146,7 +146,7 @@ export async function handleMessage(
 
     winston.debug(`handleMessage|${JSON.stringify(retrievedMessage)}`);
 
-    if (errorOrRetrievedMessage.isLeft) {
+    if (errorOrAttachment.isLeft) {
       // we consider errors while updating message as transient
       return left(ProcessingError.TRANSIENT);
     }

@@ -1,7 +1,7 @@
 import * as DocumentDb from "documentdb";
 import * as DocumentDbUtils from "../utils/documentdb";
 
-import { none, Option, some } from "ts-option";
+import { none, Option, option, some } from "ts-option";
 import { Either, left, right } from "./either";
 
 /**
@@ -164,7 +164,7 @@ export abstract class DocumentDbModel<
     documentId: string,
     partitionKey: string,
     attachment: DocumentDb.Attachment
-  ): Promise<Either<DocumentDb.QueryError, Option<TR>>> {
+  ): Promise<Either<DocumentDb.QueryError, Option<DocumentDb.AttachmentMeta>>> {
     // we do not try to retrieve the document before attaching media,
     // the operation will fail automatically on non existing documents
     const attachmentMeta = await DocumentDbUtils.upsertAttachment(
@@ -178,8 +178,8 @@ export abstract class DocumentDbModel<
       return left(attachmentMeta.left);
     }
 
-    // return the document with attachment media information
-    return this.find(documentId, partitionKey);
+    // return the attachment media information
+    return right(option(attachmentMeta.right));
   }
 
   public async getAttachments(
