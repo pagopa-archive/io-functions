@@ -300,6 +300,7 @@ export class MessageModel extends DocumentDbModel<
     partitionKey: string,
     message: IMessageWithContent
   ): Promise<Either<Error, Option<DocumentDb.AttachmentMeta>>> {
+    // this is the attachment id __and__ the filename
     const blobId = this.getMessageAttachmentName(messageId);
 
     // store media (attachment) with message content in blob storage
@@ -315,7 +316,7 @@ export class MessageModel extends DocumentDbModel<
     }
 
     // attach the created media to the message identified by messageId and partitionKey
-    const errorOrAttachment = await this.attach(messageId, partitionKey, {
+    const errorOrAttachmentMeta = await this.attach(messageId, partitionKey, {
       contentType: "application/json",
       id: blobId,
       media: getBlobUrl(
@@ -325,16 +326,16 @@ export class MessageModel extends DocumentDbModel<
       )
     });
 
-    if (errorOrAttachment.isLeft) {
+    if (errorOrAttachmentMeta.isLeft) {
       return left(
         new Error(
-          `Error while attaching stored message: ${errorOrAttachment.left
-            .code} - ${errorOrAttachment.left.body}`
+          `Error while attaching stored message: ${errorOrAttachmentMeta.left
+            .code} - ${errorOrAttachmentMeta.left.body}`
         )
       );
     }
 
-    return right(errorOrAttachment.right);
+    return right(errorOrAttachmentMeta.right);
   }
 
   private getMessageAttachmentName(id: string): string {
