@@ -1,5 +1,10 @@
 // tslint:disable:no-any
 
+import * as winston from "winston";
+winston.configure({
+  level: "debug"
+});
+
 import { response as MockResponse } from "jest-mock-express";
 
 import { none, some } from "ts-option";
@@ -31,10 +36,20 @@ import {
   NotificationAddressSource
 } from "../../models/notification";
 import {
+  CreateMessage,
   CreateMessageHandler,
   GetMessageHandler,
-  GetMessagesHandler
+  GetMessagesHandler,
+  MessagePayloadMiddleware
 } from "../messages";
+
+interface IHeaders {
+  readonly [key: string]: string | undefined;
+}
+
+function lookup(h: IHeaders): (k: string) => string | undefined {
+  return (k: string) => h[k];
+}
 
 const aFiscalCode = toFiscalCode("FRLFRC74E04B157I").get;
 
@@ -661,5 +676,160 @@ describe("GetMessagesHandler", () => {
     await Promise.resolve(); // needed to let the response promise complete
 
     expect(mockIterator.executeNext).toHaveBeenCalledTimes(2);
+  });
+});
+
+describe("MessagePayloadMiddleware", () => {
+  it("should pass on valid message payloads", async () => {
+    const fixtures: ReadonlyArray<any> = [
+      {
+        content: {
+          body_short: "test"
+        }
+      },
+      {
+        content: {
+          body_long: "x".repeat(100),
+          body_short: "test"
+        }
+      },
+      {
+        content: {
+          body_long: "x".repeat(100),
+          body_short: "test"
+        },
+        default_addresses: {
+          email: "test@example.com"
+        }
+      }
+    ];
+    await Promise.all(
+      fixtures.map(async f => {
+        const r = {
+          body: f
+        };
+        const result = await MessagePayloadMiddleware(r as any);
+        expect(result.isRight).toBeTruthy();
+        if (result.isRight) {
+          expect(result.right).toEqual(f);
+        }
+      })
+    );
+  });
+
+  it("should reject on invalid message payloads", async () => {
+    const fixtures: ReadonlyArray<any> = [
+      {},
+      {
+        content: {
+          body_short: 123456
+        }
+      },
+      {
+        content: {
+          body_long: 123456,
+          body_short: "x".repeat(100)
+        }
+      },
+      {
+        content: {
+          body_short: ""
+        }
+      },
+      {
+        content: {
+          body_short: "x".repeat(100000)
+        }
+      },
+      {
+        content: {
+          body_long: "x".repeat(100000),
+          body_short: "x".repeat(10)
+        }
+      },
+      {
+        content: {
+          body_long: "x".repeat(100),
+          body_short: "test"
+        },
+        default_addresses: {
+          email: "@example.com"
+        }
+      }
+    ];
+    await Promise.all(
+      fixtures.map(async f => {
+        const r = {
+          body: f
+        };
+        const result = await MessagePayloadMiddleware(r as any);
+        expect(result.isLeft).toBeTruthy();
+        if (result.isLeft) {
+          expect(result.left.kind).toEqual("IResponseErrorValidation");
+        }
+      })
+    );
+  });
+});
+
+describe("CreateMessage", () => {
+  it("should fail with 500 if context cannot be retrieved", async () => {
+    const createMessage = CreateMessage({} as any, {} as any, {} as any);
+    const mockResponse = MockResponse();
+    const request = {
+      app: {
+        get: jest.fn(() => undefined)
+      },
+      body: {}
+    };
+    createMessage(request as any, mockResponse as any, _ => _);
+    await Promise.resolve({});
+    expect(request.app.get).toHaveBeenCalledWith("context");
+    expect(mockResponse.status).toHaveBeenCalledWith(500);
+  });
+
+  it("should respond with 403 if no valid authorization scopes are present", async () => {
+    const headers: IHeaders = {
+      "x-user-groups": ""
+    };
+    const createMessage = CreateMessage({} as any, {} as any, {} as any);
+    const mockResponse = MockResponse();
+    const request = {
+      app: {
+        get: jest.fn(() => {
+          return {};
+        })
+      },
+      body: {},
+      header: jest.fn(lookup(headers))
+    };
+    createMessage(request as any, mockResponse as any, _ => _);
+    await Promise.resolve({});
+    expect(mockResponse.status).toHaveBeenCalledWith(403);
+  });
+
+  it("respond with 403 if the user cannot be identified", async () => {
+    const headers: IHeaders = {
+      // "x-subscription-id": "u123",
+      "x-user-groups": "ApiMessageWrite",
+      // "x-user-id": "u123",
+      "x-user-note": "organizationId: 123"
+    };
+    const createMessage = CreateMessage({} as any, {} as any, {} as any);
+    const mockResponse = MockResponse();
+    const request = {
+      app: {
+        get: jest.fn(() => {
+          return {};
+        })
+      },
+      body: {},
+      header: jest.fn(lookup(headers))
+    };
+    createMessage(request as any, mockResponse as any, _ => _);
+    await Promise.resolve({});
+    // expect(request.header).toHaveBeenCalledWith("x-user-id");
+    // expect(request.header).toHaveBeenCalledWith("x-subscription-id");
+    expect(mockResponse.status).toHaveBeenCalledWith(403);
   });
 });
