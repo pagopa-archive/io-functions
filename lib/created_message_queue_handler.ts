@@ -119,10 +119,9 @@ export async function handleMessage(
   const maybeProfile = errorOrMaybeProfile.right;
 
   // whether the recipient wants us to store the message content
-  const isMessageStorageEnabled =
-    maybeProfile
-      .map(profile => profile.isStorageOfMessageContentEnabled)
-      .getOrElse(false) || false;
+  const isMessageStorageEnabled = maybeProfile.exists(
+    profile => profile.isStorageOfMessageContentEnabled === true
+  );
 
   if (isMessageStorageEnabled) {
     // if the recipient wants to store the messages
