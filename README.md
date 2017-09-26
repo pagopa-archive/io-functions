@@ -2,7 +2,7 @@
 
 [![CircleCI](https://circleci.com/gh/teamdigitale/digital-citizenship-functions/tree/master.svg?style=svg)](https://circleci.com/gh/teamdigitale/digital-citizenship-functions/tree/master)
 
-[![dependencies](https://david-dm.org/userteamdigitale/digital-citizenship-functions.svg)](https://david-dm.org/teamdigitale/digital-citizenship-functions)
+[![dependencies](https://david-dm.org/teamdigitale/digital-citizenship-functions/status.svg)](https://david-dm.org/teamdigitale/digital-citizenship-functions)
 
 [![codecov](https://codecov.io/gh/teamdigitale/digital-citizenship-functions/branch/master/graph/badge.svg)](https://codecov.io/gh/teamdigitale/digital-citizenship-functions)
 
