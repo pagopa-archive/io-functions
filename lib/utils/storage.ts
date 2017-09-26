@@ -14,25 +14,6 @@ export function getBlobUrl(
 }
 
 /**
- * Create a new storage container if not exists.
- * 
- * @param containerName 
- */
-export function createContainerIfNotExists(
-  containerName: string
-): Promise<Either<Error, Option<azure.BlobService.ContainerResult>>> {
-  return new Promise((resolve, _) => {
-    blobService.createContainerIfNotExists(containerName, (err, result) => {
-      if (err) {
-        resolve(left(err));
-      } else {
-        resolve(right(option(result)));
-      }
-    });
-  });
-}
-
-/**
  * Create a new blob (media). 
  * Assumes that the container <containerName> already exists.
  * 
