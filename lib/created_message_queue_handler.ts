@@ -125,16 +125,22 @@ export async function handleMessage(
 
   if (isMessageStorageEnabled) {
     // if the recipient wants to store the messages
-    // we add the content of the message to the message record
-    const errorOrUpdatedMessage = await messageModel.update(
+    // we add the content of the message to the blob storage for later retrieval
+    const errorOrRetrievedMessage = await messageModel.attachStoredContent(
       retrievedMessage.id,
       retrievedMessage.fiscalCode,
-      m => {
-        return { ...m, content: messageContent };
+      {
+        content: messageContent,
+        // we do not store documentdb metadata
+        fiscalCode: retrievedMessage.fiscalCode,
+        senderOrganizationId: retrievedMessage.senderOrganizationId,
+        senderUserId: retrievedMessage.senderUserId
       }
     );
 
-    if (errorOrUpdatedMessage.isLeft) {
+    winston.debug(`storingMessageContent|${JSON.stringify(retrievedMessage)}`);
+
+    if (errorOrRetrievedMessage.isLeft) {
       // we consider errors while updating message as transient
       return left(ProcessingError.TRANSIENT);
     }
@@ -162,7 +168,7 @@ export async function handleMessage(
 
   // check whether there's at least a channel we can send the notification to
   if (maybeEmailNotification.isEmpty) {
-    // no channells to notify the user
+    // no channels to notify the user
     return left(ProcessingError.NO_ADDRESSES);
   }
 

@@ -5,11 +5,16 @@ import * as DocumentDbUtils from "../utils/documentdb";
 import { DocumentDbModel } from "../utils/documentdb_model";
 
 import { Option } from "ts-option";
-import { Either } from "../utils/either";
+import { Either, left, right } from "../utils/either";
 import { isNonEmptyString, NonEmptyString } from "../utils/strings";
 
 import { BodyShort, isBodyShort } from "../api/definitions/BodyShort";
 import { FiscalCode, isFiscalCode } from "../api/definitions/FiscalCode";
+
+import { getBlobUrl, upsertBlobFromText } from "../utils/storage";
+
+const MESSAGE_BLOB_STORAGE_CONTAINER_NAME = "message-content";
+const MESSAGE_BLOB_STORAGE_SUFFIX = ".json";
 
 /**
  * The content of a Message
@@ -84,7 +89,10 @@ export const isIMessageWithContent = is<IMessageWithContent>(
  * Type guard for IMessageWithoutContent
  */
 export const isIMessageWithoutContent = is<IMessageWithoutContent>(
-  arg => arg && arg.content === undefined && isIMessageBase(arg)
+  arg =>
+    arg &&
+    (arg.content === undefined || arg.content === null) &&
+    isIMessageBase(arg)
 );
 
 /**
@@ -280,5 +288,46 @@ export class MessageModel extends DocumentDbModel<
       ],
       query: "SELECT * FROM messages m WHERE (m.fiscalCode = @fiscalCode)"
     });
+  }
+
+  public async attachStoredContent(
+    messageId: string,
+    partitionKey: string,
+    message: IMessageWithContent
+  ): Promise<Either<Error, Option<IRetrievedMessage>>> {
+    const blobId = this.getMessageAttachmentName(messageId);
+
+    // store media (attachment) with message content in blob storage
+    const errorOrStoredMessage = await upsertBlobFromText(
+      MESSAGE_BLOB_STORAGE_CONTAINER_NAME,
+      blobId,
+      JSON.stringify({ id: messageId, ...message })
+    );
+
+    if (errorOrStoredMessage.isLeft) {
+      return left(errorOrStoredMessage.left);
+    }
+
+    // attach the created media to the message identified by messageId and partitionKey
+    const errorOrRetrievedMessage = await this.attach(messageId, partitionKey, {
+      contentType: "application/json",
+      id: blobId,
+      media: getBlobUrl(MESSAGE_BLOB_STORAGE_CONTAINER_NAME, blobId)
+    });
+
+    if (errorOrRetrievedMessage.isLeft) {
+      return left(
+        new Error(
+          `Error while attaching stored message: ${errorOrRetrievedMessage.left
+            .code} - ${errorOrRetrievedMessage.left.body}`
+        )
+      );
+    }
+
+    return right(errorOrRetrievedMessage.right);
+  }
+
+  private getMessageAttachmentName(id: string): string {
+    return `${id}${MESSAGE_BLOB_STORAGE_SUFFIX}`;
   }
 }
