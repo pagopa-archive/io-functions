@@ -6,3 +6,4 @@
 **/*.js.map
 .idea
 .vscode
+.env

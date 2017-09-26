@@ -408,3 +408,75 @@ describe("iteratorToArray", () => {
     expect(result).toEqual([1, 2, 3, 4]);
   });
 });
+
+describe("upsertAttachment", () => {
+  const aDbUri = DocumentDbUtils.getDatabaseUri("mydb");
+  const aCollectionUri = DocumentDbUtils.getCollectionUri(
+    aDbUri,
+    "mycollection"
+  );
+  const aDocumentUri = DocumentDbUtils.getDocumentUri(aCollectionUri, "mydoc");
+  it("should link an attachment to the document", async () => {
+    const anAttachment = {
+      _self: "",
+      _ts: "",
+      contentType: "application/json",
+      id: "",
+      media: "https://www.example.com"
+    };
+    const clientMock = {
+      upsertAttachment: jest.fn((_, __, ___, cb) => cb(undefined, anAttachment))
+    };
+    const result = await DocumentDbUtils.upsertAttachment(
+      (clientMock as any) as DocumentDb.DocumentClient,
+      aDocumentUri,
+      anAttachment
+    );
+    expect(clientMock.upsertAttachment).toHaveBeenCalledTimes(1);
+    expect(clientMock.upsertAttachment).toBeCalledWith(
+      aDocumentUri.uri,
+      anAttachment,
+      {},
+      expect.any(Function)
+    );
+    expect(result.isRight).toBeTruthy();
+    if (result.isRight) {
+      expect(result.right).toEqual(anAttachment);
+    }
+  });
+});
+
+describe("queryAttachments", () => {
+  const aDbUri = DocumentDbUtils.getDatabaseUri("mydb");
+  const aCollectionUri = DocumentDbUtils.getCollectionUri(
+    aDbUri,
+    "mycollection"
+  );
+  const aDocumentUri = DocumentDbUtils.getDocumentUri(aCollectionUri, "mydoc");
+  const someFeedOptions = { maxItemCount: 10000000 };
+  it("should return an iterator for the attachments", async () => {
+    const iteratorMock = {
+      executeNext: jest.fn(cb => cb(undefined, ["result"], undefined))
+    };
+    const clientMock = {
+      readAttachments: jest.fn((__, ___) => iteratorMock)
+    };
+    const iterator = await DocumentDbUtils.queryAttachments(
+      (clientMock as any) as DocumentDb.DocumentClient,
+      aDocumentUri,
+      someFeedOptions
+    );
+    expect(clientMock.readAttachments).toHaveBeenCalledTimes(1);
+    expect(clientMock.readAttachments).toBeCalledWith(
+      aDocumentUri.uri,
+      someFeedOptions
+    );
+    const result = await iterator.executeNext();
+    expect(iteratorMock.executeNext).toBeCalled();
+    expect(result.isRight).toBeTruthy();
+    if (result.isRight) {
+      expect(result.right.isDefined).toBeTruthy();
+      expect(result.right.get).toEqual(["result"]);
+    }
+  });
+});
