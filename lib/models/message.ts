@@ -11,7 +11,11 @@ import { isNonEmptyString, NonEmptyString } from "../utils/strings";
 import { BodyShort, isBodyShort } from "../api/definitions/BodyShort";
 import { FiscalCode, isFiscalCode } from "../api/definitions/FiscalCode";
 
-import { getBlobUrl, upsertBlobFromText } from "../utils/storage";
+import {
+  BlobService,
+  getBlobUrl,
+  upsertBlobFromText
+} from "../utils/azure_storage";
 
 const MESSAGE_BLOB_STORAGE_CONTAINER_NAME = "message-content";
 const MESSAGE_BLOB_STORAGE_SUFFIX = ".json";
@@ -291,6 +295,7 @@ export class MessageModel extends DocumentDbModel<
   }
 
   public async attachStoredContent(
+    blobService: BlobService,
     messageId: string,
     partitionKey: string,
     message: IMessageWithContent
@@ -299,6 +304,7 @@ export class MessageModel extends DocumentDbModel<
 
     // store media (attachment) with message content in blob storage
     const errorOrStoredMessage = await upsertBlobFromText(
+      blobService,
       MESSAGE_BLOB_STORAGE_CONTAINER_NAME,
       blobId,
       JSON.stringify({ id: messageId, ...message })
@@ -309,22 +315,26 @@ export class MessageModel extends DocumentDbModel<
     }
 
     // attach the created media to the message identified by messageId and partitionKey
-    const errorOrRetrievedMessage = await this.attach(messageId, partitionKey, {
+    const errorOrMessageContent = await this.attach(messageId, partitionKey, {
       contentType: "application/json",
       id: blobId,
-      media: getBlobUrl(MESSAGE_BLOB_STORAGE_CONTAINER_NAME, blobId)
+      media: getBlobUrl(
+        blobService,
+        MESSAGE_BLOB_STORAGE_CONTAINER_NAME,
+        blobId
+      )
     });
 
-    if (errorOrRetrievedMessage.isLeft) {
+    if (errorOrMessageContent.isLeft) {
       return left(
         new Error(
-          `Error while attaching stored message: ${errorOrRetrievedMessage.left
-            .code} - ${errorOrRetrievedMessage.left.body}`
+          `Error while attaching stored message: ${errorOrMessageContent.left
+            .code} - ${errorOrMessageContent.left.body}`
         )
       );
     }
 
-    return right(errorOrRetrievedMessage.right);
+    return right(errorOrMessageContent.right);
   }
 
   private getMessageAttachmentName(id: string): string {

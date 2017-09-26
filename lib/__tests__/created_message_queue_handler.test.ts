@@ -217,7 +217,8 @@ describe("test handleMessage function", () => {
       {} as any,
       retrievedMessageMock as any,
       {} as any,
-      none
+      none,
+      {} as any
     );
 
     expect(profileModelMock.findOneProfileByFiscalCode).toHaveBeenCalledWith(
@@ -246,7 +247,8 @@ describe("test handleMessage function", () => {
       {} as any,
       retrievedMessageMock as any,
       {} as any,
-      none
+      none,
+      {} as any
     );
 
     expect(profileModelMock.findOneProfileByFiscalCode).toHaveBeenCalledWith(
@@ -284,7 +286,8 @@ describe("test handleMessage function", () => {
         notificationModelMock as any,
         retrievedMessageMock as any,
         {} as any,
-        none
+        none,
+        {} as any
       );
 
       expect(profileModelMock.findOneProfileByFiscalCode).toHaveBeenCalledWith(
@@ -323,7 +326,8 @@ describe("test handleMessage function", () => {
         notificationModelMock as any,
         retrievedMessageMock as any,
         {} as any,
-        none
+        none,
+        {} as any
       );
 
       expect(profileModelMock.findOneProfileByFiscalCode).toHaveBeenCalledWith(
@@ -377,7 +381,8 @@ describe("test handleMessage function", () => {
         {} as any,
         some({
           email: anEmail
-        })
+        }),
+        {} as any
       );
 
       expect(profileModelMock.findOneProfileByFiscalCode).toHaveBeenCalledWith(
@@ -424,7 +429,8 @@ describe("test handleMessage function", () => {
         {} as any,
         some({
           email: anEmail
-        })
+        }),
+        {} as any
       );
 
       expect(profileModelMock.findOneProfileByFiscalCode).toHaveBeenCalledWith(
@@ -486,7 +492,8 @@ describe("test handleMessage function", () => {
       messageContent,
       some({
         email: anEmail
-      })
+      }),
+      {} as any
     );
 
     expect(profileModelMock.findOneProfileByFiscalCode).toHaveBeenCalledWith(
@@ -559,7 +566,8 @@ describe("test handleMessage function", () => {
       messageContent,
       some({
         email: anEmail
-      })
+      }),
+      {} as any
     );
 
     expect(profileModelMock.findOneProfileByFiscalCode).toHaveBeenCalledWith(
@@ -606,7 +614,8 @@ describe("test handleMessage function", () => {
       notificationModelMock as any,
       retrievedMessageMock as any,
       {} as any,
-      none
+      none,
+      {} as any
     );
 
     expect(profileModelMock.findOneProfileByFiscalCode).toHaveBeenCalledWith(

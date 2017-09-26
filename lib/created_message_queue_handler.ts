@@ -18,6 +18,8 @@ import * as documentDbUtils from "./utils/documentdb";
 
 import { Option, option } from "ts-option";
 
+import { BlobService, getBlobService } from "./utils/azure_storage";
+
 import { NewMessageDefaultAddresses } from "./api/definitions/NewMessageDefaultAddresses";
 import { NotificationChannelStatus } from "./api/definitions/NotificationChannelStatus";
 
@@ -63,6 +65,8 @@ const notificationsCollectionUrl = documentDbUtils.getCollectionUri(
   "notifications"
 );
 
+const STORAGE_CONNECTION_STRING = process.env.AzureWebJobsStorage;
+
 /**
  * Input and output bindings for this function
  * see CreatedMessageQueueHandler/function.json
@@ -102,7 +106,8 @@ export async function handleMessage(
   notificationModel: NotificationModel,
   retrievedMessage: IRetrievedMessageWithoutContent,
   messageContent: IMessageContent,
-  defaultAddresses: Option<NewMessageDefaultAddresses>
+  defaultAddresses: Option<NewMessageDefaultAddresses>,
+  blobService: BlobService
 ): Promise<Either<ProcessingError, IRetrievedNotification>> {
   // async fetch of profile data associated to the fiscal code the message
   // should be delivered to
@@ -127,6 +132,7 @@ export async function handleMessage(
     // if the recipient wants to store the messages
     // we add the content of the message to the blob storage for later retrieval
     const errorOrRetrievedMessage = await messageModel.attachStoredContent(
+      blobService,
       retrievedMessage.id,
       retrievedMessage.fiscalCode,
       {
@@ -138,7 +144,7 @@ export async function handleMessage(
       }
     );
 
-    winston.debug(`storingMessageContent|${JSON.stringify(retrievedMessage)}`);
+    winston.debug(`handleMessage|${JSON.stringify(retrievedMessage)}`);
 
     if (errorOrRetrievedMessage.isLeft) {
       // we consider errors while updating message as transient
@@ -307,6 +313,8 @@ export function index(context: IContextWithBindings): void {
     notificationsCollectionUrl
   );
 
+  const blobService = getBlobService(STORAGE_CONNECTION_STRING);
+
   // now we can trigger the notifications for the message
   handleMessage(
     profileModel,
@@ -314,7 +322,8 @@ export function index(context: IContextWithBindings): void {
     notificationModel,
     retrievedMessage,
     messageContent,
-    defaultAddresses
+    defaultAddresses,
+    blobService
   ).then(
     (errorOrNotification: Either<ProcessingError, IRetrievedNotification>) => {
       processResolve(

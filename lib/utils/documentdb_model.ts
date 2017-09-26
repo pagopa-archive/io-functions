@@ -2,7 +2,6 @@ import * as DocumentDb from "documentdb";
 import * as DocumentDbUtils from "../utils/documentdb";
 
 import { none, Option, some } from "ts-option";
-
 import { Either, left, right } from "./either";
 
 /**
@@ -186,13 +185,11 @@ export abstract class DocumentDbModel<
   public async getAttachments(
     documentId: string,
     options: DocumentDb.FeedOptions = {}
-  ): Promise<ReadonlyArray<DocumentDb.AttachmentMeta>> {
-    return DocumentDbUtils.iteratorToArray(
-      DocumentDbUtils.queryAttachments(
-        this.dbClient,
-        DocumentDbUtils.getDocumentUri(this.collectionUri, documentId),
-        options
-      )
+  ): Promise<DocumentDbUtils.IResultIterator<DocumentDb.AttachmentMeta>> {
+    return DocumentDbUtils.queryAttachments(
+      this.dbClient,
+      DocumentDbUtils.getDocumentUri(this.collectionUri, documentId),
+      options
     );
   }
 }

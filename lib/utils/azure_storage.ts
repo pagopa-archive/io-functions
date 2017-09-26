@@ -1,14 +1,21 @@
-import * as azure from "azure-storage";
+import * as azureStorage from "azure-storage";
 import { Option, option } from "ts-option";
 import { Either, left, right } from "./either";
 
-const STORAGE_CONNECTION_STRING = process.env.AzureWebJobsStorage;
-const defaultBlobService = azure.createBlobService(STORAGE_CONNECTION_STRING);
+// Storage connection string may be process.env.AzureWebJobsStorage;
+
+export type BlobService = azureStorage.BlobService;
+
+export function getBlobService(
+  connectionString: string
+): azureStorage.BlobService {
+  return azureStorage.createBlobService(connectionString);
+}
 
 export function getBlobUrl(
+  blobService: azureStorage.BlobService,
   containerName: string,
-  attachmentName: string,
-  blobService: azure.BlobService = defaultBlobService
+  attachmentName: string
 ): string {
   return blobService.getUrl(containerName, attachmentName);
 }
@@ -17,16 +24,15 @@ export function getBlobUrl(
  * Create a new blob (media). 
  * Assumes that the container <containerName> already exists.
  * 
- * 
  * @param blobName 
  * @param text 
  */
 export function upsertBlobFromText(
+  blobService: azureStorage.BlobService,
   containerName: string,
   blobName: string,
-  text: string | Buffer,
-  blobService: azure.BlobService = defaultBlobService
-): Promise<Either<Error, Option<azure.BlobService.BlobResult>>> {
+  text: string | Buffer
+): Promise<Either<Error, Option<azureStorage.BlobService.BlobResult>>> {
   return new Promise((resolve, _) =>
     blobService.createBlockBlobFromText(
       containerName,
