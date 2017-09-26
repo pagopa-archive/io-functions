@@ -18,12 +18,12 @@ import {
   WithinRangeString
 } from "../../utils/strings";
 
-export type BodyLong = WithinRangeString<100, 100000>;
+export type BodyLong = WithinRangeString<80, 8000>;
 
 export function isBodyLong(arg: any): arg is BodyLong {
-  return isWithinRangeString(arg, 100, 100000);
+  return isWithinRangeString(arg, 80, 8000);
 }
 
 export function toBodyLong(arg: any): Option<BodyLong> {
-  return toWithinRangeString(arg, 100, 100000);
+  return toWithinRangeString(arg, 80, 8000);
 }

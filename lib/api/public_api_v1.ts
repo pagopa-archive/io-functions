@@ -260,8 +260,8 @@ export const specs = {
       type: "string",
       description:
         "A long version of the message, in plain text. The content of this field will be delivered to channels that don't have any limit in terms of content size (e.g. email, etc...). The long version of the message is optional and should be provided only in cases when a longer message (compared to the short version provided in body_short) gives more information to the user. This field should not be a duplicate of body_short.",
-      minLength: 100,
-      maxLength: 100000
+      minLength: 80,
+      maxLength: 8000
     },
     PaginationResponse: {
       type: "object",
