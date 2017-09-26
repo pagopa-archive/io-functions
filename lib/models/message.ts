@@ -303,19 +303,19 @@ export class MessageModel extends DocumentDbModel<
     const blobId = this.getMessageAttachmentName(messageId);
 
     // store media (attachment) with message content in blob storage
-    const errorOrStoredMessage = await upsertBlobFromText(
+    const errorOrMessageContent = await upsertBlobFromText(
       blobService,
       MESSAGE_BLOB_STORAGE_CONTAINER_NAME,
       blobId,
       JSON.stringify({ id: messageId, ...message })
     );
 
-    if (errorOrStoredMessage.isLeft) {
-      return left(errorOrStoredMessage.left);
+    if (errorOrMessageContent.isLeft) {
+      return left(errorOrMessageContent.left);
     }
 
     // attach the created media to the message identified by messageId and partitionKey
-    const errorOrMessageContent = await this.attach(messageId, partitionKey, {
+    const errorOrRetrivedMessage = await this.attach(messageId, partitionKey, {
       contentType: "application/json",
       id: blobId,
       media: getBlobUrl(
@@ -325,16 +325,16 @@ export class MessageModel extends DocumentDbModel<
       )
     });
 
-    if (errorOrMessageContent.isLeft) {
+    if (errorOrRetrivedMessage.isLeft) {
       return left(
         new Error(
-          `Error while attaching stored message: ${errorOrMessageContent.left
-            .code} - ${errorOrMessageContent.left.body}`
+          `Error while attaching stored message: ${errorOrRetrivedMessage.left
+            .code} - ${errorOrRetrivedMessage.left.body}`
         )
       );
     }
 
-    return right(errorOrMessageContent.right);
+    return right(errorOrRetrivedMessage.right);
   }
 
   private getMessageAttachmentName(id: string): string {
