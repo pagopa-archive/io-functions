@@ -74,6 +74,13 @@ const aCreatedNotificationWithoutEmail: INewNotification = {
   messageId: toNonEmptyString("123").get
 };
 
+const aBlobService = {};
+
+const anAttachmentMeta = {
+  contentType: "application/json",
+  media: "media.json"
+};
+
 function flushPromises<T>(): Promise<T> {
   return new Promise(resolve => setImmediate(resolve));
 }
@@ -469,8 +476,8 @@ describe("test handleMessage function", () => {
     };
 
     const messageModelMock = {
-      update: jest.fn(() => {
-        return Promise.resolve(right(some(retrievedMessageMock)));
+      attachStoredContent: jest.fn(() => {
+        return Promise.resolve(right(some(anAttachmentMeta)));
       })
     };
 
@@ -493,24 +500,23 @@ describe("test handleMessage function", () => {
       some({
         email: anEmail
       }),
-      {} as any
+      aBlobService as any
     );
 
     expect(profileModelMock.findOneProfileByFiscalCode).toHaveBeenCalledWith(
       aCorrectFiscalCode
     );
-    expect(messageModelMock.update.mock.calls[0][0]).toBe(
+
+    expect(messageModelMock.attachStoredContent.mock.calls[0][0]).toBe(
+      aBlobService
+    );
+    expect(messageModelMock.attachStoredContent.mock.calls[0][1]).toBe(
       retrievedMessageMock.id
     );
-    expect(messageModelMock.update.mock.calls[0][1]).toBe(
+    expect(messageModelMock.attachStoredContent.mock.calls[0][2]).toEqual(
       retrievedMessageMock.fiscalCode
     );
-    expect(
-      messageModelMock.update.mock.calls[0][2](retrievedMessageMock)
-    ).toEqual({
-      ...retrievedMessageMock,
-      content: messageContent
-    });
+
     expect(response.isRight).toBeTruthy();
     if (response.isRight) {
       expect(response.right.emailNotification).not.toBeUndefined();
@@ -543,7 +549,7 @@ describe("test handleMessage function", () => {
     };
 
     const messageModelMock = {
-      update: jest.fn(() => {
+      attachStoredContent: jest.fn(() => {
         return Promise.resolve(left("error"));
       })
     };
@@ -567,24 +573,23 @@ describe("test handleMessage function", () => {
       some({
         email: anEmail
       }),
-      {} as any
+      aBlobService as any
     );
 
     expect(profileModelMock.findOneProfileByFiscalCode).toHaveBeenCalledWith(
       aCorrectFiscalCode
     );
-    expect(messageModelMock.update.mock.calls[0][0]).toBe(
+
+    expect(messageModelMock.attachStoredContent.mock.calls[0][0]).toBe(
+      aBlobService
+    );
+    expect(messageModelMock.attachStoredContent.mock.calls[0][1]).toBe(
       retrievedMessageMock.id
     );
-    expect(messageModelMock.update.mock.calls[0][1]).toBe(
+    expect(messageModelMock.attachStoredContent.mock.calls[0][2]).toEqual(
       retrievedMessageMock.fiscalCode
     );
-    expect(
-      messageModelMock.update.mock.calls[0][2](retrievedMessageMock)
-    ).toEqual({
-      ...retrievedMessageMock,
-      content: messageContent
-    });
+
     expect(response.isLeft).toBeTruthy();
     if (response.isLeft) {
       expect(response.left).toBe(ProcessingError.TRANSIENT);
