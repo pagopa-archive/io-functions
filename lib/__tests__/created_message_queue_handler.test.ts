@@ -14,8 +14,8 @@ import {
 } from "../models/message";
 
 import { none, some } from "ts-option";
-import { toBodyShort } from "../api/definitions/BodyShort";
 import { FiscalCode, toFiscalCode } from "../api/definitions/FiscalCode";
+import { toMessageBodyMarkdown } from "../api/definitions/MessageBodyMarkdown";
 import { NotificationChannelStatus } from "../api/definitions/NotificationChannelStatus";
 
 import {
@@ -38,6 +38,8 @@ const anEmailNotification: INotificationChannelEmail = {
   status: NotificationChannelStatus.QUEUED,
   toAddress: anEmail
 };
+
+const aMessageBodyMarkdown = toMessageBodyMarkdown("test".repeat(80)).get;
 
 const aRetrievedProfileWithEmail: IRetrievedProfile = {
   _self: "123",
@@ -127,7 +129,7 @@ describe("test index function", () => {
     const aMessageEvent: ICreatedMessageEvent = {
       message: aMessage,
       messageContent: {
-        bodyShort: toBodyShort("xyz").get
+        bodyMarkdown: aMessageBodyMarkdown
       }
     };
 
@@ -488,7 +490,7 @@ describe("test handleMessage function", () => {
     };
 
     const messageContent: IMessageContent = {
-      bodyShort: toBodyShort("some content").get
+      bodyMarkdown: aMessageBodyMarkdown
     };
 
     const response = await handleMessage(
@@ -561,7 +563,7 @@ describe("test handleMessage function", () => {
     };
 
     const messageContent: IMessageContent = {
-      bodyShort: toBodyShort("some content").get
+      bodyMarkdown: aMessageBodyMarkdown
     };
 
     const response = await handleMessage(

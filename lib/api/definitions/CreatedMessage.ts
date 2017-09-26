@@ -23,7 +23,7 @@ export interface CreatedMessage {
 
   readonly time_to_live?: TimeToLive;
 
-  readonly content: MessageContent;
+  readonly content?: MessageContent;
 
   readonly sender_organization_id: string;
 }
@@ -36,7 +36,9 @@ export function isCreatedMessage(arg: any): arg is CreatedMessage {
     (arg.time_to_live === undefined ||
       arg.time_to_live === null ||
       isTimeToLive(arg.time_to_live)) &&
-    isMessageContent(arg.content) &&
+    (arg.content === undefined ||
+      arg.content === null ||
+      isMessageContent(arg.content)) &&
     typeof arg.sender_organization_id === "string" &&
     true
   );

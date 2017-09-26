@@ -30,6 +30,7 @@ import {
   INotificationEvent,
   isNotificationEvent
 } from "./models/notification_event";
+import { markdownToHtml } from "./utils/markdown";
 
 // Setup DocumentDB
 
@@ -49,14 +50,6 @@ const notificationsCollectionUrl = documentDbUtils.getCollectionUri(
 
 const SENDGRID_KEY: string = process.env.CUSTOMCONNSTR_SENDGRID_KEY;
 
-const mailerTransporter = NodeMailer.createTransport(
-  sendGridTransport({
-    auth: {
-      api_key: SENDGRID_KEY
-    }
-  })
-);
-
 //
 // Main function
 //
@@ -71,14 +64,14 @@ interface IContextWithBindings extends IContext {
   };
 }
 
-const enum ProcessingResult {
+export const enum ProcessingResult {
   OK
 }
 
 /**
  * Bad things that can happen while we process the message
  */
-const enum ProcessingError {
+export const enum ProcessingError {
   // a transient error, e.g. database is not available
   TRANSIENT,
 
@@ -89,7 +82,7 @@ const enum ProcessingError {
 /**
  * Promise wrapper around Transporter#sendMail
  */
-async function sendMail(
+export async function sendMail(
   transporter: NodeMailer.Transporter,
   options: NodeMailer.SendMailOptions
 ): Promise<Either<Error, NodeMailer.SentMessageInfo>> {
@@ -106,7 +99,9 @@ async function sendMail(
 /**
  * Returns a copy of the Notification with the EmailNotification status as SENT
  */
-function setEmailNotificationSend(notification: INotification): INotification {
+function setEmailNotificationToSent(
+  notification: INotification
+): INotification {
   const emailNotification = notification.emailNotification;
 
   if (!emailNotification) {
@@ -128,7 +123,8 @@ function setEmailNotificationSend(notification: INotification): INotification {
  * This function will fetch the notification data and its associated message.
  * It will then send the email.
  */
-async function handleNotification(
+export async function handleNotification(
+  mailerTransporter: NodeMailer.Transporter,
   appInsightsClient: ApplicationInsights.TelemetryClient,
   notificationModel: NotificationModel,
   messageId: string,
@@ -173,6 +169,12 @@ async function handleNotification(
     return left(ProcessingError.PERMANENT);
   }
 
+  // converts the markdown body to HTML
+  // TODO: handle errors / validate the markdown
+  const bodyHtml = (await markdownToHtml.process(
+    messageContent.bodyMarkdown
+  )).toString();
+
   // trigger email delivery
   // TODO: use fromAddress from the emailNotification object
   // TODO: make everything configurable via settings
@@ -182,12 +184,12 @@ async function handleNotification(
     from: "no-reply@italia.it",
     headers: {
       "X-Italia-Messages-MessageId": messageId,
-      "X-Italia-Messages-NotificationId": notification.id
+      "X-Italia-Messages-NotificationId": notificationId
     },
-    html: messageContent.bodyShort,
+    html: bodyHtml,
     messageId,
     subject: "Un nuovo avviso per te.",
-    text: messageContent.bodyShort,
+    // text: messageContent.bodyMarkdown,
     to: emailNotification.toAddress
     // priority: "high", // TODO: set based on kind of notification
     // disableFileAccess: true,
@@ -198,12 +200,12 @@ async function handleNotification(
   const eventContent = {
     addressSource: emailNotification.addressSource,
     messageId,
-    mta: "sendgrid",
-    notificationId
+    notificationId,
+    transport: "sendgrid"
   };
 
   if (sendResult.isLeft) {
-    // we got an error while sending the email
+    // track the event of failed delivery
     appInsightsClient.trackEvent({
       name: eventName,
       properties: {
@@ -218,6 +220,7 @@ async function handleNotification(
     return left(ProcessingError.TRANSIENT);
   }
 
+  // track the event of successful delivery
   appInsightsClient.trackEvent({
     name: eventName,
     properties: {
@@ -231,9 +234,9 @@ async function handleNotification(
   // see https://nodemailer.com/usage/#sending-mail
   // see #150597597
   const updateResult = await notificationModel.update(
-    notification.id,
+    notificationId,
     messageId,
-    setEmailNotificationSend
+    setEmailNotificationToSent
   );
 
   if (updateResult.isLeft) {
@@ -293,7 +296,16 @@ export function index(context: IContextWithBindings): void {
     notificationsCollectionUrl
   );
 
+  const mailerTransporter = NodeMailer.createTransport(
+    sendGridTransport({
+      auth: {
+        api_key: SENDGRID_KEY
+      }
+    })
+  );
+
   handleNotification(
+    mailerTransporter,
     appInsightsClient,
     notificationModel,
     emailNotificationEvent.messageId,
