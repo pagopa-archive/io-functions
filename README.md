@@ -2,8 +2,6 @@
 
 [![CircleCI](https://circleci.com/gh/teamdigitale/digital-citizenship-functions/tree/master.svg?style=svg)](https://circleci.com/gh/teamdigitale/digital-citizenship-functions/tree/master)
 
-[![dependencies](https://david-dm.org/teamdigitale/digital-citizenship-functions/status.svg)](https://david-dm.org/teamdigitale/digital-citizenship-functions)
-
 [![codecov](https://codecov.io/gh/teamdigitale/digital-citizenship-functions/branch/master/graph/badge.svg)](https://codecov.io/gh/teamdigitale/digital-citizenship-functions)
 
 [![Code Climate](https://codeclimate.com/github/teamdigitale/digital-citizenship-functions/badges/gpa.svg)](https://codeclimate.com/github/teamdigitale/digital-citizenship-functions)
@@ -118,7 +116,7 @@ The high level flow of the data is the following.
       preferences for the `Profile` associated to the recipient of the `Message`
         and create a pending `Notification`. If the user enabled the
         _message inbox_, the content of the `Message` will also be persisted
-        and associated to the `Message` record.
+        and associated to the `Message` record in a blob container named 'message-content'.
     9. In case one or more notification channels have been configured in the
       `Profile` preferences, a _new notification_ gets pushed to each configured
         channel queue (e.g., email, SMS, push notification, etc...).

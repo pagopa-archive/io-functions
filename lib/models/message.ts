@@ -5,11 +5,20 @@ import * as DocumentDbUtils from "../utils/documentdb";
 import { DocumentDbModel } from "../utils/documentdb_model";
 
 import { Option } from "ts-option";
-import { Either } from "../utils/either";
+import { Either, left, right } from "../utils/either";
 import { isNonEmptyString, NonEmptyString } from "../utils/strings";
 
 import { BodyShort, isBodyShort } from "../api/definitions/BodyShort";
 import { FiscalCode, isFiscalCode } from "../api/definitions/FiscalCode";
+
+import {
+  BlobService,
+  getBlobUrl,
+  upsertBlobFromText
+} from "../utils/azure_storage";
+
+const MESSAGE_BLOB_STORAGE_CONTAINER_NAME = "message-content";
+const MESSAGE_BLOB_STORAGE_SUFFIX = ".json";
 
 /**
  * The content of a Message
@@ -84,7 +93,10 @@ export const isIMessageWithContent = is<IMessageWithContent>(
  * Type guard for IMessageWithoutContent
  */
 export const isIMessageWithoutContent = is<IMessageWithoutContent>(
-  arg => arg && arg.content === undefined && isIMessageBase(arg)
+  arg =>
+    arg &&
+    (arg.content === undefined || arg.content === null) &&
+    isIMessageBase(arg)
 );
 
 /**
@@ -280,5 +292,53 @@ export class MessageModel extends DocumentDbModel<
       ],
       query: "SELECT * FROM messages m WHERE (m.fiscalCode = @fiscalCode)"
     });
+  }
+
+  public async attachStoredContent(
+    blobService: BlobService,
+    messageId: string,
+    partitionKey: string,
+    message: IMessageWithContent
+  ): Promise<Either<Error, Option<DocumentDb.AttachmentMeta>>> {
+    // this is the attachment id __and__ the filename
+    const blobId = this.getMessageAttachmentName(messageId);
+
+    // store media (attachment) with message content in blob storage
+    const errorOrMessageContent = await upsertBlobFromText(
+      blobService,
+      MESSAGE_BLOB_STORAGE_CONTAINER_NAME,
+      blobId,
+      JSON.stringify({ id: messageId, ...message })
+    );
+
+    if (errorOrMessageContent.isLeft) {
+      return left(errorOrMessageContent.left);
+    }
+
+    // attach the created media to the message identified by messageId and partitionKey
+    const errorOrAttachmentMeta = await this.attach(messageId, partitionKey, {
+      contentType: "application/json",
+      id: blobId,
+      media: getBlobUrl(
+        blobService,
+        MESSAGE_BLOB_STORAGE_CONTAINER_NAME,
+        blobId
+      )
+    });
+
+    if (errorOrAttachmentMeta.isLeft) {
+      return left(
+        new Error(
+          `Error while attaching stored message: ${errorOrAttachmentMeta.left
+            .code} - ${errorOrAttachmentMeta.left.body}`
+        )
+      );
+    }
+
+    return right(errorOrAttachmentMeta.right);
+  }
+
+  private getMessageAttachmentName(id: string): string {
+    return `${id}${MESSAGE_BLOB_STORAGE_SUFFIX}`;
   }
 }
