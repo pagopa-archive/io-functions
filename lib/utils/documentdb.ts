@@ -452,19 +452,4 @@ export function queryAttachments<T>(
   return resultIterator;
 }
 
-/**
- * Get an array of all media attached to a document.
- * 
- * @param client        the cosmosdb client
- * @param documentUri   the uri of the document
- * @param options       request options for the REST API call
- */
-export function getAttachments(
-  client: DocumentDb.DocumentClient,
-  documentUri: IDocumentDbDocumentUri,
-  options: DocumentDb.FeedOptions = {}
-): Promise<ReadonlyArray<DocumentDb.AttachmentMeta>> {
-  return iteratorToArray(queryAttachments(client, documentUri, options));
-}
-
 ///////////// </Attachments>
