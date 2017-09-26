@@ -3,12 +3,12 @@ import { Option, option } from "ts-option";
 import { Either, left, right } from "./either";
 
 const STORAGE_CONNECTION_STRING = process.env.AzureWebJobsStorage;
-
-const blobService = azure.createBlobService(STORAGE_CONNECTION_STRING);
+const defaultBlobService = azure.createBlobService(STORAGE_CONNECTION_STRING);
 
 export function getBlobUrl(
   containerName: string,
-  attachmentName: string
+  attachmentName: string,
+  blobService: azure.BlobService = defaultBlobService
 ): string {
   return blobService.getUrl(containerName, attachmentName);
 }
@@ -24,7 +24,8 @@ export function getBlobUrl(
 export function upsertBlobFromText(
   containerName: string,
   blobName: string,
-  text: string | Buffer
+  text: string | Buffer,
+  blobService: azure.BlobService = defaultBlobService
 ): Promise<Either<Error, Option<azure.BlobService.BlobResult>>> {
   return new Promise((resolve, _) =>
     blobService.createBlockBlobFromText(
