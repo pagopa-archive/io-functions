@@ -113,9 +113,6 @@ function retrievedMessageToPublic(
   retrievedMessage: IRetrievedMessage
 ): CreatedMessage {
   return {
-    content: {
-      body_short: retrievedMessage.bodyShort
-    },
     fiscal_code: retrievedMessage.fiscalCode,
     id: retrievedMessage.id,
     sender_organization_id: retrievedMessage.senderOrganizationId
@@ -289,7 +286,7 @@ export function CreateMessageHandler(
       });
 
       const messageContent: IMessageContent = {
-        bodyShort: messagePayload.content.body_short
+        bodyMarkdown: messagePayload.content.markdown
       };
 
       const retrievedMessageWithoutContent: IRetrievedMessageWithoutContent = {

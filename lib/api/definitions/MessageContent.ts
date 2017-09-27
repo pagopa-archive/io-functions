@@ -6,8 +6,11 @@
 // tslint:disable:interface-name
 // tslint:disable:no-any
 
-import { isBodyShort, BodyShort } from "./BodyShort";
-import { isBodyLong, BodyLong } from "./BodyLong";
+import { isMessageSubject, MessageSubject } from "./MessageSubject";
+import {
+  isMessageBodyMarkdown,
+  MessageBodyMarkdown
+} from "./MessageBodyMarkdown";
 
 /**
  * 
@@ -16,18 +19,18 @@ import { isBodyLong, BodyLong } from "./BodyLong";
 import { option, Option } from "ts-option";
 
 export interface MessageContent {
-  readonly body_short: BodyShort;
+  readonly subject?: MessageSubject;
 
-  readonly body_long?: BodyLong;
+  readonly markdown: MessageBodyMarkdown;
 }
 
 export function isMessageContent(arg: any): arg is MessageContent {
   return (
     arg &&
-    isBodyShort(arg.body_short) &&
-    (arg.body_long === undefined ||
-      arg.body_long === null ||
-      isBodyLong(arg.body_long)) &&
+    (arg.subject === undefined ||
+      arg.subject === null ||
+      isMessageSubject(arg.subject)) &&
+    isMessageBodyMarkdown(arg.markdown) &&
     true
   );
 }

@@ -189,10 +189,10 @@ export const specs = {
       title: "MessageContent",
       type: "object",
       properties: {
-        body_short: { $ref: "#/definitions/BodyShort" },
-        body_long: { $ref: "#/definitions/BodyLong" }
+        subject: { $ref: "#/definitions/MessageSubject" },
+        markdown: { $ref: "#/definitions/MessageBodyMarkdown" }
       },
-      required: ["body_short"]
+      required: ["markdown"]
     },
     NewMessage: {
       title: "NewMessage",
@@ -228,7 +228,7 @@ export const specs = {
         content: { $ref: "#/definitions/MessageContent" },
         sender_organization_id: { type: "string" }
       },
-      required: ["fiscal_code", "content", "sender_organization_id"]
+      required: ["fiscal_code", "sender_organization_id"]
     },
     CreatedMessageResponse: {
       type: "object",
@@ -249,19 +249,19 @@ export const specs = {
       pattern:
         "^[A-Z]{6}[0-9LMNPQRSTUV]{2}[ABCDEHLMPRST][0-9LMNPQRSTUV]{2}[A-Z][0-9LMNPQRSTUV]{3}[A-Z]$"
     },
-    BodyShort: {
+    MessageSubject: {
       type: "string",
       description:
-        'An abstract of the message, in plain text. The content of this field will be delivered to channels that support a limited amount of characters (e.g. SMS, mobile notifications, etc...).\nThe caller should assume that only the content in "body_short" may be delivered so the value of this field MUST contain *all* the required information.',
-      minLength: 3,
-      maxLength: 100
+        "The (optional) subject of the message - note that only some notification\nchannels support the display of a subject. When a subject is not provided,\none gets generated from the client attributes.",
+      minLength: 10,
+      maxLength: 120
     },
-    BodyLong: {
+    MessageBodyMarkdown: {
       type: "string",
       description:
-        "A long version of the message, in plain text. The content of this field will be delivered to channels that don't have any limit in terms of content size (e.g. email, etc...). The long version of the message is optional and should be provided only in cases when a longer message (compared to the short version provided in body_short) gives more information to the user. This field should not be a duplicate of body_short.",
+        "The full version of the message, in plain text or Markdown format. The\ncontent of this field will be delivered to channels that don't have any\nlimit in terms of content size (e.g. email, etc...).",
       minLength: 80,
-      maxLength: 8000
+      maxLength: 10000
     },
     PaginationResponse: {
       type: "object",

@@ -1,6 +1,10 @@
 // tslint:disable:no-any
 import { isICreatedMessageEvent } from "../created_message_event";
 
+import { toMessageBodyMarkdown } from "../../api/definitions/MessageBodyMarkdown";
+
+const aMessageBodyMarkdown = toMessageBodyMarkdown("test".repeat(80)).get;
+
 describe("", () => {
   it("should validate valid events ICreatedMessageEvents", () => {
     const payloads: ReadonlyArray<any> = [
@@ -20,7 +24,7 @@ describe("", () => {
           senderUserId: "u123"
         },
         messageContent: {
-          bodyShort: "Hello, world! This works! 15"
+          bodyMarkdown: aMessageBodyMarkdown
         }
       }
     ];
