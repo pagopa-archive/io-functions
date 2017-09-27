@@ -22,6 +22,8 @@ import { IContext } from "azure-functions-types";
 import * as NodeMailer from "nodemailer";
 import * as sendGridTransport from "nodemailer-sendgrid-transport";
 
+import * as HtmlToText from "html-to-text";
+
 import { NotificationChannelStatus } from "./api/definitions/NotificationChannelStatus";
 
 import { IMessageContent } from "./models/message";
@@ -49,6 +51,15 @@ const notificationsCollectionUrl = documentDbUtils.getCollectionUri(
 //
 
 const SENDGRID_KEY: string = process.env.CUSTOMCONNSTR_SENDGRID_KEY;
+
+//
+// options used when converting an HTML message to pure text
+// see https://www.npmjs.com/package/html-to-text#options
+//
+
+const HTML_TO_TEXT_OPTIONS: HtmlToTextOptions = {
+  ignoreImage: true // ignore all document images
+};
 
 //
 // Main function
@@ -181,10 +192,12 @@ export async function handleNotification(
     messageContent.bodyMarkdown
   )).toString();
 
+  // converts the HTML to pure text to generate the text version of the message
+  const bodyText = HtmlToText.fromString(bodyHtml, HTML_TO_TEXT_OPTIONS);
+
   // trigger email delivery
   // TODO: use fromAddress from the emailNotification object
   // TODO: make everything configurable via settings
-  // TODO: provide alternative versions (html, text, markdown, ical)
   // see https://nodemailer.com/message/
   const sendResult = await sendMail(mailerTransporter, {
     from: "no-reply@italia.it",
@@ -195,7 +208,7 @@ export async function handleNotification(
     html: bodyHtml,
     messageId,
     subject,
-    // text: messageContent.bodyMarkdown,
+    text: bodyText,
     to: emailNotification.toAddress
     // priority: "high", // TODO: set based on kind of notification
     // disableFileAccess: true,
