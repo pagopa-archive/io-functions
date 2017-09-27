@@ -93,7 +93,7 @@ export function ResponseSuccessRedirectToResource<T, V>(
   payload: V
 ): IResponseSuccessRedirectToResource<T, V> {
   return {
-    apply: res => res.json(payload).redirect(202, url),
+    apply: res => res.set("Location", url).json(payload),
     kind: "IResponseSuccessRedirectToResource",
     payload,
     resource
