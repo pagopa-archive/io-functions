@@ -236,8 +236,8 @@ describe("CreateMessageHandler", () => {
     if (result.kind === "IResponseSuccessRedirectToResource") {
       const response = MockResponse();
       result.apply(response);
-      expect(response.redirect).toBeCalledWith(
-        202,
+      expect(response.set).toBeCalledWith(
+        "Location",
         `/api/v1/messages/${aFiscalCode}/${messageDocument.id}`
       );
     }
@@ -319,8 +319,8 @@ describe("CreateMessageHandler", () => {
     if (result.kind === "IResponseSuccessRedirectToResource") {
       const response = MockResponse();
       result.apply(response);
-      expect(response.redirect).toBeCalledWith(
-        202,
+      expect(response.set).toBeCalledWith(
+        "Location",
         `/api/v1/messages/${aFiscalCode}/${messageDocument.id}`
       );
     }
