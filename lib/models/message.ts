@@ -8,7 +8,15 @@ import { Option } from "ts-option";
 import { Either, left, right } from "../utils/either";
 import { isNonEmptyString, NonEmptyString } from "../utils/strings";
 
-import { BodyShort, isBodyShort } from "../api/definitions/BodyShort";
+import {
+  isMessageBodyMarkdown,
+  MessageBodyMarkdown
+} from "../api/definitions/MessageBodyMarkdown";
+import {
+  isMessageSubject,
+  MessageSubject
+} from "../api/definitions/MessageSubject";
+
 import { FiscalCode, isFiscalCode } from "../api/definitions/FiscalCode";
 
 import { BlobService } from "azure-storage";
@@ -20,14 +28,20 @@ const MESSAGE_BLOB_STORAGE_SUFFIX = ".json";
  * The content of a Message
  */
 export interface IMessageContent {
-  readonly bodyShort: BodyShort;
+  readonly bodyMarkdown: MessageBodyMarkdown;
+  readonly subject?: MessageSubject;
 }
 
 /**
  * Type guard for IMessageContent
  */
 export const isIMessageContent = is<IMessageContent>(
-  arg => arg && isBodyShort(arg.bodyShort)
+  arg =>
+    arg &&
+    isMessageBodyMarkdown(arg.bodyMarkdown) &&
+    (arg.subject === undefined ||
+      arg.subject === null ||
+      isMessageSubject(arg.subject))
 );
 
 /**

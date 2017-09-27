@@ -12,10 +12,10 @@ import { left, right } from "../../utils/either";
 
 import { ModelId } from "../../utils/documentdb_model_versioned";
 
-import { toBodyShort } from "../../api/definitions/BodyShort";
 import { CreatedMessage } from "../../api/definitions/CreatedMessage";
 import { toEmailAddress } from "../../api/definitions/EmailAddress";
 import { toFiscalCode } from "../../api/definitions/FiscalCode";
+import { toMessageBodyMarkdown } from "../../api/definitions/MessageBodyMarkdown";
 import { NewMessage } from "../../api/definitions/NewMessage";
 import { NotificationChannelStatus } from "../../api/definitions/NotificationChannelStatus";
 
@@ -53,6 +53,8 @@ function lookup(h: IHeaders): (k: string) => string | undefined {
 
 const aFiscalCode = toFiscalCode("FRLFRC74E04B157I").get;
 
+const aMessageBodyMarkdown = toMessageBodyMarkdown("test".repeat(80)).get;
+
 const someUserAttributes: IAzureUserAttributes = {
   kind: "IAzureUserAttributes",
   organization: {
@@ -77,7 +79,7 @@ const aUserAuthenticationTrustedApplication: IAzureApiAuthorization = {
 
 const aMessagePayload: NewMessage = {
   content: {
-    body_short: toBodyShort("Hello, world!").get
+    markdown: aMessageBodyMarkdown
   },
   dry_run: false
 };
@@ -98,9 +100,6 @@ const aRetrievedMessageWithoutContent: IRetrievedMessageWithoutContent = {
 };
 
 const aPublicExtendedMessage: CreatedMessage = {
-  content: {
-    body_short: aNewMessageWithoutContent.bodyShort
-  },
   fiscal_code: aNewMessageWithoutContent.fiscalCode,
   id: "A_MESSAGE_ID",
   sender_organization_id: aNewMessageWithoutContent.senderOrganizationId
@@ -216,7 +215,7 @@ describe("CreateMessageHandler", () => {
       createdMessage: {
         message: aRetrievedMessageWithoutContent,
         messageContent: {
-          bodyShort: aMessagePayload.content.body_short
+          bodyMarkdown: aMessagePayload.content.markdown
         }
       }
     });
@@ -299,7 +298,7 @@ describe("CreateMessageHandler", () => {
         },
         message: aRetrievedMessageWithoutContent,
         messageContent: {
-          bodyShort: messagePayload.content.body_short
+          bodyMarkdown: messagePayload.content.markdown
         }
       }
     });
@@ -684,19 +683,19 @@ describe("MessagePayloadMiddleware", () => {
     const fixtures: ReadonlyArray<any> = [
       {
         content: {
-          body_short: "test"
+          markdown: "test".repeat(100)
         }
       },
       {
         content: {
-          body_long: "x".repeat(100),
-          body_short: "test"
+          markdown: "test".repeat(100),
+          subject: "test subject"
         }
       },
       {
         content: {
-          body_long: "x".repeat(100),
-          body_short: "test"
+          markdown: "test".repeat(100),
+          subject: "test subject"
         },
         default_addresses: {
           email: "test@example.com"
@@ -722,35 +721,35 @@ describe("MessagePayloadMiddleware", () => {
       {},
       {
         content: {
-          body_short: 123456
+          markdown: 123456
         }
       },
       {
         content: {
-          body_long: 123456,
-          body_short: "x".repeat(100)
+          markdown: 123456,
+          subject: "x".repeat(120)
         }
       },
       {
         content: {
-          body_short: ""
+          markdown: ""
         }
       },
       {
         content: {
-          body_short: "x".repeat(100000)
+          markdown: "x".repeat(100000)
         }
       },
       {
         content: {
-          body_long: "x".repeat(100000),
-          body_short: "x".repeat(10)
+          markdown: "x".repeat(1000),
+          subject: "x".repeat(1)
         }
       },
       {
         content: {
-          body_long: "x".repeat(100),
-          body_short: "test"
+          markdown: "x".repeat(100),
+          subject: "test subject"
         },
         default_addresses: {
           email: "@example.com"
