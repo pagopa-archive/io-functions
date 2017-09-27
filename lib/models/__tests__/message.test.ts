@@ -5,8 +5,8 @@ import * as DocumentDb from "documentdb";
 
 import * as DocumentDbUtils from "../../utils/documentdb";
 
-import { toBodyShort } from "../../api/definitions/BodyShort";
 import { toFiscalCode } from "../../api/definitions/FiscalCode";
+import { toMessageBodyMarkdown } from "../../api/definitions/MessageBodyMarkdown";
 
 import { NonEmptyString, toNonEmptyString } from "../../utils/strings";
 
@@ -34,8 +34,10 @@ const aMessagesCollectionUrl = DocumentDbUtils.getCollectionUri(
   "messages"
 );
 
+const aMessageBodyMarkdown = toMessageBodyMarkdown("test".repeat(80)).get;
+
 const aMessageContent: IMessageContent = {
-  bodyShort: toBodyShort("some text").get
+  bodyMarkdown: aMessageBodyMarkdown
 };
 
 const aFiscalCode = toFiscalCode("FRLFRC74E04B157I").get;
