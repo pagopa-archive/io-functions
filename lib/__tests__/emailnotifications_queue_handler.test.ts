@@ -160,14 +160,14 @@ describe("handleNotification", () => {
     expect(sentMail.data.from).toBe("no-reply@italia.it");
     expect(sentMail.data.to).toBe("pinco@pallino.com");
     expect(sentMail.data.messageId).toBe("A_MESSAGE_ID");
-    expect(sentMail.data.subject).toBe("Un nuovo avviso per te.");
+    expect(sentMail.data.subject).not.toBeUndefined();
     expect(sentMail.data.headers["X-Italia-Messages-MessageId"]).toBe(
       "A_MESSAGE_ID"
     );
     expect(sentMail.data.headers["X-Italia-Messages-NotificationId"]).toBe(
       "A_NOTIFICATION_ID"
     );
-    expect(sentMail.message.content).toBe("<h1>Hello world!</h1>");
+    expect(sentMail.data.html).toBe("<h1>Hello world!</h1>");
 
     expect(mockAppinsights.trackEvent).toHaveBeenCalledWith({
       name: "notification.email.delivery",
@@ -193,6 +193,138 @@ describe("handleNotification", () => {
         status: NotificationChannelStatus.SENT_TO_CHANNEL
       }
     });
+
+    expect(result.isRight).toBeTruthy();
+    if (result.isRight) {
+      expect(result.right).toBe(ProcessingResult.OK);
+    }
+  });
+
+  it("should send an email notification with the text version of the message", async () => {
+    const mockAppinsights = {
+      trackEvent: jest.fn()
+    };
+
+    const mockTransport = MockTransport();
+    const mockTransporter = NodeMailer.createTransport(mockTransport);
+
+    const aNotification = {
+      emailNotification: {
+        addressSource: NotificationAddressSource.DEFAULT_ADDRESS,
+        toAddress: "pinco@pallino.com"
+      }
+    };
+
+    const aMessageContent = {
+      bodyMarkdown: `
+# Hello world!
+
+This is a *message* from the future!
+`
+    };
+
+    const notificationModelMock = {
+      find: jest.fn(() => right(some(aNotification))),
+      update: jest.fn(() => right(some(aNotification)))
+    };
+
+    const result = await handleNotification(
+      mockTransporter,
+      mockAppinsights as any,
+      notificationModelMock as any,
+      "A_MESSAGE_ID",
+      "A_NOTIFICATION_ID",
+      aMessageContent as any
+    );
+
+    expect(mockTransport.sentMail[0].data.text).toBe(
+      "HELLO WORLD!\nThis is a message from the future!"
+    );
+
+    expect(result.isRight).toBeTruthy();
+    if (result.isRight) {
+      expect(result.right).toBe(ProcessingResult.OK);
+    }
+  });
+
+  it("should send an email notification with the default subject", async () => {
+    const mockAppinsights = {
+      trackEvent: jest.fn()
+    };
+
+    const mockTransport = MockTransport();
+    const mockTransporter = NodeMailer.createTransport(mockTransport);
+
+    const aNotification = {
+      emailNotification: {
+        addressSource: NotificationAddressSource.DEFAULT_ADDRESS,
+        toAddress: "pinco@pallino.com"
+      }
+    };
+
+    const aMessageContent = {
+      bodyMarkdown: "# Hello world!"
+    };
+
+    const notificationModelMock = {
+      find: jest.fn(() => right(some(aNotification))),
+      update: jest.fn(() => right(some(aNotification)))
+    };
+
+    const result = await handleNotification(
+      mockTransporter,
+      mockAppinsights as any,
+      notificationModelMock as any,
+      "A_MESSAGE_ID",
+      "A_NOTIFICATION_ID",
+      aMessageContent as any
+    );
+
+    expect(mockTransport.sentMail[0].data.subject).toBe(
+      "Un nuovo avviso per te."
+    );
+
+    expect(result.isRight).toBeTruthy();
+    if (result.isRight) {
+      expect(result.right).toBe(ProcessingResult.OK);
+    }
+  });
+
+  it("should send an email notification with the provided subject", async () => {
+    const mockAppinsights = {
+      trackEvent: jest.fn()
+    };
+
+    const mockTransport = MockTransport();
+    const mockTransporter = NodeMailer.createTransport(mockTransport);
+
+    const aNotification = {
+      emailNotification: {
+        addressSource: NotificationAddressSource.DEFAULT_ADDRESS,
+        toAddress: "pinco@pallino.com"
+      }
+    };
+
+    const aMessageContent = {
+      bodyMarkdown: "# Hello world!",
+      subject: "A custom subject"
+    };
+
+    const notificationModelMock = {
+      find: jest.fn(() => right(some(aNotification))),
+      update: jest.fn(() => right(some(aNotification)))
+    };
+
+    const result = await handleNotification(
+      mockTransporter,
+      mockAppinsights as any,
+      notificationModelMock as any,
+      "A_MESSAGE_ID",
+      "A_NOTIFICATION_ID",
+      aMessageContent as any
+    );
+
+    expect(mockTransport.sentMail[0].data.subject).toBe("A custom subject");
 
     expect(result.isRight).toBeTruthy();
     if (result.isRight) {
