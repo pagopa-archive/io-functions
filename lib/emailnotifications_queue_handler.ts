@@ -169,6 +169,12 @@ export async function handleNotification(
     return left(ProcessingError.PERMANENT);
   }
 
+  // use the provided subject if present, or else use the default subject line
+  // TODO: generate the default subject from the organization/client metadata
+  const subject = messageContent.subject
+    ? messageContent.subject
+    : "Un nuovo avviso per te.";
+
   // converts the markdown body to HTML
   // TODO: handle errors / validate the markdown
   const bodyHtml = (await markdownToHtml.process(
@@ -188,7 +194,7 @@ export async function handleNotification(
     },
     html: bodyHtml,
     messageId,
-    subject: "Un nuovo avviso per te.",
+    subject,
     // text: messageContent.bodyMarkdown,
     to: emailNotification.toAddress
     // priority: "high", // TODO: set based on kind of notification
