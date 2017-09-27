@@ -93,7 +93,11 @@ export function ResponseSuccessRedirectToResource<T, V>(
   payload: V
 ): IResponseSuccessRedirectToResource<T, V> {
   return {
-    apply: res => res.json(payload).redirect(202, url),
+    apply: res =>
+      res
+        .set("Location", url)
+        .status(202)
+        .json(payload),
     kind: "IResponseSuccessRedirectToResource",
     payload,
     resource
@@ -134,7 +138,7 @@ function ResponseErrorGeneric(
     apply: res =>
       res
         .status(status)
-        .contentType("application/problem+json")
+        .set("Content-Type", "application/problem+json")
         .json(problem),
     kind: "IResponseErrorGeneric"
   };

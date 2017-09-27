@@ -236,8 +236,8 @@ describe("CreateMessageHandler", () => {
     if (result.kind === "IResponseSuccessRedirectToResource") {
       const response = MockResponse();
       result.apply(response);
-      expect(response.redirect).toBeCalledWith(
-        202,
+      expect(response.set).toBeCalledWith(
+        "Location",
         `/api/v1/messages/${aFiscalCode}/${messageDocument.id}`
       );
     }
@@ -319,8 +319,8 @@ describe("CreateMessageHandler", () => {
     if (result.kind === "IResponseSuccessRedirectToResource") {
       const response = MockResponse();
       result.apply(response);
-      expect(response.redirect).toBeCalledWith(
-        202,
+      expect(response.set).toBeCalledWith(
+        "Location",
         `/api/v1/messages/${aFiscalCode}/${messageDocument.id}`
       );
     }
@@ -784,6 +784,10 @@ describe("CreateMessage", () => {
     createMessage(request as any, mockResponse as any, _ => _);
     await Promise.resolve({});
     expect(request.app.get).toHaveBeenCalledWith("context");
+    expect(mockResponse.set).toHaveBeenCalledWith(
+      "Content-Type",
+      "application/problem+json"
+    );
     expect(mockResponse.status).toHaveBeenCalledWith(500);
   });
 
@@ -804,6 +808,10 @@ describe("CreateMessage", () => {
     };
     createMessage(request as any, mockResponse as any, _ => _);
     await Promise.resolve({});
+    expect(mockResponse.set).toHaveBeenCalledWith(
+      "Content-Type",
+      "application/problem+json"
+    );
     expect(mockResponse.status).toHaveBeenCalledWith(403);
   });
 
@@ -829,6 +837,10 @@ describe("CreateMessage", () => {
     await Promise.resolve({});
     // expect(request.header).toHaveBeenCalledWith("x-user-id");
     // expect(request.header).toHaveBeenCalledWith("x-subscription-id");
+    expect(mockResponse.set).toHaveBeenCalledWith(
+      "Content-Type",
+      "application/problem+json"
+    );
     expect(mockResponse.status).toHaveBeenCalledWith(403);
   });
 });
