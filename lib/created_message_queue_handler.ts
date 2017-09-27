@@ -18,7 +18,7 @@ import * as documentDbUtils from "./utils/documentdb";
 
 import { Option, option } from "ts-option";
 
-import { BlobService, getBlobService } from "./utils/azure_storage";
+import { BlobService, createBlobService } from "azure-storage";
 
 import { NewMessageDefaultAddresses } from "./api/definitions/NewMessageDefaultAddresses";
 import { NotificationChannelStatus } from "./api/definitions/NotificationChannelStatus";
@@ -104,10 +104,10 @@ export async function handleMessage(
   profileModel: ProfileModel,
   messageModel: MessageModel,
   notificationModel: NotificationModel,
+  blobService: BlobService,
   retrievedMessage: IRetrievedMessageWithoutContent,
   messageContent: IMessageContent,
-  defaultAddresses: Option<NewMessageDefaultAddresses>,
-  blobService: BlobService
+  defaultAddresses: Option<NewMessageDefaultAddresses>
 ): Promise<Either<ProcessingError, IRetrievedNotification>> {
   // async fetch of profile data associated to the fiscal code the message
   // should be delivered to
@@ -135,13 +135,7 @@ export async function handleMessage(
       blobService,
       retrievedMessage.id,
       retrievedMessage.fiscalCode,
-      {
-        content: messageContent,
-        // we do not store documentdb metadata
-        fiscalCode: retrievedMessage.fiscalCode,
-        senderOrganizationId: retrievedMessage.senderOrganizationId,
-        senderUserId: retrievedMessage.senderUserId
-      }
+      messageContent
     );
 
     winston.debug(`handleMessage|${JSON.stringify(retrievedMessage)}`);
@@ -313,17 +307,17 @@ export function index(context: IContextWithBindings): void {
     notificationsCollectionUrl
   );
 
-  const blobService = getBlobService(STORAGE_CONNECTION_STRING);
+  const blobService = createBlobService(STORAGE_CONNECTION_STRING);
 
   // now we can trigger the notifications for the message
   handleMessage(
     profileModel,
     messageModel,
     notificationModel,
+    blobService,
     retrievedMessage,
     messageContent,
-    defaultAddresses,
-    blobService
+    defaultAddresses
   ).then(
     (errorOrNotification: Either<ProcessingError, IRetrievedNotification>) => {
       processResolve(

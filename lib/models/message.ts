@@ -11,11 +11,8 @@ import { isNonEmptyString, NonEmptyString } from "../utils/strings";
 import { BodyShort, isBodyShort } from "../api/definitions/BodyShort";
 import { FiscalCode, isFiscalCode } from "../api/definitions/FiscalCode";
 
-import {
-  BlobService,
-  getBlobUrl,
-  upsertBlobFromText
-} from "../utils/azure_storage";
+import { BlobService } from "azure-storage";
+import { upsertBlobFromText } from "../utils/azure_storage";
 
 const MESSAGE_BLOB_STORAGE_CONTAINER_NAME = "message-content";
 const MESSAGE_BLOB_STORAGE_SUFFIX = ".json";
@@ -294,21 +291,31 @@ export class MessageModel extends DocumentDbModel<
     });
   }
 
+  /**
+   * Attach a media (a stored text blob) to the existing message document.
+   * 
+   * @param blobService     the azure.BlobService used to store the media
+   * @param messageId       the message document id
+   * @param partitionKey    the message document partitionKey
+   * @param messageContent  the message document content
+   */
   public async attachStoredContent(
     blobService: BlobService,
     messageId: string,
     partitionKey: string,
-    message: IMessageWithContent
-  ): Promise<Either<Error, Option<DocumentDb.AttachmentMeta>>> {
-    // this is the attachment id __and__ the filename
-    const blobId = this.getMessageAttachmentName(messageId);
+    messageContent: IMessageContent
+  ): Promise<
+    Either<Error | DocumentDb.QueryError, Option<DocumentDb.AttachmentMeta>>
+  > {
+    // this is the attachment id __and__ the media filename
+    const blobId = `${messageId}${MESSAGE_BLOB_STORAGE_SUFFIX}`;
 
     // store media (attachment) with message content in blob storage
     const errorOrMessageContent = await upsertBlobFromText(
       blobService,
       MESSAGE_BLOB_STORAGE_CONTAINER_NAME,
       blobId,
-      JSON.stringify({ id: messageId, ...message })
+      JSON.stringify({ id: messageId, ...messageContent })
     );
 
     if (errorOrMessageContent.isLeft) {
@@ -319,26 +326,13 @@ export class MessageModel extends DocumentDbModel<
     const errorOrAttachmentMeta = await this.attach(messageId, partitionKey, {
       contentType: "application/json",
       id: blobId,
-      media: getBlobUrl(
-        blobService,
-        MESSAGE_BLOB_STORAGE_CONTAINER_NAME,
-        blobId
-      )
+      media: blobService.getUrl(MESSAGE_BLOB_STORAGE_CONTAINER_NAME, blobId)
     });
 
     if (errorOrAttachmentMeta.isLeft) {
-      return left(
-        new Error(
-          `Error while attaching stored message: ${errorOrAttachmentMeta.left
-            .code} - ${errorOrAttachmentMeta.left.body}`
-        )
-      );
+      return left(errorOrAttachmentMeta.left);
     }
 
     return right(errorOrAttachmentMeta.right);
-  }
-
-  private getMessageAttachmentName(id: string): string {
-    return `${id}${MESSAGE_BLOB_STORAGE_SUFFIX}`;
   }
 }

@@ -13,6 +13,7 @@ import { toNonEmptyString } from "../../utils/strings";
 import { option } from "ts-option";
 
 import {
+  IMessageContent,
   INewMessageWithContent,
   IRetrievedMessageWithContent,
   MessageModel
@@ -20,8 +21,10 @@ import {
 
 import { ModelId } from "../../utils/documentdb_model_versioned";
 
+import { createBlobService } from "azure-storage";
+
 jest.mock("../../utils/azure_storage");
-import * as azureStorage from "../../utils/azure_storage";
+import * as azureStorageUtils from "../../utils/azure_storage";
 
 const aDatabaseUri = DocumentDbUtils.getDatabaseUri("mockdb");
 const aMessagesCollectionUrl = DocumentDbUtils.getCollectionUri(
@@ -29,12 +32,14 @@ const aMessagesCollectionUrl = DocumentDbUtils.getCollectionUri(
   "messages"
 );
 
+const aMessageContent: IMessageContent = {
+  bodyShort: toBodyShort("some text").get
+};
+
 const aFiscalCode = toFiscalCode("FRLFRC74E04B157I").get;
 
 const aNewMessageWithContent: INewMessageWithContent = {
-  content: {
-    bodyShort: toBodyShort("some text").get
-  },
+  content: aMessageContent,
   fiscalCode: aFiscalCode,
   id: toNonEmptyString("A_MESSAGE_ID").get,
   kind: "INewMessageWithContent",
@@ -297,31 +302,32 @@ describe("attachStoredContent", () => {
   const aMessageId = "MESSAGE_ID";
   const aPartitionKey = "PARTITION_KEY";
   const anAttachmentMeta = { name: "attachmentMeta" };
-  const clientMock = {
-    upsertAttachment: jest.fn((_, __, ___, cb) =>
-      cb(undefined, anAttachmentMeta)
-    )
-  };
   const aBlobResult = { name: "blobName" };
-  const blobService = azureStorage.getBlobService("aConnectionString");
-
   it("should upsert a blob from text and attach it to an existing document", async () => {
+    const aBlobService = {
+      getUrl: jest.fn().mockReturnValue("anUrl")
+    };
+    const clientMock = {
+      upsertAttachment: jest.fn((_, __, ___, cb) =>
+        cb(undefined, anAttachmentMeta)
+      )
+    };
     const model = new MessageModel(
       (clientMock as any) as DocumentDb.DocumentClient,
       aMessagesCollectionUrl
     );
     const upsertBlobFromTextSpy = jest
-      .spyOn(azureStorage, "upsertBlobFromText")
+      .spyOn(azureStorageUtils, "upsertBlobFromText")
       .mockReturnValueOnce(option(aBlobResult));
     const attachSpy = jest.spyOn(model, "attach");
     const attachment = await model.attachStoredContent(
-      blobService,
+      aBlobService as any,
       aMessageId,
       aPartitionKey,
-      aRetrievedMessageWithContent
+      aMessageContent
     );
     expect(upsertBlobFromTextSpy).toBeCalledWith(
-      blobService,
+      aBlobService as any,
       expect.any(String),
       expect.any(String),
       expect.any(String)

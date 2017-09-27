@@ -1,10 +1,9 @@
-import { BlobResult, getBlobUrl, upsertBlobFromText } from "../azure_storage";
+import { upsertBlobFromText } from "../azure_storage";
 
 jest.mock("azure-storage");
-
 import * as azureStorage from "azure-storage";
 
-const aBlobResult: BlobResult = {
+const aBlobResult: azureStorage.BlobService.BlobResult = {
   blobType: "",
   container: "",
   contentLength: "",
@@ -19,21 +18,6 @@ const anAttachmentName = "attachment-name";
 const aRandomText = "random-text";
 
 const aBlobService = new azureStorage.BlobService(aConnectionString);
-
-// function flushPromises<T>(): Promise<T> {
-//   return new Promise(resolve => setImmediate(resolve));
-// }
-
-describe("getBlobUrl", () => {
-  it("should call blobService.getUrl once", () => {
-    const spy = jest.spyOn(aBlobService, "getUrl");
-    getBlobUrl(aBlobService, aContainerName, anAttachmentName);
-    expect(spy).toHaveBeenCalledWith(aContainerName, anAttachmentName);
-    expect(spy).toHaveBeenCalledTimes(1);
-    spy.mockReset();
-    spy.mockRestore();
-  });
-});
 
 describe("upsertBlobFromText", () => {
   it("should call blobService.createBlockBlobFromText once", async () => {
