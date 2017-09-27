@@ -16,6 +16,7 @@ import { CreatedMessage } from "../../api/definitions/CreatedMessage";
 import { toEmailAddress } from "../../api/definitions/EmailAddress";
 import { toFiscalCode } from "../../api/definitions/FiscalCode";
 import { toMessageBodyMarkdown } from "../../api/definitions/MessageBodyMarkdown";
+import { toMessageSubject } from "../../api/definitions/MessageSubject";
 import { NewMessage } from "../../api/definitions/NewMessage";
 import { NotificationChannelStatus } from "../../api/definitions/NotificationChannelStatus";
 
@@ -83,6 +84,8 @@ const aMessagePayload: NewMessage = {
   },
   dry_run: false
 };
+
+const aCustomSubject = toMessageSubject("A custom subject").get;
 
 const aNewMessageWithoutContent: INewMessageWithoutContent = {
   fiscalCode: aFiscalCode,
@@ -225,6 +228,85 @@ describe("CreateMessageHandler", () => {
       name: "api.messages.create",
       properties: {
         dryRun: "false",
+        hasCustomSubject: "false",
+        hasDefaultEmail: "false",
+        senderOrganizationId: "agid",
+        senderUserId: "u123",
+        success: "true"
+      }
+    });
+
+    expect(result.kind).toBe("IResponseSuccessRedirectToResource");
+    if (result.kind === "IResponseSuccessRedirectToResource") {
+      const response = MockResponse();
+      result.apply(response);
+      expect(response.set).toBeCalledWith(
+        "Location",
+        `/api/v1/messages/${aFiscalCode}/${messageDocument.id}`
+      );
+    }
+  });
+
+  it("should handle custom subject", async () => {
+    const mockAppInsights = {
+      trackEvent: jest.fn()
+    };
+
+    const mockMessageModel = {
+      create: jest.fn(() => right(aRetrievedMessageWithoutContent))
+    };
+
+    const createMessageHandler = CreateMessageHandler(
+      mockAppInsights as any,
+      mockMessageModel as any
+    );
+
+    const mockContext = {
+      bindings: {},
+      log: jest.fn()
+    };
+
+    const result = await createMessageHandler(
+      mockContext as any,
+      {
+        ...aUserAuthenticationDeveloper,
+        groups: new Set([UserGroup.ApiMessageWrite])
+      },
+      someUserAttributes,
+      aFiscalCode,
+      {
+        ...aMessagePayload,
+        content: {
+          markdown: aMessagePayload.content.markdown,
+          subject: aCustomSubject
+        }
+      }
+    );
+
+    expect(mockMessageModel.create).toHaveBeenCalledTimes(1);
+
+    const messageDocument: INewMessage =
+      mockMessageModel.create.mock.calls[0][0];
+    expect(messageDocument.content).toBeUndefined();
+
+    expect(mockMessageModel.create.mock.calls[0][1]).toEqual(aFiscalCode);
+
+    expect(mockContext.bindings).toEqual({
+      createdMessage: {
+        message: aRetrievedMessageWithoutContent,
+        messageContent: {
+          bodyMarkdown: aMessagePayload.content.markdown,
+          subject: aCustomSubject
+        }
+      }
+    });
+
+    expect(mockAppInsights.trackEvent).toHaveBeenCalledTimes(1);
+    expect(mockAppInsights.trackEvent).toHaveBeenCalledWith({
+      name: "api.messages.create",
+      properties: {
+        dryRun: "false",
+        hasCustomSubject: "true",
         hasDefaultEmail: "false",
         senderOrganizationId: "agid",
         senderUserId: "u123",
@@ -308,6 +390,7 @@ describe("CreateMessageHandler", () => {
       name: "api.messages.create",
       properties: {
         dryRun: "false",
+        hasCustomSubject: "false",
         hasDefaultEmail: "true",
         senderOrganizationId: "agid",
         senderUserId: "u123",

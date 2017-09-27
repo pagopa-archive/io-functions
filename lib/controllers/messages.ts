@@ -274,19 +274,25 @@ export function CreateMessageHandler(
           ? "true"
           : "false";
 
+      const hasCustomSubject = messagePayload.content.subject
+        ? "true"
+        : "false";
+
       // track the event that a message has been created
       applicationInsightsClient.trackEvent({
         name: eventName,
         properties: {
           ...eventData,
           dryRun: "false",
+          hasCustomSubject,
           hasDefaultEmail,
           success: "true"
         }
       });
 
       const messageContent: IMessageContent = {
-        bodyMarkdown: messagePayload.content.markdown
+        bodyMarkdown: messagePayload.content.markdown,
+        subject: messagePayload.content.subject
       };
 
       const retrievedMessageWithoutContent: IRetrievedMessageWithoutContent = {
