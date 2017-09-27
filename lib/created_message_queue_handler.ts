@@ -42,7 +42,7 @@ import {
 import { INotificationEvent } from "./models/notification_event";
 import { ProfileModel } from "./models/profile";
 import { Either, left, right } from "./utils/either";
-import { NonEmptyString, toNonEmptyString } from "./utils/strings";
+import { toNonEmptyString } from "./utils/strings";
 import { Tuple2 } from "./utils/tuples";
 
 // Setup DocumentDB
@@ -50,8 +50,7 @@ import { Tuple2 } from "./utils/tuples";
 const COSMOSDB_URI: string = process.env.CUSTOMCONNSTR_COSMOSDB_URI;
 const COSMOSDB_KEY: string = process.env.CUSTOMCONNSTR_COSMOSDB_KEY;
 
-const MESSAGE_CONTAINER_NAME: NonEmptyString =
-  process.env.MESSAGE_CONTAINER_NAME;
+const MESSAGE_CONTAINER_NAME: string = process.env.MESSAGE_CONTAINER_NAME;
 
 // TODO: read from env vars
 const documentDbDatabaseUrl = documentDbUtils.getDatabaseUri("development");
@@ -307,7 +306,7 @@ export function index(context: IContextWithBindings): void {
   const messageModel = new MessageModel(
     documentClient,
     messagesCollectionUrl,
-    MESSAGE_CONTAINER_NAME
+    toNonEmptyString(MESSAGE_CONTAINER_NAME).get
   );
   const notificationModel = new NotificationModel(
     documentClient,

@@ -28,7 +28,7 @@ import { GetDebug } from "./controllers/debug";
 import { GetInfo } from "./controllers/info";
 import { CreateMessage, GetMessage, GetMessages } from "./controllers/messages";
 import { GetProfile, UpsertProfile } from "./controllers/profiles";
-import { NonEmptyString } from "./utils/strings";
+import { toNonEmptyString } from "./utils/strings";
 
 // Setup Express
 
@@ -39,8 +39,7 @@ const app = express();
 const COSMOSDB_URI: string = process.env.CUSTOMCONNSTR_COSMOSDB_URI;
 const COSMOSDB_KEY: string = process.env.CUSTOMCONNSTR_COSMOSDB_KEY;
 
-const MESSAGE_CONTAINER_NAME: NonEmptyString =
-  process.env.MESSAGE_CONTAINER_NAME;
+const MESSAGE_CONTAINER_NAME: string = process.env.MESSAGE_CONTAINER_NAME;
 
 const documentDbDatabaseUrl = documentDbUtils.getDatabaseUri("development");
 const messagesCollectionUrl = documentDbUtils.getCollectionUri(
@@ -68,7 +67,7 @@ const profileModel = new ProfileModel(documentClient, profilesCollectionUrl);
 const messageModel = new MessageModel(
   documentClient,
   messagesCollectionUrl,
-  MESSAGE_CONTAINER_NAME
+  toNonEmptyString(MESSAGE_CONTAINER_NAME).get
 );
 const organizationModel = new OrganizationModel(
   documentClient,
