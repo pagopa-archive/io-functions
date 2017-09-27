@@ -18,7 +18,7 @@ import * as documentDbUtils from "./utils/documentdb";
 
 import { Option, option } from "ts-option";
 
-import { BlobService, getBlobService } from "./utils/azure_storage";
+import { BlobService, createBlobService } from "azure-storage";
 
 import { NewMessageDefaultAddresses } from "./api/definitions/NewMessageDefaultAddresses";
 import { NotificationChannelStatus } from "./api/definitions/NotificationChannelStatus";
@@ -42,13 +42,16 @@ import {
 import { INotificationEvent } from "./models/notification_event";
 import { ProfileModel } from "./models/profile";
 import { Either, left, right } from "./utils/either";
-import { toNonEmptyString } from "./utils/strings";
+import { NonEmptyString, toNonEmptyString } from "./utils/strings";
 import { Tuple2 } from "./utils/tuples";
 
 // Setup DocumentDB
 
 const COSMOSDB_URI: string = process.env.CUSTOMCONNSTR_COSMOSDB_URI;
 const COSMOSDB_KEY: string = process.env.CUSTOMCONNSTR_COSMOSDB_KEY;
+
+const MESSAGE_CONTAINER_NAME: NonEmptyString =
+  process.env.MESSAGE_CONTAINER_NAME;
 
 // TODO: read from env vars
 const documentDbDatabaseUrl = documentDbUtils.getDatabaseUri("development");
@@ -104,10 +107,10 @@ export async function handleMessage(
   profileModel: ProfileModel,
   messageModel: MessageModel,
   notificationModel: NotificationModel,
+  blobService: BlobService,
   retrievedMessage: IRetrievedMessageWithoutContent,
   messageContent: IMessageContent,
-  defaultAddresses: Option<NewMessageDefaultAddresses>,
-  blobService: BlobService
+  defaultAddresses: Option<NewMessageDefaultAddresses>
 ): Promise<Either<ProcessingError, IRetrievedNotification>> {
   // async fetch of profile data associated to the fiscal code the message
   // should be delivered to
@@ -135,13 +138,7 @@ export async function handleMessage(
       blobService,
       retrievedMessage.id,
       retrievedMessage.fiscalCode,
-      {
-        content: messageContent,
-        // we do not store documentdb metadata
-        fiscalCode: retrievedMessage.fiscalCode,
-        senderOrganizationId: retrievedMessage.senderOrganizationId,
-        senderUserId: retrievedMessage.senderUserId
-      }
+      messageContent
     );
 
     winston.debug(`handleMessage|${JSON.stringify(retrievedMessage)}`);
@@ -307,23 +304,27 @@ export function index(context: IContextWithBindings): void {
     masterKey: COSMOSDB_KEY
   });
   const profileModel = new ProfileModel(documentClient, profilesCollectionUrl);
-  const messageModel = new MessageModel(documentClient, messagesCollectionUrl);
+  const messageModel = new MessageModel(
+    documentClient,
+    messagesCollectionUrl,
+    MESSAGE_CONTAINER_NAME
+  );
   const notificationModel = new NotificationModel(
     documentClient,
     notificationsCollectionUrl
   );
 
-  const blobService = getBlobService(STORAGE_CONNECTION_STRING);
+  const blobService = createBlobService(STORAGE_CONNECTION_STRING);
 
   // now we can trigger the notifications for the message
   handleMessage(
     profileModel,
     messageModel,
     notificationModel,
+    blobService,
     retrievedMessage,
     messageContent,
-    defaultAddresses,
-    blobService
+    defaultAddresses
   ).then(
     (errorOrNotification: Either<ProcessingError, IRetrievedNotification>) => {
       processResolve(

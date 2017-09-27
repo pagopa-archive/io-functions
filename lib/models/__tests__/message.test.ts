@@ -8,11 +8,12 @@ import * as DocumentDbUtils from "../../utils/documentdb";
 import { toBodyShort } from "../../api/definitions/BodyShort";
 import { toFiscalCode } from "../../api/definitions/FiscalCode";
 
-import { toNonEmptyString } from "../../utils/strings";
+import { NonEmptyString, toNonEmptyString } from "../../utils/strings";
 
 import { option } from "ts-option";
 
 import {
+  IMessageContent,
   INewMessageWithContent,
   IRetrievedMessageWithContent,
   MessageModel
@@ -21,7 +22,11 @@ import {
 import { ModelId } from "../../utils/documentdb_model_versioned";
 
 jest.mock("../../utils/azure_storage");
-import * as azureStorage from "../../utils/azure_storage";
+import * as azureStorageUtils from "../../utils/azure_storage";
+
+const MESSAGE_CONTAINER_NAME: NonEmptyString = toNonEmptyString(
+  "message-content"
+).get;
 
 const aDatabaseUri = DocumentDbUtils.getDatabaseUri("mockdb");
 const aMessagesCollectionUrl = DocumentDbUtils.getCollectionUri(
@@ -29,12 +34,14 @@ const aMessagesCollectionUrl = DocumentDbUtils.getCollectionUri(
   "messages"
 );
 
+const aMessageContent: IMessageContent = {
+  bodyShort: toBodyShort("some text").get
+};
+
 const aFiscalCode = toFiscalCode("FRLFRC74E04B157I").get;
 
 const aNewMessageWithContent: INewMessageWithContent = {
-  content: {
-    bodyShort: toBodyShort("some text").get
-  },
+  content: aMessageContent,
   fiscalCode: aFiscalCode,
   id: toNonEmptyString("A_MESSAGE_ID").get,
   kind: "INewMessageWithContent",
@@ -59,7 +66,8 @@ describe("createMessage", () => {
 
     const model = new MessageModel(
       (clientMock as any) as DocumentDb.DocumentClient,
-      aMessagesCollectionUrl
+      aMessagesCollectionUrl,
+      MESSAGE_CONTAINER_NAME
     );
 
     const result = await model.create(
@@ -82,7 +90,8 @@ describe("createMessage", () => {
 
     const model = new MessageModel(
       (clientMock as any) as DocumentDb.DocumentClient,
-      aMessagesCollectionUrl
+      aMessagesCollectionUrl,
+      MESSAGE_CONTAINER_NAME
     );
 
     const result = await model.create(
@@ -118,7 +127,8 @@ describe("find", () => {
 
     const model = new MessageModel(
       (clientMock as any) as DocumentDb.DocumentClient,
-      aMessagesCollectionUrl
+      aMessagesCollectionUrl,
+      MESSAGE_CONTAINER_NAME
     );
 
     const result = await model.find(
@@ -147,7 +157,8 @@ describe("find", () => {
 
     const model = new MessageModel(
       (clientMock as any) as DocumentDb.DocumentClient,
-      aMessagesCollectionUrl
+      aMessagesCollectionUrl,
+      MESSAGE_CONTAINER_NAME
     );
 
     const result = await model.find(
@@ -168,7 +179,8 @@ describe("find", () => {
 
     const model = new MessageModel(
       (clientMock as any) as DocumentDb.DocumentClient,
-      aMessagesCollectionUrl
+      aMessagesCollectionUrl,
+      MESSAGE_CONTAINER_NAME
     );
 
     const result = await model.find(
@@ -195,7 +207,8 @@ describe("findMessages", () => {
 
     const model = new MessageModel(
       (clientMock as any) as DocumentDb.DocumentClient,
-      aMessagesCollectionUrl
+      aMessagesCollectionUrl,
+      MESSAGE_CONTAINER_NAME
     );
 
     const resultIterator = await model.findMessages(
@@ -224,7 +237,8 @@ describe("findMessageForRecipient", () => {
 
     const model = new MessageModel(
       (clientMock as any) as DocumentDb.DocumentClient,
-      aMessagesCollectionUrl
+      aMessagesCollectionUrl,
+      MESSAGE_CONTAINER_NAME
     );
 
     const result = await model.findMessageForRecipient(
@@ -255,7 +269,8 @@ describe("findMessageForRecipient", () => {
 
     const model = new MessageModel(
       (clientMock as any) as DocumentDb.DocumentClient,
-      aMessagesCollectionUrl
+      aMessagesCollectionUrl,
+      MESSAGE_CONTAINER_NAME
     );
 
     const result = await model.findMessageForRecipient(
@@ -277,7 +292,8 @@ describe("findMessageForRecipient", () => {
 
     const model = new MessageModel(
       (clientMock as any) as DocumentDb.DocumentClient,
-      aMessagesCollectionUrl
+      aMessagesCollectionUrl,
+      MESSAGE_CONTAINER_NAME
     );
 
     const result = await model.findMessageForRecipient(
@@ -297,34 +313,36 @@ describe("attachStoredContent", () => {
   const aMessageId = "MESSAGE_ID";
   const aPartitionKey = "PARTITION_KEY";
   const anAttachmentMeta = { name: "attachmentMeta" };
-  const clientMock = {
-    upsertAttachment: jest.fn((_, __, ___, cb) =>
-      cb(undefined, anAttachmentMeta)
-    )
-  };
   const aBlobResult = { name: "blobName" };
-  const blobService = azureStorage.getBlobService("aConnectionString");
-
   it("should upsert a blob from text and attach it to an existing document", async () => {
+    const aBlobService = {
+      getUrl: jest.fn().mockReturnValue("anUrl")
+    };
+    const clientMock = {
+      upsertAttachment: jest.fn((_, __, ___, cb) =>
+        cb(undefined, anAttachmentMeta)
+      )
+    };
     const model = new MessageModel(
       (clientMock as any) as DocumentDb.DocumentClient,
-      aMessagesCollectionUrl
+      aMessagesCollectionUrl,
+      MESSAGE_CONTAINER_NAME
     );
-    const upsertBlobFromTextSpy = jest
-      .spyOn(azureStorage, "upsertBlobFromText")
+    const upsertBlobFromObjectSpy = jest
+      .spyOn(azureStorageUtils, "upsertBlobFromObject")
       .mockReturnValueOnce(option(aBlobResult));
     const attachSpy = jest.spyOn(model, "attach");
     const attachment = await model.attachStoredContent(
-      blobService,
+      aBlobService as any,
       aMessageId,
       aPartitionKey,
-      aRetrievedMessageWithContent
+      aMessageContent
     );
-    expect(upsertBlobFromTextSpy).toBeCalledWith(
-      blobService,
+    expect(upsertBlobFromObjectSpy).toBeCalledWith(
+      aBlobService as any,
       expect.any(String),
       expect.any(String),
-      expect.any(String)
+      aMessageContent
     );
     expect(attachSpy).toBeCalledWith(
       aMessageId,
@@ -335,7 +353,7 @@ describe("attachStoredContent", () => {
     if (attachment.isRight) {
       expect(attachment.right.map(a => expect(a).toEqual(anAttachmentMeta)));
     }
-    upsertBlobFromTextSpy.mockReset();
+    upsertBlobFromObjectSpy.mockReset();
     attachSpy.mockReset();
     attachSpy.mockRestore();
   });

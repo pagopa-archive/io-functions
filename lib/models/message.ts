@@ -11,13 +11,9 @@ import { isNonEmptyString, NonEmptyString } from "../utils/strings";
 import { BodyShort, isBodyShort } from "../api/definitions/BodyShort";
 import { FiscalCode, isFiscalCode } from "../api/definitions/FiscalCode";
 
-import {
-  BlobService,
-  getBlobUrl,
-  upsertBlobFromText
-} from "../utils/azure_storage";
+import { BlobService } from "azure-storage";
+import { upsertBlobFromObject } from "../utils/azure_storage";
 
-const MESSAGE_BLOB_STORAGE_CONTAINER_NAME = "message-content";
 const MESSAGE_BLOB_STORAGE_SUFFIX = ".json";
 
 /**
@@ -236,16 +232,19 @@ export class MessageModel extends DocumentDbModel<
 > {
   protected dbClient: DocumentDb.DocumentClient;
   protected collectionUri: DocumentDbUtils.IDocumentDbCollectionUri;
+  protected containerName: NonEmptyString;
 
   /**
    * Creates a new Message model
    *
    * @param dbClient the DocumentDB client
    * @param collectionUrl the collection URL
+   * @param containerName the name of the blob storage container to store message content in
    */
   constructor(
     dbClient: DocumentDb.DocumentClient,
-    collectionUrl: DocumentDbUtils.IDocumentDbCollectionUri
+    collectionUrl: DocumentDbUtils.IDocumentDbCollectionUri,
+    containerName: NonEmptyString
   ) {
     super();
     // tslint:disable-next-line:no-object-mutation
@@ -256,6 +255,8 @@ export class MessageModel extends DocumentDbModel<
     this.dbClient = dbClient;
     // tslint:disable-next-line:no-object-mutation
     this.collectionUri = collectionUrl;
+    // tslint:disable-next-line:no-object-mutation
+    this.containerName = containerName;
   }
 
   /**
@@ -294,51 +295,50 @@ export class MessageModel extends DocumentDbModel<
     });
   }
 
+  /**
+   * Attach a media (a stored text blob) to the existing message document.
+   * 
+   * @param blobService     the azure.BlobService used to store the media
+   * @param messageId       the message document id
+   * @param partitionKey    the message document partitionKey
+   * @param messageContent  the message document content
+   */
   public async attachStoredContent(
     blobService: BlobService,
     messageId: string,
     partitionKey: string,
-    message: IMessageWithContent
-  ): Promise<Either<Error, Option<DocumentDb.AttachmentMeta>>> {
-    // this is the attachment id __and__ the filename
-    const blobId = this.getMessageAttachmentName(messageId);
+    messageContent: IMessageContent
+  ): Promise<
+    Either<Error | DocumentDb.QueryError, Option<DocumentDb.AttachmentMeta>>
+  > {
+    // this is the attachment id __and__ the media filename
+    const blobId = `${messageId}${MESSAGE_BLOB_STORAGE_SUFFIX}`;
 
     // store media (attachment) with message content in blob storage
-    const errorOrMessageContent = await upsertBlobFromText(
+    const errorOrMessageContent = await upsertBlobFromObject<IMessageContent>(
       blobService,
-      MESSAGE_BLOB_STORAGE_CONTAINER_NAME,
+      this.containerName,
       blobId,
-      JSON.stringify({ id: messageId, ...message })
+      messageContent
     );
 
     if (errorOrMessageContent.isLeft) {
       return left(errorOrMessageContent.left);
     }
 
+    const mediaUrl = blobService.getUrl(this.containerName, blobId);
+
     // attach the created media to the message identified by messageId and partitionKey
     const errorOrAttachmentMeta = await this.attach(messageId, partitionKey, {
       contentType: "application/json",
       id: blobId,
-      media: getBlobUrl(
-        blobService,
-        MESSAGE_BLOB_STORAGE_CONTAINER_NAME,
-        blobId
-      )
+      media: mediaUrl
     });
 
     if (errorOrAttachmentMeta.isLeft) {
-      return left(
-        new Error(
-          `Error while attaching stored message: ${errorOrAttachmentMeta.left
-            .code} - ${errorOrAttachmentMeta.left.body}`
-        )
-      );
+      return left(errorOrAttachmentMeta.left);
     }
 
     return right(errorOrAttachmentMeta.right);
-  }
-
-  private getMessageAttachmentName(id: string): string {
-    return `${id}${MESSAGE_BLOB_STORAGE_SUFFIX}`;
   }
 }
