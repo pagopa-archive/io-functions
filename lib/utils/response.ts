@@ -138,7 +138,7 @@ function ResponseErrorGeneric(
     apply: res =>
       res
         .status(status)
-        .contentType("application/problem+json")
+        .set("Content-Type", "application/problem+json")
         .json(problem),
     kind: "IResponseErrorGeneric"
   };
