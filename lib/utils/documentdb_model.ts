@@ -1,9 +1,8 @@
 import * as DocumentDb from "documentdb";
 import * as DocumentDbUtils from "../utils/documentdb";
 
-import { none, Option, some } from "ts-option";
-
-import { Either, right } from "./either";
+import { none, Option, option, some } from "ts-option";
+import { Either, left, right } from "./either";
 
 /**
  * A persisted data model backed by a DocumentDB client: this base class
@@ -120,7 +119,7 @@ export abstract class DocumentDbModel<
     partitionKey: string,
     updater: (current: T) => T
   ): Promise<Either<DocumentDb.QueryError, Option<TR>>> {
-    // fetch the notification
+    // fetch the document
     const errorOrMaybeCurrent = await this.find(documentId, partitionKey);
     if (errorOrMaybeCurrent.isLeft) {
       // if the query returned an error, forward it
@@ -152,5 +151,45 @@ export abstract class DocumentDbModel<
     );
 
     return updatedDocument.mapRight(this.toRetrieved).mapRight(some);
+  }
+
+  /**
+   * Upsert an attachment for a specified document.
+   * 
+   * @param documentId    the id of the document
+   * @param partitionKey  partition key of the document
+   * @param attachment    attachment object (contentType and media link)
+   */
+  public async attach(
+    documentId: string,
+    partitionKey: string,
+    attachment: DocumentDb.Attachment
+  ): Promise<Either<DocumentDb.QueryError, Option<DocumentDb.AttachmentMeta>>> {
+    // we do not try to retrieve the document before attaching media,
+    // the operation will fail automatically on non existing documents
+    const attachmentMeta = await DocumentDbUtils.upsertAttachment(
+      this.dbClient,
+      DocumentDbUtils.getDocumentUri(this.collectionUri, documentId),
+      attachment,
+      { partitionKey }
+    );
+
+    if (attachmentMeta.isLeft) {
+      return left(attachmentMeta.left);
+    }
+
+    // return the attachment media information
+    return right(option(attachmentMeta.right));
+  }
+
+  public async getAttachments(
+    documentId: string,
+    options: DocumentDb.FeedOptions = {}
+  ): Promise<DocumentDbUtils.IResultIterator<DocumentDb.AttachmentMeta>> {
+    return DocumentDbUtils.queryAttachments(
+      this.dbClient,
+      DocumentDbUtils.getDocumentUri(this.collectionUri, documentId),
+      options
+    );
   }
 }

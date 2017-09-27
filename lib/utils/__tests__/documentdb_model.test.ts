@@ -58,6 +58,10 @@ const aCollectionUri = DocumentDbUtils.getCollectionUri(
   aDatabaseUri,
   "mydocuments"
 );
+const aDocumentUri = DocumentDbUtils.getDocumentUri(
+  aCollectionUri,
+  "mydocument"
+);
 
 describe("create", () => {
   it("should create a document", async () => {
@@ -296,5 +300,53 @@ describe("update", () => {
     if (result.isLeft) {
       expect(result.left).toEqual({ code: 500, body: "Error" });
     }
+  });
+});
+
+describe("attach", () => {
+  it("should return an attached media to an existing document", async () => {
+    jest.resetAllMocks();
+    const aDocumentId = "mydocument";
+    const aPartitionKey = "partitionKey";
+    const anAttachment = {
+      contentType: "application/json",
+      media: "https://example.com/media"
+    };
+    const getDocumentUriSpy = jest
+      .spyOn(DocumentDbUtils, "getDocumentUri")
+      .mockReturnValueOnce(aDocumentUri);
+    const upsertAttachmentSpy = jest
+      .spyOn(DocumentDbUtils, "upsertAttachment")
+      .mockReturnValueOnce(Promise.resolve(right(anAttachment)));
+    const model = new MyModel(aDbClient, aCollectionUri);
+    const result = await model.attach(aDocumentId, aPartitionKey, anAttachment);
+    expect(getDocumentUriSpy).toBeCalledWith(aCollectionUri, aDocumentId);
+    expect(
+      upsertAttachmentSpy
+    ).toBeCalledWith(aDbClient, undefined, anAttachment, {
+      partitionKey: aPartitionKey
+    });
+    expect(result.isRight).toBeTruthy();
+    if (result.isRight) {
+      expect(result.right.isEmpty).toBeFalsy();
+      result.right.map(r => expect(r).toEqual(anAttachment));
+    }
+    upsertAttachmentSpy.mockReset();
+    getDocumentUriSpy.mockReset();
+  });
+});
+
+describe("getAttachments", () => {
+  it("should return attachments iterator for an existing document", async () => {
+    const aDocumentId = "mydocument";
+    const queryAttachmentsSpy = jest.spyOn(DocumentDbUtils, "queryAttachments");
+    const model = new MyModel(aDbClient, aCollectionUri);
+    const feedOptions = {};
+    await model.getAttachments(aDocumentId, feedOptions);
+    expect(queryAttachmentsSpy).toHaveBeenCalledWith(
+      aDbClient,
+      aCollectionUri,
+      feedOptions
+    );
   });
 });

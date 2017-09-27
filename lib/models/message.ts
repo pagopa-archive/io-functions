@@ -5,11 +5,16 @@ import * as DocumentDbUtils from "../utils/documentdb";
 import { DocumentDbModel } from "../utils/documentdb_model";
 
 import { Option } from "ts-option";
-import { Either } from "../utils/either";
+import { Either, left, right } from "../utils/either";
 import { isNonEmptyString, NonEmptyString } from "../utils/strings";
 
 import { BodyShort, isBodyShort } from "../api/definitions/BodyShort";
 import { FiscalCode, isFiscalCode } from "../api/definitions/FiscalCode";
+
+import { BlobService } from "azure-storage";
+import { upsertBlobFromObject } from "../utils/azure_storage";
+
+const MESSAGE_BLOB_STORAGE_SUFFIX = ".json";
 
 /**
  * The content of a Message
@@ -84,7 +89,10 @@ export const isIMessageWithContent = is<IMessageWithContent>(
  * Type guard for IMessageWithoutContent
  */
 export const isIMessageWithoutContent = is<IMessageWithoutContent>(
-  arg => arg && arg.content === undefined && isIMessageBase(arg)
+  arg =>
+    arg &&
+    (arg.content === undefined || arg.content === null) &&
+    isIMessageBase(arg)
 );
 
 /**
@@ -224,16 +232,19 @@ export class MessageModel extends DocumentDbModel<
 > {
   protected dbClient: DocumentDb.DocumentClient;
   protected collectionUri: DocumentDbUtils.IDocumentDbCollectionUri;
+  protected containerName: NonEmptyString;
 
   /**
    * Creates a new Message model
    *
    * @param dbClient the DocumentDB client
    * @param collectionUrl the collection URL
+   * @param containerName the name of the blob storage container to store message content in
    */
   constructor(
     dbClient: DocumentDb.DocumentClient,
-    collectionUrl: DocumentDbUtils.IDocumentDbCollectionUri
+    collectionUrl: DocumentDbUtils.IDocumentDbCollectionUri,
+    containerName: NonEmptyString
   ) {
     super();
     // tslint:disable-next-line:no-object-mutation
@@ -244,6 +255,8 @@ export class MessageModel extends DocumentDbModel<
     this.dbClient = dbClient;
     // tslint:disable-next-line:no-object-mutation
     this.collectionUri = collectionUrl;
+    // tslint:disable-next-line:no-object-mutation
+    this.containerName = containerName;
   }
 
   /**
@@ -280,5 +293,52 @@ export class MessageModel extends DocumentDbModel<
       ],
       query: "SELECT * FROM messages m WHERE (m.fiscalCode = @fiscalCode)"
     });
+  }
+
+  /**
+   * Attach a media (a stored text blob) to the existing message document.
+   * 
+   * @param blobService     the azure.BlobService used to store the media
+   * @param messageId       the message document id
+   * @param partitionKey    the message document partitionKey
+   * @param messageContent  the message document content
+   */
+  public async attachStoredContent(
+    blobService: BlobService,
+    messageId: string,
+    partitionKey: string,
+    messageContent: IMessageContent
+  ): Promise<
+    Either<Error | DocumentDb.QueryError, Option<DocumentDb.AttachmentMeta>>
+  > {
+    // this is the attachment id __and__ the media filename
+    const blobId = `${messageId}${MESSAGE_BLOB_STORAGE_SUFFIX}`;
+
+    // store media (attachment) with message content in blob storage
+    const errorOrMessageContent = await upsertBlobFromObject<IMessageContent>(
+      blobService,
+      this.containerName,
+      blobId,
+      messageContent
+    );
+
+    if (errorOrMessageContent.isLeft) {
+      return left(errorOrMessageContent.left);
+    }
+
+    const mediaUrl = blobService.getUrl(this.containerName, blobId);
+
+    // attach the created media to the message identified by messageId and partitionKey
+    const errorOrAttachmentMeta = await this.attach(messageId, partitionKey, {
+      contentType: "application/json",
+      id: blobId,
+      media: mediaUrl
+    });
+
+    if (errorOrAttachmentMeta.isLeft) {
+      return left(errorOrAttachmentMeta.left);
+    }
+
+    return right(errorOrAttachmentMeta.right);
   }
 }

@@ -379,3 +379,77 @@ export function replaceDocument<T>(
     );
   });
 }
+
+///////////// <Attachments>
+
+/**
+ * Create or update media attached to a document.
+ * 
+ * @param client        the cosmosdb client
+ * @param documentUri   the uri of the document
+ * @param attachment    the media (link) to the attachment
+ * @param options       request options for the REST API call
+ */
+export function upsertAttachment<T>(
+  client: DocumentDb.DocumentClient,
+  documentUri: IDocumentDbDocumentUri,
+  attachment: DocumentDb.Attachment,
+  options: DocumentDb.RequestOptions = {}
+): Promise<Either<DocumentDb.QueryError, T & DocumentDb.AttachmentMeta>> {
+  return new Promise(resolve => {
+    client.upsertAttachment(
+      documentUri.uri,
+      attachment,
+      options,
+      (err, meta) => {
+        if (err) {
+          resolve(left(err));
+        } else {
+          resolve(right(meta as T & DocumentDb.AttachmentMeta));
+        }
+      }
+    );
+  });
+}
+
+/**
+ * Get all media attached to a document.
+ * 
+ * @param client        the cosmosdb client
+ * @param documentUri   the uri of the document
+ * @param options       request options for the REST API call
+ */
+export function queryAttachments<T>(
+  client: DocumentDb.DocumentClient,
+  documentUri: IDocumentDbDocumentUri,
+  options: DocumentDb.FeedOptions = {}
+): IResultIterator<T & DocumentDb.AttachmentMeta> {
+  const attachmentsIterator = client.readAttachments(documentUri.uri, options);
+  const resultIterator: IResultIterator<T & DocumentDb.AttachmentMeta> = {
+    executeNext: () => {
+      return new Promise(resolve => {
+        attachmentsIterator.executeNext((error, attachments, _) => {
+          if (error) {
+            resolve(left(error));
+          } else if (attachments && attachments.length > 0) {
+            const readonlyAttachments: ReadonlyArray<
+              DocumentDb.AttachmentMeta
+            > = attachments;
+            resolve(
+              right(
+                some(readonlyAttachments as ReadonlyArray<
+                  T & DocumentDb.AttachmentMeta
+                >)
+              )
+            );
+          } else {
+            resolve(right(none));
+          }
+        });
+      });
+    }
+  };
+  return resultIterator;
+}
+
+///////////// </Attachments>

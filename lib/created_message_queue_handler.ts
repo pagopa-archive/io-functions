@@ -18,6 +18,8 @@ import * as documentDbUtils from "./utils/documentdb";
 
 import { Option, option } from "ts-option";
 
+import { BlobService, createBlobService } from "azure-storage";
+
 import { NewMessageDefaultAddresses } from "./api/definitions/NewMessageDefaultAddresses";
 import { NotificationChannelStatus } from "./api/definitions/NotificationChannelStatus";
 
@@ -48,6 +50,8 @@ import { Tuple2 } from "./utils/tuples";
 const COSMOSDB_URI: string = process.env.CUSTOMCONNSTR_COSMOSDB_URI;
 const COSMOSDB_KEY: string = process.env.CUSTOMCONNSTR_COSMOSDB_KEY;
 
+const MESSAGE_CONTAINER_NAME: string = process.env.MESSAGE_CONTAINER_NAME;
+
 // TODO: read from env vars
 const documentDbDatabaseUrl = documentDbUtils.getDatabaseUri("development");
 const profilesCollectionUrl = documentDbUtils.getCollectionUri(
@@ -62,6 +66,8 @@ const notificationsCollectionUrl = documentDbUtils.getCollectionUri(
   documentDbDatabaseUrl,
   "notifications"
 );
+
+const STORAGE_CONNECTION_STRING = process.env.AzureWebJobsStorage;
 
 /**
  * Input and output bindings for this function
@@ -100,6 +106,7 @@ export async function handleMessage(
   profileModel: ProfileModel,
   messageModel: MessageModel,
   notificationModel: NotificationModel,
+  blobService: BlobService,
   retrievedMessage: IRetrievedMessageWithoutContent,
   messageContent: IMessageContent,
   defaultAddresses: Option<NewMessageDefaultAddresses>
@@ -125,16 +132,17 @@ export async function handleMessage(
 
   if (isMessageStorageEnabled) {
     // if the recipient wants to store the messages
-    // we add the content of the message to the message record
-    const errorOrUpdatedMessage = await messageModel.update(
+    // we add the content of the message to the blob storage for later retrieval
+    const errorOrAttachment = await messageModel.attachStoredContent(
+      blobService,
       retrievedMessage.id,
       retrievedMessage.fiscalCode,
-      m => {
-        return { ...m, content: messageContent };
-      }
+      messageContent
     );
 
-    if (errorOrUpdatedMessage.isLeft) {
+    winston.debug(`handleMessage|${JSON.stringify(retrievedMessage)}`);
+
+    if (errorOrAttachment.isLeft) {
       // we consider errors while updating message as transient
       return left(ProcessingError.TRANSIENT);
     }
@@ -162,7 +170,7 @@ export async function handleMessage(
 
   // check whether there's at least a channel we can send the notification to
   if (maybeEmailNotification.isEmpty) {
-    // no channells to notify the user
+    // no channels to notify the user
     return left(ProcessingError.NO_ADDRESSES);
   }
 
@@ -295,17 +303,24 @@ export function index(context: IContextWithBindings): void {
     masterKey: COSMOSDB_KEY
   });
   const profileModel = new ProfileModel(documentClient, profilesCollectionUrl);
-  const messageModel = new MessageModel(documentClient, messagesCollectionUrl);
+  const messageModel = new MessageModel(
+    documentClient,
+    messagesCollectionUrl,
+    toNonEmptyString(MESSAGE_CONTAINER_NAME).get
+  );
   const notificationModel = new NotificationModel(
     documentClient,
     notificationsCollectionUrl
   );
+
+  const blobService = createBlobService(STORAGE_CONNECTION_STRING);
 
   // now we can trigger the notifications for the message
   handleMessage(
     profileModel,
     messageModel,
     notificationModel,
+    blobService,
     retrievedMessage,
     messageContent,
     defaultAddresses
