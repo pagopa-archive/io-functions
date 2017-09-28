@@ -167,7 +167,9 @@ describe("handleNotification", () => {
     expect(sentMail.data.headers["X-Italia-Messages-NotificationId"]).toBe(
       "A_NOTIFICATION_ID"
     );
-    expect(sentMail.data.html).toBe("<h1>Hello world!</h1>");
+    expect(
+      String(sentMail.data.html).indexOf("<h1>Hello world!</h1>")
+    ).toBeGreaterThan(0);
 
     expect(mockAppinsights.trackEvent).toHaveBeenCalledWith({
       name: "notification.email.delivery",
@@ -237,8 +239,21 @@ This is a *message* from the future!
       aMessageContent as any
     );
 
-    expect(mockTransport.sentMail[0].data.text).toBe(
-      "HELLO WORLD!\nThis is a message from the future!"
+    expect(
+      String(mockTransport.sentMail[0].data.text).replace(/[ \n]+/g, "|")
+    ).toBe(
+      `TODO
+
+TODO
+TODO
+
+Un nuovo avviso per te.
+
+HELLO WORLD!
+This is a message from the future!
+
+
+TODO`.replace(/[ \n]+/g, "|")
     );
 
     expect(result.isRight).toBeTruthy();
