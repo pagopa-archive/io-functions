@@ -1,6 +1,7 @@
 **/node_modules
 **/coverage
 **/*.js
+!gulpfile.js
 **/*.log
 **/local.*
 **/*.js.map
