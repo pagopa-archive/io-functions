@@ -30,6 +30,10 @@ import { left, right } from "../utils/either";
 import { toNonNegativeNumber } from "../utils/numbers";
 import { toNonEmptyString } from "../utils/strings";
 
+// setup jest
+jest.mock("applicationinsights");
+jest.useFakeTimers();
+
 const aCorrectFiscalCode = toFiscalCode("FRLFRC74E04B157I").get;
 const aWrongFiscalCode = "FRLFRC74E04B157" as FiscalCode;
 const anEmail = toNonEmptyString("x@example.com").get;
@@ -655,6 +659,7 @@ describe("test processResolve function", () => {
       errorOrNotificationMock as any,
       contextMock as any,
       retrievedMessageMock as any,
+      {} as any,
       {} as any
     );
 
@@ -693,6 +698,7 @@ describe("test processResolve function", () => {
       errorOrNotificationMock as any,
       contextMock as any,
       retrievedMessageMock as any,
+      {} as any,
       {} as any
     );
 
@@ -707,6 +713,7 @@ describe("test processResolve function", () => {
     };
 
     const contextMock = {
+      bindingData: { dequeueCount: 5 },
       bindings: {
         emailNotification: undefined
       },
@@ -724,6 +731,7 @@ describe("test processResolve function", () => {
       errorOrNotificationMock as any,
       contextMock as any,
       retrievedMessageMock as any,
+      {} as any,
       {} as any
     );
 
@@ -744,6 +752,7 @@ describe("test processResolve function", () => {
     };
 
     const contextMock = {
+      bindingData: { dequeueCount: 5 },
       bindings: {
         emailNotification: undefined
       },
@@ -755,15 +764,22 @@ describe("test processResolve function", () => {
       fiscalCode: aWrongFiscalCode
     };
 
+    const mockAppinsights = {
+      trackEvent: jest.fn()
+    };
+
     const spy = jest.spyOn(winston, "error");
 
     processResolve(
       errorOrNotificationMock as any,
       contextMock as any,
       retrievedMessageMock as any,
-      {} as any
+      {} as any,
+      mockAppinsights as any
     );
+    jest.runAllTimers();
 
+    expect(mockAppinsights.trackEvent).toHaveBeenCalled();
     expect(contextMock.done).toHaveBeenCalledTimes(1);
     expect(spy.mock.calls[0][0]).toEqual(
       `Transient error, retrying|${retrievedMessageMock.fiscalCode}`
@@ -780,6 +796,7 @@ describe("test processReject function", () => {
     const errorMock = jest.fn();
 
     const contextMock = {
+      bindingData: { dequeueCount: 5 },
       bindings: {
         emailNotification: undefined
       },
@@ -793,12 +810,19 @@ describe("test processReject function", () => {
 
     const spy = jest.spyOn(winston, "error");
 
+    const mockAppinsights = {
+      trackEvent: jest.fn()
+    };
+
     processReject(
       contextMock as any,
       retrievedMessageMock as any,
-      errorMock as any
+      errorMock as any,
+      mockAppinsights as any
     );
+    jest.runAllTimers();
 
+    expect(mockAppinsights.trackEvent).toHaveBeenCalled();
     expect(contextMock.done).toHaveBeenCalledTimes(1);
     expect(spy).toHaveBeenCalledTimes(1);
     expect(spy.mock.calls[0][0]).toEqual(
