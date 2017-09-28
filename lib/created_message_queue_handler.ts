@@ -98,9 +98,9 @@ export enum ProcessingError {
 
 // wait 10 ^ dequeueCount * 1000 before retrying
 const fail = (ctx: IContextWithBindings, error: string) => {
-  const timeout = Math.pow(10, ctx.bindingData.dequeueCount) * 1000;
-  winston.debug(`fail|waiting ${timeout / 1000} seconds before retrying`);
-  return setTimeout(ctx.done, timeout, error);
+  const timeout = Math.pow(10, ctx.bindingData.dequeueCount);
+  winston.debug(`fail|waiting ${timeout} seconds before retrying`);
+  return setTimeout(ctx.done, timeout * 1000, error);
 };
 
 /**
