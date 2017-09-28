@@ -23,6 +23,8 @@ import { BlobService, createBlobService } from "azure-storage";
 import { NewMessageDefaultAddresses } from "./api/definitions/NewMessageDefaultAddresses";
 import { NotificationChannelStatus } from "./api/definitions/NotificationChannelStatus";
 
+import * as ApplicationInsights from "applicationinsights";
+
 import {
   ICreatedMessageEvent,
   isICreatedMessageEvent
@@ -97,8 +99,12 @@ export enum ProcessingError {
 }
 
 // wait 10 ^ dequeueCount * 1000 before retrying
+// maximum waiting time is 24h
 const fail = (ctx: IContextWithBindings, error: string) => {
-  const timeout = Math.pow(10, ctx.bindingData.dequeueCount);
+  const timeout = Math.min(
+    3600 * 24,
+    Math.pow(10, ctx.bindingData.dequeueCount)
+  );
   winston.debug(`fail|waiting ${timeout} seconds before retrying`);
   return setTimeout(ctx.done, timeout * 1000, error);
 };
@@ -215,7 +221,8 @@ export function processResolve(
   errorOrNotification: Either<ProcessingError, IRetrievedNotification>,
   context: IContextWithBindings,
   retrievedMessage: IRetrievedMessageWithoutContent,
-  messageContent: IMessageContent
+  messageContent: IMessageContent,
+  appInsightsClient: ApplicationInsights.TelemetryClient
 ): void {
   if (errorOrNotification.isRight) {
     // the notification has been created
@@ -249,6 +256,13 @@ export function processResolve(
           `Transient error, retrying|${retrievedMessage.fiscalCode}`
         );
         // here we trigger a retry
+        appInsightsClient.trackEvent({
+          name: "notification.queue.retries",
+          properties: {
+            fiscalCode: retrievedMessage.fiscalCode,
+            reason: "processingError"
+          }
+        });
         fail(context, errorOrNotification.toString());
         break;
       }
@@ -259,7 +273,8 @@ export function processResolve(
 export function processReject(
   context: IContextWithBindings,
   retrievedMessage: IRetrievedMessageWithoutContent,
-  error: Either<ProcessingError, IRetrievedNotification>
+  error: Either<ProcessingError, IRetrievedNotification>,
+  appInsightsClient: ApplicationInsights.TelemetryClient
 ): void {
   // the promise failed
   winston.error(
@@ -267,6 +282,13 @@ export function processReject(
   );
   // in case of error, we return a failure to trigger a retry
   // (up to the configured max retries)
+  appInsightsClient.trackEvent({
+    name: "notification.queue.retries",
+    properties: {
+      fiscalCode: retrievedMessage.fiscalCode,
+      reason: "processReject"
+    }
+  });
   fail(context, error.toString());
 }
 
@@ -280,6 +302,8 @@ export function index(context: IContextWithBindings): void {
 
   const createdMessageEvent = context.bindings.createdMessage;
   winston.debug(`createdMessageEvent|${JSON.stringify(createdMessageEvent)}`);
+
+  const appInsightsClient = new ApplicationInsights.TelemetryClient();
 
   // since this function gets triggered by a queued message that gets
   // deserialized from a json object, we must first check that what we
@@ -336,11 +360,12 @@ export function index(context: IContextWithBindings): void {
         errorOrNotification,
         context,
         retrievedMessage,
-        messageContent
+        messageContent,
+        appInsightsClient
       );
     },
     (error: Either<ProcessingError, IRetrievedNotification>) => {
-      processReject(context, retrievedMessage, error);
+      processReject(context, retrievedMessage, error, appInsightsClient);
     }
   );
 }
