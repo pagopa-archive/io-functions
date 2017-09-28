@@ -96,6 +96,13 @@ export enum ProcessingError {
   NO_ADDRESSES
 }
 
+// wait 10 ^ dequeueCount * 1000 before retrying
+const fail = (ctx: IContextWithBindings, error: string) => {
+  const timeout = Math.pow(10, ctx.bindingData.dequeueCount) * 1000;
+  winston.debug(`fail|waiting ${timeout / 1000} seconds before retrying`);
+  return setTimeout(ctx.done, timeout, error);
+};
+
 /**
  * Handles the retrieved message by looking up the associated profile and
  * creating a Notification record that has all the channels configured.
@@ -241,8 +248,8 @@ export function processResolve(
         winston.error(
           `Transient error, retrying|${retrievedMessage.fiscalCode}`
         );
-        context.done("Transient error"); // here we trigger a retry by calling
-        // done(error)
+        // here we trigger a retry
+        fail(context, errorOrNotification.toString());
         break;
       }
     }
@@ -258,10 +265,9 @@ export function processReject(
   winston.error(
     `Error while processing event, retrying|${retrievedMessage.fiscalCode}|${error}`
   );
-  // in case of error, we return a failure to trigger a retry (up to the
-  // configured max retries) TODO: schedule next retry with exponential
-  // backoff, see #150597257
-  context.done(error);
+  // in case of error, we return a failure to trigger a retry
+  // (up to the configured max retries)
+  fail(context, error.toString());
 }
 
 /**
