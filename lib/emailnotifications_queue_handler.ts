@@ -24,6 +24,7 @@ import * as sendGridTransport from "nodemailer-sendgrid-transport";
 
 import * as HtmlToText from "html-to-text";
 
+import { MessageBodyMarkdown } from "./api/definitions/MessageBodyMarkdown";
 import { NotificationChannelStatus } from "./api/definitions/NotificationChannelStatus";
 
 import { IMessageContent } from "./models/message";
@@ -33,6 +34,8 @@ import {
   isNotificationEvent
 } from "./models/notification_event";
 import { markdownToHtml } from "./utils/markdown";
+
+import defaultEmailTemplate from "./templates/html/default";
 
 // Setup DocumentDB
 
@@ -58,7 +61,8 @@ const SENDGRID_KEY: string = process.env.CUSTOMCONNSTR_SENDGRID_KEY;
 //
 
 const HTML_TO_TEXT_OPTIONS: HtmlToTextOptions = {
-  ignoreImage: true // ignore all document images
+  ignoreImage: true, // ignore all document images
+  tables: true
 };
 
 //
@@ -88,6 +92,31 @@ export const enum ProcessingError {
 
   // a permanent error, e.g. missing email data from the notification
   PERMANENT
+}
+
+/**
+ * Generates the HTML for the email from the Markdown content and the subject
+ */
+export async function generateDocumentHtml(
+  subject: string,
+  bodyMarkdown: MessageBodyMarkdown
+): Promise<Either<Error, string>> {
+  // converts the markdown body to HTML
+  // TODO: handle errors / validate the markdown
+  const bodyHtml = (await markdownToHtml.process(bodyMarkdown)).toString();
+
+  // wrap the generated HTML into an email template
+  const documentHtml = defaultEmailTemplate(
+    subject,
+    "TODO",
+    "TODO",
+    "TODO",
+    subject,
+    bodyHtml,
+    "TODO"
+  );
+
+  return right(documentHtml);
 }
 
 /**
@@ -186,14 +215,22 @@ export async function handleNotification(
     ? messageContent.subject
     : "Un nuovo avviso per te.";
 
-  // converts the markdown body to HTML
-  // TODO: handle errors / validate the markdown
-  const bodyHtml = (await markdownToHtml.process(
+  const documentHtmlOrError = await generateDocumentHtml(
+    subject,
     messageContent.bodyMarkdown
-  )).toString();
+  );
+
+  if (documentHtmlOrError.isLeft) {
+    winston.error(
+      `handleNotification|error while generating HTML|${documentHtmlOrError.left}`
+    );
+    return left(ProcessingError.PERMANENT);
+  }
+
+  const documentHtml = documentHtmlOrError.right;
 
   // converts the HTML to pure text to generate the text version of the message
-  const bodyText = HtmlToText.fromString(bodyHtml, HTML_TO_TEXT_OPTIONS);
+  const bodyText = HtmlToText.fromString(documentHtml, HTML_TO_TEXT_OPTIONS);
 
   // trigger email delivery
   // TODO: use fromAddress from the emailNotification object
@@ -205,7 +242,7 @@ export async function handleNotification(
       "X-Italia-Messages-MessageId": messageId,
       "X-Italia-Messages-NotificationId": notificationId
     },
-    html: bodyHtml,
+    html: documentHtml,
     messageId,
     subject,
     text: bodyText,

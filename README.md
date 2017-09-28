@@ -179,6 +179,20 @@ _Note_: You'll have to `install -h ts-node` first to make it work.
 
 The generated code will be stored in `lib/api`.
 
+### Code generation from MJML templates
+
+For improved readability on as many devices as possible, we rely on
+[MJML](https://mjml.io/) responsive email framework.
+
+The MJML templates live under `templates/mjml`.
+
+The MJML templates gets compiled to Typescript code by the `Makefile`
+located in the root folder:
+
+```
+make mjml
+```
+
 ### Unit Tests
 
 Unit tests gets execute using Jest and are located in the `__tests__`
