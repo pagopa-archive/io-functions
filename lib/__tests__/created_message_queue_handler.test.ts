@@ -28,11 +28,11 @@ import { IRetrievedProfile } from "../models/profile";
 import * as winston from "winston";
 import { left, right } from "../utils/either";
 import { toNonNegativeNumber } from "../utils/numbers";
-import { toNonEmptyString } from "../utils/strings";
+import { toEmailString, toNonEmptyString } from "../utils/strings";
 
 const aCorrectFiscalCode = toFiscalCode("FRLFRC74E04B157I").get;
 const aWrongFiscalCode = "FRLFRC74E04B157" as FiscalCode;
-const anEmail = toNonEmptyString("x@example.com").get;
+const anEmail = toEmailString("x@example.com").get;
 const anEmailNotification: INotificationChannelEmail = {
   addressSource: NotificationAddressSource.PROFILE_ADDRESS,
   status: NotificationChannelStatus.QUEUED,

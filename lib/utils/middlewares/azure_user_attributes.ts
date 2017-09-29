@@ -8,7 +8,13 @@ import { none, option, Option } from "ts-option";
 import * as winston from "winston";
 
 import { left, right } from "../either";
-import { isNonEmptyString, NonEmptyString, toNonEmptyString } from "../strings";
+import {
+  EmailString,
+  isNonEmptyString,
+  NonEmptyString,
+  toEmailString,
+  toNonEmptyString
+} from "../strings";
 
 import { IOrganization, OrganizationModel } from "../../models/organization";
 import { IRequestMiddleware } from "../request_middleware";
@@ -21,6 +27,11 @@ import {
   ResponseErrorQuery
 } from "../response";
 
+// The user email will be passed in this header by the API Gateway
+const HEADER_USER_EMAIL = "x-user-email";
+
+// The user "note" attribute will be passed in this header by the API Gateway
+// The "note" attribute will be URI encoded
 const HEADER_USER_NOTE = "x-user-note";
 
 /**
@@ -78,9 +89,13 @@ function parseIAzureUserNoteFromUriEncodedYaml(
  */
 export interface IAzureUserAttributes {
   readonly kind: "IAzureUserAttributes";
+  // the email of the registered user
+  readonly email: EmailString;
   // the organization associated to the user
   readonly organization: IOrganization;
+  // the name of the department within the organization
   readonly departmentName: NonEmptyString;
+  // the name of the service
   readonly serviceName: NonEmptyString;
 }
 
@@ -110,6 +125,18 @@ export function AzureUserAttributesMiddleware(
   IAzureUserAttributes
 > {
   return async request => {
+    const maybeUserEmail = toEmailString(request.header(HEADER_USER_EMAIL));
+
+    if (maybeUserEmail.isEmpty) {
+      return left(
+        ResponseErrorInternal(
+          `Missing, empty or invalid ${HEADER_USER_EMAIL} header`
+        )
+      );
+    }
+
+    const userEmail = maybeUserEmail.get;
+
     const maybeUserNoteHeader = toNonEmptyString(
       request.header(HEADER_USER_NOTE)
     );
@@ -165,6 +192,7 @@ export function AzureUserAttributesMiddleware(
 
     const authInfo: IAzureUserAttributes = {
       departmentName: userAttributes.departmentName,
+      email: userEmail,
       kind: "IAzureUserAttributes",
       organization,
       serviceName: userAttributes.serviceName

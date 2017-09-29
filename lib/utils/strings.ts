@@ -19,7 +19,7 @@ interface IPatternStringTag<P extends string> {
 }
 
 interface IEmailStringTag {
-  readonly kind: "INonEmptyStringTag";
+  readonly kind: "IEmailStringTag";
 }
 
 /**

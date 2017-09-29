@@ -25,7 +25,7 @@ import {
   UserGroup
 } from "../../utils/middlewares/azure_api_auth";
 import { IAzureUserAttributes } from "../../utils/middlewares/azure_user_attributes";
-import { toNonEmptyString } from "../../utils/strings";
+import { toEmailString, toNonEmptyString } from "../../utils/strings";
 
 import {
   INewMessage,
@@ -53,11 +53,12 @@ function lookup(h: IHeaders): (k: string) => string | undefined {
 }
 
 const aFiscalCode = toFiscalCode("FRLFRC74E04B157I").get;
-
+const anEmail = toEmailString("test@example.com").get;
 const aMessageBodyMarkdown = toMessageBodyMarkdown("test".repeat(80)).get;
 
 const someUserAttributes: IAzureUserAttributes = {
   departmentName: toNonEmptyString("IT").get,
+  email: anEmail,
   kind: "IAzureUserAttributes",
   organization: {
     name: toNonEmptyString("AgID").get,
@@ -683,7 +684,7 @@ describe("GetMessageHandler", () => {
       emailNotification: {
         addressSource: NotificationAddressSource.PROFILE_ADDRESS,
         status: NotificationChannelStatus.SENT_TO_CHANNEL,
-        toAddress: toNonEmptyString("x@example.com").get
+        toAddress: toEmailString("x@example.com").get
       },
       fiscalCode: aFiscalCode,
       id: toNonEmptyString("A_NOTIFICATION_ID").get,

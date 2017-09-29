@@ -24,8 +24,9 @@ import {
  * Messages API.
  */
 export interface ICreatedMessageEvent {
-  readonly messageContent: IMessageContent;
+  // the optional message, it will be defined only if the message was saved
   readonly message: IRetrievedMessageWithoutContent;
+  readonly messageContent: IMessageContent;
   readonly defaultAddresses?: NewMessageDefaultAddresses;
   readonly senderMetadata: ICreatedMessageEventSenderMetadata;
 }
