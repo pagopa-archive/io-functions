@@ -58,7 +58,6 @@
     "@types/jest": "^20.0.8",
     "@types/nunjucks": "^0.0.33",
     "@types/prettier": "^1.6.1",
-    "@types/shelljs": "^0.7.4",
     "@types/swagger-parser": "^4.0.2",
     "@types/swagger-schema-official": "^2.0.6",
     "gulp": "^3.9.1",
