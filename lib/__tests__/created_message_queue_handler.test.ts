@@ -130,6 +130,11 @@ describe("test index function", () => {
       message: aMessage,
       messageContent: {
         bodyMarkdown: aMessageBodyMarkdown
+      },
+      senderMetadata: {
+        departmentName: toNonEmptyString("IT").get,
+        organizationName: toNonEmptyString("agid").get,
+        serviceName: toNonEmptyString("Test").get
       }
     };
 
@@ -655,6 +660,7 @@ describe("test processResolve function", () => {
       errorOrNotificationMock as any,
       contextMock as any,
       retrievedMessageMock as any,
+      {} as any,
       {} as any
     );
 
@@ -693,6 +699,7 @@ describe("test processResolve function", () => {
       errorOrNotificationMock as any,
       contextMock as any,
       retrievedMessageMock as any,
+      {} as any,
       {} as any
     );
 
@@ -724,6 +731,7 @@ describe("test processResolve function", () => {
       errorOrNotificationMock as any,
       contextMock as any,
       retrievedMessageMock as any,
+      {} as any,
       {} as any
     );
 
@@ -761,6 +769,7 @@ describe("test processResolve function", () => {
       errorOrNotificationMock as any,
       contextMock as any,
       retrievedMessageMock as any,
+      {} as any,
       {} as any
     );
 

@@ -1,7 +1,13 @@
 import is from "ts-is";
 
 import { isNonEmptyString, NonEmptyString } from "../utils/strings";
+
 import { IMessageContent, isIMessageContent } from "./message";
+
+import {
+  ICreatedMessageEventSenderMetadata,
+  isICreatedMessageEventSenderMetadata
+} from "./created_message_sender_metadata";
 
 /**
  * Payload of a notification event.
@@ -13,6 +19,7 @@ export interface INotificationEvent {
   readonly messageId: NonEmptyString;
   readonly messageContent: IMessageContent;
   readonly notificationId: NonEmptyString;
+  readonly senderMetadata: ICreatedMessageEventSenderMetadata;
 }
 
 /**
@@ -21,7 +28,12 @@ export interface INotificationEvent {
 export const isNotificationEvent = is<INotificationEvent>(
   arg =>
     arg &&
+    arg.notificationId &&
     isNonEmptyString(arg.notificationId) &&
+    arg.messageId &&
     isNonEmptyString(arg.messageId) &&
-    isIMessageContent(arg.messageContent)
+    arg.messageContent &&
+    isIMessageContent(arg.messageContent) &&
+    arg.senderMetadata &&
+    isICreatedMessageEventSenderMetadata(arg.senderMetadata)
 );

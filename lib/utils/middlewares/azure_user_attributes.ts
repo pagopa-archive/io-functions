@@ -3,55 +3,85 @@
  */
 
 import * as jsYaml from "js-yaml";
-import { none, option, Option, some } from "ts-option";
+import { is } from "ts-is";
+import { none, option, Option } from "ts-option";
+import * as winston from "winston";
 
 import { left, right } from "../either";
-import { NonEmptyString } from "../strings";
+import { isNonEmptyString, NonEmptyString, toNonEmptyString } from "../strings";
 
-import {
-  IOrganization,
-  IRetrievedOrganization,
-  OrganizationModel
-} from "../../models/organization";
+import { IOrganization, OrganizationModel } from "../../models/organization";
 import { IRequestMiddleware } from "../request_middleware";
 import {
   IResponseErrorForbiddenNotAuthorized,
   IResponseErrorInternal,
-  ResponseErrorInternal
+  IResponseErrorQuery,
+  ResponseErrorForbiddenNotAuthorized,
+  ResponseErrorInternal,
+  ResponseErrorQuery
 } from "../response";
 
-interface IAzureUserNote {
-  readonly organizationId?: NonEmptyString;
-}
+const HEADER_USER_NOTE = "x-user-note";
 
-export interface IAzureUserAttributes {
-  readonly kind: "IAzureUserAttributes";
-  // the organization associated to the user
-  readonly organization?: IOrganization;
+/**
+ * The attributes that can be defined in the user's "Note" field.
+ * This is the YAML representation of those attributes.
+ */
+interface IAzureUserNote {
+  readonly organizationId: NonEmptyString;
+  readonly departmentName: NonEmptyString;
+  readonly serviceName: NonEmptyString;
 }
 
 /**
- * Attempts to fetch the Organization associated to the user in the
- * user custom attributes.
+ * Type guard for IAzureUserNote
  */
-async function getUserOrganization(
-  organizationModel: OrganizationModel,
-  azureUserAttributes: IAzureUserNote
-): Promise<Option<IRetrievedOrganization>> {
-  const organizationId = azureUserAttributes.organizationId;
-  if (typeof organizationId !== "string" || organizationId.length === 0) {
-    return Promise.resolve(none);
-  }
+const isIAzureUserNote = is<IAzureUserNote>(
+  arg =>
+    arg.organizationId &&
+    isNonEmptyString(arg.organizationId) &&
+    arg.departmentName &&
+    isNonEmptyString(arg.departmentName) &&
+    arg.serviceName &&
+    isNonEmptyString(arg.serviceName)
+);
 
-  const errorOrMaybeOrganization = await organizationModel.findByOrganizationId(
-    organizationId
-  );
+// tslint:disable-next-line:no-any
+function toIAzureUserNote(arg: any): Option<IAzureUserNote> {
+  return option(arg).filter(isIAzureUserNote);
+}
 
-  if (errorOrMaybeOrganization.isRight) {
-    return errorOrMaybeOrganization.right;
-  } else {
-    return Promise.resolve(none);
+/**
+ * Attempts to deserialize a IAzureUserNote from a YAML string
+ */
+function parseIAzureUserNoteFromYaml(data: string): Option<IAzureUserNote> {
+  try {
+    const yaml = jsYaml.safeLoad(data);
+    return toIAzureUserNote(yaml);
+  } catch (e) {
+    return none;
   }
+}
+
+/**
+ * Attempts to deserialize a IAzureUserNote from an URI encoded YAML string
+ */
+function parseIAzureUserNoteFromUriEncodedYaml(
+  data: string
+): Option<IAzureUserNote> {
+  const decoded = decodeURIComponent(data);
+  return parseIAzureUserNoteFromYaml(decoded);
+}
+
+/**
+ * The attributes extracted from the user's "Note"
+ */
+export interface IAzureUserAttributes {
+  readonly kind: "IAzureUserAttributes";
+  // the organization associated to the user
+  readonly organization: IOrganization;
+  readonly departmentName: NonEmptyString;
+  readonly serviceName: NonEmptyString;
 }
 
 /**
@@ -66,7 +96,7 @@ async function getUserOrganization(
  * structure providing the following attributes associated to the authenticated
  * user:
  *
- *   organizationId:  The identifier of the organization of this user (optional)
+ *   organizationId:  The identifier of the organization of this user
  *
  * On success, the middleware provides an IUserAttributes.
  *
@@ -74,65 +104,72 @@ async function getUserOrganization(
 export function AzureUserAttributesMiddleware(
   organizationModel: OrganizationModel
 ): IRequestMiddleware<
-  IResponseErrorForbiddenNotAuthorized | IResponseErrorInternal,
+  | IResponseErrorForbiddenNotAuthorized
+  | IResponseErrorQuery
+  | IResponseErrorInternal,
   IAzureUserAttributes
 > {
-  return request =>
-    new Promise(resolve => {
-      // now we check whether some custom user attributes have been set
-      // through the x-user-note header (filled from the User Note attribute)
-      const userAttributes = option(request.header("x-user-note"))
-        // the header is a URI encoded string (since it may contain new lines
-        // and special chars), so we must first decode it.
-        .map(decodeURIComponent)
-        .flatMap<IAzureUserNote>(y => {
-          // then we try to parse the YAML string
-          try {
-            // all IUserAttributes are optional, so we can safely cast
-            // the object to it
-            // TODO: add type guard for IAzureUserNote
-            const yaml = jsYaml.safeLoad(y) as IAzureUserNote;
-            return some(yaml);
-          } catch (e) {
-            return none;
-          }
-        });
+  return async request => {
+    const maybeUserNoteHeader = toNonEmptyString(
+      request.header(HEADER_USER_NOTE)
+    );
 
-      // now we can attempt to retrieve the Organization associated to the
-      // user, in case it was set in the custom attribute
-      const userOrg: Promise<
-        Option<IRetrievedOrganization>
-      > = new Promise((orgResolve, orgReject) => {
-        userAttributes
-          .map(a => {
-            getUserOrganization(organizationModel, a).then(
-              orgResolve,
-              orgReject
-            );
-          })
-          .getOrElse(() => orgResolve(none));
-      });
-
-      userOrg.then(
-        o => {
-          // we have everything we need, we can now resolve the outer
-          // promise with an IAzureApiAuthorization object
-
-          const authInfo: IAzureUserAttributes = {
-            kind: "IAzureUserAttributes",
-            organization: o.isDefined ? o.get : undefined
-          };
-
-          resolve(right(authInfo));
-        },
-        error =>
-          resolve(
-            left(
-              ResponseErrorInternal(
-                `Error while fetching organization details: ${error}`
-              )
-            )
-          )
+    if (maybeUserNoteHeader.isEmpty) {
+      return left(
+        ResponseErrorInternal(`Missing or empty ${HEADER_USER_NOTE} header`)
       );
-    });
+    }
+
+    const userNoteHeader = maybeUserNoteHeader.get;
+
+    // now we check whether some custom user attributes have been set
+    // through the x-user-note header (filled from the User Note attribute)
+    const maybeUserAttributes = parseIAzureUserNoteFromUriEncodedYaml(
+      userNoteHeader
+    );
+
+    if (maybeUserAttributes.isEmpty) {
+      return left(
+        ResponseErrorInternal(
+          `Cannot parse user attributes from ${HEADER_USER_NOTE} header`
+        )
+      );
+    }
+
+    const userAttributes = maybeUserAttributes.get;
+
+    const errorOrMaybeOrganization = await organizationModel.findByOrganizationId(
+      userAttributes.organizationId
+    );
+
+    if (errorOrMaybeOrganization.isLeft) {
+      winston.error(
+        `Error while retrieving organization|${userAttributes.organizationId}|${errorOrMaybeOrganization.left}`
+      );
+      return left(
+        ResponseErrorQuery(
+          `Error while retrieving organization|${userAttributes.organizationId}`,
+          errorOrMaybeOrganization.left
+        )
+      );
+    }
+
+    const maybeOrganization = errorOrMaybeOrganization.right;
+
+    if (maybeOrganization.isEmpty) {
+      winston.error(`Organization not found|${userAttributes.organizationId}`);
+      return left(ResponseErrorForbiddenNotAuthorized);
+    }
+
+    const organization = maybeOrganization.get;
+
+    const authInfo: IAzureUserAttributes = {
+      departmentName: userAttributes.departmentName,
+      kind: "IAzureUserAttributes",
+      organization,
+      serviceName: userAttributes.serviceName
+    };
+
+    return right(authInfo);
+  };
 }

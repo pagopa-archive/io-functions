@@ -10,13 +10,14 @@ import { Option } from "ts-option";
 import { Either } from "../utils/either";
 
 import { NonNegativeNumber } from "../utils/numbers";
+import { NonEmptyString } from "../utils/strings";
 
 /**
  * Base interface for Organization objects
  */
 export interface IOrganization {
   readonly organizationId: ModelId;
-  readonly name: string;
+  readonly name: NonEmptyString;
 }
 
 /**

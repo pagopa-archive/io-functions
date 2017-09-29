@@ -8,15 +8,41 @@ import MockTransport = require("nodemailer-mock-transport");
 import { none, some } from "ts-option";
 
 import { left, right } from "../utils/either";
+import { toEmailString, toNonEmptyString } from "../utils/strings";
 
+import { toFiscalCode } from "../api/definitions/FiscalCode";
 import { NotificationChannelStatus } from "../api/definitions/NotificationChannelStatus";
+
 import {
   handleNotification,
   ProcessingError,
   ProcessingResult,
   sendMail
 } from "../emailnotifications_queue_handler";
-import { NotificationAddressSource } from "../models/notification";
+
+import { ICreatedMessageEventSenderMetadata } from "../models/created_message_sender_metadata";
+import {
+  INotification,
+  NotificationAddressSource
+} from "../models/notification";
+
+const aFiscalCode = toFiscalCode("FRLFRC74E04B157I").get;
+
+const aNotification: INotification = {
+  emailNotification: {
+    addressSource: NotificationAddressSource.DEFAULT_ADDRESS,
+    status: NotificationChannelStatus.QUEUED,
+    toAddress: toEmailString("pinco@pallino.com").get
+  },
+  fiscalCode: aFiscalCode,
+  messageId: toNonEmptyString("A_MESSAGE_ID").get
+};
+
+const aSenderMetadata: ICreatedMessageEventSenderMetadata = {
+  departmentName: toNonEmptyString("IT").get,
+  organizationName: toNonEmptyString("agid").get,
+  serviceName: toNonEmptyString("Test").get
+};
 
 describe("sendMail", () => {
   it("should call sendMail on the Transporter and return the result", async () => {
@@ -69,6 +95,7 @@ describe("handleNotification", () => {
       notificationModelMock as any,
       "A_MESSAGE_ID",
       "A_NOTIFICATION_ID",
+      {} as any,
       {} as any
     );
 
@@ -93,6 +120,7 @@ describe("handleNotification", () => {
       notificationModelMock as any,
       "A_MESSAGE_ID",
       "A_NOTIFICATION_ID",
+      {} as any,
       {} as any
     );
 
@@ -113,6 +141,7 @@ describe("handleNotification", () => {
       notificationModelMock as any,
       "A_MESSAGE_ID",
       "A_NOTIFICATION_ID",
+      {} as any,
       {} as any
     );
 
@@ -130,13 +159,6 @@ describe("handleNotification", () => {
     const mockTransport = MockTransport();
     const mockTransporter = NodeMailer.createTransport(mockTransport);
 
-    const aNotification = {
-      emailNotification: {
-        addressSource: NotificationAddressSource.DEFAULT_ADDRESS,
-        toAddress: "pinco@pallino.com"
-      }
-    };
-
     const aMessageContent = {
       bodyMarkdown: "# Hello world!"
     };
@@ -152,7 +174,8 @@ describe("handleNotification", () => {
       notificationModelMock as any,
       "A_MESSAGE_ID",
       "A_NOTIFICATION_ID",
-      aMessageContent as any
+      aMessageContent as any,
+      aSenderMetadata
     );
 
     expect(mockTransport.sentMail.length).toBe(1);
@@ -167,9 +190,15 @@ describe("handleNotification", () => {
     expect(sentMail.data.headers["X-Italia-Messages-NotificationId"]).toBe(
       "A_NOTIFICATION_ID"
     );
-    expect(
-      String(sentMail.data.html).indexOf("<h1>Hello world!</h1>")
-    ).toBeGreaterThan(0);
+    const emailBody = String(sentMail.data.html);
+    expect(emailBody.indexOf("<h1>Hello world!</h1>")).toBeGreaterThan(0);
+    expect(emailBody.indexOf(aSenderMetadata.departmentName)).toBeGreaterThan(
+      0
+    );
+    expect(emailBody.indexOf(aSenderMetadata.organizationName)).toBeGreaterThan(
+      0
+    );
+    expect(emailBody.indexOf(aSenderMetadata.serviceName)).toBeGreaterThan(0);
 
     expect(mockAppinsights.trackEvent).toHaveBeenCalledWith({
       name: "notification.email.delivery",
@@ -210,13 +239,6 @@ describe("handleNotification", () => {
     const mockTransport = MockTransport();
     const mockTransporter = NodeMailer.createTransport(mockTransport);
 
-    const aNotification = {
-      emailNotification: {
-        addressSource: NotificationAddressSource.DEFAULT_ADDRESS,
-        toAddress: "pinco@pallino.com"
-      }
-    };
-
     const aMessageContent = {
       bodyMarkdown: `
 # Hello world!
@@ -236,24 +258,21 @@ This is a *message* from the future!
       notificationModelMock as any,
       "A_MESSAGE_ID",
       "A_NOTIFICATION_ID",
-      aMessageContent as any
+      aMessageContent as any,
+      aSenderMetadata
     );
 
     expect(
       String(mockTransport.sentMail[0].data.text).replace(/[ \n]+/g, "|")
     ).toBe(
-      `TODO
-
-TODO
-TODO
+      `agid
+IT
+Test
 
 Un nuovo avviso per te.
 
 HELLO WORLD!
-This is a message from the future!
-
-
-TODO`.replace(/[ \n]+/g, "|")
+This is a message from the future!`.replace(/[ \n]+/g, "|")
     );
 
     expect(result.isRight).toBeTruthy();
@@ -270,13 +289,6 @@ TODO`.replace(/[ \n]+/g, "|")
     const mockTransport = MockTransport();
     const mockTransporter = NodeMailer.createTransport(mockTransport);
 
-    const aNotification = {
-      emailNotification: {
-        addressSource: NotificationAddressSource.DEFAULT_ADDRESS,
-        toAddress: "pinco@pallino.com"
-      }
-    };
-
     const aMessageContent = {
       bodyMarkdown: "# Hello world!"
     };
@@ -292,7 +304,8 @@ TODO`.replace(/[ \n]+/g, "|")
       notificationModelMock as any,
       "A_MESSAGE_ID",
       "A_NOTIFICATION_ID",
-      aMessageContent as any
+      aMessageContent as any,
+      {} as any
     );
 
     expect(mockTransport.sentMail[0].data.subject).toBe(
@@ -313,13 +326,6 @@ TODO`.replace(/[ \n]+/g, "|")
     const mockTransport = MockTransport();
     const mockTransporter = NodeMailer.createTransport(mockTransport);
 
-    const aNotification = {
-      emailNotification: {
-        addressSource: NotificationAddressSource.DEFAULT_ADDRESS,
-        toAddress: "pinco@pallino.com"
-      }
-    };
-
     const aMessageContent = {
       bodyMarkdown: "# Hello world!",
       subject: "A custom subject"
@@ -336,7 +342,8 @@ TODO`.replace(/[ \n]+/g, "|")
       notificationModelMock as any,
       "A_MESSAGE_ID",
       "A_NOTIFICATION_ID",
-      aMessageContent as any
+      aMessageContent as any,
+      {} as any
     );
 
     expect(mockTransport.sentMail[0].data.subject).toBe("A custom subject");
@@ -357,13 +364,6 @@ TODO`.replace(/[ \n]+/g, "|")
     };
     const mockTransporter = NodeMailer.createTransport(mockTransport as any);
 
-    const aNotification = {
-      emailNotification: {
-        addressSource: NotificationAddressSource.DEFAULT_ADDRESS,
-        toAddress: "pinco@pallino.com"
-      }
-    };
-
     const aMessageContent = {
       bodyMarkdown: "# Hello world!"
     };
@@ -379,7 +379,8 @@ TODO`.replace(/[ \n]+/g, "|")
       notificationModelMock as any,
       "A_MESSAGE_ID",
       "A_NOTIFICATION_ID",
-      aMessageContent as any
+      aMessageContent as any,
+      {} as any
     );
 
     expect(mockAppinsights.trackEvent).toHaveBeenCalledWith({
@@ -409,13 +410,6 @@ TODO`.replace(/[ \n]+/g, "|")
     const mockTransport = MockTransport();
     const mockTransporter = NodeMailer.createTransport(mockTransport);
 
-    const aNotification = {
-      emailNotification: {
-        addressSource: NotificationAddressSource.DEFAULT_ADDRESS,
-        toAddress: "pinco@pallino.com"
-      }
-    };
-
     const aMessageContent = {
       bodyMarkdown: "# Hello world!"
     };
@@ -431,7 +425,8 @@ TODO`.replace(/[ \n]+/g, "|")
       notificationModelMock as any,
       "A_MESSAGE_ID",
       "A_NOTIFICATION_ID",
-      aMessageContent as any
+      aMessageContent as any,
+      {} as any
     );
 
     expect(mockTransport.sentMail.length).toBe(1);

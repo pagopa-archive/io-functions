@@ -2,12 +2,12 @@
 
 import { none, some } from "ts-option";
 
-import { right } from "../../either";
+import { left, right } from "../../either";
 
 import { AzureUserAttributesMiddleware } from "../azure_user_attributes";
 
 describe("AzureUserAttributesMiddleware", () => {
-  it("should ignore invalid yaml", () => {
+  it("should fail on invalid yaml", async () => {
     const orgModel = jest.fn();
 
     const mockRequest = {
@@ -16,13 +16,15 @@ describe("AzureUserAttributesMiddleware", () => {
 
     const middleware = AzureUserAttributesMiddleware(orgModel as any);
 
-    return middleware(mockRequest as any).then(result => {
-      expect(mockRequest.header).toHaveBeenCalledWith("x-user-note");
-      expect(result.isRight).toBeTruthy();
-    });
+    const result = await middleware(mockRequest as any);
+    expect(mockRequest.header).toHaveBeenCalledWith("x-user-note");
+    expect(result.isLeft).toBeTruthy();
+    if (result.isLeft) {
+      expect(result.left.kind).toEqual("IResponseErrorInternal");
+    }
   });
 
-  it("should ignore the user organization from the custom attributes if it does not exist", async () => {
+  it("should fail if the user organization does not exist", async () => {
     const orgModel = {
       findByOrganizationId: jest.fn(() => Promise.resolve(right(none)))
     };
@@ -30,13 +32,11 @@ describe("AzureUserAttributesMiddleware", () => {
     const mockRequest = {
       header: jest.fn(() =>
         encodeURI(
-          [
-            "# example custom attributes in yaml",
-            "---",
-            "organizationId: agid",
-            "dummy: dummy",
-            ""
-          ].join("\n")
+          `---
+organizationId: agid
+departmentName: IT
+serviceName: Test
+`
         )
       )
     };
@@ -47,9 +47,9 @@ describe("AzureUserAttributesMiddleware", () => {
 
     expect(mockRequest.header).toHaveBeenCalledWith("x-user-note");
     expect(orgModel.findByOrganizationId).toHaveBeenCalledWith("agid");
-    expect(result.isRight).toBeTruthy();
-    if (result.isRight) {
-      expect(result.right.organization).toBeUndefined();
+    expect(result.isLeft).toBeTruthy();
+    if (result.isLeft) {
+      expect(result.left.kind).toEqual("IResponseErrorForbiddenNotAuthorized");
     }
   });
 
@@ -67,13 +67,11 @@ describe("AzureUserAttributesMiddleware", () => {
     const mockRequest = {
       header: jest.fn(() =>
         encodeURI(
-          [
-            "# example custom attributes in yaml",
-            "---",
-            "organizationId: agid",
-            "dummy: dummy",
-            ""
-          ].join("\n")
+          `---
+organizationId: agid
+departmentName: IT
+serviceName: Test
+`
         )
       )
     };
@@ -85,17 +83,26 @@ describe("AzureUserAttributesMiddleware", () => {
     expect(orgModel.findByOrganizationId).toHaveBeenCalledWith("agid");
     expect(result.isRight);
     if (result.isRight) {
-      expect(result.right.organization).toEqual(mockOrg);
+      const attributes = result.right;
+      expect(attributes.organization).toEqual(mockOrg);
+      expect(attributes.departmentName).toEqual("IT");
+      expect(attributes.serviceName).toEqual("Test");
     }
   });
 
   it("should fail in case of error when fetching the user organization", async () => {
     const orgModel = {
-      findByOrganizationId: jest.fn(() => Promise.reject("error"))
+      findByOrganizationId: jest.fn(() => Promise.resolve(left("error")))
     };
 
     const mockRequest = {
-      header: jest.fn(() => "organizationId: agid")
+      header: jest.fn(
+        () => `---
+organizationId: agid
+departmentName: IT
+serviceName: Test
+`
+      )
     };
 
     const middleware = AzureUserAttributesMiddleware(orgModel as any);
@@ -105,7 +112,7 @@ describe("AzureUserAttributesMiddleware", () => {
     expect(orgModel.findByOrganizationId).toHaveBeenCalledWith("agid");
     expect(result.isLeft);
     if (result.isLeft) {
-      expect(result.left.kind).toEqual("IResponseErrorInternal");
+      expect(result.left.kind).toEqual("IResponseErrorQuery");
     }
   });
 });
