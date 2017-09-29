@@ -27,6 +27,7 @@ import {
   ICreatedMessageEvent,
   isICreatedMessageEvent
 } from "./models/created_message_event";
+import { ICreatedMessageEventSenderMetadata } from "./models/created_message_sender_metadata";
 import {
   IMessageContent,
   IRetrievedMessageWithoutContent,
@@ -41,6 +42,7 @@ import {
 } from "./models/notification";
 import { INotificationEvent } from "./models/notification_event";
 import { ProfileModel } from "./models/profile";
+
 import { Either, left, right } from "./utils/either";
 import { toNonEmptyString } from "./utils/strings";
 import { Tuple2 } from "./utils/tuples";
@@ -208,7 +210,8 @@ export function processResolve(
   errorOrNotification: Either<ProcessingError, IRetrievedNotification>,
   context: IContextWithBindings,
   retrievedMessage: IRetrievedMessageWithoutContent,
-  messageContent: IMessageContent
+  messageContent: IMessageContent,
+  senderMetadata: ICreatedMessageEventSenderMetadata
 ): void {
   if (errorOrNotification.isRight) {
     // the notification has been created
@@ -222,7 +225,8 @@ export function processResolve(
       context.bindings.emailNotification = {
         messageContent,
         messageId: notification.messageId,
-        notificationId: notification.id
+        notificationId: notification.id,
+        senderMetadata
       };
     }
 
@@ -293,6 +297,7 @@ export function index(context: IContextWithBindings): void {
   const retrievedMessage = createdMessageEvent.message;
   const messageContent = createdMessageEvent.messageContent;
   const defaultAddresses = option(createdMessageEvent.defaultAddresses);
+  const senderMetadata = createdMessageEvent.senderMetadata;
 
   winston.info(
     `A new message was created|${retrievedMessage.id}|${retrievedMessage.fiscalCode}`
@@ -330,7 +335,8 @@ export function index(context: IContextWithBindings): void {
         errorOrNotification,
         context,
         retrievedMessage,
-        messageContent
+        messageContent,
+        senderMetadata
       );
     },
     (error: Either<ProcessingError, IRetrievedNotification>) => {

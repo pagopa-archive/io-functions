@@ -27,6 +27,7 @@ import * as HtmlToText from "html-to-text";
 import { MessageBodyMarkdown } from "./api/definitions/MessageBodyMarkdown";
 import { NotificationChannelStatus } from "./api/definitions/NotificationChannelStatus";
 
+import { ICreatedMessageEventSenderMetadata } from "./models/created_message_sender_metadata";
 import { IMessageContent } from "./models/message";
 import { INotification, NotificationModel } from "./models/notification";
 import {
@@ -99,21 +100,25 @@ export const enum ProcessingError {
  */
 export async function generateDocumentHtml(
   subject: string,
-  bodyMarkdown: MessageBodyMarkdown
+  bodyMarkdown: MessageBodyMarkdown,
+  senderMetadata: ICreatedMessageEventSenderMetadata
 ): Promise<Either<Error, string>> {
   // converts the markdown body to HTML
   // TODO: handle errors / validate the markdown
   const bodyHtml = (await markdownToHtml.process(bodyMarkdown)).toString();
 
+  // compose the service name from the department name and the service name
+  const senderServiceName = `${senderMetadata.departmentName}<br />${senderMetadata.serviceName}`;
+
   // wrap the generated HTML into an email template
   const documentHtml = defaultEmailTemplate(
-    subject,
-    "TODO",
-    "TODO",
-    "TODO",
+    subject, // title
+    "", // TODO: headline
+    senderMetadata.organizationName, // organization name
+    senderServiceName, // service name
     subject,
     bodyHtml,
-    "TODO"
+    "" // TODO: footer
   );
 
   return right(documentHtml);
@@ -169,7 +174,8 @@ export async function handleNotification(
   notificationModel: NotificationModel,
   messageId: string,
   notificationId: string,
-  messageContent: IMessageContent
+  messageContent: IMessageContent,
+  senderMetadata: ICreatedMessageEventSenderMetadata
 ): Promise<Either<ProcessingError, ProcessingResult>> {
   // fetch the notification
   const errorOrMaybeNotification = await notificationModel.find(
@@ -217,7 +223,8 @@ export async function handleNotification(
 
   const documentHtmlOrError = await generateDocumentHtml(
     subject,
-    messageContent.bodyMarkdown
+    messageContent.bodyMarkdown,
+    senderMetadata
   );
 
   if (documentHtmlOrError.isLeft) {
@@ -366,7 +373,8 @@ export function index(context: IContextWithBindings): void {
     notificationModel,
     emailNotificationEvent.messageId,
     emailNotificationEvent.notificationId,
-    emailNotificationEvent.messageContent
+    emailNotificationEvent.messageContent,
+    emailNotificationEvent.senderMetadata
   ).then(
     result => {
       if (result.isLeft) {

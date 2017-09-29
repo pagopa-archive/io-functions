@@ -305,7 +305,12 @@ export function CreateMessageHandler(
       const createdMessageEvent: ICreatedMessageEvent = {
         defaultAddresses: messagePayload.default_addresses,
         message: retrievedMessageWithoutContent,
-        messageContent
+        messageContent,
+        senderMetadata: {
+          departmentName: userAttributes.departmentName,
+          organizationName: userAttributes.organization.name,
+          serviceName: userAttributes.serviceName
+        }
       };
 
       // queue the message to the created messages queue by setting

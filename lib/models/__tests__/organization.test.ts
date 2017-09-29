@@ -5,6 +5,7 @@ import * as DocumentDb from "documentdb";
 import * as DocumentDbUtils from "../../utils/documentdb";
 import { ModelId } from "../../utils/documentdb_model_versioned";
 import { toNonNegativeNumber } from "../../utils/numbers";
+import { toNonEmptyString } from "../../utils/strings";
 
 import {
   IOrganization,
@@ -25,7 +26,7 @@ const aRetrievedOrganization: IRetrievedOrganization = {
   _ts: "xyz",
   id: "xyz",
   kind: "IRetrievedOrganization",
-  name: "MyOrganization",
+  name: toNonEmptyString("MyOrganization").get,
   organizationId: aOrganizationId,
   version: toNonNegativeNumber(0).get
 };
@@ -90,7 +91,7 @@ describe("createOrganization", () => {
     const model = new OrganizationModel(clientMock, organizationsCollectionUrl);
 
     const newOrganization: IOrganization = {
-      name: "MyOrganization",
+      name: toNonEmptyString("MyOrganization").get,
       organizationId: aOrganizationId
     };
 
@@ -125,7 +126,7 @@ describe("createOrganization", () => {
     const model = new OrganizationModel(clientMock, organizationsCollectionUrl);
 
     const newOrganization: IOrganization = {
-      name: "MyOrganization",
+      name: toNonEmptyString("MyOrganization").get,
       organizationId: aOrganizationId
     };
 

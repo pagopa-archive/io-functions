@@ -57,11 +57,13 @@ const aFiscalCode = toFiscalCode("FRLFRC74E04B157I").get;
 const aMessageBodyMarkdown = toMessageBodyMarkdown("test".repeat(80)).get;
 
 const someUserAttributes: IAzureUserAttributes = {
+  departmentName: toNonEmptyString("IT").get,
   kind: "IAzureUserAttributes",
   organization: {
-    name: "AgID",
+    name: toNonEmptyString("AgID").get,
     organizationId: "agid" as ModelId
-  }
+  },
+  serviceName: toNonEmptyString("Test").get
 };
 
 const aUserAuthenticationDeveloper: IAzureApiAuthorization = {
@@ -219,6 +221,11 @@ describe("CreateMessageHandler", () => {
         message: aRetrievedMessageWithoutContent,
         messageContent: {
           bodyMarkdown: aMessagePayload.content.markdown
+        },
+        senderMetadata: {
+          departmentName: "IT",
+          organizationName: "AgID",
+          serviceName: "Test"
         }
       }
     });
@@ -297,6 +304,11 @@ describe("CreateMessageHandler", () => {
         messageContent: {
           bodyMarkdown: aMessagePayload.content.markdown,
           subject: aCustomSubject
+        },
+        senderMetadata: {
+          departmentName: "IT",
+          organizationName: "AgID",
+          serviceName: "Test"
         }
       }
     });
@@ -381,6 +393,11 @@ describe("CreateMessageHandler", () => {
         message: aRetrievedMessageWithoutContent,
         messageContent: {
           bodyMarkdown: messagePayload.content.markdown
+        },
+        senderMetadata: {
+          departmentName: "IT",
+          organizationName: "AgID",
+          serviceName: "Test"
         }
       }
     });
@@ -585,14 +602,9 @@ describe("GetMessageHandler", () => {
       mockNotificationModel as any
     );
 
-    const userAttributes: IAzureUserAttributes = {
-      ...someUserAttributes,
-      organization: undefined
-    };
-
     const result = await getMessageHandler(
       aUserAuthenticationTrustedApplication,
-      userAttributes,
+      someUserAttributes,
       aFiscalCode,
       aRetrievedMessageWithoutContent.id
     );
@@ -696,14 +708,9 @@ describe("GetMessageHandler", () => {
       mockNotificationModel as any
     );
 
-    const userAttributes: IAzureUserAttributes = {
-      ...someUserAttributes,
-      organization: undefined
-    };
-
     const result = await getMessageHandler(
       aUserAuthenticationTrustedApplication,
-      userAttributes,
+      someUserAttributes,
       aFiscalCode,
       aRetrievedMessageWithoutContent.id
     );

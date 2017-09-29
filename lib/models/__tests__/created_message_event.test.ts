@@ -25,7 +25,8 @@ describe("", () => {
         },
         messageContent: {
           bodyMarkdown: aMessageBodyMarkdown
-        }
+        },
+        senderMetadata: { departmentName: "IT", serviceName: "Test" }
       }
     ];
     payloads.forEach(payload => {
