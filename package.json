@@ -55,7 +55,6 @@
     "winston": "^2.3.1"
   },
   "devDependencies": {
-    "@types/gulp-load-plugins": "^0.0.30",
     "@types/jest": "^20.0.8",
     "@types/nunjucks": "^0.0.33",
     "@types/prettier": "^1.6.1",
