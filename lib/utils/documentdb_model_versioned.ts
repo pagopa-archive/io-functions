@@ -54,8 +54,10 @@ export abstract class DocumentDbModelVersioned<
   TN extends T & DocumentDb.NewDocument & IVersionedModel,
   TR extends T & DocumentDb.RetrievedDocument & IVersionedModel
 > extends DocumentDbModel<T, TN, TR> {
+  // tslint:disable-next-line:readonly-keyword
   protected getModelId: (o: T) => ModelId;
 
+  // tslint:disable-next-line:readonly-keyword
   protected versionateModel: (
     o: T,
     id: string,

@@ -244,8 +244,11 @@ export class MessageModel extends DocumentDbModel<
   INewMessage,
   IRetrievedMessage
 > {
+  // tslint:disable-next-line:readonly-keyword
   protected dbClient: DocumentDb.DocumentClient;
+  // tslint:disable-next-line:readonly-keyword
   protected collectionUri: DocumentDbUtils.IDocumentDbCollectionUri;
+  // tslint:disable-next-line:readonly-keyword
   protected containerName: NonEmptyString;
 
   /**
