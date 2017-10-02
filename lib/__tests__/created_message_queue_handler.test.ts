@@ -8,10 +8,7 @@ import {
   processResolve
 } from "../created_message_queue_handler";
 import { ICreatedMessageEvent } from "../models/created_message_event";
-import {
-  IMessageContent,
-  IRetrievedMessageWithoutContent
-} from "../models/message";
+import { IMessageContent, INewMessageWithoutContent } from "../models/message";
 
 import { none, some } from "ts-option";
 import { FiscalCode, toFiscalCode } from "../api/definitions/FiscalCode";
@@ -116,17 +113,16 @@ describe("test index function", () => {
   });
 
   it("should return failure if createdMessage is invalid (wrong fiscal code)", async () => {
-    const aMessage: IRetrievedMessageWithoutContent = {
-      _self: "",
-      _ts: "",
+    const aMessage: INewMessageWithoutContent = {
       fiscalCode: aWrongFiscalCode,
       id: toNonEmptyString("xyz").get,
-      kind: "IRetrievedMessageWithoutContent",
+      kind: "INewMessageWithoutContent",
       senderOrganizationId: "",
       senderUserId: toNonEmptyString("u123").get
     };
 
     const aMessageEvent: ICreatedMessageEvent = {
+      isDryRun: false,
       message: aMessage,
       messageContent: {
         bodyMarkdown: aMessageBodyMarkdown

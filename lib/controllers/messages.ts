@@ -3,7 +3,7 @@
  */
 
 import * as express from "express";
-import * as ulid from "ulid";
+import * as winston from "winston";
 
 import * as ApplicationInsights from "applicationinsights";
 
@@ -56,7 +56,7 @@ import {
   ResponseSuccessJsonIterator,
   ResponseSuccessRedirectToResource
 } from "../utils/response";
-import { toNonEmptyString } from "../utils/strings";
+import { ObjectIdGenerator, ulidGenerator } from "../utils/strings";
 
 import { mapResultIterator } from "../utils/documentdb";
 
@@ -70,7 +70,6 @@ import {
   IMessageContent,
   INewMessageWithoutContent,
   IRetrievedMessage,
-  IRetrievedMessageWithoutContent,
   MessageModel
 } from "../models/message";
 
@@ -186,153 +185,166 @@ type IGetMessagesHandler = (
  */
 export function CreateMessageHandler(
   applicationInsightsClient: ApplicationInsights.TelemetryClient,
-  messageModel: MessageModel
+  messageModel: MessageModel,
+  generateObjectId: ObjectIdGenerator
 ): ICreateMessageHandler {
   return async (context, auth, userAttributes, fiscalCode, messagePayload) => {
+    // extract the user organization
     const userOrganization = userAttributes.organization;
-    if (!userOrganization) {
-      // to be able to send a message the user musy be part of an organization
-      return ResponseErrorValidation(
-        "Request not valid",
-        "The user is not part of any organization."
-      );
-    }
 
-    const eventName = "api.messages.create";
-    const eventData = {
+    // whether this is a real creation of message or just a dry run
+    const isDryRun = messagePayload.dry_run || false;
+
+    // base appinsights event attributes for convenience (used later)
+    const appInsightsEventName = "api.messages.create";
+    const appInsightsEventProps = {
+      hasCustomSubject: Boolean(messagePayload.content.subject).toString(),
+      hasDefaultEmail: Boolean(
+        messagePayload.default_addresses &&
+          messagePayload.default_addresses.email
+      ).toString(),
+      isDryRun: isDryRun.toString(),
       senderOrganizationId: userOrganization.organizationId,
       senderUserId: auth.userId
     };
 
-    if (messagePayload.dry_run) {
-      // the user requested a dry run
+    //
+    // authorization checks
+    //
 
-      if (auth.groups.has(UserGroup.ApiMessageWriteDryRun)) {
-        // the user is authorized for dry run calls, we respond with the
-        // data that he just sent
-        applicationInsightsClient.trackEvent({
-          name: eventName,
-          properties: {
-            ...eventData,
-            dryRun: "true",
-            success: "true"
-          }
-        });
-        const responsePayload: CreatedMessageResponse = {
-          dry_run: true
-        };
-        return ResponseSuccessJson(responsePayload);
-      } else {
-        // the user is not authorized for dry run calls
+    if (isDryRun) {
+      // dry run requests
+
+      // check whether the user is authorized for dry runs
+      if (!auth.groups.has(UserGroup.ApiMessageWriteDryRun)) {
         return ResponseErrorForbiddenNotAuthorizedForDryRun;
+      }
+    } else {
+      // real message creation requests
+
+      // check whether the user is authorized for real message creation
+      if (!auth.groups.has(UserGroup.ApiMessageWrite)) {
+        // the user is doing a production call but he's not enabled
+        return ResponseErrorForbiddenNotAuthorizedForProduction;
+      }
+
+      // check whether the user is authorized to provide default addresses
+      if (
+        messagePayload.default_addresses &&
+        !auth.groups.has(UserGroup.ApiMessageWriteDefaultAddress)
+      ) {
+        // the user is sending a message by providing default addresses but he's
+        // not allowed to do so.
+        return ResponseErrorForbiddenNotAuthorizedForDefaultAddresses;
       }
     }
 
-    // the user is doing a production call
-    if (!auth.groups.has(UserGroup.ApiMessageWrite)) {
-      // the user is doing a production call but he's not enabled
-      return ResponseErrorForbiddenNotAuthorizedForProduction;
-    }
-
-    if (
-      messagePayload.default_addresses &&
-      !auth.groups.has(UserGroup.ApiMessageWriteDefaultAddress)
-    ) {
-      // the user is sending a message by providing default addresses but he's
-      // not allowed to do so.
-      return ResponseErrorForbiddenNotAuthorizedForDefaultAddresses;
-    }
-
-    // we need the user to be associated to a valid organization for him
-    // to be able to send a message
-    const message: INewMessageWithoutContent = {
+    // create a new message from the payload
+    // this object contains only the message metadata, the content of the
+    // message is handled separately (see below)
+    const newMessageWithoutContent: INewMessageWithoutContent = {
       fiscalCode,
-      id: toNonEmptyString(ulid()).get,
+      id: generateObjectId(),
       kind: "INewMessageWithoutContent",
       senderOrganizationId: userOrganization.organizationId,
       senderUserId: auth.userId
     };
 
-    // attempt to create the message
-    const errorOrMessage = await messageModel.create(
-      message,
-      message.fiscalCode
-    );
+    //
+    // handle real message creation requests
+    //
 
-    if (errorOrMessage.isRight) {
+    if (!isDryRun) {
+      // attempt to create the message
+      const errorOrMessage = await messageModel.create(
+        newMessageWithoutContent,
+        newMessageWithoutContent.fiscalCode
+      );
+
+      if (errorOrMessage.isLeft) {
+        // we got an error while creating the message
+
+        // track the event that a message has failed to be created
+        applicationInsightsClient.trackEvent({
+          name: appInsightsEventName,
+          properties: {
+            ...appInsightsEventProps,
+            error: "IResponseErrorQuery",
+            success: "false"
+          }
+        });
+
+        // return an error response
+        return ResponseErrorQuery(
+          "Error while creating Message",
+          errorOrMessage.left
+        );
+      }
+
       // message creation succeeded
       const retrievedMessage = errorOrMessage.right;
-      context.log(
-        `>> message created|${fiscalCode}|${userOrganization.organizationId}|${retrievedMessage.id}`
+
+      winston.debug(
+        `CreateMessageHandler|message created|${userOrganization.organizationId}|${retrievedMessage.id}`
       );
+    }
 
-      // when tracking the message creation event we want to know whether a
-      // default email address was provided
-      const hasDefaultEmail =
-        messagePayload.default_addresses &&
-        messagePayload.default_addresses.email
-          ? "true"
-          : "false";
+    //
+    // emit created message event to the output queue
+    //
 
-      const hasCustomSubject = messagePayload.content.subject
-        ? "true"
-        : "false";
+    const messageContent: IMessageContent = {
+      bodyMarkdown: messagePayload.content.markdown,
+      subject: messagePayload.content.subject
+    };
 
-      // track the event that a message has been created
-      applicationInsightsClient.trackEvent({
-        name: eventName,
-        properties: {
-          ...eventData,
-          dryRun: "false",
-          hasCustomSubject,
-          hasDefaultEmail,
-          success: "true"
-        }
-      });
+    // prepare the created message event
+    const createdMessageEvent: ICreatedMessageEvent = {
+      defaultAddresses: messagePayload.default_addresses,
+      isDryRun,
+      message: newMessageWithoutContent,
+      messageContent,
+      senderMetadata: {
+        departmentName: userAttributes.departmentName,
+        organizationName: userAttributes.organization.name,
+        serviceName: userAttributes.serviceName
+      }
+    };
 
-      const messageContent: IMessageContent = {
-        bodyMarkdown: messagePayload.content.markdown,
-        subject: messagePayload.content.subject
-      };
+    // queue the message to the created messages queue by setting
+    // the message to the output binding of this function
+    // tslint:disable-next-line:no-object-mutation
+    context.bindings.createdMessage = createdMessageEvent;
 
-      const retrievedMessageWithoutContent: IRetrievedMessageWithoutContent = {
-        ...retrievedMessage,
-        content: undefined,
-        kind: "IRetrievedMessageWithoutContent"
-      };
+    //
+    // generate appinsights event
+    //
 
-      // prepare the created message event
-      const createdMessageEvent: ICreatedMessageEvent = {
-        defaultAddresses: messagePayload.default_addresses,
-        message: retrievedMessageWithoutContent,
-        messageContent,
-        senderMetadata: {
-          departmentName: userAttributes.departmentName,
-          organizationName: userAttributes.organization.name,
-          serviceName: userAttributes.serviceName
-        }
-      };
+    // track the event that a message has been created
+    applicationInsightsClient.trackEvent({
+      name: appInsightsEventName,
+      properties: {
+        ...appInsightsEventProps,
+        success: "true"
+      }
+    });
 
-      // queue the message to the created messages queue by setting
-      // the message to the output binding of this function
-      // tslint:disable-next-line:no-object-mutation
-      context.bindings.createdMessage = createdMessageEvent;
+    //
+    // respond to request
+    //
 
-      const responsePayload: CreatedMessageResponse = {
-        dry_run: false
-      };
+    const responsePayload: CreatedMessageResponse = {
+      dry_run: isDryRun
+    };
 
+    if (isDryRun) {
+      return ResponseSuccessJson(responsePayload);
+    } else {
       // redirect the client to the message resource
       return ResponseSuccessRedirectToResource(
-        retrievedMessage,
-        `/api/v1/messages/${fiscalCode}/${message.id}`,
+        newMessageWithoutContent,
+        `/api/v1/messages/${fiscalCode}/${newMessageWithoutContent.id}`,
         responsePayload
-      );
-    } else {
-      // we got an error while creating the message
-      return ResponseErrorQuery(
-        "Error while creating Message",
-        errorOrMessage.left
       );
     }
   };
@@ -346,7 +358,11 @@ export function CreateMessage(
   organizationModel: OrganizationModel,
   messageModel: MessageModel
 ): express.RequestHandler {
-  const handler = CreateMessageHandler(applicationInsightsClient, messageModel);
+  const handler = CreateMessageHandler(
+    applicationInsightsClient,
+    messageModel,
+    ulidGenerator
+  );
   const middlewaresWrap = withRequestMiddlewares(
     ContextMiddleware<IBindings>(),
     AzureApiAuthMiddleware(
