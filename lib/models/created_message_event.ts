@@ -29,7 +29,6 @@ export interface ICreatedMessageEvent {
   readonly messageContent: IMessageContent;
   readonly defaultAddresses?: NewMessageDefaultAddresses;
   readonly senderMetadata: ICreatedMessageEventSenderMetadata;
-  readonly isDryRun: boolean;
 }
 
 /**

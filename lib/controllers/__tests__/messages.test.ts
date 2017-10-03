@@ -84,8 +84,7 @@ const aUserAuthenticationTrustedApplication: IAzureApiAuthorization = {
 const aMessagePayload: NewMessage = {
   content: {
     markdown: aMessageBodyMarkdown
-  },
-  dry_run: false
+  }
 };
 
 const aCustomSubject = toMessageSubject("A custom subject").get;
@@ -114,74 +113,6 @@ const aPublicExtendedMessage: CreatedMessage = {
 };
 
 describe("CreateMessageHandler", () => {
-  it("should process dry run calls", async () => {
-    const mockAppInsights = {
-      trackEvent: jest.fn()
-    };
-
-    const mockMessageModel = {
-      create: jest.fn()
-    };
-
-    const createMessageHandler = CreateMessageHandler(
-      mockAppInsights as any,
-      mockMessageModel as any,
-      () => aMessageId
-    );
-
-    const aDryRunMessagePayload: NewMessage = {
-      ...aMessagePayload,
-      dry_run: true
-    };
-
-    const mockContext = {
-      bindings: {}
-    };
-
-    const result = await createMessageHandler(
-      mockContext as any,
-      {
-        ...aUserAuthenticationDeveloper,
-        groups: new Set([UserGroup.ApiMessageWriteDryRun])
-      },
-      someUserAttributes,
-      aFiscalCode,
-      aDryRunMessagePayload
-    );
-
-    expect(mockMessageModel.create).not.toHaveBeenCalled();
-    expect(mockContext.bindings).toEqual({
-      createdMessage: {
-        isDryRun: true,
-        message: aNewMessageWithoutContent,
-        messageContent: {
-          bodyMarkdown: aMessagePayload.content.markdown
-        },
-        senderMetadata: {
-          departmentName: "IT",
-          organizationName: "AgID",
-          serviceName: "Test"
-        }
-      }
-    });
-    expect(mockAppInsights.trackEvent).toHaveBeenCalledTimes(1);
-    expect(mockAppInsights.trackEvent).toHaveBeenCalledWith({
-      name: "api.messages.create",
-      properties: {
-        hasCustomSubject: "false",
-        hasDefaultEmail: "false",
-        isDryRun: "true",
-        senderOrganizationId: "agid",
-        senderUserId: "u123",
-        success: "true"
-      }
-    });
-    expect(result.kind).toBe("IResponseSuccessJson");
-    if (result.kind === "IResponseSuccessJson") {
-      expect(result.value.dry_run).toBeTruthy();
-    }
-  });
-
   it("should create a new message", async () => {
     const mockAppInsights = {
       trackEvent: jest.fn()
@@ -223,7 +154,6 @@ describe("CreateMessageHandler", () => {
 
     expect(mockContext.bindings).toEqual({
       createdMessage: {
-        isDryRun: false,
         message: aNewMessageWithoutContent,
         messageContent: {
           bodyMarkdown: aMessagePayload.content.markdown
@@ -242,7 +172,6 @@ describe("CreateMessageHandler", () => {
       properties: {
         hasCustomSubject: "false",
         hasDefaultEmail: "false",
-        isDryRun: "false",
         senderOrganizationId: "agid",
         senderUserId: "u123",
         success: "true"
@@ -307,7 +236,6 @@ describe("CreateMessageHandler", () => {
 
     expect(mockContext.bindings).toEqual({
       createdMessage: {
-        isDryRun: false,
         message: aNewMessageWithoutContent,
         messageContent: {
           bodyMarkdown: aMessagePayload.content.markdown,
@@ -327,7 +255,6 @@ describe("CreateMessageHandler", () => {
       properties: {
         hasCustomSubject: "true",
         hasDefaultEmail: "false",
-        isDryRun: "false",
         senderOrganizationId: "agid",
         senderUserId: "u123",
         success: "true"
@@ -399,7 +326,6 @@ describe("CreateMessageHandler", () => {
         defaultAddresses: {
           email: toEmailAddress("test@example.com").get
         },
-        isDryRun: false,
         message: aNewMessageWithoutContent,
         messageContent: {
           bodyMarkdown: messagePayload.content.markdown
@@ -418,7 +344,6 @@ describe("CreateMessageHandler", () => {
       properties: {
         hasCustomSubject: "false",
         hasDefaultEmail: "true",
-        isDryRun: "false",
         senderOrganizationId: "agid",
         senderUserId: "u123",
         success: "true"
@@ -561,7 +486,6 @@ describe("CreateMessageHandler", () => {
         error: "IResponseErrorQuery",
         hasCustomSubject: "false",
         hasDefaultEmail: "false",
-        isDryRun: "false",
         senderOrganizationId: "agid",
         senderUserId: "u123",
         success: "false"

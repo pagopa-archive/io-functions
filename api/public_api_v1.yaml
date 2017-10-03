@@ -65,7 +65,7 @@ paths:
       summary: Submit a message
       description: |-
         Submits a message to a user.
-        On error, the reason is returned in the response payload. This is useful with the 'dry_run' option to check for the validity a the messages before sending it.
+        On error, the reason is returned in the response payload.
       parameters:
         - name: message
           in: body
@@ -74,8 +74,6 @@ paths:
       responses:
         '201':
           description: Message created.
-          schema:
-            $ref: '#/definitions/CreatedMessageResponse'
           headers:
             Location:
               type: string
@@ -163,9 +161,6 @@ definitions:
     title: NewMessage
     type: object
     properties:
-      dry_run:
-        type: boolean
-        description: 'This parameter, when set to true, allows developers to test a request without actually sending a message. The submitted message won''t be delivered to the end user but only checked for validity: "400 BAD REQUEST" is returned with a payload that describes the error. If the message can be accepted for delivery then "200 OK" is returned. The default value is false.'
       time_to_live:
         $ref: '#/definitions/TimeToLive'
       content:
@@ -202,13 +197,6 @@ definitions:
     required:
       - fiscal_code
       - sender_organization_id
-  CreatedMessageResponse:
-    type: object
-    properties:
-      dry_run:
-        type: boolean
-    required:
-      - dry_run
   MessageResponse:
     type: object
     properties:

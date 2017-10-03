@@ -12,7 +12,6 @@ import { IContext } from "azure-function-express";
 import { left, right } from "../utils/either";
 
 import { CreatedMessage } from "../api/definitions/CreatedMessage";
-import { CreatedMessageResponse } from "../api/definitions/CreatedMessageResponse";
 import { FiscalCode } from "../api/definitions/FiscalCode";
 import { MessageResponse } from "../api/definitions/MessageResponse";
 import { isNewMessage, NewMessage } from "../api/definitions/NewMessage";
@@ -37,7 +36,6 @@ import {
 import {
   IResponseErrorForbiddenNotAuthorized,
   IResponseErrorForbiddenNotAuthorizedForDefaultAddresses,
-  IResponseErrorForbiddenNotAuthorizedForDryRun,
   IResponseErrorForbiddenNotAuthorizedForProduction,
   IResponseErrorNotFound,
   IResponseErrorQuery,
@@ -47,7 +45,6 @@ import {
   IResponseSuccessRedirectToResource,
   ResponseErrorForbiddenNotAuthorized,
   ResponseErrorForbiddenNotAuthorizedForDefaultAddresses,
-  ResponseErrorForbiddenNotAuthorizedForDryRun,
   ResponseErrorForbiddenNotAuthorizedForProduction,
   ResponseErrorNotFound,
   ResponseErrorQuery,
@@ -133,12 +130,10 @@ type ICreateMessageHandler = (
   fiscalCode: FiscalCode,
   messagePayload: NewMessage
 ) => Promise<
-  | IResponseSuccessRedirectToResource<IMessage, CreatedMessageResponse>
-  | IResponseSuccessJson<CreatedMessageResponse>
+  | IResponseSuccessRedirectToResource<IMessage, {}>
   | IResponseErrorQuery
   | IResponseErrorValidation
   | IResponseErrorForbiddenNotAuthorized
-  | IResponseErrorForbiddenNotAuthorizedForDryRun
   | IResponseErrorForbiddenNotAuthorizedForProduction
   | IResponseErrorForbiddenNotAuthorizedForDefaultAddresses
 >;
@@ -192,9 +187,6 @@ export function CreateMessageHandler(
     // extract the user organization
     const userOrganization = userAttributes.organization;
 
-    // whether this is a real creation of message or just a dry run
-    const isDryRun = messagePayload.dry_run || false;
-
     // base appinsights event attributes for convenience (used later)
     const appInsightsEventName = "api.messages.create";
     const appInsightsEventProps = {
@@ -203,7 +195,6 @@ export function CreateMessageHandler(
         messagePayload.default_addresses &&
           messagePayload.default_addresses.email
       ).toString(),
-      isDryRun: isDryRun.toString(),
       senderOrganizationId: userOrganization.organizationId,
       senderUserId: auth.userId
     };
@@ -212,31 +203,20 @@ export function CreateMessageHandler(
     // authorization checks
     //
 
-    if (isDryRun) {
-      // dry run requests
+    // check whether the user is authorized for real message creation
+    if (!auth.groups.has(UserGroup.ApiMessageWrite)) {
+      // the user is doing a production call but he's not enabled
+      return ResponseErrorForbiddenNotAuthorizedForProduction;
+    }
 
-      // check whether the user is authorized for dry runs
-      if (!auth.groups.has(UserGroup.ApiMessageWriteDryRun)) {
-        return ResponseErrorForbiddenNotAuthorizedForDryRun;
-      }
-    } else {
-      // real message creation requests
-
-      // check whether the user is authorized for real message creation
-      if (!auth.groups.has(UserGroup.ApiMessageWrite)) {
-        // the user is doing a production call but he's not enabled
-        return ResponseErrorForbiddenNotAuthorizedForProduction;
-      }
-
-      // check whether the user is authorized to provide default addresses
-      if (
-        messagePayload.default_addresses &&
-        !auth.groups.has(UserGroup.ApiMessageWriteDefaultAddress)
-      ) {
-        // the user is sending a message by providing default addresses but he's
-        // not allowed to do so.
-        return ResponseErrorForbiddenNotAuthorizedForDefaultAddresses;
-      }
+    // check whether the user is authorized to provide default addresses
+    if (
+      messagePayload.default_addresses &&
+      !auth.groups.has(UserGroup.ApiMessageWriteDefaultAddress)
+    ) {
+      // the user is sending a message by providing default addresses but he's
+      // not allowed to do so.
+      return ResponseErrorForbiddenNotAuthorizedForDefaultAddresses;
     }
 
     // create a new message from the payload
@@ -254,40 +234,38 @@ export function CreateMessageHandler(
     // handle real message creation requests
     //
 
-    if (!isDryRun) {
-      // attempt to create the message
-      const errorOrMessage = await messageModel.create(
-        newMessageWithoutContent,
-        newMessageWithoutContent.fiscalCode
-      );
+    // attempt to create the message
+    const errorOrMessage = await messageModel.create(
+      newMessageWithoutContent,
+      newMessageWithoutContent.fiscalCode
+    );
 
-      if (errorOrMessage.isLeft) {
-        // we got an error while creating the message
+    if (errorOrMessage.isLeft) {
+      // we got an error while creating the message
 
-        // track the event that a message has failed to be created
-        applicationInsightsClient.trackEvent({
-          name: appInsightsEventName,
-          properties: {
-            ...appInsightsEventProps,
-            error: "IResponseErrorQuery",
-            success: "false"
-          }
-        });
+      // track the event that a message has failed to be created
+      applicationInsightsClient.trackEvent({
+        name: appInsightsEventName,
+        properties: {
+          ...appInsightsEventProps,
+          error: "IResponseErrorQuery",
+          success: "false"
+        }
+      });
 
-        // return an error response
-        return ResponseErrorQuery(
-          "Error while creating Message",
-          errorOrMessage.left
-        );
-      }
-
-      // message creation succeeded
-      const retrievedMessage = errorOrMessage.right;
-
-      winston.debug(
-        `CreateMessageHandler|message created|${userOrganization.organizationId}|${retrievedMessage.id}`
+      // return an error response
+      return ResponseErrorQuery(
+        "Error while creating Message",
+        errorOrMessage.left
       );
     }
+
+    // message creation succeeded
+    const retrievedMessage = errorOrMessage.right;
+
+    winston.debug(
+      `CreateMessageHandler|message created|${userOrganization.organizationId}|${retrievedMessage.id}`
+    );
 
     //
     // emit created message event to the output queue
@@ -301,7 +279,6 @@ export function CreateMessageHandler(
     // prepare the created message event
     const createdMessageEvent: ICreatedMessageEvent = {
       defaultAddresses: messagePayload.default_addresses,
-      isDryRun,
       message: newMessageWithoutContent,
       messageContent,
       senderMetadata: {
@@ -333,20 +310,12 @@ export function CreateMessageHandler(
     // respond to request
     //
 
-    const responsePayload: CreatedMessageResponse = {
-      dry_run: isDryRun
-    };
-
-    if (isDryRun) {
-      return ResponseSuccessJson(responsePayload);
-    } else {
-      // redirect the client to the message resource
-      return ResponseSuccessRedirectToResource(
-        newMessageWithoutContent,
-        `/api/v1/messages/${fiscalCode}/${newMessageWithoutContent.id}`,
-        responsePayload
-      );
-    }
+    // redirect the client to the message resource
+    return ResponseSuccessRedirectToResource(
+      newMessageWithoutContent,
+      `/api/v1/messages/${fiscalCode}/${newMessageWithoutContent.id}`,
+      {}
+    );
   };
 }
 
@@ -365,9 +334,7 @@ export function CreateMessage(
   );
   const middlewaresWrap = withRequestMiddlewares(
     ContextMiddleware<IBindings>(),
-    AzureApiAuthMiddleware(
-      new Set([UserGroup.ApiMessageWrite, UserGroup.ApiMessageWriteDryRun])
-    ),
+    AzureApiAuthMiddleware(new Set([UserGroup.ApiMessageWrite])),
     AzureUserAttributesMiddleware(organizationModel),
     FiscalCodeMiddleware,
     MessagePayloadMiddleware

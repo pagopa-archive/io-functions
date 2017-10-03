@@ -122,7 +122,6 @@ describe("test index function", () => {
     };
 
     const aMessageEvent: ICreatedMessageEvent = {
-      isDryRun: false,
       message: aMessage,
       messageContent: {
         bodyMarkdown: aMessageBodyMarkdown

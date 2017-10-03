@@ -39,8 +39,6 @@ export enum UserGroup {
 
   // messages: read sent message
   ApiMessageRead = "ApiMessageRead",
-  // messages: send messages in dry run mode
-  ApiMessageWriteDryRun = "ApiMessageWriteDryRun",
   // messages: send messages
   ApiMessageWrite = "ApiMessageWrite",
   // messages: ability to set default address when sending a message

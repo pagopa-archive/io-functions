@@ -137,7 +137,7 @@ the Azure Application Insights service.
 Currently the system emits the following events:
 
 * `api.messages.create`: when a message gets created (metadata includes
-  `senderOrganizationId`, `senderUserId`, `dryRun` and `success` status).
+  `senderOrganizationId`, `senderUserId` and `success` status).
 * `notification.email.delivery`: when an email notification gets delivered (
   metadata includes `addressSource`, `messageId`, `notificationId` and `mta`).
 
