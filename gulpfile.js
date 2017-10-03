@@ -1,14 +1,23 @@
+/**
+ * This file contains gulp (https://gulpjs.com/) tasks to run at build time.
+ * See also npm tasks in package.json.
+ */
 const gulp = require("gulp");
 const loadPLugins = require("gulp-load-plugins");
 const mjml = require("mjml");
 const path = require("path");
-const shell = require("shelljs");
 
 const plugin = loadPLugins();
 
 const TYPESCRIPT_TEMPLATES_DIR = "lib/templates/html";
 const MJML_TEMPLATES_DIR = "templates/mjml";
 
+/**
+ * Transform a mjml template to a Typescript function outputting HTML.
+ * 
+ * @param content the content of mjml template as string
+ * @param options options object (see gulp-text-simple plugin https://www.npmjs.com/package/gulp-text-simple)
+ */
 const toMjml = (content, options) => {
   const name = path.basename(options.sourcePath);
   return [
@@ -30,7 +39,10 @@ const toMjml = (content, options) => {
   ].join("\n");
 };
 
-gulp.task("mjml", () => {
+/**
+ * Generate Typescript template files from mjml (https://mjml.io/).
+ */
+gulp.task("generate:templates", () => {
   return gulp
     .src(`${MJML_TEMPLATES_DIR}/*.mjml`)
     .pipe(plugin.textSimple(toMjml)())
@@ -38,4 +50,4 @@ gulp.task("mjml", () => {
     .pipe(gulp.dest(TYPESCRIPT_TEMPLATES_DIR));
 });
 
-gulp.task("default", ["mjml"]);
+gulp.task("default", ["generate:templates"]);

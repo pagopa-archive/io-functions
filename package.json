@@ -18,7 +18,7 @@
     "pretest": "npm run lint",
     "test": "jest --coverage",
     "generate:models": "ts-node ./api/generate_models.ts",
-    "generate:templates": "gulp mjml"
+    "generate:templates": "gulp generate:templates"
   },
   "dependencies": {
     "@types/documentdb": "^1.10.2",
