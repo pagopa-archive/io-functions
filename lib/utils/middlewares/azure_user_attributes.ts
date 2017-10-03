@@ -27,6 +27,8 @@ import {
   ResponseErrorQuery
 } from "../response";
 
+import { FiscalCode, isFiscalCode } from "../../api/definitions/FiscalCode";
+
 // The user email will be passed in this header by the API Gateway
 const HEADER_USER_EMAIL = "x-user-email";
 
@@ -42,6 +44,7 @@ interface IAzureUserNote {
   readonly organizationId: NonEmptyString;
   readonly departmentName: NonEmptyString;
   readonly serviceName: NonEmptyString;
+  readonly authorizedRecipients?: ReadonlyArray<NonEmptyString>;
 }
 
 /**
@@ -54,7 +57,11 @@ const isIAzureUserNote = is<IAzureUserNote>(
     arg.departmentName &&
     isNonEmptyString(arg.departmentName) &&
     arg.serviceName &&
-    isNonEmptyString(arg.serviceName)
+    isNonEmptyString(arg.serviceName) &&
+    (arg.authorizedRecipients === null ||
+      arg.authorizedRecipients === undefined ||
+      (Array.isArray(arg.authorizedRecipients) &&
+        arg.authorizedRecipients.every(isNonEmptyString)))
 );
 
 // tslint:disable-next-line:no-any
@@ -97,6 +104,8 @@ export interface IAzureUserAttributes {
   readonly departmentName: NonEmptyString;
   // the name of the service
   readonly serviceName: NonEmptyString;
+  // optional authorized recipients for limited message creation
+  readonly authorizedRecipients: ReadonlySet<FiscalCode>;
 }
 
 /**
@@ -190,7 +199,13 @@ export function AzureUserAttributesMiddleware(
 
     const organization = maybeOrganization.get;
 
+    // extract the valid autorized recipients
+    const authorizedRecipients = userAttributes.authorizedRecipients
+      ? new Set(userAttributes.authorizedRecipients.filter(isFiscalCode))
+      : new Set();
+
     const authInfo: IAzureUserAttributes = {
+      authorizedRecipients,
       departmentName: userAttributes.departmentName,
       email: userEmail,
       kind: "IAzureUserAttributes",

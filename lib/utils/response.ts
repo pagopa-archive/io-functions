@@ -228,6 +228,26 @@ export const ResponseErrorForbiddenNotAuthorizedForProduction: IResponseErrorFor
 };
 
 /**
+ * The user is not allowed to issue requests for the recipient.
+ */
+export interface IResponseErrorForbiddenNotAuthorizedForRecipient
+  extends IResponse {
+  readonly kind: "IResponseErrorForbiddenNotAuthorizedForRecipient";
+}
+
+/**
+ * The user is not allowed to issue requests for the recipient.
+ */
+export const ResponseErrorForbiddenNotAuthorizedForRecipient: IResponseErrorForbiddenNotAuthorizedForRecipient = {
+  ...ResponseErrorGeneric(
+    HTTP_STATUS_403,
+    "Recipient forbidden",
+    "You are not allowed to issue requests for the recipient."
+  ),
+  kind: "IResponseErrorForbiddenNotAuthorizedForRecipient"
+};
+
+/**
  * The user is not allowed to send messages with default addresses.
  */
 export interface IResponseErrorForbiddenNotAuthorizedForDefaultAddresses

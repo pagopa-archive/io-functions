@@ -57,6 +57,7 @@ const anEmail = toEmailString("test@example.com").get;
 const aMessageBodyMarkdown = toMessageBodyMarkdown("test".repeat(80)).get;
 
 const someUserAttributes: IAzureUserAttributes = {
+  authorizedRecipients: new Set(),
   departmentName: toNonEmptyString("IT").get,
   email: anEmail,
   kind: "IAzureUserAttributes",
@@ -113,6 +114,39 @@ const aPublicExtendedMessage: CreatedMessage = {
 };
 
 describe("CreateMessageHandler", () => {
+  it("should not authorize sending messages to unauthorized recipients", async () => {
+    const mockMessageModel = {
+      create: jest.fn()
+    };
+
+    const createMessageHandler = CreateMessageHandler(
+      {} as any,
+      mockMessageModel as any,
+      {} as any
+    );
+
+    const mockContext = {
+      bindings: {},
+      log: jest.fn()
+    };
+
+    const result = await createMessageHandler(
+      mockContext as any,
+      {
+        ...aUserAuthenticationDeveloper,
+        groups: new Set([UserGroup.ApiMessageWriteLimited])
+      },
+      { ...someUserAttributes, authorizedRecipients: new Set([]) },
+      aFiscalCode,
+      aMessagePayload
+    );
+
+    expect(mockMessageModel.create).not.toHaveBeenCalled();
+    expect(result.kind).toBe(
+      "IResponseErrorForbiddenNotAuthorizedForRecipient"
+    );
+  });
+
   it("should create a new message", async () => {
     const mockAppInsights = {
       trackEvent: jest.fn()
@@ -140,6 +174,85 @@ describe("CreateMessageHandler", () => {
         groups: new Set([UserGroup.ApiMessageWrite])
       },
       someUserAttributes,
+      aFiscalCode,
+      aMessagePayload
+    );
+
+    expect(mockMessageModel.create).toHaveBeenCalledTimes(1);
+
+    const messageDocument: INewMessage =
+      mockMessageModel.create.mock.calls[0][0];
+    expect(messageDocument.content).toBeUndefined();
+
+    expect(mockMessageModel.create.mock.calls[0][1]).toEqual(aFiscalCode);
+
+    expect(mockContext.bindings).toEqual({
+      createdMessage: {
+        message: aNewMessageWithoutContent,
+        messageContent: {
+          bodyMarkdown: aMessagePayload.content.markdown
+        },
+        senderMetadata: {
+          departmentName: "IT",
+          organizationName: "AgID",
+          serviceName: "Test"
+        }
+      }
+    });
+
+    expect(mockAppInsights.trackEvent).toHaveBeenCalledTimes(1);
+    expect(mockAppInsights.trackEvent).toHaveBeenCalledWith({
+      name: "api.messages.create",
+      properties: {
+        hasCustomSubject: "false",
+        hasDefaultEmail: "false",
+        senderOrganizationId: "agid",
+        senderUserId: "u123",
+        success: "true"
+      }
+    });
+
+    expect(result.kind).toBe("IResponseSuccessRedirectToResource");
+    if (result.kind === "IResponseSuccessRedirectToResource") {
+      const response = MockResponse();
+      result.apply(response);
+      expect(response.set).toBeCalledWith(
+        "Location",
+        `/api/v1/messages/${aFiscalCode}/${messageDocument.id}`
+      );
+    }
+  });
+
+  it("should create a new message for a limited auhorization recipient", async () => {
+    const mockAppInsights = {
+      trackEvent: jest.fn()
+    };
+
+    const mockMessageModel = {
+      create: jest.fn(() => right(aRetrievedMessageWithoutContent))
+    };
+
+    const createMessageHandler = CreateMessageHandler(
+      mockAppInsights as any,
+      mockMessageModel as any,
+      () => aMessageId
+    );
+
+    const mockContext = {
+      bindings: {},
+      log: jest.fn()
+    };
+
+    const result = await createMessageHandler(
+      mockContext as any,
+      {
+        ...aUserAuthenticationDeveloper,
+        groups: new Set([UserGroup.ApiMessageWriteLimited])
+      },
+      {
+        ...someUserAttributes,
+        authorizedRecipients: new Set([aFiscalCode])
+      },
       aFiscalCode,
       aMessagePayload
     );

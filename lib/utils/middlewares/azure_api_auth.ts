@@ -41,6 +41,8 @@ export enum UserGroup {
   ApiMessageRead = "ApiMessageRead",
   // messages: send messages
   ApiMessageWrite = "ApiMessageWrite",
+  // messages: send messages only to authorized receipts (used for trial)
+  ApiMessageWriteLimited = "ApiMessageWriteLimited",
   // messages: ability to set default address when sending a message
   ApiMessageWriteDefaultAddress = "ApiMessageWriteDefaultAddress",
   // messages: list all messages for any recipient

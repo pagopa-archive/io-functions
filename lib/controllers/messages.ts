@@ -37,6 +37,7 @@ import {
   IResponseErrorForbiddenNotAuthorized,
   IResponseErrorForbiddenNotAuthorizedForDefaultAddresses,
   IResponseErrorForbiddenNotAuthorizedForProduction,
+  IResponseErrorForbiddenNotAuthorizedForRecipient,
   IResponseErrorNotFound,
   IResponseErrorQuery,
   IResponseErrorValidation,
@@ -46,6 +47,7 @@ import {
   ResponseErrorForbiddenNotAuthorized,
   ResponseErrorForbiddenNotAuthorizedForDefaultAddresses,
   ResponseErrorForbiddenNotAuthorizedForProduction,
+  ResponseErrorForbiddenNotAuthorizedForRecipient,
   ResponseErrorNotFound,
   ResponseErrorQuery,
   ResponseErrorValidation,
@@ -134,6 +136,7 @@ type ICreateMessageHandler = (
   | IResponseErrorQuery
   | IResponseErrorValidation
   | IResponseErrorForbiddenNotAuthorized
+  | IResponseErrorForbiddenNotAuthorizedForRecipient
   | IResponseErrorForbiddenNotAuthorizedForProduction
   | IResponseErrorForbiddenNotAuthorizedForDefaultAddresses
 >;
@@ -203,8 +206,15 @@ export function CreateMessageHandler(
     // authorization checks
     //
 
-    // check whether the user is authorized for real message creation
-    if (!auth.groups.has(UserGroup.ApiMessageWrite)) {
+    // check whether the user is authorized to send messages to limited recipients
+    // or whether the user is authorized to send messages to any recipient
+    if (auth.groups.has(UserGroup.ApiMessageWriteLimited)) {
+      // user is in limited message creation mode, check whether he's sending
+      // the message to an authorized recipient
+      if (!userAttributes.authorizedRecipients.has(fiscalCode)) {
+        return ResponseErrorForbiddenNotAuthorizedForRecipient;
+      }
+    } else if (!auth.groups.has(UserGroup.ApiMessageWrite)) {
       // the user is doing a production call but he's not enabled
       return ResponseErrorForbiddenNotAuthorizedForProduction;
     }
@@ -333,10 +343,17 @@ export function CreateMessage(
     ulidGenerator
   );
   const middlewaresWrap = withRequestMiddlewares(
+    // extract Azure Functions bindings
     ContextMiddleware<IBindings>(),
-    AzureApiAuthMiddleware(new Set([UserGroup.ApiMessageWrite])),
+    // allow only users in the ApiMessageWrite and ApiMessageWriteLimited groups
+    AzureApiAuthMiddleware(
+      new Set([UserGroup.ApiMessageWrite, UserGroup.ApiMessageWriteLimited])
+    ),
+    // extracts custom user attributes from the request
     AzureUserAttributesMiddleware(organizationModel),
+    // extracts the fiscal code from the request params
     FiscalCodeMiddleware,
+    // extracts the create message payload from the request body
     MessagePayloadMiddleware
   );
   return wrapRequestHandler(middlewaresWrap(handler));
