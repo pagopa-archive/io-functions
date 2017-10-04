@@ -12,7 +12,7 @@
 
 [![Issue Count](https://codeclimate.com/github/teamdigitale/digital-citizenship-functions/badges/issue_count.svg)](https://codeclimate.com/github/teamdigitale/digital-citizenship-functions)
 
-## Overview
+## Introduction
 
 This is the implementation of the Digital Citizenship API, a set of services
 that enable Public Administrations to deliver modern digital services to
@@ -26,6 +26,59 @@ delivery of personalized digital services based on the citizen's preferences
 For further details about the Digital Citizenship initiative, checkout the
 [main Digital Citizenship](https://github.com/teamdigitale/cittadinanza-digitale)
 repository.
+
+## Services provided by the Digital Citizenship API
+
+### Messages
+
+Public administration agencies receives millions of requests every year from
+citizens anxious to find out about the progress of their application or whether
+a payment has been received. Citizens have to spend time on hold, which wastes
+their time and costs government a lot of money in call centre running costs.
+Moreover citizens forget about or miss payment deadlines costing them overtime
+fees.
+
+The messages service makes it easier to keep citizens updated, by helping
+service teams across public administration agencies to send text messages,
+emails or letters to the citizens.
+
+#### How messages work
+
+Public administration services can send notifications to citizen by calling
+the messages API from their web applications, back office systems or batch jobs.
+The messages service provides flexibility and resilience by having a number of
+SMS, email and post providers. It’s straightforward for us to swap these
+providers in and out, based on price, performance etc, with no effort or impact
+on government service teams.
+
+The messages service is for sending transactional messages, not for marketing.
+There is a risk that marketing messages may be reported as spam, which would
+affect delivery rates.
+
+### Preferences
+
+Modern digital services are designed for delivering personalized experiences
+to the users. Today, a citizen that wishes to provide personal information and
+preferences to the services he uses, has to provide his preferences over and
+over again to all services, that's because most public digital services don't
+share any information.
+
+The preferences service makes it easier for the citizen to provide his personal
+preferences (i.e. contacts information, payment preferences, language, etc...)
+in a central repository that digital services across public administration can
+use to provide a more personalized digital experience to citizens.
+
+#### How preferences work
+
+Public administration services can query a citizen preferences by calling the
+preferences API from their web applications.
+The preferences service provides fine control on what preferences attributes a
+certain application can read or write, making handling user provided information
+safe and painless.
+
+The preferences service is for delivering personalized digital services, not for
+collecting citizens emails or mobile numbers. For any transactional
+communication need, the messages service must be used.
 
 ## Architecture
 
