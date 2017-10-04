@@ -3,7 +3,7 @@
  */
 
 import * as express from "express";
-import * as ulid from "ulid";
+import * as winston from "winston";
 
 import * as ApplicationInsights from "applicationinsights";
 
@@ -12,7 +12,6 @@ import { IContext } from "azure-function-express";
 import { left, right } from "../utils/either";
 
 import { CreatedMessage } from "../api/definitions/CreatedMessage";
-import { CreatedMessageResponse } from "../api/definitions/CreatedMessageResponse";
 import { FiscalCode } from "../api/definitions/FiscalCode";
 import { MessageResponse } from "../api/definitions/MessageResponse";
 import { isNewMessage, NewMessage } from "../api/definitions/NewMessage";
@@ -37,8 +36,8 @@ import {
 import {
   IResponseErrorForbiddenNotAuthorized,
   IResponseErrorForbiddenNotAuthorizedForDefaultAddresses,
-  IResponseErrorForbiddenNotAuthorizedForDryRun,
   IResponseErrorForbiddenNotAuthorizedForProduction,
+  IResponseErrorForbiddenNotAuthorizedForRecipient,
   IResponseErrorNotFound,
   IResponseErrorQuery,
   IResponseErrorValidation,
@@ -47,8 +46,8 @@ import {
   IResponseSuccessRedirectToResource,
   ResponseErrorForbiddenNotAuthorized,
   ResponseErrorForbiddenNotAuthorizedForDefaultAddresses,
-  ResponseErrorForbiddenNotAuthorizedForDryRun,
   ResponseErrorForbiddenNotAuthorizedForProduction,
+  ResponseErrorForbiddenNotAuthorizedForRecipient,
   ResponseErrorNotFound,
   ResponseErrorQuery,
   ResponseErrorValidation,
@@ -56,7 +55,7 @@ import {
   ResponseSuccessJsonIterator,
   ResponseSuccessRedirectToResource
 } from "../utils/response";
-import { toNonEmptyString } from "../utils/strings";
+import { ObjectIdGenerator, ulidGenerator } from "../utils/strings";
 
 import { mapResultIterator } from "../utils/documentdb";
 
@@ -70,7 +69,6 @@ import {
   IMessageContent,
   INewMessageWithoutContent,
   IRetrievedMessage,
-  IRetrievedMessageWithoutContent,
   MessageModel
 } from "../models/message";
 
@@ -134,12 +132,11 @@ type ICreateMessageHandler = (
   fiscalCode: FiscalCode,
   messagePayload: NewMessage
 ) => Promise<
-  | IResponseSuccessRedirectToResource<IMessage, CreatedMessageResponse>
-  | IResponseSuccessJson<CreatedMessageResponse>
+  | IResponseSuccessRedirectToResource<IMessage, {}>
   | IResponseErrorQuery
   | IResponseErrorValidation
   | IResponseErrorForbiddenNotAuthorized
-  | IResponseErrorForbiddenNotAuthorizedForDryRun
+  | IResponseErrorForbiddenNotAuthorizedForRecipient
   | IResponseErrorForbiddenNotAuthorizedForProduction
   | IResponseErrorForbiddenNotAuthorizedForDefaultAddresses
 >;
@@ -186,54 +183,43 @@ type IGetMessagesHandler = (
  */
 export function CreateMessageHandler(
   applicationInsightsClient: ApplicationInsights.TelemetryClient,
-  messageModel: MessageModel
+  messageModel: MessageModel,
+  generateObjectId: ObjectIdGenerator
 ): ICreateMessageHandler {
   return async (context, auth, userAttributes, fiscalCode, messagePayload) => {
+    // extract the user organization
     const userOrganization = userAttributes.organization;
-    if (!userOrganization) {
-      // to be able to send a message the user musy be part of an organization
-      return ResponseErrorValidation(
-        "Request not valid",
-        "The user is not part of any organization."
-      );
-    }
 
-    const eventName = "api.messages.create";
-    const eventData = {
+    // base appinsights event attributes for convenience (used later)
+    const appInsightsEventName = "api.messages.create";
+    const appInsightsEventProps = {
+      hasCustomSubject: Boolean(messagePayload.content.subject).toString(),
+      hasDefaultEmail: Boolean(
+        messagePayload.default_addresses &&
+          messagePayload.default_addresses.email
+      ).toString(),
       senderOrganizationId: userOrganization.organizationId,
       senderUserId: auth.userId
     };
 
-    if (messagePayload.dry_run) {
-      // the user requested a dry run
+    //
+    // authorization checks
+    //
 
-      if (auth.groups.has(UserGroup.ApiMessageWriteDryRun)) {
-        // the user is authorized for dry run calls, we respond with the
-        // data that he just sent
-        applicationInsightsClient.trackEvent({
-          name: eventName,
-          properties: {
-            ...eventData,
-            dryRun: "true",
-            success: "true"
-          }
-        });
-        const responsePayload: CreatedMessageResponse = {
-          dry_run: true
-        };
-        return ResponseSuccessJson(responsePayload);
-      } else {
-        // the user is not authorized for dry run calls
-        return ResponseErrorForbiddenNotAuthorizedForDryRun;
+    // check whether the user is authorized to send messages to limited recipients
+    // or whether the user is authorized to send messages to any recipient
+    if (auth.groups.has(UserGroup.ApiLimitedMessageWrite)) {
+      // user is in limited message creation mode, check whether he's sending
+      // the message to an authorized recipient
+      if (!userAttributes.authorizedRecipients.has(fiscalCode)) {
+        return ResponseErrorForbiddenNotAuthorizedForRecipient;
       }
-    }
-
-    // the user is doing a production call
-    if (!auth.groups.has(UserGroup.ApiMessageWrite)) {
+    } else if (!auth.groups.has(UserGroup.ApiMessageWrite)) {
       // the user is doing a production call but he's not enabled
       return ResponseErrorForbiddenNotAuthorizedForProduction;
     }
 
+    // check whether the user is authorized to provide default addresses
     if (
       messagePayload.default_addresses &&
       !auth.groups.has(UserGroup.ApiMessageWriteDefaultAddress)
@@ -243,98 +229,103 @@ export function CreateMessageHandler(
       return ResponseErrorForbiddenNotAuthorizedForDefaultAddresses;
     }
 
-    // we need the user to be associated to a valid organization for him
-    // to be able to send a message
-    const message: INewMessageWithoutContent = {
+    // create a new message from the payload
+    // this object contains only the message metadata, the content of the
+    // message is handled separately (see below)
+    const newMessageWithoutContent: INewMessageWithoutContent = {
       fiscalCode,
-      id: toNonEmptyString(ulid()).get,
+      id: generateObjectId(),
       kind: "INewMessageWithoutContent",
       senderOrganizationId: userOrganization.organizationId,
       senderUserId: auth.userId
     };
 
+    //
+    // handle real message creation requests
+    //
+
     // attempt to create the message
     const errorOrMessage = await messageModel.create(
-      message,
-      message.fiscalCode
+      newMessageWithoutContent,
+      newMessageWithoutContent.fiscalCode
     );
 
-    if (errorOrMessage.isRight) {
-      // message creation succeeded
-      const retrievedMessage = errorOrMessage.right;
-      context.log(
-        `>> message created|${fiscalCode}|${userOrganization.organizationId}|${retrievedMessage.id}`
-      );
+    if (errorOrMessage.isLeft) {
+      // we got an error while creating the message
 
-      // when tracking the message creation event we want to know whether a
-      // default email address was provided
-      const hasDefaultEmail =
-        messagePayload.default_addresses &&
-        messagePayload.default_addresses.email
-          ? "true"
-          : "false";
-
-      const hasCustomSubject = messagePayload.content.subject
-        ? "true"
-        : "false";
-
-      // track the event that a message has been created
+      // track the event that a message has failed to be created
       applicationInsightsClient.trackEvent({
-        name: eventName,
+        name: appInsightsEventName,
         properties: {
-          ...eventData,
-          dryRun: "false",
-          hasCustomSubject,
-          hasDefaultEmail,
-          success: "true"
+          ...appInsightsEventProps,
+          error: "IResponseErrorQuery",
+          success: "false"
         }
       });
 
-      const messageContent: IMessageContent = {
-        bodyMarkdown: messagePayload.content.markdown,
-        subject: messagePayload.content.subject
-      };
-
-      const retrievedMessageWithoutContent: IRetrievedMessageWithoutContent = {
-        ...retrievedMessage,
-        content: undefined,
-        kind: "IRetrievedMessageWithoutContent"
-      };
-
-      // prepare the created message event
-      const createdMessageEvent: ICreatedMessageEvent = {
-        defaultAddresses: messagePayload.default_addresses,
-        message: retrievedMessageWithoutContent,
-        messageContent,
-        senderMetadata: {
-          departmentName: userAttributes.departmentName,
-          organizationName: userAttributes.organization.name,
-          serviceName: userAttributes.serviceName
-        }
-      };
-
-      // queue the message to the created messages queue by setting
-      // the message to the output binding of this function
-      // tslint:disable-next-line:no-object-mutation
-      context.bindings.createdMessage = createdMessageEvent;
-
-      const responsePayload: CreatedMessageResponse = {
-        dry_run: false
-      };
-
-      // redirect the client to the message resource
-      return ResponseSuccessRedirectToResource(
-        retrievedMessage,
-        `/api/v1/messages/${fiscalCode}/${message.id}`,
-        responsePayload
-      );
-    } else {
-      // we got an error while creating the message
+      // return an error response
       return ResponseErrorQuery(
         "Error while creating Message",
         errorOrMessage.left
       );
     }
+
+    // message creation succeeded
+    const retrievedMessage = errorOrMessage.right;
+
+    winston.debug(
+      `CreateMessageHandler|message created|${userOrganization.organizationId}|${retrievedMessage.id}`
+    );
+
+    //
+    // emit created message event to the output queue
+    //
+
+    const messageContent: IMessageContent = {
+      bodyMarkdown: messagePayload.content.markdown,
+      subject: messagePayload.content.subject
+    };
+
+    // prepare the created message event
+    const createdMessageEvent: ICreatedMessageEvent = {
+      defaultAddresses: messagePayload.default_addresses,
+      message: newMessageWithoutContent,
+      messageContent,
+      senderMetadata: {
+        departmentName: userAttributes.departmentName,
+        organizationName: userAttributes.organization.name,
+        serviceName: userAttributes.serviceName
+      }
+    };
+
+    // queue the message to the created messages queue by setting
+    // the message to the output binding of this function
+    // tslint:disable-next-line:no-object-mutation
+    context.bindings.createdMessage = createdMessageEvent;
+
+    //
+    // generate appinsights event
+    //
+
+    // track the event that a message has been created
+    applicationInsightsClient.trackEvent({
+      name: appInsightsEventName,
+      properties: {
+        ...appInsightsEventProps,
+        success: "true"
+      }
+    });
+
+    //
+    // respond to request
+    //
+
+    // redirect the client to the message resource
+    return ResponseSuccessRedirectToResource(
+      newMessageWithoutContent,
+      `/api/v1/messages/${fiscalCode}/${newMessageWithoutContent.id}`,
+      {}
+    );
   };
 }
 
@@ -346,14 +337,23 @@ export function CreateMessage(
   organizationModel: OrganizationModel,
   messageModel: MessageModel
 ): express.RequestHandler {
-  const handler = CreateMessageHandler(applicationInsightsClient, messageModel);
+  const handler = CreateMessageHandler(
+    applicationInsightsClient,
+    messageModel,
+    ulidGenerator
+  );
   const middlewaresWrap = withRequestMiddlewares(
+    // extract Azure Functions bindings
     ContextMiddleware<IBindings>(),
+    // allow only users in the ApiMessageWrite and ApiMessageWriteLimited groups
     AzureApiAuthMiddleware(
-      new Set([UserGroup.ApiMessageWrite, UserGroup.ApiMessageWriteDryRun])
+      new Set([UserGroup.ApiMessageWrite, UserGroup.ApiLimitedMessageWrite])
     ),
+    // extracts custom user attributes from the request
     AzureUserAttributesMiddleware(organizationModel),
+    // extracts the fiscal code from the request params
     FiscalCodeMiddleware,
+    // extracts the create message payload from the request body
     MessagePayloadMiddleware
   );
   return wrapRequestHandler(middlewaresWrap(handler));

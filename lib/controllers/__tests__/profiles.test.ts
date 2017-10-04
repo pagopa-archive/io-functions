@@ -2,7 +2,7 @@
 
 import { none, some } from "ts-option";
 import { right } from "../../utils/either";
-import { toNonEmptyString } from "../../utils/strings";
+import { toEmailString, toNonEmptyString } from "../../utils/strings";
 
 import { IRetrievedProfile } from "../../models/profile";
 import {
@@ -33,7 +33,7 @@ const aProfilePayloadMock = {
 const aRetrievedProfile: IRetrievedProfile = {
   _self: "123",
   _ts: "123",
-  email: toNonEmptyString("x&example.com").get,
+  email: toEmailString("x@example.com").get,
   fiscalCode: aFiscalCode,
   id: toNonEmptyString("123").get,
   kind: "IRetrievedProfile",
@@ -176,7 +176,7 @@ it("should update an existing profile", async () => {
   const upsertProfileHandler = UpsertProfileHandler(profileModelMock as any);
 
   const profilePayloadMock = {
-    email: toNonEmptyString("y@example.com").get
+    email: toEmailString("y@example.com").get
   };
 
   const response = await upsertProfileHandler(
