@@ -134,7 +134,7 @@ describe("CreateMessageHandler", () => {
       mockContext as any,
       {
         ...aUserAuthenticationDeveloper,
-        groups: new Set([UserGroup.ApiMessageWriteLimited])
+        groups: new Set([UserGroup.ApiLimitedMessageWrite])
       },
       { ...someUserAttributes, authorizedRecipients: new Set([]) },
       aFiscalCode,
@@ -247,7 +247,7 @@ describe("CreateMessageHandler", () => {
       mockContext as any,
       {
         ...aUserAuthenticationDeveloper,
-        groups: new Set([UserGroup.ApiMessageWriteLimited])
+        groups: new Set([UserGroup.ApiLimitedMessageWrite])
       },
       {
         ...someUserAttributes,

@@ -208,7 +208,7 @@ export function CreateMessageHandler(
 
     // check whether the user is authorized to send messages to limited recipients
     // or whether the user is authorized to send messages to any recipient
-    if (auth.groups.has(UserGroup.ApiMessageWriteLimited)) {
+    if (auth.groups.has(UserGroup.ApiLimitedMessageWrite)) {
       // user is in limited message creation mode, check whether he's sending
       // the message to an authorized recipient
       if (!userAttributes.authorizedRecipients.has(fiscalCode)) {
@@ -347,7 +347,7 @@ export function CreateMessage(
     ContextMiddleware<IBindings>(),
     // allow only users in the ApiMessageWrite and ApiMessageWriteLimited groups
     AzureApiAuthMiddleware(
-      new Set([UserGroup.ApiMessageWrite, UserGroup.ApiMessageWriteLimited])
+      new Set([UserGroup.ApiMessageWrite, UserGroup.ApiLimitedMessageWrite])
     ),
     // extracts custom user attributes from the request
     AzureUserAttributesMiddleware(organizationModel),
