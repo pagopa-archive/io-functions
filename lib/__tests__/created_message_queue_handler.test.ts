@@ -8,10 +8,7 @@ import {
   processResolve
 } from "../created_message_queue_handler";
 import { ICreatedMessageEvent } from "../models/created_message_event";
-import {
-  IMessageContent,
-  IRetrievedMessageWithoutContent
-} from "../models/message";
+import { IMessageContent, INewMessageWithoutContent } from "../models/message";
 
 import { none, some } from "ts-option";
 import { FiscalCode, toFiscalCode } from "../api/definitions/FiscalCode";
@@ -28,11 +25,11 @@ import { IRetrievedProfile } from "../models/profile";
 import * as winston from "winston";
 import { left, right } from "../utils/either";
 import { toNonNegativeNumber } from "../utils/numbers";
-import { toNonEmptyString } from "../utils/strings";
+import { toEmailString, toNonEmptyString } from "../utils/strings";
 
 const aCorrectFiscalCode = toFiscalCode("FRLFRC74E04B157I").get;
 const aWrongFiscalCode = "FRLFRC74E04B157" as FiscalCode;
-const anEmail = toNonEmptyString("x@example.com").get;
+const anEmail = toEmailString("x@example.com").get;
 const anEmailNotification: INotificationChannelEmail = {
   addressSource: NotificationAddressSource.PROFILE_ADDRESS,
   status: NotificationChannelStatus.QUEUED,
@@ -116,12 +113,10 @@ describe("test index function", () => {
   });
 
   it("should return failure if createdMessage is invalid (wrong fiscal code)", async () => {
-    const aMessage: IRetrievedMessageWithoutContent = {
-      _self: "",
-      _ts: "",
+    const aMessage: INewMessageWithoutContent = {
       fiscalCode: aWrongFiscalCode,
       id: toNonEmptyString("xyz").get,
-      kind: "IRetrievedMessageWithoutContent",
+      kind: "INewMessageWithoutContent",
       senderOrganizationId: "",
       senderUserId: toNonEmptyString("u123").get
     };

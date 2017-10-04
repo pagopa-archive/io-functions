@@ -25,7 +25,7 @@ import {
   UserGroup
 } from "../../utils/middlewares/azure_api_auth";
 import { IAzureUserAttributes } from "../../utils/middlewares/azure_user_attributes";
-import { toNonEmptyString } from "../../utils/strings";
+import { toEmailString, toNonEmptyString } from "../../utils/strings";
 
 import {
   INewMessage,
@@ -53,11 +53,13 @@ function lookup(h: IHeaders): (k: string) => string | undefined {
 }
 
 const aFiscalCode = toFiscalCode("FRLFRC74E04B157I").get;
-
+const anEmail = toEmailString("test@example.com").get;
 const aMessageBodyMarkdown = toMessageBodyMarkdown("test".repeat(80)).get;
 
 const someUserAttributes: IAzureUserAttributes = {
+  authorizedRecipients: new Set(),
   departmentName: toNonEmptyString("IT").get,
+  email: anEmail,
   kind: "IAzureUserAttributes",
   organization: {
     name: toNonEmptyString("AgID").get,
@@ -83,11 +85,12 @@ const aUserAuthenticationTrustedApplication: IAzureApiAuthorization = {
 const aMessagePayload: NewMessage = {
   content: {
     markdown: aMessageBodyMarkdown
-  },
-  dry_run: false
+  }
 };
 
 const aCustomSubject = toMessageSubject("A custom subject").get;
+
+const aMessageId = toNonEmptyString("A_MESSAGE_ID").get;
 
 const aNewMessageWithoutContent: INewMessageWithoutContent = {
   fiscalCode: aFiscalCode,
@@ -111,71 +114,37 @@ const aPublicExtendedMessage: CreatedMessage = {
 };
 
 describe("CreateMessageHandler", () => {
-  it("should require the user to be part of an organization", async () => {
-    const createMessageHandler = CreateMessageHandler({} as any, {} as any);
-    const result = await createMessageHandler(
-      {} as any,
-      {} as any,
-      {
-        organization: undefined
-      } as any,
-      {} as any,
-      {} as any
-    );
-
-    expect(result.kind).toBe("IResponseErrorValidation");
-  });
-
-  it("should allow dry run calls", async () => {
-    const mockAppInsights = {
-      trackEvent: jest.fn()
-    };
-
+  it("should not authorize sending messages to unauthorized recipients", async () => {
     const mockMessageModel = {
       create: jest.fn()
     };
 
     const createMessageHandler = CreateMessageHandler(
-      mockAppInsights as any,
-      mockMessageModel as any
+      {} as any,
+      mockMessageModel as any,
+      {} as any
     );
 
-    const aDryRunMessagePayload: NewMessage = {
-      ...aMessagePayload,
-      dry_run: true
-    };
-
     const mockContext = {
-      bindings: {}
+      bindings: {},
+      log: jest.fn()
     };
 
     const result = await createMessageHandler(
       mockContext as any,
       {
         ...aUserAuthenticationDeveloper,
-        groups: new Set([UserGroup.ApiMessageWriteDryRun])
+        groups: new Set([UserGroup.ApiMessageWriteLimited])
       },
-      someUserAttributes,
-      {} as any,
-      aDryRunMessagePayload
+      { ...someUserAttributes, authorizedRecipients: new Set([]) },
+      aFiscalCode,
+      aMessagePayload
     );
 
     expect(mockMessageModel.create).not.toHaveBeenCalled();
-    expect(mockContext.bindings).toEqual({});
-    expect(mockAppInsights.trackEvent).toHaveBeenCalledTimes(1);
-    expect(mockAppInsights.trackEvent).toHaveBeenCalledWith({
-      name: "api.messages.create",
-      properties: {
-        dryRun: "true",
-        senderOrganizationId: "agid",
-        senderUserId: "u123",
-        success: "true"
-      }
-    });
-    expect(result.kind).toBe("IResponseSuccessJson");
-    if (result.kind === "IResponseSuccessJson") {
-      expect(result.value.dry_run).toBeTruthy();
-    }
+    expect(result.kind).toBe(
+      "IResponseErrorForbiddenNotAuthorizedForRecipient"
+    );
   });
 
   it("should create a new message", async () => {
@@ -189,7 +158,8 @@ describe("CreateMessageHandler", () => {
 
     const createMessageHandler = CreateMessageHandler(
       mockAppInsights as any,
-      mockMessageModel as any
+      mockMessageModel as any,
+      () => aMessageId
     );
 
     const mockContext = {
@@ -218,7 +188,7 @@ describe("CreateMessageHandler", () => {
 
     expect(mockContext.bindings).toEqual({
       createdMessage: {
-        message: aRetrievedMessageWithoutContent,
+        message: aNewMessageWithoutContent,
         messageContent: {
           bodyMarkdown: aMessagePayload.content.markdown
         },
@@ -234,7 +204,85 @@ describe("CreateMessageHandler", () => {
     expect(mockAppInsights.trackEvent).toHaveBeenCalledWith({
       name: "api.messages.create",
       properties: {
-        dryRun: "false",
+        hasCustomSubject: "false",
+        hasDefaultEmail: "false",
+        senderOrganizationId: "agid",
+        senderUserId: "u123",
+        success: "true"
+      }
+    });
+
+    expect(result.kind).toBe("IResponseSuccessRedirectToResource");
+    if (result.kind === "IResponseSuccessRedirectToResource") {
+      const response = MockResponse();
+      result.apply(response);
+      expect(response.set).toBeCalledWith(
+        "Location",
+        `/api/v1/messages/${aFiscalCode}/${messageDocument.id}`
+      );
+    }
+  });
+
+  it("should create a new message for a limited auhorization recipient", async () => {
+    const mockAppInsights = {
+      trackEvent: jest.fn()
+    };
+
+    const mockMessageModel = {
+      create: jest.fn(() => right(aRetrievedMessageWithoutContent))
+    };
+
+    const createMessageHandler = CreateMessageHandler(
+      mockAppInsights as any,
+      mockMessageModel as any,
+      () => aMessageId
+    );
+
+    const mockContext = {
+      bindings: {},
+      log: jest.fn()
+    };
+
+    const result = await createMessageHandler(
+      mockContext as any,
+      {
+        ...aUserAuthenticationDeveloper,
+        groups: new Set([UserGroup.ApiMessageWriteLimited])
+      },
+      {
+        ...someUserAttributes,
+        authorizedRecipients: new Set([aFiscalCode])
+      },
+      aFiscalCode,
+      aMessagePayload
+    );
+
+    expect(mockMessageModel.create).toHaveBeenCalledTimes(1);
+
+    const messageDocument: INewMessage =
+      mockMessageModel.create.mock.calls[0][0];
+    expect(messageDocument.content).toBeUndefined();
+
+    expect(mockMessageModel.create.mock.calls[0][1]).toEqual(aFiscalCode);
+
+    expect(mockContext.bindings).toEqual({
+      createdMessage: {
+        message: aNewMessageWithoutContent,
+        messageContent: {
+          bodyMarkdown: aMessagePayload.content.markdown
+        },
+        senderMetadata: {
+          departmentName: "IT",
+          organizationName: "AgID",
+          serviceName: "Test"
+        }
+      }
+    });
+
+    expect(mockAppInsights.trackEvent).toHaveBeenCalledTimes(1);
+    expect(mockAppInsights.trackEvent).toHaveBeenCalledWith({
+      name: "api.messages.create",
+      properties: {
         hasCustomSubject: "false",
         hasDefaultEmail: "false",
         senderOrganizationId: "agid",
@@ -265,7 +313,8 @@ describe("CreateMessageHandler", () => {
 
     const createMessageHandler = CreateMessageHandler(
       mockAppInsights as any,
-      mockMessageModel as any
+      mockMessageModel as any,
+      () => aMessageId
     );
 
     const mockContext = {
@@ -300,7 +349,7 @@ describe("CreateMessageHandler", () => {
 
     expect(mockContext.bindings).toEqual({
       createdMessage: {
-        message: aRetrievedMessageWithoutContent,
+        message: aNewMessageWithoutContent,
         messageContent: {
           bodyMarkdown: aMessagePayload.content.markdown,
           subject: aCustomSubject
@@ -317,7 +366,6 @@ describe("CreateMessageHandler", () => {
     expect(mockAppInsights.trackEvent).toHaveBeenCalledWith({
       name: "api.messages.create",
       properties: {
-        dryRun: "false",
         hasCustomSubject: "true",
         hasDefaultEmail: "false",
         senderOrganizationId: "agid",
@@ -348,7 +396,8 @@ describe("CreateMessageHandler", () => {
 
     const createMessageHandler = CreateMessageHandler(
       mockAppInsights as any,
-      mockMessageModel as any
+      mockMessageModel as any,
+      () => aMessageId
     );
 
     const mockContext = {
@@ -390,7 +439,7 @@ describe("CreateMessageHandler", () => {
         defaultAddresses: {
           email: toEmailAddress("test@example.com").get
         },
-        message: aRetrievedMessageWithoutContent,
+        message: aNewMessageWithoutContent,
         messageContent: {
           bodyMarkdown: messagePayload.content.markdown
         },
@@ -406,7 +455,6 @@ describe("CreateMessageHandler", () => {
     expect(mockAppInsights.trackEvent).toHaveBeenCalledWith({
       name: "api.messages.create",
       properties: {
-        dryRun: "false",
         hasCustomSubject: "false",
         hasDefaultEmail: "true",
         senderOrganizationId: "agid",
@@ -437,7 +485,8 @@ describe("CreateMessageHandler", () => {
 
     const createMessageHandler = CreateMessageHandler(
       mockAppInsights as any,
-      mockMessageModel as any
+      mockMessageModel as any,
+      () => aMessageId
     );
 
     const mockContext = {
@@ -484,7 +533,8 @@ describe("CreateMessageHandler", () => {
 
     const createMessageHandler = CreateMessageHandler(
       mockAppInsights as any,
-      mockMessageModel as any
+      mockMessageModel as any,
+      () => aMessageId
     );
 
     const mockContext = {
@@ -521,7 +571,8 @@ describe("CreateMessageHandler", () => {
 
     const createMessageHandler = CreateMessageHandler(
       mockAppInsights as any,
-      mockMessageModel as any
+      mockMessageModel as any,
+      () => aMessageId
     );
 
     const mockContext = {
@@ -541,7 +592,18 @@ describe("CreateMessageHandler", () => {
     );
 
     expect(mockMessageModel.create).toHaveBeenCalledTimes(1);
-    expect(mockAppInsights.trackEvent).not.toHaveBeenCalled();
+    expect(mockAppInsights.trackEvent).toHaveBeenCalledTimes(1);
+    expect(mockAppInsights.trackEvent).toHaveBeenCalledWith({
+      name: "api.messages.create",
+      properties: {
+        error: "IResponseErrorQuery",
+        hasCustomSubject: "false",
+        hasDefaultEmail: "false",
+        senderOrganizationId: "agid",
+        senderUserId: "u123",
+        success: "false"
+      }
+    });
 
     expect(mockContext.bindings).toEqual({});
     expect(result.kind).toBe("IResponseErrorQuery");
@@ -683,7 +745,7 @@ describe("GetMessageHandler", () => {
       emailNotification: {
         addressSource: NotificationAddressSource.PROFILE_ADDRESS,
         status: NotificationChannelStatus.SENT_TO_CHANNEL,
-        toAddress: toNonEmptyString("x@example.com").get
+        toAddress: toEmailString("x@example.com").get
       },
       fiscalCode: aFiscalCode,
       id: toNonEmptyString("A_NOTIFICATION_ID").get,

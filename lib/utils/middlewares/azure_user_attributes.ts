@@ -8,7 +8,13 @@ import { none, option, Option } from "ts-option";
 import * as winston from "winston";
 
 import { left, right } from "../either";
-import { isNonEmptyString, NonEmptyString, toNonEmptyString } from "../strings";
+import {
+  EmailString,
+  isNonEmptyString,
+  NonEmptyString,
+  toEmailString,
+  toNonEmptyString
+} from "../strings";
 
 import { IOrganization, OrganizationModel } from "../../models/organization";
 import { IRequestMiddleware } from "../request_middleware";
@@ -21,6 +27,13 @@ import {
   ResponseErrorQuery
 } from "../response";
 
+import { FiscalCode, isFiscalCode } from "../../api/definitions/FiscalCode";
+
+// The user email will be passed in this header by the API Gateway
+const HEADER_USER_EMAIL = "x-user-email";
+
+// The user "note" attribute will be passed in this header by the API Gateway
+// The "note" attribute will be URI encoded
 const HEADER_USER_NOTE = "x-user-note";
 
 /**
@@ -31,6 +44,7 @@ interface IAzureUserNote {
   readonly organizationId: NonEmptyString;
   readonly departmentName: NonEmptyString;
   readonly serviceName: NonEmptyString;
+  readonly authorizedRecipients?: ReadonlyArray<NonEmptyString>;
 }
 
 /**
@@ -43,7 +57,11 @@ const isIAzureUserNote = is<IAzureUserNote>(
     arg.departmentName &&
     isNonEmptyString(arg.departmentName) &&
     arg.serviceName &&
-    isNonEmptyString(arg.serviceName)
+    isNonEmptyString(arg.serviceName) &&
+    (arg.authorizedRecipients === null ||
+      arg.authorizedRecipients === undefined ||
+      (Array.isArray(arg.authorizedRecipients) &&
+        arg.authorizedRecipients.every(isNonEmptyString)))
 );
 
 // tslint:disable-next-line:no-any
@@ -78,10 +96,16 @@ function parseIAzureUserNoteFromUriEncodedYaml(
  */
 export interface IAzureUserAttributes {
   readonly kind: "IAzureUserAttributes";
+  // the email of the registered user
+  readonly email: EmailString;
   // the organization associated to the user
   readonly organization: IOrganization;
+  // the name of the department within the organization
   readonly departmentName: NonEmptyString;
+  // the name of the service
   readonly serviceName: NonEmptyString;
+  // optional authorized recipients for limited message creation
+  readonly authorizedRecipients: ReadonlySet<FiscalCode>;
 }
 
 /**
@@ -110,6 +134,18 @@ export function AzureUserAttributesMiddleware(
   IAzureUserAttributes
 > {
   return async request => {
+    const maybeUserEmail = toEmailString(request.header(HEADER_USER_EMAIL));
+
+    if (maybeUserEmail.isEmpty) {
+      return left(
+        ResponseErrorInternal(
+          `Missing, empty or invalid ${HEADER_USER_EMAIL} header`
+        )
+      );
+    }
+
+    const userEmail = maybeUserEmail.get;
+
     const maybeUserNoteHeader = toNonEmptyString(
       request.header(HEADER_USER_NOTE)
     );
@@ -163,8 +199,15 @@ export function AzureUserAttributesMiddleware(
 
     const organization = maybeOrganization.get;
 
+    // extract the valid autorized recipients
+    const authorizedRecipients = userAttributes.authorizedRecipients
+      ? new Set(userAttributes.authorizedRecipients.filter(isFiscalCode))
+      : new Set();
+
     const authInfo: IAzureUserAttributes = {
+      authorizedRecipients,
       departmentName: userAttributes.departmentName,
+      email: userEmail,
       kind: "IAzureUserAttributes",
       organization,
       serviceName: userAttributes.serviceName

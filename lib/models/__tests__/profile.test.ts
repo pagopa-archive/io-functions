@@ -6,7 +6,7 @@ import * as DocumentDbUtils from "../../utils/documentdb";
 
 import { toFiscalCode } from "../../api/definitions/FiscalCode";
 import { toNonNegativeNumber } from "../../utils/numbers";
-import { toNonEmptyString } from "../../utils/strings";
+import { toEmailString, toNonEmptyString } from "../../utils/strings";
 
 import { IProfile, IRetrievedProfile, ProfileModel } from "../profile";
 
@@ -149,7 +149,7 @@ describe("update", () => {
       p => {
         return {
           ...p,
-          email: toNonEmptyString("new@example.com").get
+          email: toEmailString("new@example.com").get
         };
       }
     );
