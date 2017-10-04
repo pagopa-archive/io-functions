@@ -31,10 +31,10 @@ repository.
 
 ### Messages
 
-Public administration agencies receives millions of requests every year from
-citizens anxious to find out about the progress of their application or whether
+Public administration agencies receive millions of requests every year from
+citizens anxious to find out about the progresses of their application or whether
 a payment has been received. Citizens have to spend time on hold, which wastes
-their time and costs government a lot of money in call centre running costs.
+their time and costs government a lot of money in running call centres.
 Moreover citizens forget about or miss payment deadlines costing them overtime
 fees.
 
@@ -79,6 +79,66 @@ safe and painless.
 The preferences service is for delivering personalized digital services, not for
 collecting citizens emails or mobile numbers. For any transactional
 communication need, the messages service must be used.
+
+## Using the Digital Citizenship API
+
+### Trial mode
+
+All new accounts on the Digital Citizenship API start off in trial mode.
+
+This means:
+
+* you can only send messages with email notifications to yourself
+* you can only send 50 messages per day
+
+When you’re ready we can remove these restrictions.
+
+### Message sending flow
+
+![message sending flow](docs/message-sending-flow.png)
+
+[Edit diagram](https://www.draw.io/#G0By3amPPe9r4uNWw4NkJQYXk1M3M)
+
+If a notification fails for a certain notification channel because the user
+has not configured that channel and you haven't provided a default address
+for that channel, nothing can be done.
+
+### Delivery and failure
+
+Our delivery states are:
+
+* Sending
+* Delivered
+* Phone number or email address not provided
+* Technical failure
+
+#### Sending
+
+All messages start in the `Sending` state.
+
+This means that we have accepted the message. It’s waiting in a queue to be
+sent to our email or text message delivery partners.
+
+#### Delivered
+
+This means the message is in the person’s email inbox or on his/her phone.
+
+We can’t tell you if they’ve read it – to do so would require invasive and
+unreliable tracking techniques.
+
+#### Phone number or email address not provided
+
+You haven't provided any address to reach the citizen (email phone number),
+and the citizen you're trying to contact doesn't have any contact preferences
+in his profile.
+
+#### Technical failure
+
+This means there is a problem with the connection between the messages API
+system andour email or text message delivery partners.
+
+Notifications still being retried are marked as `Sending`. We mark notifications
+as `Technical failure` once we’ve given up.
 
 ## Architecture
 
