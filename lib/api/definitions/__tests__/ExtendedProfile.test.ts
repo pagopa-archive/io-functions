@@ -4,11 +4,15 @@ import {
   toExtendedProfile
 } from "../ExtendedProfile";
 
+import { toEmailAddress } from "../EmailAddress";
+
+import { toPreferredLanguages } from "../PreferredLanguages";
+
 describe("Check ExtendedProfile methods", () => {
   test("toExtendedProfile", () => {
     const extendedProfile: ExtendedProfile = {
-      email: "address@mail.org",
-      preferred_languages: ["it_IT"],
+      email: toEmailAddress("address@mail.org").get,
+      preferred_languages: toPreferredLanguages(["it_IT"]).get,
       version: 1
     };
 
@@ -19,8 +23,8 @@ describe("Check ExtendedProfile methods", () => {
 
   test("isExtendedProfile", () => {
     const extendedProfile: ExtendedProfile = {
-      email: "address@mail.org",
-      preferred_languages: ["it_IT"],
+      email: toEmailAddress("address@mail.org").get,
+      preferred_languages: toPreferredLanguages(["it_IT"]).get,
       version: 1
     };
 
@@ -30,13 +34,13 @@ describe("Check ExtendedProfile methods", () => {
   test("isExtendedProfile, check email property", () => {
     const extendedProfileOne: ExtendedProfile = {
       email: "address@",
-      preferred_languages: ["it_IT"],
+      preferred_languages: toPreferredLanguages(["it_IT"]).get,
       version: 1
     };
     expect(isExtendedProfile(extendedProfileOne)).toBe(false);
 
     const extendedProfileTwo: ExtendedProfile = {
-      preferred_languages: ["it_IT"],
+      preferred_languages: toPreferredLanguages(["it_IT"]).get,
       version: 1
     };
     expect(isExtendedProfile(extendedProfileTwo)).toBe(true);
@@ -44,7 +48,7 @@ describe("Check ExtendedProfile methods", () => {
     /* tslint:disable */
     const extendedProfileThree: ExtendedProfile = {
       email: null,
-      preferred_languages: ["it_IT"],
+      preferred_languages: toPreferredLanguages(["it_IT"]).get,
       version: 1
     };
     /* tslint:enable */
@@ -53,21 +57,21 @@ describe("Check ExtendedProfile methods", () => {
 
   test("isExtendedProfile, check preferred_languages property", () => {
     const extendedProfileOne: ExtendedProfile = {
-      email: "address@mail.org",
+      email: toEmailAddress("address@mail.org").get,
       preferred_languages: ["it"],
       version: 1
     };
     expect(isExtendedProfile(extendedProfileOne)).toBe(false);
 
     const extendedProfileTwo: ExtendedProfile = {
-      email: "address@mail.org",
+      email: toEmailAddress("address@mail.org").get,
       version: 1
     };
     expect(isExtendedProfile(extendedProfileTwo)).toBe(true);
 
     /* tslint:disable */
     const extendedProfileThree: ExtendedProfile = {
-      email: "address@mail.org",
+      email: toEmailAddress("address@mail.org").get,
       preferred_languages: null,
       version: 1
     };
@@ -77,22 +81,22 @@ describe("Check ExtendedProfile methods", () => {
 
   test("isExtendedProfile, check version property", () => {
     const extendedProfileOne: ExtendedProfile = {
-      email: "address@mail.org",
-      preferred_languages: ["it_IT"],
+      email: toEmailAddress("address@mail.org").get,
+      preferred_languages: toPreferredLanguages(["it_IT"]).get,
       version: "1"
     };
     expect(isExtendedProfile(extendedProfileOne)).toBe(false);
 
     const extendedProfileTwo: ExtendedProfile = {
-      email: "address@mail.org",
-      preferred_languages: ["it_IT"]
+      email: toEmailAddress("address@mail.org").get,
+      preferred_languages: toPreferredLanguages(["it_IT"]).get
     };
     expect(isExtendedProfile(extendedProfileTwo)).toBe(true);
 
     /* tslint:disable */
     const extendedProfileThree: ExtendedProfile = {
-      email: "address@mail.org",
-      preferred_languages: ["it_IT"],
+      email: toEmailAddress("address@mail.org").get,
+      preferred_languages: toPreferredLanguages(["it_IT"]).get,
       version: null
     };
     /* tslint:enable */

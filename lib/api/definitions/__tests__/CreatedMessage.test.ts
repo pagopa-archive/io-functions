@@ -10,6 +10,10 @@ import { MessageContent } from "../MessageContent";
 
 import { toMessageSubject } from "../MessageSubject";
 
+import { toFiscalCode } from "../FiscalCode";
+
+import { toTimeToLive } from "../TimeToLive";
+
 describe("Check CreatedMessage methods", () => {
   test("toCreatedMessage", () => {
     const s = toMessageSubject("Lorem ipsum dolor sit amet");
@@ -25,10 +29,10 @@ describe("Check CreatedMessage methods", () => {
 
     const message = {
       content: messageContent,
-      fiscal_code: "AAABBB01C01A000A",
+      fiscal_code: toFiscalCode("AAABBB01C01A000A").get,
       id: "12345",
       sender_organization_id: "Sender Organization",
-      time_to_live: 123456
+      time_to_live: toTimeToLive(3600).get
     };
 
     const createdMessage: CreatedMessage = toCreatedMessage(message).get;
@@ -49,10 +53,10 @@ describe("Check CreatedMessage methods", () => {
 
     const message = {
       content: messageContent,
-      fiscal_code: "AAABBB01C01A000A",
+      fiscal_code: toFiscalCode("AAABBB01C01A000A").get,
       id: "12345",
       sender_organization_id: "Sender Organization",
-      time_to_live: 123456
+      time_to_live: toTimeToLive(3600).get
     };
 
     expect(isCreatedMessage(message)).toBe(true);
@@ -72,29 +76,29 @@ describe("Check CreatedMessage methods", () => {
 
     const messageOne = {
       content: messageContent,
-      fiscal_code: "AAABBB01C01A000A",
+      fiscal_code: toFiscalCode("AAABBB01C01A000A").get,
       sender_organization_id: "Sender Organization",
-      time_to_live: 123456
+      time_to_live: toTimeToLive(3600).get
     };
     expect(isCreatedMessage(messageOne)).toBe(true);
 
     /* tslint:disable */
     const messageTwo = {
       content: messageContent,
-      fiscal_code: "AAABBB01C01A000A",
+      fiscal_code: toFiscalCode("AAABBB01C01A000A").get,
       id: null,
       sender_organization_id: "Sender Organization",
-      time_to_live: 123456
+      time_to_live: toTimeToLive(3600).get
     };
     /* tslint:enable */
     expect(isCreatedMessage(messageTwo)).toBe(true);
 
     const messageThree = {
       content: messageContent,
-      fiscal_code: "AAABBB01C01A000A",
+      fiscal_code: toFiscalCode("AAABBB01C01A000A").get,
       id: 12345,
       sender_organization_id: "Sender Organization",
-      time_to_live: 123456
+      time_to_live: toTimeToLive(3600).get
     };
     expect(isCreatedMessage(messageThree)).toBe(false);
   });
@@ -116,7 +120,7 @@ describe("Check CreatedMessage methods", () => {
       fiscal_code: "WRONG",
       id: "12345",
       sender_organization_id: "Sender Organization",
-      time_to_live: 123456
+      time_to_live: toTimeToLive(3600).get
     };
     expect(isCreatedMessage(messageOne)).toBe(false);
 
@@ -125,7 +129,7 @@ describe("Check CreatedMessage methods", () => {
       fiscal_code: 111111,
       id: "12345",
       sender_organization_id: "Sender Organization",
-      time_to_live: 123456
+      time_to_live: toTimeToLive(3600).get
     };
     expect(isCreatedMessage(messageTwo)).toBe(false);
 
@@ -133,7 +137,7 @@ describe("Check CreatedMessage methods", () => {
       content: messageContent,
       id: "12345",
       sender_organization_id: "Sender Organization",
-      time_to_live: 123456
+      time_to_live: toTimeToLive(3600).get
     };
     expect(isCreatedMessage(messageThree)).toBe(false);
   });
@@ -152,7 +156,7 @@ describe("Check CreatedMessage methods", () => {
 
     const messageOne = {
       content: messageContent,
-      fiscal_code: "AAABBB01C01A000A",
+      fiscal_code: toFiscalCode("AAABBB01C01A000A").get,
       id: "12345",
       sender_organization_id: "Sender Organization"
     };
@@ -161,7 +165,7 @@ describe("Check CreatedMessage methods", () => {
     /* tslint:disable */
     const messageTwo = {
       content: messageContent,
-      fiscal_code: "AAABBB01C01A000A",
+      fiscal_code: toFiscalCode("AAABBB01C01A000A").get,
       id: "12345",
       sender_organization_id: "Sender Organization",
       time_to_live: null
@@ -171,10 +175,10 @@ describe("Check CreatedMessage methods", () => {
 
     const messageThree = {
       content: messageContent,
-      fiscal_code: "AAABBB01C01A000A",
+      fiscal_code: toFiscalCode("AAABBB01C01A000A").get,
       id: "12345",
       sender_organization_id: "Sender Organization",
-      time_to_live: "123456"
+      time_to_live: "3600"
     };
     expect(isCreatedMessage(messageThree)).toBe(false);
   });
@@ -186,30 +190,30 @@ describe("Check CreatedMessage methods", () => {
     };
 
     const messageOne = {
-      fiscal_code: "AAABBB01C01A000A",
+      fiscal_code: toFiscalCode("AAABBB01C01A000A").get,
       id: "12345",
       sender_organization_id: "Sender Organization",
-      time_to_live: 123456
+      time_to_live: toTimeToLive(3600).get
     };
     expect(isCreatedMessage(messageOne)).toBe(true);
 
     /* tslint:disable */
     const messageTwo = {
       content: null,
-      fiscal_code: "AAABBB01C01A000A",
+      fiscal_code: toFiscalCode("AAABBB01C01A000A").get,
       id: "12345",
       sender_organization_id: "Sender Organization",
-      time_to_live: 123456
+      time_to_live: toTimeToLive(3600).get
     };
     /* tslint:enable */
     expect(isCreatedMessage(messageTwo)).toBe(true);
 
     const messageThree = {
       content: messageContent,
-      fiscal_code: "AAABBB01C01A000A",
+      fiscal_code: toFiscalCode("AAABBB01C01A000A").get,
       id: "12345",
       sender_organization_id: "Sender Organization",
-      time_to_live: 123456
+      time_to_live: toTimeToLive(3600).get
     };
     expect(isCreatedMessage(messageThree)).toBe(false);
   });
@@ -228,29 +232,29 @@ describe("Check CreatedMessage methods", () => {
 
     const messageOne = {
       content: messageContent,
-      fiscal_code: "AAABBB01C01A000A",
+      fiscal_code: toFiscalCode("AAABBB01C01A000A").get,
       id: "12345",
-      time_to_live: 123456
+      time_to_live: toTimeToLive(3600).get
     };
     expect(isCreatedMessage(messageOne)).toBe(false);
 
     /* tslint:disable */
     const messageTwo = {
       content: messageContent,
-      fiscal_code: "AAABBB01C01A000A",
+      fiscal_code: toFiscalCode("AAABBB01C01A000A").get,
       id: "12345",
       sender_organization_id: null,
-      time_to_live: 123456
+      time_to_live: toTimeToLive(3600).get
     };
     /* tslint:enable */
     expect(isCreatedMessage(messageTwo)).toBe(false);
 
     const messageThree = {
       content: messageContent,
-      fiscal_code: "AAABBB01C01A000A",
+      fiscal_code: toFiscalCode("AAABBB01C01A000A").get,
       id: "12345",
       sender_organization_id: 123456789,
-      time_to_live: 123456
+      time_to_live: toTimeToLive(3600).get
     };
     expect(isCreatedMessage(messageThree)).toBe(false);
   });

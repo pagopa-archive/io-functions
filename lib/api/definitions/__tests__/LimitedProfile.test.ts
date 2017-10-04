@@ -4,10 +4,12 @@ import {
   toLimitedProfile
 } from "../LimitedProfile";
 
+import { toPreferredLanguages } from "../PreferredLanguages";
+
 describe("Check LimitedProfile methods", () => {
   test("toLimitedProfile", () => {
     const limitedProfileOne: LimitedProfile = {
-      preferred_languages: ["it_IT"]
+      preferred_languages: toPreferredLanguages(["it_IT"]).get
     };
     const limitedProfileTwo: LimitedProfile = {
       preferred_languages: ["it_"]
@@ -19,7 +21,7 @@ describe("Check LimitedProfile methods", () => {
 
   test("isLimitedProfile", () => {
     const limitedProfileOne: LimitedProfile = {
-      preferred_languages: ["it_IT"]
+      preferred_languages: toPreferredLanguages(["it_IT"]).get
     };
     const limitedProfileTwo: LimitedProfile = {
       preferred_languages: ["it_"]
