@@ -14,7 +14,7 @@ describe("Check PreferredLanguages methods", () => {
     ];
     const preferredLanguagesTwo: PreferredLanguages = [
       PreferredLanguage.it_IT,
-      'en_WRONG'
+      "en_WRONG"
     ];
 
     expect(toPreferredLanguages(preferredLanguagesOne).get).toEqual(
@@ -30,7 +30,7 @@ describe("Check PreferredLanguages methods", () => {
     ];
     const preferredLanguagesTwo: PreferredLanguages = [
       PreferredLanguage.it_IT,
-      'en_WRONG'
+      "en_WRONG"
     ];
 
     expect(isPreferredLanguages(preferredLanguagesOne)).toBe(true);
