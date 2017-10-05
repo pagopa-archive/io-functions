@@ -36,6 +36,10 @@ import {
 } from "./models/notification_event";
 import { markdownToHtml } from "./utils/markdown";
 
+import {
+  MessageSubject,
+  toMessageSubject
+} from "./api/definitions/MessageSubject";
 import defaultEmailTemplate from "./templates/html/default";
 
 // Setup DocumentDB
@@ -99,12 +103,11 @@ export const enum ProcessingError {
  * Generates the HTML for the email from the Markdown content and the subject
  */
 export async function generateDocumentHtml(
-  subject: string,
+  subject: MessageSubject,
   bodyMarkdown: MessageBodyMarkdown,
   senderMetadata: ICreatedMessageEventSenderMetadata
-): Promise<Either<Error, string>> {
+): Promise<string> {
   // converts the markdown body to HTML
-  // TODO: handle errors / validate the markdown
   const bodyHtml = (await markdownToHtml.process(bodyMarkdown)).toString();
 
   // compose the service name from the department name and the service name
@@ -121,7 +124,7 @@ export async function generateDocumentHtml(
     "" // TODO: footer
   );
 
-  return right(documentHtml);
+  return documentHtml;
 }
 
 /**
@@ -149,6 +152,7 @@ function setEmailNotificationToSent(
 ): INotification {
   const emailNotification = notification.emailNotification;
 
+  // this should never happens
   if (!emailNotification) {
     return notification;
   }
@@ -219,22 +223,13 @@ export async function handleNotification(
   // TODO: generate the default subject from the organization/client metadata
   const subject = messageContent.subject
     ? messageContent.subject
-    : "Un nuovo avviso per te.";
+    : toMessageSubject("A new notification for you.").get;
 
-  const documentHtmlOrError = await generateDocumentHtml(
+  const documentHtml = await generateDocumentHtml(
     subject,
     messageContent.bodyMarkdown,
     senderMetadata
   );
-
-  if (documentHtmlOrError.isLeft) {
-    winston.error(
-      `handleNotification|error while generating HTML|${documentHtmlOrError.left}`
-    );
-    return left(ProcessingError.PERMANENT);
-  }
-
-  const documentHtml = documentHtmlOrError.right;
 
   // converts the HTML to pure text to generate the text version of the message
   const bodyText = HtmlToText.fromString(documentHtml, HTML_TO_TEXT_OPTIONS);
@@ -319,6 +314,46 @@ export async function handleNotification(
   return right(ProcessingResult.OK);
 }
 
+export function processResolve(
+  result: Either<ProcessingError, ProcessingResult>,
+  context: IContextWithBindings
+): void {
+  if (result.isLeft) {
+    // if handler returned an error, decide what to do
+    switch (result.left) {
+      case ProcessingError.TRANSIENT: {
+        // transient error, we trigger a retry
+        context.done("Transient");
+        break;
+      }
+      case ProcessingError.PERMANENT: {
+        // permanent error, we're done
+        context.done();
+        break;
+      }
+    }
+    return;
+  }
+
+  // success!
+  context.done();
+}
+
+export function processReject(
+  error: Either<ProcessingError, ProcessingResult>,
+  context: IContextWithBindings,
+  emailNotificationEvent: INotificationEvent
+): void {
+  // the promise failed
+  winston.error(
+    `Error while processing event, retrying` +
+      `|${emailNotificationEvent.messageId}|${emailNotificationEvent.notificationId}|${error}`
+  );
+  // in case of error, we return a failure to trigger a retry (up to the configured max retries)
+  // TODO: schedule next retry with exponential backoff, see #150597257
+  context.done(error);
+}
+
 /**
  * Function handler
  */
@@ -376,36 +411,11 @@ export function index(context: IContextWithBindings): void {
     emailNotificationEvent.messageContent,
     emailNotificationEvent.senderMetadata
   ).then(
-    result => {
-      if (result.isLeft) {
-        // if handler returned an error, decide what to do
-        switch (result.left) {
-          case ProcessingError.TRANSIENT: {
-            // transient error, we trigger a retry
-            context.done("Transient");
-            break;
-          }
-          case ProcessingError.PERMANENT: {
-            // permanent error, we're done
-            context.done();
-            break;
-          }
-        }
-        return;
-      }
-
-      // success!
-      context.done();
+    (result: Either<ProcessingError, ProcessingResult>) => {
+      processResolve(result, context);
     },
-    error => {
-      // the promise failed
-      winston.error(
-        `Error while processing event, retrying` +
-          `|${emailNotificationEvent.messageId}|${emailNotificationEvent.notificationId}|${error}`
-      );
-      // in case of error, we return a failure to trigger a retry (up to the configured max retries)
-      // TODO: schedule next retry with exponential backoff, see #150597257
-      context.done(error);
+    (error: Either<ProcessingError, ProcessingResult>) => {
+      processReject(error, context, emailNotificationEvent);
     }
   );
 }
