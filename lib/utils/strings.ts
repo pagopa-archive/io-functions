@@ -1,4 +1,5 @@
 import is from "ts-is";
+import * as ulid from "ulid";
 import * as validator from "validator";
 
 import { option, Option } from "ts-option";
@@ -19,8 +20,14 @@ interface IPatternStringTag<P extends string> {
 }
 
 interface IEmailStringTag {
-  readonly kind: "INonEmptyStringTag";
+  readonly kind: "IEmailStringTag";
 }
+
+// a generator of identifiers
+export type ObjectIdGenerator = () => NonEmptyString;
+
+export const ulidGenerator: ObjectIdGenerator = () =>
+  toNonEmptyString(ulid()).get;
 
 /**
  * A string guaranteed to have a length within the range [L,H)

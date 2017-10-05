@@ -14,17 +14,24 @@ import { toFiscalCode } from "../api/definitions/FiscalCode";
 import { NotificationChannelStatus } from "../api/definitions/NotificationChannelStatus";
 
 import {
+  generateDocumentHtml,
   handleNotification,
   ProcessingError,
   ProcessingResult,
+  processReject,
+  processResolve,
   sendMail
 } from "../emailnotifications_queue_handler";
 
+import * as winston from "winston";
+import { toMessageBodyMarkdown } from "../api/definitions/MessageBodyMarkdown";
+import { toMessageSubject } from "../api/definitions/MessageSubject";
 import { ICreatedMessageEventSenderMetadata } from "../models/created_message_sender_metadata";
 import {
   INotification,
   NotificationAddressSource
 } from "../models/notification";
+import { INotificationEvent } from "../models/notification_event";
 
 const aFiscalCode = toFiscalCode("FRLFRC74E04B157I").get;
 
@@ -269,7 +276,7 @@ This is a *message* from the future!
 IT
 Test
 
-Un nuovo avviso per te.
+A new notification for you.
 
 HELLO WORLD!
 This is a message from the future!`.replace(/[ \n]+/g, "|")
@@ -309,7 +316,7 @@ This is a message from the future!`.replace(/[ \n]+/g, "|")
     );
 
     expect(mockTransport.sentMail[0].data.subject).toBe(
-      "Un nuovo avviso per te."
+      "A new notification for you."
     );
 
     expect(result.isRight).toBeTruthy();
@@ -449,5 +456,130 @@ This is a message from the future!`.replace(/[ \n]+/g, "|")
     if (result.isLeft) {
       expect(result.left).toBe(ProcessingError.TRANSIENT);
     }
+  });
+});
+describe("test processResolve function", () => {
+  it("should call context.done on success", async () => {
+    const resultMock = {
+      isRight: () => true
+    };
+
+    const contextMock = {
+      bindings: {},
+      done: jest.fn()
+    };
+
+    processResolve(resultMock as any, contextMock as any);
+
+    expect(contextMock.done).toHaveBeenCalledTimes(1);
+    expect(contextMock.done.mock.calls[0][0]).toBe(undefined);
+  });
+  it("should call context.done Transient on transient error", async () => {
+    const resultMock = {
+      isLeft: () => true,
+      left: ProcessingError.TRANSIENT
+    };
+
+    const contextMock = {
+      bindings: {},
+      done: jest.fn()
+    };
+
+    processResolve(resultMock as any, contextMock as any);
+
+    expect(contextMock.done).toHaveBeenCalledTimes(1);
+    expect(contextMock.done.mock.calls[0][0]).toBe("Transient");
+  });
+  it("should call context.done on permanent error", async () => {
+    const resultMock = {
+      isLeft: () => true,
+      left: ProcessingError.PERMANENT
+    };
+
+    const contextMock = {
+      bindings: {},
+      done: jest.fn()
+    };
+
+    processResolve(resultMock as any, contextMock as any);
+
+    expect(contextMock.done).toHaveBeenCalledTimes(1);
+    expect(contextMock.done.mock.calls[0][0]).toBe(undefined);
+  });
+});
+describe("test processReject function", () => {
+  it("should call context.done on error", async () => {
+    const errorMock = {
+      isRight: () => true
+    };
+
+    const contextMock = {
+      bindings: {},
+      done: jest.fn()
+    };
+
+    const emailNotificationMock: INotificationEvent = {
+      messageContent: {
+        bodyMarkdown: toMessageBodyMarkdown("test".repeat(80)).get
+      },
+      messageId: toNonEmptyString("xxx").get,
+      notificationId: toNonEmptyString("yyy").get,
+      senderMetadata: {
+        departmentName: toNonEmptyString("aaa").get,
+        organizationName: toNonEmptyString("bbb").get,
+        serviceName: toNonEmptyString("ccc").get
+      }
+    };
+
+    const spy = jest.spyOn(winston, "error");
+
+    processReject(errorMock as any, contextMock as any, emailNotificationMock);
+
+    expect(spy.mock.calls[0][0]).toEqual(
+      `Error while processing event, retrying` +
+        `|${emailNotificationMock.messageId}|${emailNotificationMock.notificationId}|${errorMock}`
+    );
+    expect(contextMock.done).toHaveBeenCalledTimes(1);
+    expect(contextMock.done.mock.calls[0][0]).toEqual(errorMock);
+
+    spy.mockReset();
+    spy.mockRestore();
+  });
+});
+describe("generate html document", () => {
+  it("should convert markdown to the right html", async () => {
+    const subject = toMessageSubject("This is the subject").get;
+    const markdown = `
+# This is an H1
+Lorem ipsum
+## This is an H2
+Lorem ipsum
+###### This is an H6
+Lorem ipsum
+*   Red
+*   Green
+*   Blue
+Lorem ipsum
+1.  Bird
+2.  McHale
+3.  Parish
+`;
+    const body = toMessageBodyMarkdown(markdown).get;
+    const metadata: ICreatedMessageEventSenderMetadata = {
+      departmentName: toNonEmptyString("departmentXXX").get,
+      organizationName: toNonEmptyString("organizationYYY").get,
+      serviceName: toNonEmptyString("serviceZZZ").get
+    };
+
+    const result = await generateDocumentHtml(subject, body, metadata);
+    expect(result.indexOf("This is the subject")).toBeGreaterThan(0);
+    expect(result.indexOf("departmentXXX")).toBeGreaterThan(0);
+    expect(result.indexOf("organizationYYY")).toBeGreaterThan(0);
+    expect(result.indexOf("serviceZZZ")).toBeGreaterThan(0);
+    expect(result.indexOf("<h1>This is an H1</h1>")).toBeGreaterThan(0);
+    expect(result.indexOf("<h2>This is an H2</h2>")).toBeGreaterThan(0);
+    expect(result.indexOf("<h6>This is an H6</h6>")).toBeGreaterThan(0);
+    expect(result.indexOf("<ul>\n<li>Red</li>")).toBeGreaterThan(0);
+    expect(result.indexOf("<ol>\n<li>Bird</li>")).toBeGreaterThan(0);
   });
 });

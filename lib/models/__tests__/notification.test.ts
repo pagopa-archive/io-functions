@@ -7,7 +7,7 @@ import * as DocumentDbUtils from "../../utils/documentdb";
 import { toFiscalCode } from "../../api/definitions/FiscalCode";
 import { NotificationChannelStatus } from "../../api/definitions/NotificationChannelStatus";
 
-import { toNonEmptyString } from "../../utils/strings";
+import { toEmailString, toNonEmptyString } from "../../utils/strings";
 
 import {
   INewNotification,
@@ -155,7 +155,7 @@ describe("update", () => {
   const anEmailNotification: INotificationChannelEmail = {
     addressSource: NotificationAddressSource.DEFAULT_ADDRESS,
     status: NotificationChannelStatus.SENT_TO_CHANNEL,
-    toAddress: toNonEmptyString("to@example.com").get
+    toAddress: toEmailString("to@example.com").get
   };
 
   const updateFunction = jest.fn(n => {

@@ -85,7 +85,7 @@ export const specs = {
         operationId: "submitMessageforUser",
         summary: "Submit a message",
         description:
-          "Submits a message to a user.\nOn error, the reason is returned in the response payload. This is useful with the 'dry_run' option to check for the validity a the messages before sending it.",
+          "Submits a message to a user.\nOn error, the reason is returned in the response payload.",
         parameters: [
           {
             name: "message",
@@ -96,7 +96,6 @@ export const specs = {
         responses: {
           "201": {
             description: "Message created.",
-            schema: { $ref: "#/definitions/CreatedMessageResponse" },
             headers: {
               Location: {
                 type: "string",
@@ -198,11 +197,6 @@ export const specs = {
       title: "NewMessage",
       type: "object",
       properties: {
-        dry_run: {
-          type: "boolean",
-          description:
-            'This parameter, when set to true, allows developers to test a request without actually sending a message. The submitted message won\'t be delivered to the end user but only checked for validity: "400 BAD REQUEST" is returned with a payload that describes the error. If the message can be accepted for delivery then "200 OK" is returned. The default value is false.'
-        },
         time_to_live: { $ref: "#/definitions/TimeToLive" },
         content: { $ref: "#/definitions/MessageContent" },
         default_addresses: { $ref: "#/definitions/NewMessageDefaultAddresses" }
@@ -229,11 +223,6 @@ export const specs = {
         sender_organization_id: { type: "string" }
       },
       required: ["fiscal_code", "sender_organization_id"]
-    },
-    CreatedMessageResponse: {
-      type: "object",
-      properties: { dry_run: { type: "boolean" } },
-      required: ["dry_run"]
     },
     MessageResponse: {
       type: "object",

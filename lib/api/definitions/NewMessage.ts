@@ -20,8 +20,6 @@ import {
 import { option, Option } from "ts-option";
 
 export interface NewMessage {
-  readonly dry_run?: boolean;
-
   readonly time_to_live?: TimeToLive;
 
   readonly content: MessageContent;
@@ -32,9 +30,6 @@ export interface NewMessage {
 export function isNewMessage(arg: any): arg is NewMessage {
   return (
     arg &&
-    (arg.dry_run === undefined ||
-      arg.dry_run === null ||
-      typeof arg.dry_run === "boolean") &&
     (arg.time_to_live === undefined ||
       arg.time_to_live === null ||
       isTimeToLive(arg.time_to_live)) &&

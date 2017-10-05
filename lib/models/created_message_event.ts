@@ -7,9 +7,9 @@ import {
 
 import {
   IMessageContent,
-  IRetrievedMessageWithoutContent,
+  INewMessageWithoutContent,
   isIMessageContent,
-  isIRetrievedMessageWithoutContent
+  isINewMessageWithoutContent
 } from "./message";
 
 import {
@@ -24,8 +24,9 @@ import {
  * Messages API.
  */
 export interface ICreatedMessageEvent {
+  // the optional message, it will be defined only if the message was saved
+  readonly message: INewMessageWithoutContent;
   readonly messageContent: IMessageContent;
-  readonly message: IRetrievedMessageWithoutContent;
   readonly defaultAddresses?: NewMessageDefaultAddresses;
   readonly senderMetadata: ICreatedMessageEventSenderMetadata;
 }
@@ -36,7 +37,7 @@ export interface ICreatedMessageEvent {
 export const isICreatedMessageEvent = is<ICreatedMessageEvent>(
   arg =>
     arg.message &&
-    isIRetrievedMessageWithoutContent(arg.message) &&
+    isINewMessageWithoutContent(arg.message) &&
     arg.messageContent &&
     isIMessageContent(arg.messageContent) &&
     arg.senderMetadata &&

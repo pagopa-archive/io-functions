@@ -142,6 +142,27 @@ export interface INewMessageWithoutContent
 export type INewMessage = INewMessageWithContent | INewMessageWithoutContent;
 
 /**
+ * Type guard for INewMessageWithContent
+ */
+export const isINewMessageWithContent = is<INewMessageWithContent>(
+  arg => isNonEmptyString(arg.id) && isIMessageWithContent(arg)
+);
+
+/**
+ * Type guard for INewMessageWithoutContent
+ */
+export const isINewMessageWithoutContent = is<INewMessageWithoutContent>(
+  arg => isNonEmptyString(arg.id) && isIMessageWithoutContent(arg)
+);
+
+/**
+ * Type guard for INewMessage
+ */
+export const isINewMessage = is<INewMessage>(
+  arg => isINewMessageWithContent(arg) || isINewMessageWithoutContent(arg)
+);
+
+/**
  * A (previously saved) retrieved Message with content
  */
 export interface IRetrievedMessageWithContent
@@ -314,7 +335,7 @@ export class MessageModel extends DocumentDbModel<
 
   /**
    * Attach a media (a stored text blob) to the existing message document.
-   * 
+   *
    * @param blobService     the azure.BlobService used to store the media
    * @param messageId       the message document id
    * @param partitionKey    the message document partitionKey

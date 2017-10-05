@@ -222,29 +222,29 @@ export const ResponseErrorForbiddenNotAuthorizedForProduction: IResponseErrorFor
   ...ResponseErrorGeneric(
     HTTP_STATUS_403,
     "Production call forbidden",
-    "You are not allowed to issue production calls, set 'dry_run' to true or ask to be enabled for production."
+    "You are not allowed to issue production calls at this time."
   ),
   kind: "IResponseErrorForbiddenNotAuthorizedForProduction"
 };
 
 /**
- * The user is not allowed to issue dry run requests.
+ * The user is not allowed to issue requests for the recipient.
  */
-export interface IResponseErrorForbiddenNotAuthorizedForDryRun
+export interface IResponseErrorForbiddenNotAuthorizedForRecipient
   extends IResponse {
-  readonly kind: "IResponseErrorForbiddenNotAuthorizedForDryRun";
+  readonly kind: "IResponseErrorForbiddenNotAuthorizedForRecipient";
 }
 
 /**
- * The user is not allowed to issue dry run requests.
+ * The user is not allowed to issue requests for the recipient.
  */
-export const ResponseErrorForbiddenNotAuthorizedForDryRun: IResponseErrorForbiddenNotAuthorizedForDryRun = {
+export const ResponseErrorForbiddenNotAuthorizedForRecipient: IResponseErrorForbiddenNotAuthorizedForRecipient = {
   ...ResponseErrorGeneric(
     HTTP_STATUS_403,
-    "Dry run call forbidden",
-    "You are not allowed to issue dry run calls."
+    "Recipient forbidden",
+    "You are not allowed to issue requests for the recipient."
   ),
-  kind: "IResponseErrorForbiddenNotAuthorizedForDryRun"
+  kind: "IResponseErrorForbiddenNotAuthorizedForRecipient"
 };
 
 /**
