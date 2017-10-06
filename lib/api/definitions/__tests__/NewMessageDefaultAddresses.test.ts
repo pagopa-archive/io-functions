@@ -11,7 +11,7 @@ describe("Check NewMessageDefaultAddresses methods", () => {
     const newMessageDefaultAddressesOne: NewMessageDefaultAddresses = {
       email: toEmailAddress("address@mail.org").get
     };
-    const newMessageDefaultAddressesTwo: NewMessageDefaultAddresses = {
+    const newMessageDefaultAddressesTwo = {
       email: "address@"
     };
 
@@ -27,7 +27,7 @@ describe("Check NewMessageDefaultAddresses methods", () => {
     const newMessageDefaultAddressesOne: NewMessageDefaultAddresses = {
       email: toEmailAddress("address@mail.org").get
     };
-    const newMessageDefaultAddressesTwo: NewMessageDefaultAddresses = {
+    const newMessageDefaultAddressesTwo = {
       email: "address@"
     };
     const newMessageDefaultAddressesThree: NewMessageDefaultAddresses = {

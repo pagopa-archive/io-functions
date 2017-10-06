@@ -31,7 +31,7 @@ describe("Check ProblemJson methods", () => {
 
   test("isProblemJson, check detail property", () => {
     const httpStatusCode: HttpStatusCode = toHttpStatusCode(200).get;
-    const problemJsonOne: ProblemJson = {
+    const problemJsonOne = {
       detail: 1,
       instance: "instance",
       status: httpStatusCode,
@@ -62,7 +62,7 @@ describe("Check ProblemJson methods", () => {
 
   test("isProblemJson, check instance property", () => {
     const httpStatusCode: HttpStatusCode = toHttpStatusCode(200).get;
-    const problemJsonOne: ProblemJson = {
+    const problemJsonOne = {
       detail: "detail",
       instance: 2,
       status: httpStatusCode,
@@ -92,8 +92,7 @@ describe("Check ProblemJson methods", () => {
   });
 
   test("isProblemJson, check status property", () => {
-    const httpStatusCode: HttpStatusCode = toHttpStatusCode(200).get;
-    const problemJsonOne: ProblemJson = {
+    const problemJsonOne = {
       detail: "detail",
       instance: "instance",
       status: 99,
@@ -124,7 +123,7 @@ describe("Check ProblemJson methods", () => {
 
   test("isProblemJson, check title property", () => {
     const httpStatusCode: HttpStatusCode = toHttpStatusCode(200).get;
-    const problemJsonOne: ProblemJson = {
+    const problemJsonOne = {
       detail: "detail",
       instance: "instance",
       status: httpStatusCode,
@@ -155,7 +154,7 @@ describe("Check ProblemJson methods", () => {
 
   test("isProblemJson, check type property", () => {
     const httpStatusCode: HttpStatusCode = toHttpStatusCode(200).get;
-    const problemJsonOne: ProblemJson = {
+    const problemJsonOne = {
       detail: "detail",
       instance: "instance",
       status: httpStatusCode,

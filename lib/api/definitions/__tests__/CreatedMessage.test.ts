@@ -184,7 +184,7 @@ describe("Check CreatedMessage methods", () => {
   });
 
   test("isCreatedMessage, check content property", () => {
-    const messageContent: MessageContent = {
+    const messageContent = {
       markdown: "Lorem ipsum",
       subject: "Lorem ipsum dolor sit amet"
     };

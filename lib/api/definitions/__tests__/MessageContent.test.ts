@@ -47,28 +47,28 @@ describe("Check MessageContent type", () => {
   test("isMessageContent, check markdown property", () => {
     const s: MessageSubject = toMessageSubject("Lorem ipsum dolor sit amet")
       .get;
-    const m: MessageBodyMarkdown = "Lorem ipsum dolor sit amet";
+    const m: string = "Lorem ipsum dolor sit amet";
 
-    const messageContentOne: MessageContent = {
+    const messageContentOne = {
       markdown: m,
       subject: s
     };
     expect(isMessageContent(messageContentOne)).toBe(false);
 
-    const messageContentTwo: MessageContent = {
+    const messageContentTwo = {
       subject: s
     };
     expect(isMessageContent(messageContentTwo)).toBe(false);
   });
 
   test("isMessageContent, check subject property", () => {
-    const s: MessageSubject = "Lorem";
+    const s: string = "Lorem";
     const m: MessageBodyMarkdown = toMessageBodyMarkdown(
       // String long 90 characters.
       "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt"
     ).get;
 
-    const messageContentOne: MessageContent = {
+    const messageContentOne = {
       markdown: m,
       subject: s
     };

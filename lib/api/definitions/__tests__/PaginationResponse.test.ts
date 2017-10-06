@@ -10,7 +10,7 @@ describe("Check PaginationResponse methods", () => {
       next: "next",
       page_size: 2
     };
-    const paginationResponseTwo: PaginationResponse = {
+    const paginationResponseTwo = {
       next: 1,
       page_size: 2
     };
@@ -30,7 +30,7 @@ describe("Check PaginationResponse methods", () => {
   });
 
   test("isPaginationResponse, check next property", () => {
-    const paginationResponseOne: PaginationResponse = {
+    const paginationResponseOne = {
       next: 1,
       page_size: 2
     };
@@ -50,7 +50,7 @@ describe("Check PaginationResponse methods", () => {
   });
 
   test("isPaginationResponse, check page_size property", () => {
-    const paginationResponseOne: PaginationResponse = {
+    const paginationResponseOne = {
       next: "next",
       page_size: "2"
     };

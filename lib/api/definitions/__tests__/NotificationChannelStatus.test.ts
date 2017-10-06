@@ -5,8 +5,8 @@ import {
 
 describe("Check NotificationChannelStatus methods", () => {
   test("toNotificationChannelStatus", () => {
-    const notificationChannelStatusOne = "QUEUED";
-    const notificationChannelStatusTwo = "WRONG";
+    const notificationChannelStatusOne: string = "QUEUED";
+    const notificationChannelStatusTwo: string = "WRONG";
     expect(
       toNotificationChannelStatus(notificationChannelStatusOne).get
     ).toEqual(notificationChannelStatusOne);
@@ -16,8 +16,8 @@ describe("Check NotificationChannelStatus methods", () => {
   });
 
   test("isNotificationChannelStatus", () => {
-    const notificationChannelStatusOne = "QUEUED";
-    const notificationChannelStatusTwo = "WRONG";
+    const notificationChannelStatusOne: string = "QUEUED";
+    const notificationChannelStatusTwo: string = "WRONG";
 
     expect(isNotificationChannelStatus(notificationChannelStatusOne)).toBe(
       true

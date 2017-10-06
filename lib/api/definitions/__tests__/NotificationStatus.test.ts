@@ -11,7 +11,7 @@ describe("Check NotificationStatus methods", () => {
     const notificationStatusOne: NotificationStatus = {
       email: toNotificationChannelStatus("QUEUED").get
     };
-    const notificationStatusTwo: NotificationStatus = {
+    const notificationStatusTwo = {
       email: "WRONG"
     };
 
@@ -26,7 +26,7 @@ describe("Check NotificationStatus methods", () => {
     const notificationStatusOne: NotificationStatus = {
       email: toNotificationChannelStatus("QUEUED").get
     };
-    const notificationStatusTwo: NotificationStatus = {
+    const notificationStatusTwo = {
       email: "WRONG"
     };
     const notificationStatusThree: NotificationStatus = {

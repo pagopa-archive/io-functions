@@ -11,7 +11,7 @@ describe("Check LimitedProfile methods", () => {
     const limitedProfileOne: LimitedProfile = {
       preferred_languages: toPreferredLanguages(["it_IT"]).get
     };
-    const limitedProfileTwo: LimitedProfile = {
+    const limitedProfileTwo = {
       preferred_languages: ["it_"]
     };
 
@@ -23,7 +23,7 @@ describe("Check LimitedProfile methods", () => {
     const limitedProfileOne: LimitedProfile = {
       preferred_languages: toPreferredLanguages(["it_IT"]).get
     };
-    const limitedProfileTwo: LimitedProfile = {
+    const limitedProfileTwo = {
       preferred_languages: ["it_"]
     };
     /* tslint:disable */

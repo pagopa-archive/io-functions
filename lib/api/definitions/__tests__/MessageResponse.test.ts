@@ -97,7 +97,7 @@ describe("Check MessageResponse methods", () => {
       subject: s.get
     };
 
-    const msg: CreatedMessage = {
+    const msg = {
       content: messageContent,
       id: "12345",
       sender_organization_id: "Sender Organization",
@@ -108,7 +108,7 @@ describe("Check MessageResponse methods", () => {
       email: toNotificationChannelStatus("SENT_TO_CHANNEL").get
     };
 
-    const messageResponse: MessageResponse = {
+    const messageResponse = {
       message: msg,
       notification: ns
     };
@@ -136,11 +136,11 @@ describe("Check MessageResponse methods", () => {
       time_to_live: toTimeToLive(3600).get
     };
 
-    const ns: NotificationStatus = {
+    const ns = {
       email: "WRONG"
     };
 
-    const messageResponseOne: MessageResponse = {
+    const messageResponseOne = {
       message: msg,
       notification: ns
     };

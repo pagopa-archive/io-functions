@@ -2,8 +2,8 @@ import { isPreferredLanguage, toPreferredLanguage } from "../PreferredLanguage";
 
 describe("Check PreferredLanguage methods", () => {
   test("toPreferredLanguage", () => {
-    const preferredLanguageOne = "it_IT";
-    const preferredLanguageTwo = "it_WRONG";
+    const preferredLanguageOne: string = "it_IT";
+    const preferredLanguageTwo: string = "it_WRONG";
 
     expect(toPreferredLanguage(preferredLanguageOne).get).toEqual(
       preferredLanguageOne
@@ -12,8 +12,8 @@ describe("Check PreferredLanguage methods", () => {
   });
 
   test("isPreferredLanguage", () => {
-    const preferredLanguageOne = "it_IT";
-    const preferredLanguageTwo = "it_WRONG";
+    const preferredLanguageOne: string = "it_IT";
+    const preferredLanguageTwo: string = "it_WRONG";
 
     expect(isPreferredLanguage(preferredLanguageOne)).toBe(true);
     expect(isPreferredLanguage(preferredLanguageTwo)).toBe(false);

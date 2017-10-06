@@ -4,22 +4,23 @@ import {
   toHttpStatusCode
 } from "../HttpStatusCode";
 
+import { toWithinRangeNumber } from "../../../utils/numbers";
+
 describe("Check HttpStatusCode methods", () => {
   test("toHttpStatusCode", () => {
-    const httpStatusCodeOne: HttpStatusCode = 100;
-    const httpStatusCodeTwo: HttpStatusCode = 99;
+    const httpStatusCodeOne: HttpStatusCode = toWithinRangeNumber(100, 100, 600)
+      .get;
 
     expect(toHttpStatusCode(httpStatusCodeOne).get).toEqual(httpStatusCodeOne);
-    expect(toHttpStatusCode(httpStatusCodeTwo)).toEqual({});
+    expect(toHttpStatusCode(99)).toEqual({});
   });
 
   test("isHttpStatusCode", () => {
-    const httpStatusCodeOne: HttpStatusCode = 100;
-    const httpStatusCodeTwo: HttpStatusCode = 99;
-    const httpStatusCodeThree: HttpStatusCode = "200";
+    const httpStatusCodeOne: HttpStatusCode = toWithinRangeNumber(100, 100, 600)
+      .get;
 
     expect(isHttpStatusCode(httpStatusCodeOne)).toBe(true);
-    expect(isHttpStatusCode(httpStatusCodeTwo)).toBe(false);
-    expect(isHttpStatusCode(httpStatusCodeThree)).toBe(false);
+    expect(isHttpStatusCode(99)).toBe(false);
+    expect(isHttpStatusCode("200")).toBe(false);
   });
 });

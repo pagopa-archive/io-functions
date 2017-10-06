@@ -32,7 +32,7 @@ describe("Check ExtendedProfile methods", () => {
   });
 
   test("isExtendedProfile, check email property", () => {
-    const extendedProfileOne: ExtendedProfile = {
+    const extendedProfileOne = {
       email: "address@",
       preferred_languages: toPreferredLanguages(["it_IT"]).get,
       version: 1
@@ -56,7 +56,7 @@ describe("Check ExtendedProfile methods", () => {
   });
 
   test("isExtendedProfile, check preferred_languages property", () => {
-    const extendedProfileOne: ExtendedProfile = {
+    const extendedProfileOne = {
       email: toEmailAddress("address@mail.org").get,
       preferred_languages: ["it"],
       version: 1
@@ -80,7 +80,7 @@ describe("Check ExtendedProfile methods", () => {
   });
 
   test("isExtendedProfile, check version property", () => {
-    const extendedProfileOne: ExtendedProfile = {
+    const extendedProfileOne = {
       email: toEmailAddress("address@mail.org").get,
       preferred_languages: toPreferredLanguages(["it_IT"]).get,
       version: "1"

@@ -12,7 +12,7 @@ describe("Check PreferredLanguages methods", () => {
       PreferredLanguage.it_IT,
       PreferredLanguage.en_GB
     ];
-    const preferredLanguagesTwo: PreferredLanguages = [
+    const preferredLanguagesTwo: ReadonlyArray<string> = [
       PreferredLanguage.it_IT,
       "en_WRONG"
     ];
@@ -28,7 +28,7 @@ describe("Check PreferredLanguages methods", () => {
       PreferredLanguage.it_IT,
       PreferredLanguage.en_GB
     ];
-    const preferredLanguagesTwo: PreferredLanguages = [
+    const preferredLanguagesTwo: ReadonlyArray<string> = [
       PreferredLanguage.it_IT,
       "en_WRONG"
     ];
