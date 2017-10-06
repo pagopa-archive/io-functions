@@ -8,8 +8,8 @@ import { toEmailAddress } from "../EmailAddress";
 
 import { toPreferredLanguages } from "../PreferredLanguages";
 
-describe("Check ExtendedProfile methods", () => {
-  test("toExtendedProfile", () => {
+describe("ExtendedProfile#toExtendedProfile", () => {
+  test("should returns a defined option for valid ExtendedProfile", () => {
     const extendedProfile: ExtendedProfile = {
       email: toEmailAddress("address@mail.org").get,
       preferred_languages: toPreferredLanguages(["it_IT"]).get,
@@ -17,34 +17,36 @@ describe("Check ExtendedProfile methods", () => {
     };
 
     expect(toExtendedProfile(extendedProfile).get).toEqual(extendedProfile);
-    // ExtendedProfile's properties are all not required.
-    expect(toExtendedProfile({}).get).toEqual({});
   });
+  test("should returns an empty option for invalid ExtendedProfile", () => {
+    const extendedProfile = {
+      email: "address@",
+      preferred_languages: toPreferredLanguages(["it_IT"]).get,
+      version: 1
+    };
+    expect(toExtendedProfile(extendedProfile)).toEqual({});
+  });
+});
 
-  test("isExtendedProfile", () => {
+describe("ExtendedProfile#isExtendedProfile", () => {
+  test("should returns true if ExtendedProfile is well formed", () => {
     const extendedProfile: ExtendedProfile = {
       email: toEmailAddress("address@mail.org").get,
       preferred_languages: toPreferredLanguages(["it_IT"]).get,
       version: 1
     };
 
-    expect(isExtendedProfile(extendedProfile)).toBe(true);
+    expect(toExtendedProfile(extendedProfile).get).toEqual(extendedProfile);
   });
 
-  test("isExtendedProfile, check email property", () => {
-    const extendedProfileOne = {
-      email: "address@",
-      preferred_languages: toPreferredLanguages(["it_IT"]).get,
-      version: 1
-    };
-    expect(isExtendedProfile(extendedProfileOne)).toBe(false);
-
+  test("should returns true if ExtendedProfile object does not have email property", () => {
     const extendedProfileTwo: ExtendedProfile = {
       preferred_languages: toPreferredLanguages(["it_IT"]).get,
       version: 1
     };
     expect(isExtendedProfile(extendedProfileTwo)).toBe(true);
-
+  });
+  test("should returns true if ExtendedProfile object does have email property set to null", () => {
     /* tslint:disable */
     const extendedProfileThree = {
       email: null,
@@ -54,21 +56,23 @@ describe("Check ExtendedProfile methods", () => {
     /* tslint:enable */
     expect(isExtendedProfile(extendedProfileThree)).toBe(true);
   });
-
-  test("isExtendedProfile, check preferred_languages property", () => {
+  test("should returns false if ExtendedProfile object does have email property malformed", () => {
     const extendedProfileOne = {
-      email: toEmailAddress("address@mail.org").get,
-      preferred_languages: ["it"],
+      email: "address@",
+      preferred_languages: toPreferredLanguages(["it_IT"]).get,
       version: 1
     };
     expect(isExtendedProfile(extendedProfileOne)).toBe(false);
+  });
 
+  test("should returns true if ExtendedProfile object does not have preferred_languages property", () => {
     const extendedProfileTwo: ExtendedProfile = {
       email: toEmailAddress("address@mail.org").get,
       version: 1
     };
     expect(isExtendedProfile(extendedProfileTwo)).toBe(true);
-
+  });
+  test("should returns true if ExtendedProfile object does have preferred_languages property set to null", () => {
     /* tslint:disable */
     const extendedProfileThree = {
       email: toEmailAddress("address@mail.org").get,
@@ -78,21 +82,23 @@ describe("Check ExtendedProfile methods", () => {
     /* tslint:enable */
     expect(isExtendedProfile(extendedProfileThree)).toBe(true);
   });
-
-  test("isExtendedProfile, check version property", () => {
+  test("should returns false if ExtendedProfile object does have preferred_languages property malformed", () => {
     const extendedProfileOne = {
       email: toEmailAddress("address@mail.org").get,
-      preferred_languages: toPreferredLanguages(["it_IT"]).get,
-      version: "1"
+      preferred_languages: ["it"],
+      version: 1
     };
     expect(isExtendedProfile(extendedProfileOne)).toBe(false);
+  });
 
+  test("should returns true if ExtendedProfile object does not have version property", () => {
     const extendedProfileTwo: ExtendedProfile = {
       email: toEmailAddress("address@mail.org").get,
       preferred_languages: toPreferredLanguages(["it_IT"]).get
     };
     expect(isExtendedProfile(extendedProfileTwo)).toBe(true);
-
+  });
+  test("should returns true if ExtendedProfile object does have version property set to null", () => {
     /* tslint:disable */
     const extendedProfileThree = {
       email: toEmailAddress("address@mail.org").get,
@@ -101,5 +107,13 @@ describe("Check ExtendedProfile methods", () => {
     };
     /* tslint:enable */
     expect(isExtendedProfile(extendedProfileThree)).toBe(true);
+  });
+  test("should returns false if ExtendedProfile object does have version property malformed", () => {
+    const extendedProfileOne = {
+      email: toEmailAddress("address@mail.org").get,
+      preferred_languages: toPreferredLanguages(["it_IT"]).get,
+      version: "1"
+    };
+    expect(isExtendedProfile(extendedProfileOne)).toBe(false);
   });
 });

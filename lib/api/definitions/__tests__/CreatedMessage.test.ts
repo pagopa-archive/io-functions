@@ -14,8 +14,8 @@ import { toFiscalCode } from "../FiscalCode";
 
 import { toTimeToLive } from "../TimeToLive";
 
-describe("Check CreatedMessage methods", () => {
-  test("toCreatedMessage", () => {
+describe("CreatedMessage#toCreatedMessage", () => {
+  test("should returns a defined option for valid payloads", () => {
     const s = toMessageSubject("Lorem ipsum dolor sit amet");
     const m = toMessageBodyMarkdown(
       // String long 90 characters.
@@ -27,7 +27,7 @@ describe("Check CreatedMessage methods", () => {
       subject: s.get
     };
 
-    const message = {
+    const message: CreatedMessage = {
       content: messageContent,
       fiscal_code: toFiscalCode("AAABBB01C01A000A").get,
       id: "12345",
@@ -35,11 +35,23 @@ describe("Check CreatedMessage methods", () => {
       time_to_live: toTimeToLive(3600).get
     };
 
-    const createdMessage: CreatedMessage = toCreatedMessage(message).get;
-    expect(createdMessage).toEqual(message);
+    expect(toCreatedMessage(message).get).toEqual(message);
   });
 
-  test("isCreatedMessage", () => {
+  test("should returns an empty option for invalid payloads", () => {
+    const message = {
+      content: "WRONG",
+      fiscal_code: toFiscalCode("AAABBB01C01A000A").get,
+      id: "12345",
+      sender_organization_id: "Sender Organization",
+      time_to_live: toTimeToLive(3600).get
+    };
+    expect(toCreatedMessage(message)).toEqual({});
+  });
+});
+
+describe("CreatedMessage#isCreatedMessage", () => {
+  test("should returns true if CreatedMessage is well formed", () => {
     const s = toMessageSubject("Lorem ipsum dolor sit amet");
     const m = toMessageBodyMarkdown(
       // String long 90 characters.
@@ -51,7 +63,7 @@ describe("Check CreatedMessage methods", () => {
       subject: s.get
     };
 
-    const message = {
+    const message: CreatedMessage = {
       content: messageContent,
       fiscal_code: toFiscalCode("AAABBB01C01A000A").get,
       id: "12345",
@@ -62,7 +74,7 @@ describe("Check CreatedMessage methods", () => {
     expect(isCreatedMessage(message)).toBe(true);
   });
 
-  test("isCreatedMessage, check id property", () => {
+  test("should returns true if CreatedMessage object does not have id property", () => {
     const s = toMessageSubject("Lorem ipsum dolor sit amet");
     const m = toMessageBodyMarkdown(
       // String long 90 characters.
@@ -81,6 +93,18 @@ describe("Check CreatedMessage methods", () => {
       time_to_live: toTimeToLive(3600).get
     };
     expect(isCreatedMessage(messageOne)).toBe(true);
+  });
+  test("should returns true if CreatedMessage object does have id property set to null", () => {
+    const s = toMessageSubject("Lorem ipsum dolor sit amet");
+    const m = toMessageBodyMarkdown(
+      // String long 90 characters.
+      "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt"
+    );
+
+    const messageContent: MessageContent = {
+      markdown: m.get,
+      subject: s.get
+    };
 
     /* tslint:disable */
     const messageTwo = {
@@ -92,7 +116,18 @@ describe("Check CreatedMessage methods", () => {
     };
     /* tslint:enable */
     expect(isCreatedMessage(messageTwo)).toBe(true);
+  });
+  test("should returns false if CreatedMessage object does have id property malformed", () => {
+    const s = toMessageSubject("Lorem ipsum dolor sit amet");
+    const m = toMessageBodyMarkdown(
+      // String long 90 characters.
+      "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt"
+    );
 
+    const messageContent: MessageContent = {
+      markdown: m.get,
+      subject: s.get
+    };
     const messageThree = {
       content: messageContent,
       fiscal_code: toFiscalCode("AAABBB01C01A000A").get,
@@ -103,7 +138,27 @@ describe("Check CreatedMessage methods", () => {
     expect(isCreatedMessage(messageThree)).toBe(false);
   });
 
-  test("isCreatedMessage, check fiscal_code property", () => {
+  test("should returns false if CreatedMessage object does not have fiscal_code property", () => {
+    const s = toMessageSubject("Lorem ipsum dolor sit amet");
+    const m = toMessageBodyMarkdown(
+      // String long 90 characters.
+      "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt"
+    );
+
+    const messageContent: MessageContent = {
+      markdown: m.get,
+      subject: s.get
+    };
+
+    const messageThree = {
+      content: messageContent,
+      id: "12345",
+      sender_organization_id: "Sender Organization",
+      time_to_live: toTimeToLive(3600).get
+    };
+    expect(isCreatedMessage(messageThree)).toBe(false);
+  });
+  test("should returns false if CreatedMessage object does have fiscal_code property mlformed", () => {
     const s = toMessageSubject("Lorem ipsum dolor sit amet");
     const m = toMessageBodyMarkdown(
       // String long 90 characters.
@@ -123,26 +178,9 @@ describe("Check CreatedMessage methods", () => {
       time_to_live: toTimeToLive(3600).get
     };
     expect(isCreatedMessage(messageOne)).toBe(false);
-
-    const messageTwo = {
-      content: messageContent,
-      fiscal_code: 111111,
-      id: "12345",
-      sender_organization_id: "Sender Organization",
-      time_to_live: toTimeToLive(3600).get
-    };
-    expect(isCreatedMessage(messageTwo)).toBe(false);
-
-    const messageThree = {
-      content: messageContent,
-      id: "12345",
-      sender_organization_id: "Sender Organization",
-      time_to_live: toTimeToLive(3600).get
-    };
-    expect(isCreatedMessage(messageThree)).toBe(false);
   });
 
-  test("isCreatedMessage, check time_to_live property", () => {
+  test("should returns true if CreatedMessage object does not have time_to_live property", () => {
     const s = toMessageSubject("Lorem ipsum dolor sit amet");
     const m = toMessageBodyMarkdown(
       // String long 90 characters.
@@ -161,6 +199,18 @@ describe("Check CreatedMessage methods", () => {
       sender_organization_id: "Sender Organization"
     };
     expect(isCreatedMessage(messageOne)).toBe(true);
+  });
+  test("should returns true if CreatedMessage object does have time_to_live property set to null", () => {
+    const s = toMessageSubject("Lorem ipsum dolor sit amet");
+    const m = toMessageBodyMarkdown(
+      // String long 90 characters.
+      "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt"
+    );
+
+    const messageContent: MessageContent = {
+      markdown: m.get,
+      subject: s.get
+    };
 
     /* tslint:disable */
     const messageTwo = {
@@ -172,6 +222,18 @@ describe("Check CreatedMessage methods", () => {
     };
     /* tslint:enable */
     expect(isCreatedMessage(messageTwo)).toBe(true);
+  });
+  test("should returns false if CreatedMessage object does have time_to_live property mlformed", () => {
+    const s = toMessageSubject("Lorem ipsum dolor sit amet");
+    const m = toMessageBodyMarkdown(
+      // String long 90 characters.
+      "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt"
+    );
+
+    const messageContent: MessageContent = {
+      markdown: m.get,
+      subject: s.get
+    };
 
     const messageThree = {
       content: messageContent,
@@ -183,12 +245,7 @@ describe("Check CreatedMessage methods", () => {
     expect(isCreatedMessage(messageThree)).toBe(false);
   });
 
-  test("isCreatedMessage, check content property", () => {
-    const messageContent = {
-      markdown: "Lorem ipsum",
-      subject: "Lorem ipsum dolor sit amet"
-    };
-
+  test("should returns true if CreatedMessage object does not have content property", () => {
     const messageOne = {
       fiscal_code: toFiscalCode("AAABBB01C01A000A").get,
       id: "12345",
@@ -196,7 +253,8 @@ describe("Check CreatedMessage methods", () => {
       time_to_live: toTimeToLive(3600).get
     };
     expect(isCreatedMessage(messageOne)).toBe(true);
-
+  });
+  test("should returns true if CreatedMessage object does have content property set to null", () => {
     /* tslint:disable */
     const messageTwo = {
       content: null,
@@ -207,6 +265,12 @@ describe("Check CreatedMessage methods", () => {
     };
     /* tslint:enable */
     expect(isCreatedMessage(messageTwo)).toBe(true);
+  });
+  test("should returns false if CreatedMessage object does have content property mlformed", () => {
+    const messageContent = {
+      markdown: "Lorem ipsum",
+      subject: "Lorem ipsum dolor sit amet"
+    };
 
     const messageThree = {
       content: messageContent,
@@ -218,7 +282,7 @@ describe("Check CreatedMessage methods", () => {
     expect(isCreatedMessage(messageThree)).toBe(false);
   });
 
-  test("isCreatedMessage, check sender_organization_id property", () => {
+  test("should returns true if CreatedMessage object does not have sender_organization_id property", () => {
     const s = toMessageSubject("Lorem ipsum dolor sit amet");
     const m = toMessageBodyMarkdown(
       // String long 90 characters.
@@ -237,6 +301,18 @@ describe("Check CreatedMessage methods", () => {
       time_to_live: toTimeToLive(3600).get
     };
     expect(isCreatedMessage(messageOne)).toBe(false);
+  });
+  test("should returns true if CreatedMessage object does have sender_organization_id property set to null", () => {
+    const s = toMessageSubject("Lorem ipsum dolor sit amet");
+    const m = toMessageBodyMarkdown(
+      // String long 90 characters.
+      "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt"
+    );
+
+    const messageContent: MessageContent = {
+      markdown: m.get,
+      subject: s.get
+    };
 
     /* tslint:disable */
     const messageTwo = {
@@ -248,6 +324,18 @@ describe("Check CreatedMessage methods", () => {
     };
     /* tslint:enable */
     expect(isCreatedMessage(messageTwo)).toBe(false);
+  });
+  test("should returns false if CreatedMessage object does have sender_organization_id property mlformed", () => {
+    const s = toMessageSubject("Lorem ipsum dolor sit amet");
+    const m = toMessageBodyMarkdown(
+      // String long 90 characters.
+      "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt"
+    );
+
+    const messageContent: MessageContent = {
+      markdown: m.get,
+      subject: s.get
+    };
 
     const messageThree = {
       content: messageContent,

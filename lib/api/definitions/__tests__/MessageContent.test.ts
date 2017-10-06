@@ -11,8 +11,8 @@ import {
   toMessageContent
 } from "../MessageContent";
 
-describe("Check MessageContent type", () => {
-  test("toMessageContent", () => {
+describe("MessageContent#toMessageContent", () => {
+  test("should returns a defined option for valid message content ", () => {
     const s: MessageSubject = toMessageSubject("Lorem ipsum dolor sit amet")
       .get;
     const m: MessageBodyMarkdown = toMessageBodyMarkdown(
@@ -27,8 +27,24 @@ describe("Check MessageContent type", () => {
 
     expect(toMessageContent(messageContent).get).toEqual(messageContent);
   });
+  test("should returns an empty option for invalid message content", () => {
+    const s: string = "Lorem";
+    const m: MessageBodyMarkdown = toMessageBodyMarkdown(
+      // String long 90 characters.
+      "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt"
+    ).get;
 
-  test("isMessageContent", () => {
+    const messageContent = {
+      markdown: m,
+      subject: s
+    };
+
+    expect(toMessageContent(messageContent)).toEqual({});
+  });
+});
+
+describe("MessageContent#isMessageContent", () => {
+  test("should returns true if message content is well formed", () => {
     const s: MessageSubject = toMessageSubject("Lorem ipsum dolor sit amet")
       .get;
     const m: MessageBodyMarkdown = toMessageBodyMarkdown(
@@ -44,24 +60,30 @@ describe("Check MessageContent type", () => {
     expect(isMessageContent(messageContent)).toBe(true);
   });
 
-  test("isMessageContent, check markdown property", () => {
-    const s: MessageSubject = toMessageSubject("Lorem ipsum dolor sit amet")
-      .get;
-    const m: string = "Lorem ipsum dolor sit amet";
-
-    const messageContentOne = {
-      markdown: m,
-      subject: s
+  test("should returns true if MessageContent object does not have subject property", () => {
+    const m: MessageBodyMarkdown = toMessageBodyMarkdown(
+      // String long 90 characters.
+      "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt"
+    ).get;
+    const messageContentTwo: MessageContent = {
+      markdown: m
     };
-    expect(isMessageContent(messageContentOne)).toBe(false);
-
-    const messageContentTwo = {
-      subject: s
-    };
-    expect(isMessageContent(messageContentTwo)).toBe(false);
+    expect(isMessageContent(messageContentTwo)).toBe(true);
   });
-
-  test("isMessageContent, check subject property", () => {
+  test("should returns true if MessageContent object does have subject property set to null", () => {
+    const m: MessageBodyMarkdown = toMessageBodyMarkdown(
+      // String long 90 characters.
+      "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt"
+    ).get;
+    /* tslint:disable */
+    const messageContentThree = {
+      markdown: m,
+      subject: null
+    };
+    /* tslint:enable */
+    expect(isMessageContent(messageContentThree)).toBe(true);
+  });
+  test("should returns false if MessageContent object does have subject property malformed", () => {
     const s: string = "Lorem";
     const m: MessageBodyMarkdown = toMessageBodyMarkdown(
       // String long 90 characters.
@@ -73,18 +95,25 @@ describe("Check MessageContent type", () => {
       subject: s
     };
     expect(isMessageContent(messageContentOne)).toBe(false);
+  });
 
-    const messageContentTwo: MessageContent = {
-      markdown: m
+  test("should returns true if MessageContent object does not have markdown property", () => {
+    const s: MessageSubject = toMessageSubject("Lorem ipsum dolor sit amet")
+      .get;
+    const messageContentTwo = {
+      subject: s
     };
-    expect(isMessageContent(messageContentTwo)).toBe(true);
+    expect(isMessageContent(messageContentTwo)).toBe(false);
+  });
+  test("should returns false if MessageContent object does have markdown property malformed", () => {
+    const s: MessageSubject = toMessageSubject("Lorem ipsum dolor sit amet")
+      .get;
+    const m: string = "Lorem ipsum dolor sit amet";
 
-    /* tslint:disable */
-    const messageContentThree = {
+    const messageContentOne = {
       markdown: m,
-      subject: null
+      subject: s
     };
-    /* tslint:enable */
-    expect(isMessageContent(messageContentThree)).toBe(true);
+    expect(isMessageContent(messageContentOne)).toBe(false);
   });
 });
