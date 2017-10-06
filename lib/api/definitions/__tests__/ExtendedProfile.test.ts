@@ -46,7 +46,7 @@ describe("Check ExtendedProfile methods", () => {
     expect(isExtendedProfile(extendedProfileTwo)).toBe(true);
 
     /* tslint:disable */
-    const extendedProfileThree: ExtendedProfile = {
+    const extendedProfileThree = {
       email: null,
       preferred_languages: toPreferredLanguages(["it_IT"]).get,
       version: 1
@@ -70,7 +70,7 @@ describe("Check ExtendedProfile methods", () => {
     expect(isExtendedProfile(extendedProfileTwo)).toBe(true);
 
     /* tslint:disable */
-    const extendedProfileThree: ExtendedProfile = {
+    const extendedProfileThree = {
       email: toEmailAddress("address@mail.org").get,
       preferred_languages: null,
       version: 1
@@ -94,7 +94,7 @@ describe("Check ExtendedProfile methods", () => {
     expect(isExtendedProfile(extendedProfileTwo)).toBe(true);
 
     /* tslint:disable */
-    const extendedProfileThree: ExtendedProfile = {
+    const extendedProfileThree = {
       email: toEmailAddress("address@mail.org").get,
       preferred_languages: toPreferredLanguages(["it_IT"]).get,
       version: null

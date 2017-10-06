@@ -33,7 +33,7 @@ describe("Check NotificationStatus methods", () => {
       email: undefined
     };
     /* tslint:disable */
-    const notificationStatusFour: NotificationStatus = {
+    const notificationStatusFour = {
       email: null
     };
     /* tslint:enable */

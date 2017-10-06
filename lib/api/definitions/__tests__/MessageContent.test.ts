@@ -80,7 +80,7 @@ describe("Check MessageContent type", () => {
     expect(isMessageContent(messageContentTwo)).toBe(true);
 
     /* tslint:disable */
-    const messageContentThree: MessageContent = {
+    const messageContentThree = {
       markdown: m,
       subject: null
     };

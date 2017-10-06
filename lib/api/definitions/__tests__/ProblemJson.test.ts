@@ -46,7 +46,7 @@ describe("Check ProblemJson methods", () => {
       type: "type"
     };
     /* tslint:disable */
-    const problemJsonThree: ProblemJson = {
+    const problemJsonThree = {
       detail: null,
       instance: "instance",
       status: httpStatusCode,
@@ -77,7 +77,7 @@ describe("Check ProblemJson methods", () => {
       type: "type"
     };
     /* tslint:disable */
-    const problemJsonThree: ProblemJson = {
+    const problemJsonThree = {
       detail: "detail",
       instance: null,
       status: httpStatusCode,
@@ -107,7 +107,7 @@ describe("Check ProblemJson methods", () => {
       type: "type"
     };
     /* tslint:disable */
-    const problemJsonThree: ProblemJson = {
+    const problemJsonThree = {
       detail: "detail",
       instance: "instance",
       status: null,
@@ -138,7 +138,7 @@ describe("Check ProblemJson methods", () => {
       type: "type"
     };
     /* tslint:disable */
-    const problemJsonThree: ProblemJson = {
+    const problemJsonThree = {
       detail: "detail",
       instance: "instance",
       status: httpStatusCode,
@@ -169,7 +169,7 @@ describe("Check ProblemJson methods", () => {
       type: undefined
     };
     /* tslint:disable */
-    const problemJsonThree: ProblemJson = {
+    const problemJsonThree = {
       detail: "detail",
       instance: "instance",
       status: httpStatusCode,

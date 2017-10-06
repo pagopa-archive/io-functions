@@ -39,7 +39,7 @@ describe("Check PaginationResponse methods", () => {
       page_size: 2
     };
     /* tslint:disable */
-    const paginationResponseThree: PaginationResponse = {
+    const paginationResponseThree = {
       next: null,
       page_size: 2
     };
@@ -59,7 +59,7 @@ describe("Check PaginationResponse methods", () => {
       page_size: undefined
     };
     /* tslint:disable */
-    const paginationResponseThree: PaginationResponse = {
+    const paginationResponseThree = {
       next: "next",
       page_size: null
     };

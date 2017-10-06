@@ -115,7 +115,7 @@ describe("Check NewMessage methods", () => {
     expect(isNewMessage(newMessageOne)).toBe(true);
 
     /* tslint:disable */
-    const newMessageTwo: NewMessage = {
+    const newMessageTwo = {
       content: messageContent,
       default_addresses: null,
       time_to_live: toTimeToLive(3600).get
@@ -162,7 +162,7 @@ describe("Check NewMessage methods", () => {
     expect(isNewMessage(newMessageTwo)).toBe(true);
 
     /* tslint:disable */
-    const newMessageThree: NewMessage = {
+    const newMessageThree = {
       content: messageContent,
       default_addresses: nmda,
       time_to_live: null

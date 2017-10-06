@@ -153,7 +153,7 @@ describe("Check MessageResponse methods", () => {
     expect(isMessageResponse(messageResponseTwo)).toBe(true);
 
     /* tslint:disable */
-    const messageResponseThree: MessageResponse = {
+    const messageResponseThree = {
       message: msg,
       notification: null
     };

@@ -34,7 +34,7 @@ describe("Check NewMessageDefaultAddresses methods", () => {
       email: undefined
     };
     /* tslint:disable */
-    const newMessageDefaultAddressesFour: NewMessageDefaultAddresses = {
+    const newMessageDefaultAddressesFour = {
       email: null
     };
     /* tslint:enable */
