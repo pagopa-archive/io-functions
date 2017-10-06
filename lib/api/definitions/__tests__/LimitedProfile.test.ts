@@ -26,7 +26,7 @@ describe("Check LimitedProfile methods", () => {
     const limitedProfileTwo: LimitedProfile = {
       preferred_languages: ["it_"]
     };
-      /* tslint:disable */
+    /* tslint:disable */
     const limitedProfileThree: LimitedProfile = {
       preferred_languages: null
     };
