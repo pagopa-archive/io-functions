@@ -16,7 +16,7 @@ import {
   UserGroup
 } from "../utils/middlewares/azure_api_auth";
 import { FiscalCodeMiddleware } from "../utils/middlewares/fiscalcode";
-import { isNonEmptyString, NonEmptyString } from "../utils/strings";
+import { isNonEmptyString } from "../utils/strings";
 
 import {
   IRequestMiddleware,
@@ -37,6 +37,7 @@ import {
   ResponseSuccessJson
 } from "../utils/response";
 
+import { EmailAddress } from "../api/definitions/EmailAddress";
 import { IProfile, IRetrievedProfile, ProfileModel } from "../models/profile";
 
 function toExtendedProfile(profile: IRetrievedProfile): ExtendedProfile {
@@ -140,7 +141,7 @@ export function GetProfile(profileModel: ProfileModel): express.RequestHandler {
  * TODO: generate from a schema.
  */
 interface IProfilePayload {
-  readonly email?: NonEmptyString;
+  readonly email?: EmailAddress;
 }
 
 /**

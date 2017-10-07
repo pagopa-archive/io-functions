@@ -30,7 +30,7 @@ import {
 import { ICreatedMessageEventSenderMetadata } from "./models/created_message_sender_metadata";
 import {
   IMessageContent,
-  IRetrievedMessageWithoutContent,
+  INewMessageWithoutContent,
   MessageModel
 } from "./models/message";
 import {
@@ -109,14 +109,14 @@ export async function handleMessage(
   messageModel: MessageModel,
   notificationModel: NotificationModel,
   blobService: BlobService,
-  retrievedMessage: IRetrievedMessageWithoutContent,
+  newMessageWithoutContent: INewMessageWithoutContent,
   messageContent: IMessageContent,
   defaultAddresses: Option<NewMessageDefaultAddresses>
 ): Promise<Either<ProcessingError, IRetrievedNotification>> {
   // async fetch of profile data associated to the fiscal code the message
   // should be delivered to
   const errorOrMaybeProfile = await profileModel.findOneProfileByFiscalCode(
-    retrievedMessage.fiscalCode
+    newMessageWithoutContent.fiscalCode
   );
 
   if (errorOrMaybeProfile.isLeft) {
@@ -137,12 +137,12 @@ export async function handleMessage(
     // we add the content of the message to the blob storage for later retrieval
     const errorOrAttachment = await messageModel.attachStoredContent(
       blobService,
-      retrievedMessage.id,
-      retrievedMessage.fiscalCode,
+      newMessageWithoutContent.id,
+      newMessageWithoutContent.fiscalCode,
       messageContent
     );
 
-    winston.debug(`handleMessage|${JSON.stringify(retrievedMessage)}`);
+    winston.debug(`handleMessage|${JSON.stringify(newMessageWithoutContent)}`);
 
     if (errorOrAttachment.isLeft) {
       // we consider errors while updating message as transient
@@ -184,10 +184,10 @@ export async function handleMessage(
     emailNotification: maybeEmailNotification.isDefined
       ? maybeEmailNotification.get
       : undefined,
-    fiscalCode: retrievedMessage.fiscalCode,
+    fiscalCode: newMessageWithoutContent.fiscalCode,
     id: toNonEmptyString(ulid()).get,
     kind: "INewNotification",
-    messageId: retrievedMessage.id
+    messageId: newMessageWithoutContent.id
   };
 
   // save the Notification
@@ -209,7 +209,7 @@ export async function handleMessage(
 export function processResolve(
   errorOrNotification: Either<ProcessingError, IRetrievedNotification>,
   context: IContextWithBindings,
-  retrievedMessage: IRetrievedMessageWithoutContent,
+  newMessageWithoutContent: INewMessageWithoutContent,
   messageContent: IMessageContent,
   senderMetadata: ICreatedMessageEventSenderMetadata
 ): void {
@@ -236,14 +236,14 @@ export function processResolve(
     switch (errorOrNotification.left) {
       case ProcessingError.NO_ADDRESSES: {
         winston.error(
-          `Fiscal code has no associated profile and no default addresses provided|${retrievedMessage.fiscalCode}`
+          `Fiscal code has no associated profile and no default addresses provided|${newMessageWithoutContent.fiscalCode}`
         );
         context.done();
         break;
       }
       case ProcessingError.TRANSIENT: {
         winston.error(
-          `Transient error, retrying|${retrievedMessage.fiscalCode}`
+          `Transient error, retrying|${newMessageWithoutContent.fiscalCode}`
         );
         context.done("Transient error"); // here we trigger a retry by calling
         // done(error)
@@ -255,12 +255,12 @@ export function processResolve(
 
 export function processReject(
   context: IContextWithBindings,
-  retrievedMessage: IRetrievedMessageWithoutContent,
+  newMessageWithoutContent: INewMessageWithoutContent,
   error: Either<ProcessingError, IRetrievedNotification>
 ): void {
   // the promise failed
   winston.error(
-    `Error while processing event, retrying|${retrievedMessage.fiscalCode}|${error}`
+    `Error while processing event, retrying|${newMessageWithoutContent.fiscalCode}|${error}`
   );
   // in case of error, we return a failure to trigger a retry (up to the
   // configured max retries) TODO: schedule next retry with exponential
@@ -294,13 +294,13 @@ export function index(context: IContextWithBindings): void {
   }
 
   // it is an ICreatedMessageEvent
-  const retrievedMessage = createdMessageEvent.message;
+  const newMessageWithoutContent = createdMessageEvent.message;
   const messageContent = createdMessageEvent.messageContent;
   const defaultAddresses = option(createdMessageEvent.defaultAddresses);
   const senderMetadata = createdMessageEvent.senderMetadata;
 
   winston.info(
-    `A new message was created|${retrievedMessage.id}|${retrievedMessage.fiscalCode}`
+    `A new message was created|${newMessageWithoutContent.id}|${newMessageWithoutContent.fiscalCode}`
   );
 
   // setup required models
@@ -326,7 +326,7 @@ export function index(context: IContextWithBindings): void {
     messageModel,
     notificationModel,
     blobService,
-    retrievedMessage,
+    newMessageWithoutContent,
     messageContent,
     defaultAddresses
   ).then(
@@ -334,13 +334,13 @@ export function index(context: IContextWithBindings): void {
       processResolve(
         errorOrNotification,
         context,
-        retrievedMessage,
+        newMessageWithoutContent,
         messageContent,
         senderMetadata
       );
     },
     (error: Either<ProcessingError, IRetrievedNotification>) => {
-      processReject(context, retrievedMessage, error);
+      processReject(context, newMessageWithoutContent, error);
     }
   );
 }
