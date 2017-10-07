@@ -12,6 +12,8 @@
 
 [![Issue Count](https://codeclimate.com/github/teamdigitale/digital-citizenship-functions/badges/issue_count.svg)](https://codeclimate.com/github/teamdigitale/digital-citizenship-functions)
 
+[![Known Vulnerabilities](https://snyk.io/test/github/teamdigitale/digital-citizenship-functions/badge.svg)](https://snyk.io/test/github/teamdigitale/digital-citizenship-functions)
+
 ## Introduction
 
 This is the implementation of the Digital Citizenship API, a set of services
