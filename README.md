@@ -12,7 +12,9 @@
 
 [![Issue Count](https://codeclimate.com/github/teamdigitale/digital-citizenship-functions/badges/issue_count.svg)](https://codeclimate.com/github/teamdigitale/digital-citizenship-functions)
 
-## Overview
+[![Known Vulnerabilities](https://snyk.io/test/github/teamdigitale/digital-citizenship-functions/badge.svg)](https://snyk.io/test/github/teamdigitale/digital-citizenship-functions)
+
+## Introduction
 
 This is the implementation of the Digital Citizenship API, a set of services
 that enable Public Administrations to deliver modern digital services to
@@ -26,6 +28,119 @@ delivery of personalized digital services based on the citizen's preferences
 For further details about the Digital Citizenship initiative, checkout the
 [main Digital Citizenship](https://github.com/teamdigitale/cittadinanza-digitale)
 repository.
+
+## Services provided by the Digital Citizenship API
+
+### Messages
+
+Public administration agencies receive millions of requests every year from
+citizens anxious to find out about the progresses of their application or whether
+a payment has been received. Citizens have to spend time on hold, which wastes
+their time and costs government a lot of money in running call centres.
+Moreover citizens forget about or miss payment deadlines costing them overtime
+fees.
+
+The messages service makes it easier to keep citizens updated, by helping
+service teams across public administration agencies to send text messages,
+emails or letters to the citizens.
+
+#### How messages work
+
+Public administration services can send notifications to citizen by calling
+the messages API from their web applications, back office systems or batch jobs.
+The messages service provides flexibility and resilience by having a number of
+SMS, email and post providers. It’s straightforward for us to swap these
+providers in and out, based on price, performance etc, with no effort or impact
+on government service teams.
+
+The messages service is for sending transactional messages, not for marketing.
+There is a risk that marketing messages may be reported as spam, which would
+affect delivery rates.
+
+### Preferences
+
+Modern digital services are designed for delivering personalized experiences
+to the users. Today, a citizen that wishes to provide personal information and
+preferences to the services he uses, has to provide his preferences over and
+over again to all services, that's because most public digital services don't
+share any information.
+
+The preferences service makes it easier for the citizen to provide his personal
+preferences (i.e. contacts information, payment preferences, language, etc...)
+in a central repository that digital services across public administration can
+use to provide a more personalized digital experience to citizens.
+
+#### How preferences work
+
+Public administration services can query a citizen preferences by calling the
+preferences API from their web applications.
+The preferences service provides fine control on what preferences attributes a
+certain application can read or write, making handling user provided information
+safe and painless.
+
+The preferences service is for delivering personalized digital services, not for
+collecting citizens emails or mobile numbers. For any transactional
+communication need, the messages service must be used.
+
+## Using the Digital Citizenship API
+
+### Trial mode
+
+All new accounts on the Digital Citizenship API start off in trial mode.
+
+This means:
+
+* you can only send messages with email notifications to yourself
+* you can only send 50 messages per day
+
+When you’re ready we can remove these restrictions.
+
+### Message sending flow
+
+![message sending flow](docs/message-sending-flow.png)
+
+[Edit diagram](https://www.draw.io/#G0By3amPPe9r4uNWw4NkJQYXk1M3M)
+
+If a notification fails for a certain notification channel because the user
+has not configured that channel and you haven't provided a default address
+for that channel, nothing can be done.
+
+### Delivery and failure
+
+Our delivery states are:
+
+* Sending
+* Delivered
+* Phone number or email address not provided
+* Technical failure
+
+#### Sending
+
+All messages start in the `Sending` state.
+
+This means that we have accepted the message. It’s waiting in a queue to be
+sent to our email or text message delivery partners.
+
+#### Delivered
+
+This means the message is in the person’s email inbox or on his/her phone.
+
+We can’t tell you if they’ve read it – to do so would require invasive and
+unreliable tracking techniques.
+
+#### Phone number or email address not provided
+
+You haven't provided any address to reach the citizen (email phone number),
+and the citizen you're trying to contact doesn't have any contact preferences
+in his profile.
+
+#### Technical failure
+
+This means there is a problem with the connection between the messages API
+system andour email or text message delivery partners.
+
+Notifications still being retried are marked as `Sending`. We mark notifications
+as `Technical failure` once we’ve given up.
 
 ## Architecture
 
