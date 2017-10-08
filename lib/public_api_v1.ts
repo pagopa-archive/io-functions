@@ -50,7 +50,8 @@ app.use(
   })
 );
 
-// Set up the following HTTP headers:
+// Set up the following HTTP headers
+// (see https://helmetjs.github.io/ for default values)
 //    strict-transport-security: max-age=15552000; includeSubDomains
 //    transfer-encoding: chunked
 //    x-content-type-options: nosniff
