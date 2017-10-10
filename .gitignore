@@ -1,9 +1,11 @@
 **/node_modules
 **/coverage
 **/*.js
+!gulpfile.js
 **/*.log
 **/local.*
 **/*.js.map
 .idea
 .vscode
 .env
+lib/templates/**
