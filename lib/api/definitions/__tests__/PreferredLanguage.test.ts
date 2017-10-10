@@ -1,21 +1,25 @@
 import { isPreferredLanguage, toPreferredLanguage } from "../PreferredLanguage";
 
-describe("Check PreferredLanguage methods", () => {
-  test("toPreferredLanguage", () => {
+describe("PreferredLanguage#toPreferredLanguage", () => {
+  test("should returns a defined option for valid preferred language", () => {
     const preferredLanguageOne: string = "it_IT";
-    const preferredLanguageTwo: string = "it_WRONG";
-
     expect(toPreferredLanguage(preferredLanguageOne).get).toEqual(
       preferredLanguageOne
     );
+  });
+  test("should returns an empty option for invalid preferred language", () => {
+    const preferredLanguageTwo: string = "it_WRONG";
     expect(toPreferredLanguage(preferredLanguageTwo)).toEqual({});
   });
+});
 
-  test("isPreferredLanguage", () => {
+describe("PreferredLanguage#isPreferredLanguage", () => {
+  test("should returns true if PreferredLanguage is well formed", () => {
     const preferredLanguageOne: string = "it_IT";
-    const preferredLanguageTwo: string = "it_WRONG";
-
     expect(isPreferredLanguage(preferredLanguageOne)).toBe(true);
+  });
+  test("should returns true if PreferredLanguage is malformed", () => {
+    const preferredLanguageTwo: string = "it_WRONG";
     expect(isPreferredLanguage(preferredLanguageTwo)).toBe(false);
   });
 });

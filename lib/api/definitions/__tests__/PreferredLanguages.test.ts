@@ -6,34 +6,38 @@ import {
 
 import { PreferredLanguage } from "../PreferredLanguage";
 
-describe("Check PreferredLanguages methods", () => {
-  test("toPreferredLanguages", () => {
+describe("PreferredLanguages#toPreferredLanguages", () => {
+  test("should returns a defined option for valid preferred languages", () => {
     const preferredLanguagesOne: PreferredLanguages = [
       PreferredLanguage.it_IT,
       PreferredLanguage.en_GB
     ];
-    const preferredLanguagesTwo: ReadonlyArray<string> = [
-      PreferredLanguage.it_IT,
-      "en_WRONG"
-    ];
-
     expect(toPreferredLanguages(preferredLanguagesOne).get).toEqual(
       preferredLanguagesOne
     );
-    expect(toPreferredLanguages(preferredLanguagesTwo)).toEqual({});
   });
-
-  test("toPreferredLanguages", () => {
-    const preferredLanguagesOne: PreferredLanguages = [
-      PreferredLanguage.it_IT,
-      PreferredLanguage.en_GB
-    ];
+  test("should returns an empty option for invalid preferred languages", () => {
     const preferredLanguagesTwo: ReadonlyArray<string> = [
       PreferredLanguage.it_IT,
       "en_WRONG"
     ];
+    expect(toPreferredLanguages(preferredLanguagesTwo)).toEqual({});
+  });
+});
 
+describe("PreferredLanguages#isPreferredLanguages", () => {
+  test("should returns true if PreferredLanguages is well formed", () => {
+    const preferredLanguagesOne: PreferredLanguages = [
+      PreferredLanguage.it_IT,
+      PreferredLanguage.en_GB
+    ];
     expect(isPreferredLanguages(preferredLanguagesOne)).toBe(true);
+  });
+  test("should returns true if PreferredLanguages is malformed", () => {
+    const preferredLanguagesTwo: ReadonlyArray<string> = [
+      PreferredLanguage.it_IT,
+      "en_WRONG"
+    ];
     expect(isPreferredLanguages(preferredLanguagesTwo)).toBe(false);
   });
 });

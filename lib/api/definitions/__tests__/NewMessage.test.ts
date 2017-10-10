@@ -11,8 +11,8 @@ import { toMessageSubject } from "../MessageSubject";
 
 import { toEmailAddress } from "../EmailAddress";
 
-describe("Check NewMessage methods", () => {
-  test("toNewMessage", () => {
+describe("NewMessage#toNewMessage", () => {
+  test("should returns a defined option for valid new message", () => {
     const s = toMessageSubject("Lorem ipsum dolor sit amet");
     const m = toMessageBodyMarkdown(
       // String long 90 characters.
@@ -34,17 +34,23 @@ describe("Check NewMessage methods", () => {
       time_to_live: toTimeToLive(3600).get
     };
 
+    expect(toNewMessage(newMessageOne).get).toEqual(newMessageOne);
+  });
+  test("should returns an empty option for invalid new message", () => {
+    const nmda: NewMessageDefaultAddresses = {
+      email: toEmailAddress("address@mail.org").get
+    };
+
     const newMessageTwo = {
       content: undefined,
       default_addresses: nmda,
       time_to_live: toTimeToLive(3600).get
     };
-
-    expect(toNewMessage(newMessageOne).get).toEqual(newMessageOne);
     expect(toNewMessage(newMessageTwo)).toEqual({});
   });
-
-  test("isNewMessage", () => {
+});
+describe("NewMessage#isNewMessage", () => {
+  test("should returns true if NewMessage is well formed", () => {
     const s = toMessageSubject("Lorem ipsum dolor sit amet");
     const m = toMessageBodyMarkdown(
       // String long 90 characters.
@@ -68,7 +74,7 @@ describe("Check NewMessage methods", () => {
     expect(isNewMessage(newMessageOne)).toBe(true);
   });
 
-  test("isNewMessage, check content property", () => {
+  test("should returns false if NewMessage object does have content property malformed", () => {
     const m = toMessageBodyMarkdown(
       // String long 90 characters.
       "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt"
@@ -91,7 +97,7 @@ describe("Check NewMessage methods", () => {
     expect(isNewMessage(newMessageOne)).toBe(false);
   });
 
-  test("isNewMessage, check default_addresses property", () => {
+  test("should returns true if NewMessage object does not have time_to_live property", () => {
     const s = toMessageSubject("Lorem ipsum dolor sit amet");
     const m = toMessageBodyMarkdown(
       // String long 90 characters.
@@ -103,35 +109,42 @@ describe("Check NewMessage methods", () => {
       subject: s.get
     };
 
-    const nmda = {
-      email: "address@"
+    const nmda: NewMessageDefaultAddresses = {
+      email: toEmailAddress("address@mail.org").get
     };
 
-    const newMessageOne: NewMessage = {
-      content: messageContent,
-      default_addresses: undefined,
-      time_to_live: toTimeToLive(3600).get
-    };
-    expect(isNewMessage(newMessageOne)).toBe(true);
-
-    /* tslint:disable */
     const newMessageTwo = {
       content: messageContent,
-      default_addresses: null,
-      time_to_live: toTimeToLive(3600).get
+      default_addresses: nmda
     };
-    /* tslint:enable */
     expect(isNewMessage(newMessageTwo)).toBe(true);
+  });
+  test("should returns true if NewMessage object does have time_to_live property set to null", () => {
+    const s = toMessageSubject("Lorem ipsum dolor sit amet");
+    const m = toMessageBodyMarkdown(
+      // String long 90 characters.
+      "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt"
+    );
 
-    const newMessagethree = {
+    const messageContent: MessageContent = {
+      markdown: m.get,
+      subject: s.get
+    };
+
+    const nmda: NewMessageDefaultAddresses = {
+      email: toEmailAddress("address@mail.org").get
+    };
+
+    /* tslint:disable */
+    const newMessageThree = {
       content: messageContent,
       default_addresses: nmda,
-      time_to_live: toTimeToLive(3600).get
+      time_to_live: null
     };
-    expect(isNewMessage(newMessagethree)).toBe(false);
+    /* tslint:enable */
+    expect(isNewMessage(newMessageThree)).toBe(true);
   });
-
-  test("isNewMessage, check time_to_live property", () => {
+  test("should returns false if NewMessage object does have time_to_live property malformed", () => {
     const s = toMessageSubject("Lorem ipsum dolor sit amet");
     const m = toMessageBodyMarkdown(
       // String long 90 characters.
@@ -153,21 +166,68 @@ describe("Check NewMessage methods", () => {
       time_to_live: 3599
     };
     expect(isNewMessage(newMessageOne)).toBe(false);
+  });
 
-    const newMessageTwo: NewMessage = {
-      content: messageContent,
-      default_addresses: nmda,
-      time_to_live: undefined
+  test("should returns true if NewMessage object does not have default_addresses property", () => {
+    const s = toMessageSubject("Lorem ipsum dolor sit amet");
+    const m = toMessageBodyMarkdown(
+      // String long 90 characters.
+      "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt"
+    );
+
+    const messageContent: MessageContent = {
+      markdown: m.get,
+      subject: s.get
     };
-    expect(isNewMessage(newMessageTwo)).toBe(true);
+
+    const newMessageOne: NewMessage = {
+      content: messageContent,
+      time_to_live: toTimeToLive(3600).get
+    };
+    expect(isNewMessage(newMessageOne)).toBe(true);
+  });
+  test("should returns true if NewMessage object does have default_addresses property set to null", () => {
+    const s = toMessageSubject("Lorem ipsum dolor sit amet");
+    const m = toMessageBodyMarkdown(
+      // String long 90 characters.
+      "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt"
+    );
+
+    const messageContent: MessageContent = {
+      markdown: m.get,
+      subject: s.get
+    };
 
     /* tslint:disable */
-    const newMessageThree = {
+    const newMessageTwo = {
       content: messageContent,
-      default_addresses: nmda,
-      time_to_live: null
+      default_addresses: null,
+      time_to_live: toTimeToLive(3600).get
     };
     /* tslint:enable */
-    expect(isNewMessage(newMessageThree)).toBe(true);
+    expect(isNewMessage(newMessageTwo)).toBe(true);
+  });
+  test("should returns false if NewMessage object does have default_addresses property malformed", () => {
+    const s = toMessageSubject("Lorem ipsum dolor sit amet");
+    const m = toMessageBodyMarkdown(
+      // String long 90 characters.
+      "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt"
+    );
+
+    const messageContent: MessageContent = {
+      markdown: m.get,
+      subject: s.get
+    };
+
+    const nmda = {
+      email: "address@"
+    };
+
+    const newMessagethree = {
+      content: messageContent,
+      default_addresses: nmda,
+      time_to_live: toTimeToLive(3600).get
+    };
+    expect(isNewMessage(newMessagethree)).toBe(false);
   });
 });
