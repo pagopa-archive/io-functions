@@ -62,7 +62,7 @@ affect delivery rates.
 Modern digital services are designed for delivering personalized experiences
 to the users. Today, a citizen that wishes to provide personal information and
 preferences to the services he uses, has to provide his preferences over and
-over again to all services, that's because most public digital services don't
+over again to all services; that's because most public digital services don't
 share any information.
 
 The preferences service makes it easier for the citizen to provide his personal
@@ -137,7 +137,7 @@ in his profile.
 #### Technical failure
 
 This means there is a problem with the connection between the messages API
-system andour email or text message delivery partners.
+system and our email or text message delivery partners.
 
 Notifications still being retried are marked as `Sending`. We mark notifications
 as `Technical failure` once we’ve given up.
@@ -215,7 +215,7 @@ The data source layer follows the
 [table data gateway pattern](https://martinfowler.com/eaaCatalog/tableDataGateway.html)
 and handles the operations on the resources stored in the database.
 
-Operations specific to the databased technology have been encapsulated in a
+Operations specific to the database technology have been encapsulated in a
 [gateway object](https://martinfowler.com/eaaCatalog/gateway.html) that
 [abstracts the DocumentDb API](https://github.com/teamdigitale/digital-citizenship-functions/blob/master/lib/utils/documentdb_model.ts)
 exposed by CosmosDB. This approach decouples the
@@ -320,7 +320,9 @@ by the components.
 ### Authentication of requests
 
 Authentication of requests is handled by the Azure API Management service.
-Currently the system relies on a bearer API token for authenticating clients.
+Currently the system relies on a custom API token for authenticating clients.
+The token is transmitted in the HTTP request custom header `Ocp-Apim-Subscription-Key`
+and is tied to one user account belonging to an Organization.
 
 ### Authorization of requests
 
