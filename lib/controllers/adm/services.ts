@@ -175,7 +175,9 @@ export function UpdateServiceHandler(
 /**
  * Extracts the serviceId value from the URL path parameter.
  */
-const requiredServiceIdMiddleware = RequiredParamMiddleware(params => {
+const requiredServiceIdMiddleware = RequiredParamMiddleware<
+  NonEmptyString
+>(params => {
   const serviceId = params.serviceid;
   if (isNonEmptyString(serviceId)) {
     return right(serviceId);

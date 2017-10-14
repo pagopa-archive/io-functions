@@ -53,7 +53,7 @@
     "remark-rehype": "^2.0.1",
     "ts-is": "^1.0.0",
     "ts-option": "^1.1.4",
-    "typescript": "^2.5.2",
+    "typescript": "^2.6.0",
     "ulid": "^1.0.0",
     "unified": "^6.1.5",
     "validator": "^8.2.0",

@@ -9,6 +9,7 @@
     "noUnusedParameters": true,
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,
+    "strictFunctionTypes": true,
     "sourceMap": true
   },
   "exclude": [
