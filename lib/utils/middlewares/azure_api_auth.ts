@@ -1,16 +1,16 @@
-import { Option, option } from 'ts-option';
+import { Option, option } from "ts-option";
 
-import { left, right } from '../either';
-import { IRequestMiddleware } from '../request_middleware';
+import { left, right } from "../either";
+import { IRequestMiddleware } from "../request_middleware";
 import {
   IResponseErrorForbiddenAnonymousUser,
   IResponseErrorForbiddenNoAuthorizationGroups,
   IResponseErrorForbiddenNotAuthorized,
   ResponseErrorForbiddenAnonymousUser,
   ResponseErrorForbiddenNoAuthorizationGroups,
-  ResponseErrorForbiddenNotAuthorized,
-} from '../response';
-import { NonEmptyString, toNonEmptyString } from '../strings';
+  ResponseErrorForbiddenNotAuthorized
+} from "../response";
+import { NonEmptyString, toNonEmptyString } from "../strings";
 
 /*
  * A middle ware that extracts authentication information from the
