@@ -12,7 +12,7 @@ import { toMessageSubject } from "../MessageSubject";
 import { toEmailAddress } from "../EmailAddress";
 
 describe("NewMessage#toNewMessage", () => {
-  test("should returns a defined option for valid new message", () => {
+  it("should returns a defined option for valid new message", () => {
     const s = toMessageSubject("Lorem ipsum dolor sit amet");
     const m = toMessageBodyMarkdown(
       // String long 90 characters.
@@ -36,7 +36,7 @@ describe("NewMessage#toNewMessage", () => {
 
     expect(toNewMessage(newMessageOne).get).toEqual(newMessageOne);
   });
-  test("should returns an empty option for invalid new message", () => {
+  it("should returns an empty option for invalid new message", () => {
     const nmda: NewMessageDefaultAddresses = {
       email: toEmailAddress("address@mail.org").get
     };
@@ -50,7 +50,7 @@ describe("NewMessage#toNewMessage", () => {
   });
 });
 describe("NewMessage#isNewMessage", () => {
-  test("should returns true if NewMessage is well formed", () => {
+  it("should returns true if NewMessage is well formed", () => {
     const s = toMessageSubject("Lorem ipsum dolor sit amet");
     const m = toMessageBodyMarkdown(
       // String long 90 characters.
@@ -66,15 +66,40 @@ describe("NewMessage#isNewMessage", () => {
       email: toEmailAddress("address@mail.org").get
     };
 
-    const newMessageOne: NewMessage = {
-      content: messageContent,
-      default_addresses: nmda,
-      time_to_live: toTimeToLive(3600).get
-    };
-    expect(isNewMessage(newMessageOne)).toBe(true);
+    /* tslint:disable:no-null-keyword */
+    /* tslint:disable:no-any */
+    const fixtures: ReadonlyArray<any> = [
+      {
+        content: messageContent,
+        default_addresses: nmda,
+        time_to_live: toTimeToLive(3600).get
+      },
+      {
+        content: messageContent,
+        default_addresses: nmda,
+        time_to_live: undefined
+      },
+      {
+        content: messageContent,
+        default_addresses: nmda,
+        time_to_live: null
+      },
+      {
+        content: messageContent,
+        default_addresses: undefined,
+        time_to_live: toTimeToLive(3600).get
+      },
+      {
+        content: messageContent,
+        default_addresses: null,
+        time_to_live: toTimeToLive(3600).get
+      }
+    ];
+
+    fixtures.forEach(f => expect(isNewMessage(f)).toBe(true));
   });
 
-  test("should returns false if NewMessage object does have content property malformed", () => {
+  it("should returns false if NewMessage is malformed", () => {
     const m = toMessageBodyMarkdown(
       // String long 90 characters.
       "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt"
@@ -89,145 +114,40 @@ describe("NewMessage#isNewMessage", () => {
       email: toEmailAddress("address@mail.org").get
     };
 
-    const newMessageOne = {
-      content: messageContent,
-      default_addresses: nmda,
-      time_to_live: toTimeToLive(3600).get
-    };
-    expect(isNewMessage(newMessageOne)).toBe(false);
-  });
-
-  test("should returns true if NewMessage object does not have time_to_live property", () => {
-    const s = toMessageSubject("Lorem ipsum dolor sit amet");
-    const m = toMessageBodyMarkdown(
-      // String long 90 characters.
-      "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt"
-    );
-
-    const messageContent: MessageContent = {
-      markdown: m.get,
-      subject: s.get
-    };
-
-    const nmda: NewMessageDefaultAddresses = {
-      email: toEmailAddress("address@mail.org").get
-    };
-
-    const newMessageTwo = {
-      content: messageContent,
-      default_addresses: nmda
-    };
-    expect(isNewMessage(newMessageTwo)).toBe(true);
-  });
-  test("should returns true if NewMessage object does have time_to_live property set to null", () => {
-    const s = toMessageSubject("Lorem ipsum dolor sit amet");
-    const m = toMessageBodyMarkdown(
-      // String long 90 characters.
-      "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt"
-    );
-
-    const messageContent: MessageContent = {
-      markdown: m.get,
-      subject: s.get
-    };
-
-    const nmda: NewMessageDefaultAddresses = {
-      email: toEmailAddress("address@mail.org").get
-    };
-
-    /* tslint:disable */
-    const newMessageThree = {
-      content: messageContent,
-      default_addresses: nmda,
-      time_to_live: null
-    };
-    /* tslint:enable */
-    expect(isNewMessage(newMessageThree)).toBe(true);
-  });
-  test("should returns false if NewMessage object does have time_to_live property malformed", () => {
-    const s = toMessageSubject("Lorem ipsum dolor sit amet");
-    const m = toMessageBodyMarkdown(
-      // String long 90 characters.
-      "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt"
-    );
-
-    const messageContent: MessageContent = {
-      markdown: m.get,
-      subject: s.get
-    };
-
-    const nmda: NewMessageDefaultAddresses = {
-      email: toEmailAddress("address@mail.org").get
-    };
-
-    const newMessageOne = {
-      content: messageContent,
-      default_addresses: nmda,
-      time_to_live: 3599
-    };
-    expect(isNewMessage(newMessageOne)).toBe(false);
-  });
-
-  test("should returns true if NewMessage object does not have default_addresses property", () => {
-    const s = toMessageSubject("Lorem ipsum dolor sit amet");
-    const m = toMessageBodyMarkdown(
-      // String long 90 characters.
-      "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt"
-    );
-
-    const messageContent: MessageContent = {
-      markdown: m.get,
-      subject: s.get
-    };
-
-    const newMessageOne: NewMessage = {
-      content: messageContent,
-      time_to_live: toTimeToLive(3600).get
-    };
-    expect(isNewMessage(newMessageOne)).toBe(true);
-  });
-  test("should returns true if NewMessage object does have default_addresses property set to null", () => {
-    const s = toMessageSubject("Lorem ipsum dolor sit amet");
-    const m = toMessageBodyMarkdown(
-      // String long 90 characters.
-      "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt"
-    );
-
-    const messageContent: MessageContent = {
-      markdown: m.get,
-      subject: s.get
-    };
-
-    /* tslint:disable */
-    const newMessageTwo = {
-      content: messageContent,
-      default_addresses: null,
-      time_to_live: toTimeToLive(3600).get
-    };
-    /* tslint:enable */
-    expect(isNewMessage(newMessageTwo)).toBe(true);
-  });
-  test("should returns false if NewMessage object does have default_addresses property malformed", () => {
-    const s = toMessageSubject("Lorem ipsum dolor sit amet");
-    const m = toMessageBodyMarkdown(
-      // String long 90 characters.
-      "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt"
-    );
-
-    const messageContent: MessageContent = {
-      markdown: m.get,
-      subject: s.get
-    };
-
-    const nmda = {
-      email: "address@"
-    };
-
-    const newMessagethree = {
-      content: messageContent,
-      default_addresses: nmda,
-      time_to_live: toTimeToLive(3600).get
-    };
-    expect(isNewMessage(newMessagethree)).toBe(false);
+    /* tslint:disable:no-null-keyword */
+    /* tslint:disable:no-any */
+    const fixtures: ReadonlyArray<any> = [
+      undefined,
+      null,
+      {},
+      {
+        content: null,
+        default_addresses: nmda,
+        time_to_live: toTimeToLive(3600).get
+      },
+      {
+        content: undefined,
+        default_addresses: nmda,
+        time_to_live: toTimeToLive(3600).get
+      },
+      {
+        content: messageContent,
+        default_addresses: nmda,
+        time_to_live: toTimeToLive(3600).get
+      },
+      {
+        content: messageContent,
+        default_addresses: {
+          email: "address@"
+        },
+        time_to_live: toTimeToLive(3600).get
+      },
+      {
+        content: messageContent,
+        default_addresses: nmda,
+        time_to_live: 3599
+      }
+    ];
+    fixtures.forEach(f => expect(isNewMessage(f)).toBeFalsy());
   });
 });

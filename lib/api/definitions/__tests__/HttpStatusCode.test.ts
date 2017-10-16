@@ -7,31 +7,29 @@ import {
 import { toWithinRangeNumber } from "../../../utils/numbers";
 
 describe("HttpStatusCode#toHttpStatusCode", () => {
-  test("should returns a defined option for valid http status code", () => {
+  it("should returns a defined option for valid http status code", () => {
     const httpStatusCodeOne: HttpStatusCode = toWithinRangeNumber(100, 100, 600)
       .get;
 
     expect(toHttpStatusCode(httpStatusCodeOne).get).toEqual(httpStatusCodeOne);
   });
-  test("should returns a empty option for malformed http status code", () => {
-    expect(toHttpStatusCode("200")).toEqual({});
-  });
-  test("should returns a empty option for a invalid http status code", () => {
-    expect(toHttpStatusCode(99)).toEqual({});
+  it("should returns a empty option for malformed/invalid http status code", () => {
+    /* tslint:disable:no-any */
+    const fixtures: ReadonlyArray<any> = ["200", 99];
+    fixtures.forEach(f => expect(toHttpStatusCode(f)).toEqual({}));
   });
 });
 
 describe("HttpStatusCode#isHttpStatusCode", () => {
-  test("should returns true if http status code is well formed", () => {
+  it("should returns true if http status code is well formed", () => {
     const httpStatusCodeOne: HttpStatusCode = toWithinRangeNumber(100, 100, 600)
       .get;
 
     expect(isHttpStatusCode(httpStatusCodeOne)).toBe(true);
   });
-  test("should returns false if http status code is malformed", () => {
-    expect(isHttpStatusCode("200")).toBe(false);
-  });
-  test("should returns false if http status code is invalid", () => {
-    expect(isHttpStatusCode(99)).toBe(false);
+  it("should returns false if http status code is malformed/invalid", () => {
+    /* tslint:disable:no-any */
+    const fixtures: ReadonlyArray<any> = ["200", 99];
+    fixtures.forEach(f => expect(isHttpStatusCode(f)).toBeFalsy());
   });
 });

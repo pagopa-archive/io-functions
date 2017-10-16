@@ -5,7 +5,7 @@ import {
 } from "../PaginationResponse";
 
 describe("PaginationResponse#toPaginationResponse", () => {
-  test("should returns a defined option for valid pagination response", () => {
+  it("should returns a defined option for valid pagination response", () => {
     const paginationResponseOne: PaginationResponse = {
       next: "next",
       page_size: 2
@@ -14,7 +14,7 @@ describe("PaginationResponse#toPaginationResponse", () => {
       paginationResponseOne
     );
   });
-  test("should returns an empty option for invalid pagination response", () => {
+  it("should returns an empty option for invalid pagination response", () => {
     const paginationResponseTwo = {
       next: 1,
       page_size: 2
@@ -24,58 +24,49 @@ describe("PaginationResponse#toPaginationResponse", () => {
 });
 
 describe("PaginationResponse#isPaginationResponse", () => {
-  test("should returns true if PaginationResponse is well formed", () => {
-    const paginationResponseOne: PaginationResponse = {
-      next: "next",
-      page_size: 2
-    };
-    expect(isPaginationResponse(paginationResponseOne)).toBe(true);
+  it("should returns true if PaginationResponse is well formed", () => {
+    /* tslint:disable:no-null-keyword */
+    /* tslint:disable:no-any */
+    const fixtures: ReadonlyArray<any> = [
+      {
+        next: "next",
+        page_size: 2
+      },
+      {
+        next: undefined,
+        page_size: 2
+      },
+      {
+        next: null,
+        page_size: 2
+      },
+      {
+        next: "next",
+        page_size: undefined
+      },
+      {
+        next: "next",
+        page_size: null
+      }
+    ];
+
+    fixtures.forEach(f => expect(isPaginationResponse(f)).toBe(true));
   });
 
-  test("should returns true if PaginationResponse object does not have next property", () => {
-    const paginationResponseTwo = {
-      page_size: 2
-    };
-    expect(isPaginationResponse(paginationResponseTwo)).toBe(true);
-  });
-  test("should returns true if PaginationResponse object does have next property set to null", () => {
-    /* tslint:disable */
-    const paginationResponseThree = {
-      next: null,
-      page_size: 2
-    };
-    /* tslint:enable */
-    expect(isPaginationResponse(paginationResponseThree)).toBe(true);
-  });
-  test("should returns false if PaginationResponse object does have next property malformed", () => {
-    const paginationResponseOne = {
-      next: 1,
-      page_size: 2
-    };
-    expect(isPaginationResponse(paginationResponseOne)).toBe(false);
-  });
-
-  test("should returns true if PaginationResponse object does not have page_size property", () => {
-    const paginationResponseTwo = {
-      next: "next"
-    };
-    expect(isPaginationResponse(paginationResponseTwo)).toBe(true);
-  });
-  test("should returns true if PaginationResponse object does have page_size property set to null", () => {
-    /* tslint:disable */
-    const paginationResponseThree = {
-      next: "next",
-      page_size: null
-    };
-    /* tslint:enable */
-    expect(isPaginationResponse(paginationResponseThree)).toBe(true);
-  });
-  test("should returns false if PaginationResponse object does have page_size property malformed", () => {
-    const paginationResponseOne = {
-      next: "next",
-      page_size: "2"
-    };
-
-    expect(isPaginationResponse(paginationResponseOne)).toBe(false);
+  it("should returns false if PaginationResponse is malformed", () => {
+    /* tslint:disable:no-null-keyword */
+    /* tslint:disable:no-any */
+    const fixtures: ReadonlyArray<any> = [
+      null,
+      {
+        next: 1,
+        page_size: 2
+      },
+      {
+        next: "next",
+        page_size: "2"
+      }
+    ];
+    fixtures.forEach(f => expect(isPaginationResponse(f)).toBeFalsy());
   });
 });

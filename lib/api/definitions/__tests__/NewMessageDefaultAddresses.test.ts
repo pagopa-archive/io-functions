@@ -7,7 +7,7 @@ import {
 import { toEmailAddress } from "../EmailAddress";
 
 describe("NewMessageDefaultAddresses#toNewMessageDefaultAddresses", () => {
-  test("should returns a defined option for valid new message default address", () => {
+  it("should returns a defined option for valid new message default address", () => {
     const newMessageDefaultAddressesOne: NewMessageDefaultAddresses = {
       email: toEmailAddress("address@mail.org").get
     };
@@ -16,7 +16,7 @@ describe("NewMessageDefaultAddresses#toNewMessageDefaultAddresses", () => {
       toNewMessageDefaultAddresses(newMessageDefaultAddressesOne).get
     ).toEqual(newMessageDefaultAddressesOne);
   });
-  test("should returns an empty option for invalid new message default address", () => {
+  it("should returns an empty option for invalid new message default address", () => {
     const newMessageDefaultAddressesTwo = {
       email: "address@"
     };
@@ -28,37 +28,32 @@ describe("NewMessageDefaultAddresses#toNewMessageDefaultAddresses", () => {
 });
 
 describe("NewMessageDefaultAddresses#isNewMessageDefaultAddresses", () => {
-  test("should returns true if NewMessageDefaultAddresses is well formed", () => {
-    const newMessageDefaultAddressesOne: NewMessageDefaultAddresses = {
-      email: toEmailAddress("address@mail.org").get
-    };
-    expect(isNewMessageDefaultAddresses(newMessageDefaultAddressesOne)).toBe(
-      true
-    );
+  it("should returns true if NewMessageDefaultAddresses is well formed", () => {
+    /* tslint:disable:no-null-keyword */
+    /* tslint:disable:no-any */
+    const fixtures: ReadonlyArray<any> = [
+      {
+        email: undefined
+      },
+      {
+        email: null
+      },
+      {
+        email: toEmailAddress("address@mail.org").get
+      }
+    ];
+    fixtures.forEach(f => expect(isNewMessageDefaultAddresses(f)).toBe(true));
   });
 
-  test("should returns true if NewMessageDefaultAddresses object does not have email property", () => {
-    const newMessageDefaultAddressesThree = {};
-    expect(isNewMessageDefaultAddresses(newMessageDefaultAddressesThree)).toBe(
-      true
-    );
-  });
-  test("should returns true if NewMessageDefaultAddresses object does have email property set to null", () => {
-    /* tslint:disable */
-    const newMessageDefaultAddressesFour = {
-      email: null
-    };
-    /* tslint:enable */
-    expect(isNewMessageDefaultAddresses(newMessageDefaultAddressesFour)).toBe(
-      true
-    );
-  });
-  test("should returns false if NewMessageDefaultAddresses object does have email property malformed", () => {
-    const newMessageDefaultAddressesTwo = {
-      email: "address@"
-    };
-    expect(isNewMessageDefaultAddresses(newMessageDefaultAddressesTwo)).toBe(
-      false
-    );
+  it("should returns false if NewMessageDefaultAddresses is malformed", () => {
+    /* tslint:disable:no-null-keyword */
+    /* tslint:disable:no-any */
+    const fixtures: ReadonlyArray<any> = [
+      null,
+      {
+        email: "address@"
+      }
+    ];
+    fixtures.forEach(f => expect(isNewMessageDefaultAddresses(f)).toBeFalsy());
   });
 });

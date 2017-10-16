@@ -7,7 +7,7 @@ import {
 import { toNotificationChannelStatus } from "../NotificationChannelStatus";
 
 describe("NotificationStatus#toNotificationStatus", () => {
-  test("should returns a defined option for valid notification status", () => {
+  it("should returns a defined option for valid notification status", () => {
     const notificationStatusOne: NotificationStatus = {
       email: toNotificationChannelStatus("QUEUED").get
     };
@@ -16,7 +16,7 @@ describe("NotificationStatus#toNotificationStatus", () => {
       notificationStatusOne
     );
   });
-  test("should returns an empty option for invalid notification status", () => {
+  it("should returns an empty option for invalid notification status", () => {
     const notificationStatusTwo = {
       email: "WRONG"
     };
@@ -25,28 +25,32 @@ describe("NotificationStatus#toNotificationStatus", () => {
 });
 
 describe("NotificationStatus#isNotificationStatus", () => {
-  test("should returns true if NotificationStatus is well formed", () => {
-    const notificationStatusOne: NotificationStatus = {
-      email: toNotificationChannelStatus("QUEUED").get
-    };
-    expect(isNotificationStatus(notificationStatusOne)).toBe(true);
+  it("should returns true if NotificationStatus is well formed", () => {
+    /* tslint:disable:no-null-keyword */
+    /* tslint:disable:no-any */
+    const fixtures: ReadonlyArray<any> = [
+      {
+        email: undefined
+      },
+      {
+        email: null
+      },
+      {
+        email: toNotificationChannelStatus("QUEUED").get
+      }
+    ];
+    fixtures.forEach(f => expect(isNotificationStatus(f)).toBe(true));
   });
 
-  test("should returns true if NotificationStatus object does not have email property", () => {
-    expect(isNotificationStatus({})).toBe(true);
-  });
-  test("should returns true if NotificationStatus object does have notification email set to null", () => {
-    /* tslint:disable */
-    const notificationStatusFour = {
-      email: null
-    };
-    /* tslint:enable */
-    expect(isNotificationStatus(notificationStatusFour)).toBe(true);
-  });
-  test("should returns false if NotificationStatus is malformed", () => {
-    const notificationStatusTwo = {
-      email: "WRONG"
-    };
-    expect(isNotificationStatus(notificationStatusTwo)).toBe(false);
+  it("should returns false if NotificationStatus is malformed", () => {
+    /* tslint:disable:no-null-keyword */
+    /* tslint:disable:no-any */
+    const fixtures: ReadonlyArray<any> = [
+      null,
+      {
+        email: "WRONG"
+      }
+    ];
+    fixtures.forEach(f => expect(isNotificationStatus(f)).toBeFalsy());
   });
 });

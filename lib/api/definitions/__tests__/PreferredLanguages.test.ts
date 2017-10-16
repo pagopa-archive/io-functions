@@ -7,7 +7,7 @@ import {
 import { PreferredLanguage } from "../PreferredLanguage";
 
 describe("PreferredLanguages#toPreferredLanguages", () => {
-  test("should returns a defined option for valid preferred languages", () => {
+  it("should returns a defined option for valid preferred languages", () => {
     const preferredLanguagesOne: PreferredLanguages = [
       PreferredLanguage.it_IT,
       PreferredLanguage.en_GB
@@ -16,7 +16,7 @@ describe("PreferredLanguages#toPreferredLanguages", () => {
       preferredLanguagesOne
     );
   });
-  test("should returns an empty option for invalid preferred languages", () => {
+  it("should returns an empty option for invalid preferred languages", () => {
     const preferredLanguagesTwo: ReadonlyArray<string> = [
       PreferredLanguage.it_IT,
       "en_WRONG"
@@ -26,14 +26,14 @@ describe("PreferredLanguages#toPreferredLanguages", () => {
 });
 
 describe("PreferredLanguages#isPreferredLanguages", () => {
-  test("should returns true if PreferredLanguages is well formed", () => {
+  it("should returns true if PreferredLanguages is well formed", () => {
     const preferredLanguagesOne: PreferredLanguages = [
       PreferredLanguage.it_IT,
       PreferredLanguage.en_GB
     ];
     expect(isPreferredLanguages(preferredLanguagesOne)).toBe(true);
   });
-  test("should returns true if PreferredLanguages is malformed", () => {
+  it("should returns true if PreferredLanguages is malformed", () => {
     const preferredLanguagesTwo: ReadonlyArray<string> = [
       PreferredLanguage.it_IT,
       "en_WRONG"

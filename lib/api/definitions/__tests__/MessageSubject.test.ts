@@ -7,7 +7,7 @@ import {
 import { toWithinRangeString } from "../../../utils/strings";
 
 describe("MessageSubject#toMessageSubject", () => {
-  test("should returns a defined option for valid message subject", () => {
+  it("should returns a defined option for valid message subject", () => {
     const messageSubject: MessageSubject = toWithinRangeString(
       "Lorem ipsum dolor sit amet",
       10,
@@ -15,13 +15,13 @@ describe("MessageSubject#toMessageSubject", () => {
     ).get;
     expect(toMessageSubject(messageSubject).get).toEqual(messageSubject);
   });
-  test("should returns an empty option for invalid message subject", () => {
+  it("should returns an empty option for invalid message subject", () => {
     const messageSubject: string = "Lorem";
     expect(toMessageSubject(messageSubject)).toEqual({});
   });
 });
 describe("MessageSubject#isMessageSubject", () => {
-  test("should returns true if MessageSubject is well formed", () => {
+  it("should returns true if MessageSubject is well formed", () => {
     const messageSubjectOne: MessageSubject = toWithinRangeString(
       "Lorem ipsum dolor sit amet",
       10,
@@ -29,7 +29,7 @@ describe("MessageSubject#isMessageSubject", () => {
     ).get;
     expect(isMessageSubject(messageSubjectOne)).toBe(true);
   });
-  test("should returns false if MessageSubject is malformed", () => {
+  it("should returns false if MessageSubject is malformed", () => {
     const messageSubjectTwo: string = "Lorem";
     expect(isMessageSubject(messageSubjectTwo)).toBe(false);
   });

@@ -8,20 +8,20 @@ describe("EmailAddress#toEmailAddress", () => {
     expect(toEmailAddress(mail).get).toEqual(mail);
   });
 
-  test("should return a empty option for a malformed email address", () => {
+  it("should return a empty option for a malformed email address", () => {
     expect(toEmailAddress("address@")).toEqual({});
   });
 });
 
 describe("EmailAddress#isEmailAddress", () => {
-  test("should returns true if EmailAddress is well formed", () => {
+  it("should returns true if EmailAddress is well formed", () => {
     const mailOne: EmailAddress = toEmailString("address@mail.org").get;
     expect(isEmailAddress(mailOne)).toBe(true);
   });
-  test("should returns false if EmailAddress is malformed", () => {
-    expect(isEmailAddress("address@")).toBe(false);
-  });
-  test("should returns false if EmailAddress is empty", () => {
-    expect(isEmailAddress("")).toBe(false);
+  it("should returns false if EmailAddress is malformed", () => {
+    /* tslint:disable:no-null-keyword */
+    /* tslint:disable:no-any */
+    const fixtures: ReadonlyArray<any> = [undefined, null, {}, "address@", ""];
+    fixtures.forEach(f => expect(isEmailAddress(f)).toBe(false));
   });
 });
