@@ -12,7 +12,7 @@
     },
     {
       "type": "npm",
-      "script": "build-noemit",
+      "script": "build:tsc-noemit",
       "group": {
         "kind": "build",
         "isDefault": true

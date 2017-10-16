@@ -1,13 +1,6 @@
-/*
- * A middle ware that extracts authentication information from the
- * request.
- */
-
-import { option, Option } from "ts-option";
+import { Option, option } from "ts-option";
 
 import { left, right } from "../either";
-import { NonEmptyString, toNonEmptyString } from "../strings";
-
 import { IRequestMiddleware } from "../request_middleware";
 import {
   IResponseErrorForbiddenAnonymousUser,
@@ -17,6 +10,12 @@ import {
   ResponseErrorForbiddenNoAuthorizationGroups,
   ResponseErrorForbiddenNotAuthorized
 } from "../response";
+import { NonEmptyString, toNonEmptyString } from "../strings";
+
+/*
+ * A middle ware that extracts authentication information from the
+ * request.
+ */
 
 /**
  * Enumerates all supported Azure user groups.
@@ -58,8 +57,9 @@ export enum UserGroup {
 /**
  * Looks up a UserGroup by name
  */
-const toUserGroup = (name: keyof typeof UserGroup): Option<UserGroup> =>
-  option(UserGroup[name]);
+function toUserGroup(name: string): Option<UserGroup> {
+  return option(UserGroup[name as keyof typeof UserGroup]);
+}
 
 /**
  * Azure authorization info
@@ -80,7 +80,7 @@ function getGroupsFromHeader(groupsHeader: string): Set<UserGroup> {
   return new Set(
     groupsHeader
       .split(",")
-      .map(toUserGroup)
+      .map(v => toUserGroup(v))
       .filter(g => g.isDefined)
       .map(g => g.get)
   );
