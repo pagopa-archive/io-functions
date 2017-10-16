@@ -58,6 +58,7 @@ export interface IResponseSuccessJsonIterator<T> extends IResponse {
 
 /**
  * A successful response that consumes and return the documentdb iterator as a json array
+ * @TODO: pagination
  */
 export function ResponseSuccessJsonIterator<T>(
   i: IResultIterator<T>
@@ -68,7 +69,10 @@ export function ResponseSuccessJsonIterator<T>(
         const kindlessDocuments = documents.map(d =>
           Object.assign(Object.assign({}, d), { kind: undefined })
         );
-        res.status(200).json(kindlessDocuments);
+        res.status(200).json({
+          items: kindlessDocuments,
+          page_size: kindlessDocuments.length
+        });
       }),
     kind: "IResponseSuccessJsonIterator",
     value: {} as T

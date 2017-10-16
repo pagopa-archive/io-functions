@@ -4,40 +4,48 @@ info:
   title: Digital Citizenship API
   description: Digital Citizenship API.
 host: localhost
-basePath: /api/v1
+basePath: "/api/v1"
 schemes:
-  - https
+- https
 paths:
-  '/messages/{id}':
+  "/messages/{fiscal_code}/{id}":
     parameters:
-      - name: id
-        in: path
-        type: string
-        required: true
-        description: The ID of the message.
+    - name: fiscal_code
+      in: path
+      type: string
+      required: true
+      maxLength: 16
+      minLength: 16
+      pattern: '[A-Z]{6}[0-9LMNPQRSTUV]{2}[ABCDEHLMPRST][0-9LMNPQRSTUV]{2}[A-Z][0-9LMNPQRSTUV]{3}[A-Z]'      
+    - name: id
+      in: path
+      type: string
+      required: true
+      description: The ID of the message.
     get:
       operationId: getMessage
       summary: Get Message
-      description: The previously created message with the provided message ID is returned.
+      description: The previously created message with the provided message ID is
+        returned.
       responses:
         '200':
           description: Message found.
           schema:
-            $ref: '#/definitions/MessageResponse'
+            "$ref": "#/definitions/MessageResponse"
           examples: {}
         '404':
           description: No message found for the provided ID.
-  '/users/{fiscal_code}/messages':
+  "/messages/{fiscal_code}":
     parameters:
-      - $ref: '#/parameters/PaginationRequest'
-      - name: fiscal_code
-        in: path
-        type: string
-        required: true
+    - "$ref": "#/parameters/PaginationRequest"
+    - name: fiscal_code
+      in: path
+      type: string
+      required: true
         description: 'The fiscal code of the user, all upper case.'
         maxLength: 16
         minLength: 16
-        pattern: '[A-Z]{6}[0-9LMNPQRSTUV]{2}[ABCDEHLMPRST][0-9LMNPQRSTUV]{2}[A-Z][0-9LMNPQRSTUV]{3}[A-Z]'
+        pattern: '[A-Z]{6}[0-9LMNPQRSTUV]{2}[ABCDEHLMPRST][0-9LMNPQRSTUV]{2}[A-Z][0-9LMNPQRSTUV]{3}[A-Z]'      
     get:
       operationId: getMessagesByUser
       summary: Get messages by user
@@ -50,13 +58,13 @@ paths:
           description: Found.
           schema:
             allOf:
-              - type: object
-                properties:
+            - type: object
+              properties:
+                items:
+                  type: array
                   items:
-                    type: array
-                    items:
-                      $ref: '#/definitions/CreatedMessage'
-              - $ref: '#/definitions/PaginationResponse'
+                    "$ref": "#/definitions/CreatedMessage"
+            - "$ref": "#/definitions/PaginationResponse"
         '404':
           description: No message found.
       parameters: []
@@ -67,10 +75,10 @@ paths:
         Submits a message to a user.
         On error, the reason is returned in the response payload.
       parameters:
-        - name: message
-          in: body
-          schema:
-            $ref: '#/definitions/NewMessage'
+      - name: message
+        in: body
+        schema:
+          "$ref": "#/definitions/NewMessage"
       responses:
         '201':
           description: Message created.
@@ -83,36 +91,37 @@ paths:
         '400':
           description: Invalid payload.
           schema:
-            $ref: '#/definitions/ProblemJson'
+            "$ref": "#/definitions/ProblemJson"
           examples: {}
         '500':
           description: The message cannot be delivered.
           schema:
-            $ref: '#/definitions/ProblemJson'
-  '/profiles/{fiscal_code}':
+            "$ref": "#/definitions/ProblemJson"
+  "/profiles/{fiscal_code}":
     get:
       operationId: getProfile
       summary: Get User's Preferences
-      description: Returns the preferences for the user identified by the provided fiscal code.
+      description: Returns the preferences for the user identified by the provided
+        fiscal code.
       responses:
         '200':
           description: Found.
           schema:
-            oneOf:
-              - $ref: '#/definitions/LimitedProfile'
-              - $ref: '#/definitions/ExtendedProfile'
+            allOf:
+            - "$ref": "#/definitions/LimitedProfile"
+            - "$ref": "#/definitions/ExtendedProfile"
           examples: {}
         '404':
           description: No user found for the provided fiscal code.
     parameters:
-      - name: fiscal_code
-        in: path
-        type: string
-        required: true
-        pattern: '[A-Z]{6}[0-9LMNPQRSTUV]{2}[ABCDEHLMPRST][0-9LMNPQRSTUV]{2}[A-Z][0-9LMNPQRSTUV]{3}[A-Z]'
-        maxLength: 16
-        minLength: 16
-        description: 'User''s fiscal code, all upper case.'
+    - name: fiscal_code
+      in: path
+      type: string
+      required: true
+      pattern: "[A-Z]{6}[0-9LMNPQRSTUV]{2}[ABCDEHLMPRST][0-9LMNPQRSTUV]{2}[A-Z][0-9LMNPQRSTUV]{3}[A-Z]"
+      maxLength: 16
+      minLength: 16
+      description: User's fiscal code, all upper case.
 definitions:
   ProblemJson:
     title: Problem Type
@@ -125,8 +134,8 @@ definitions:
           An absolute URI that identifies the problem type. When dereferenced,
           it SHOULD provide human-readable documentation for the problem type
           (e.g., using HTML).
-        default: 'about:blank'
-        example: 'https://example.com/problem/constraint-violation'
+        default: about:blank
+        example: https://example.com/problem/constraint-violation
       title:
         type: string
         description: |
@@ -134,7 +143,7 @@ definitions:
           for engineers (usually not suited for non technical stakeholders and
           not localized); example: Service Unavailable
       status:
-        $ref: '#/definitions/HttpStatusCode'
+        "$ref": "#/definitions/HttpStatusCode"
       detail:
         type: string
         description: |
@@ -152,34 +161,34 @@ definitions:
     type: object
     properties:
       subject:
-        $ref: '#/definitions/MessageSubject'
+        "$ref": "#/definitions/MessageSubject"
       markdown:
-        $ref: '#/definitions/MessageBodyMarkdown'
+        "$ref": "#/definitions/MessageBodyMarkdown"
     required:
-      - markdown
+    - markdown
   NewMessage:
     title: NewMessage
     type: object
     properties:
       time_to_live:
-        $ref: '#/definitions/TimeToLive'
+        "$ref": "#/definitions/TimeToLive"
       content:
-        $ref: '#/definitions/MessageContent'
+        "$ref": "#/definitions/MessageContent"
       default_addresses:
-        $ref: '#/definitions/NewMessageDefaultAddresses'
+        "$ref": "#/definitions/NewMessageDefaultAddresses"
     required:
-      - content
+    - content
   NotificationChannelStatus:
     type: string
     x-extensible-enum:
-      - QUEUED
-      - SENT_TO_CHANNEL
+    - QUEUED
+    - SENT_TO_CHANNEL
   NotificationStatus:
     title: NotificationStatus
     type: object
     properties:
       email:
-        $ref: '#/definitions/NotificationChannelStatus'
+        "$ref": "#/definitions/NotificationChannelStatus"
   CreatedMessage:
     title: CreatedMessage
     type: object
@@ -187,29 +196,29 @@ definitions:
       id:
         type: string
       fiscal_code:
-        $ref: '#/definitions/FiscalCode'
+        "$ref": "#/definitions/FiscalCode"
       time_to_live:
-        $ref: '#/definitions/TimeToLive'
+        "$ref": "#/definitions/TimeToLive"
       content:
-        $ref: '#/definitions/MessageContent'
+        "$ref": "#/definitions/MessageContent"
       sender_organization_id:
         type: string
     required:
-      - fiscal_code
-      - sender_organization_id
+    - fiscal_code
+    - sender_organization_id
   MessageResponse:
     type: object
     properties:
       message:
-        $ref: '#/definitions/CreatedMessage'
+        "$ref": "#/definitions/CreatedMessage"
       notification:
-        $ref: '#/definitions/NotificationStatus'
+        "$ref": "#/definitions/NotificationStatus"
     required:
-      - message
+    - message
   FiscalCode:
     type: string
     description: User's fiscal code.
-    pattern: '^[A-Z]{6}[0-9LMNPQRSTUV]{2}[ABCDEHLMPRST][0-9LMNPQRSTUV]{2}[A-Z][0-9LMNPQRSTUV]{3}[A-Z]$'
+    pattern: "^[A-Z]{6}[0-9LMNPQRSTUV]{2}[ABCDEHLMPRST][0-9LMNPQRSTUV]{2}[A-Z][0-9LMNPQRSTUV]{3}[A-Z]$"
   MessageSubject:
     type: string
     description: |-
@@ -237,33 +246,45 @@ definitions:
         description: Number of items returned for each page.
       next:
         type: string
-        description: 'Contains an URL to GET the next #<page_size> results in the retrieved collection of items.'
+        description: 'Contains an URL to GET the next #<page_size> results in the
+          retrieved collection of items.'
         format: uri
   LimitedProfile:
     title: A citizen's profile
-    description: Describes the citizen's profile, mostly interesting for preferences attributes.
+    description: Describes the citizen's profile, mostly interesting for preferences
+      attributes.
     type: object
     properties:
       preferred_languages:
-        description: 'Indicates the User''s preferred written or spoken language. Generally used for selecting a localized User interface. Valid values are concatenation of the ISO 639-1 two letter language code, an underscore, and the ISO 3166-1 2 letter country code; e.g., ''en_US'' specifies the language English and country US.'
-        $ref: "#/definitions/PreferredLanguages"
+        description: Indicates the User's preferred written or spoken language. Generally
+          used for selecting a localized User interface. Valid values are concatenation
+          of the ISO 639-1 two letter language code, an underscore, and the ISO 3166-1
+          2 letter country code; e.g., 'en_US' specifies the language English and
+          country US.
+        "$ref": "#/definitions/PreferredLanguages"
   ExtendedProfile:
     title: A citizen's profile
-    description: Describes the citizen's profile, mostly interesting for preferences attributes.
+    description: Describes the citizen's profile, mostly interesting for preferences
+      attributes.
     type: object
     properties:
       email:
-        $ref: "#/definitions/EmailAddress"
+        "$ref": "#/definitions/EmailAddress"
       preferred_languages:
-        description: 'Indicates the User''s preferred written or spoken language. Generally used for selecting a localized User interface. Valid values are concatenation of the ISO 639-1 two letter language code, an underscore, and the ISO 3166-1 2 letter country code; e.g., ''en_US'' specifies the language English and country US.'
-        $ref: "#/definitions/PreferredLanguages"
+        description: Indicates the User's preferred written or spoken language. Generally
+          used for selecting a localized User interface. Valid values are concatenation
+          of the ISO 639-1 two letter language code, an underscore, and the ISO 3166-1
+          2 letter country code; e.g., 'en_US' specifies the language English and
+          country US.
+        "$ref": "#/definitions/PreferredLanguages"
       version:
         type: integer
   TimeToLive:
     type: integer
     minimum: 3600
     maximum: 31536000
-    description: This parameter specifies for how long (in seconds) the system will try to deliver the message to the channels configured by the user.
+    description: This parameter specifies for how long (in seconds) the system will
+      try to deliver the message to the channels configured by the user.
   HttpStatusCode:
     type: integer
     format: int32
@@ -276,26 +297,27 @@ definitions:
     example: 503
   NewMessageDefaultAddresses:
     type: object
-    description: 'Default addresses for notifying the recipient of the message.'
+    description: Default addresses for notifying the recipient of the message.
     properties:
       email:
-        $ref: '#/definitions/EmailAddress'
-        description: 'The recipient will be notified to this email address in case no email is set in the recipient profile.'
+        "$ref": "#/definitions/EmailAddress"
+        description: The recipient will be notified to this email address in case
+          no email is set in the recipient profile.
   EmailAddress:
     type: string
     format: email
   PreferredLanguage:
     type: string
     x-extensible-enum:
-      - it_IT
-      - en_GB
-      - es_ES
-      - de_DE
-      - fr_FR
+    - it_IT
+    - en_GB
+    - es_ES
+    - de_DE
+    - fr_FR
   PreferredLanguages:
     type: array
     items:
-      $ref: '#/definitions/PreferredLanguage'
+      "$ref": "#/definitions/PreferredLanguage"
 responses: {}
 parameters:
   PaginationRequest:
@@ -305,6 +327,6 @@ parameters:
     minimum: 1
     description: An opaque identifier that points to the next item in the collection.
 consumes:
-  - application/json
+- application/json
 produces:
-  - application/json
+- application/json
