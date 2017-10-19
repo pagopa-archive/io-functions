@@ -244,7 +244,7 @@ definitions:
     type: object
     properties:
       email:
-        $ref: "#/definitions/EmailAddress"
+        "$ref": "#/definitions/EmailAddress"
       preferred_languages:
         $ref: "#/definitions/PreferredLanguages"
       version:
