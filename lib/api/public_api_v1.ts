@@ -13,6 +13,7 @@ export const specs = {
   host: "localhost",
   basePath: "/api/v1",
   schemes: ["https"],
+  security: [{ SubscriptionKey: [] }],
   paths: {
     "/messages/{fiscal_code}/{id}": {
       parameters: [
@@ -130,8 +131,12 @@ export const specs = {
       get: {
         responses: {
           "200": {
-            description: "Return success in case the API-key is correct.",
+            description: "Returns success if the API-Key is right.",
             schema: { type: "object", properties: {} }
+          },
+          "401": {
+            description:
+              "Returns unauthorized when the API-key if empty or wrong."
           }
         },
         description:
