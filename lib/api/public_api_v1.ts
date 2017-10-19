@@ -13,6 +13,7 @@ export const specs = {
   host: "localhost",
   basePath: "/api/v1",
   schemes: ["https"],
+  security: [{ SubscriptionKey: [] }],
   paths: {
     "/messages/{fiscal_code}/{id}": {
       parameters: [
@@ -41,10 +42,7 @@ export const specs = {
       }
     },
     "/messages/{fiscal_code}": {
-      parameters: [
-        { $ref: "#/parameters/PaginationRequest" },
-        { $ref: "#/parameters/FiscalCode" }
-      ],
+      parameters: [{ $ref: "#/parameters/FiscalCode" }],
       get: {
         operationId: "getMessagesByUser",
         summary: "Get messages by user",
@@ -70,7 +68,7 @@ export const specs = {
           },
           "404": { description: "No message found." }
         },
-        parameters: []
+        parameters: [{ $ref: "#/parameters/PaginationRequest" }]
       },
       post: {
         operationId: "submitMessageforUser",
@@ -128,6 +126,22 @@ export const specs = {
         }
       },
       parameters: [{ $ref: "#/parameters/FiscalCode" }]
+    },
+    "/info": {
+      get: {
+        responses: {
+          "200": {
+            description: "Returns success if the API-Key is right.",
+            schema: { type: "object", properties: {} }
+          },
+          "401": {
+            description:
+              "Returns unauthorized when the API-key if empty or wrong."
+          }
+        },
+        description:
+          "An endpoint to test authenticated access to the API backend."
+      }
     }
   },
   definitions: {
@@ -333,5 +347,13 @@ export const specs = {
     }
   },
   consumes: ["application/json"],
-  produces: ["application/json"]
+  produces: ["application/json"],
+  securityDefinitions: {
+    SubscriptionKey: {
+      type: "apiKey",
+      name: "Ocp-Apim-Subscription-Key",
+      in: "header",
+      description: "The API key obtained through the developer portal."
+    }
+  }
 };
