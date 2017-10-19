@@ -118,23 +118,23 @@ const appInsightsClient = new ApplicationInsights.TelemetryClient();
 // Setup handlers
 
 const debugHandler = GetDebug(organizationModel);
-app.get("/debug", debugHandler);
-app.post("/debug", debugHandler);
+app.get("/api/v1/debug", debugHandler);
+app.post("/api/v1/debug", debugHandler);
 
-app.get("/profiles/:fiscalcode", GetProfile(profileModel));
-app.post("/profiles/:fiscalcode", UpsertProfile(profileModel));
+app.get("/api/v1/profiles/:fiscalcode", GetProfile(profileModel));
+app.post("/api/v1/profiles/:fiscalcode", UpsertProfile(profileModel));
 
 app.get(
-  "/messages/:fiscalcode/:id",
+  "/api/v1/messages/:fiscalcode/:id",
   GetMessage(organizationModel, messageModel, notificationModel)
 );
-app.get("/messages/:fiscalcode", GetMessages(messageModel));
+app.get("/api/v1/messages/:fiscalcode", GetMessages(messageModel));
 app.post(
-  "/messages/:fiscalcode",
+  "/api/v1/messages/:fiscalcode",
   CreateMessage(appInsightsClient, organizationModel, messageModel)
 );
 
-app.get("/info", GetInfo());
+app.get("/api/v1/info", GetInfo());
 
 const azureFunctionHandler = createAzureFunctionHandler(app);
 
