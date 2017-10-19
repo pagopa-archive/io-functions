@@ -31,7 +31,6 @@ paths:
           description: No message found for the provided ID.
   "/messages/{fiscal_code}":
     parameters:
-    - $ref: "#/parameters/PaginationRequest"
     - $ref: "#/parameters/FiscalCode"
     get:
       operationId: getMessagesByUser
@@ -54,7 +53,8 @@ paths:
             - $ref: "#/definitions/PaginationResponse"
         '404':
           description: No message found.
-      parameters: []
+      parameters:
+      - $ref: "#/parameters/PaginationRequest"
     post:
       operationId: submitMessageforUser
       summary: Submit a message
@@ -102,6 +102,15 @@ paths:
           description: No user found for the provided fiscal code.
     parameters:
     - $ref: "#/parameters/FiscalCode"
+  "/info":
+    get:
+      responses:
+        '200':
+          description: Return success in case the API-key is correct.
+          schema:
+            type: object
+            properties: {}
+      description: An endpoint to test authenticated access to the API backend.
 definitions:
   ProblemJson:
     title: Problem Type
@@ -244,7 +253,7 @@ definitions:
     type: object
     properties:
       email:
-        "$ref": "#/definitions/EmailAddress"
+        $ref: "#/definitions/EmailAddress"
       preferred_languages:
         $ref: "#/definitions/PreferredLanguages"
       version:
@@ -314,3 +323,9 @@ consumes:
 - application/json
 produces:
 - application/json
+securityDefinitions:
+  SubscriptionKey:
+    type: apiKey
+    name: Ocp-Apim-Subscription-Key
+    in: header
+    description: The API key obtained through the developer portal.
