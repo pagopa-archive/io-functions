@@ -32,7 +32,7 @@ export function getAppContext<T>(
  */
 export function ContextMiddleware<T>(): IRequestMiddleware<
   IResponseErrorInternal,
-  IContext<T> | void
+  IContext<T>
 > {
   return request =>
     new Promise(resolve =>

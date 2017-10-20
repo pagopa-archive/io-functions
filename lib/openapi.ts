@@ -21,7 +21,7 @@ import { specs as publicApiV1Specs } from "./api/public_api_v1";
 
 const app = express();
 
-app.get("/swagger.json", GetOpenapi(publicApiV1Specs));
+app.get("/api/v1/swagger.json", GetOpenapi(publicApiV1Specs));
 
 const azureFunctionHandler = createAzureFunctionHandler(app);
 

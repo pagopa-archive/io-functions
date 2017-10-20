@@ -13,9 +13,11 @@ export const specs = {
   host: "localhost",
   basePath: "/api/v1",
   schemes: ["https"],
+  security: [{ SubscriptionKey: [] }],
   paths: {
-    "/messages/{id}": {
+    "/messages/{fiscal_code}/{id}": {
       parameters: [
+        { $ref: "#/parameters/FiscalCode" },
         {
           name: "id",
           in: "path",
@@ -39,21 +41,8 @@ export const specs = {
         }
       }
     },
-    "/users/{fiscal_code}/messages": {
-      parameters: [
-        { $ref: "#/parameters/PaginationRequest" },
-        {
-          name: "fiscal_code",
-          in: "path",
-          type: "string",
-          required: true,
-          description: "The fiscal code of the user, all upper case.",
-          maxLength: 16,
-          minLength: 16,
-          pattern:
-            "[A-Z]{6}[0-9LMNPQRSTUV]{2}[ABCDEHLMPRST][0-9LMNPQRSTUV]{2}[A-Z][0-9LMNPQRSTUV]{3}[A-Z]"
-        }
-      ],
+    "/messages/{fiscal_code}": {
+      parameters: [{ $ref: "#/parameters/FiscalCode" }],
       get: {
         operationId: "getMessagesByUser",
         summary: "Get messages by user",
@@ -79,7 +68,7 @@ export const specs = {
           },
           "404": { description: "No message found." }
         },
-        parameters: []
+        parameters: [{ $ref: "#/parameters/PaginationRequest" }]
       },
       post: {
         operationId: "submitMessageforUser",
@@ -126,7 +115,7 @@ export const specs = {
           "200": {
             description: "Found.",
             schema: {
-              oneOf: [
+              allOf: [
                 { $ref: "#/definitions/LimitedProfile" },
                 { $ref: "#/definitions/ExtendedProfile" }
               ]
@@ -136,19 +125,23 @@ export const specs = {
           "404": { description: "No user found for the provided fiscal code." }
         }
       },
-      parameters: [
-        {
-          name: "fiscal_code",
-          in: "path",
-          type: "string",
-          required: true,
-          pattern:
-            "[A-Z]{6}[0-9LMNPQRSTUV]{2}[ABCDEHLMPRST][0-9LMNPQRSTUV]{2}[A-Z][0-9LMNPQRSTUV]{3}[A-Z]",
-          maxLength: 16,
-          minLength: 16,
-          description: "User's fiscal code, all upper case."
-        }
-      ]
+      parameters: [{ $ref: "#/parameters/FiscalCode" }]
+    },
+    "/info": {
+      get: {
+        responses: {
+          "200": {
+            description: "Returns success if the API-Key is right.",
+            schema: { type: "object", properties: {} }
+          },
+          "401": {
+            description:
+              "Returns unauthorized when the API-key if empty or wrong."
+          }
+        },
+        description:
+          "An endpoint to test authenticated access to the API backend."
+      }
     }
   },
   definitions: {
@@ -276,11 +269,7 @@ export const specs = {
         "Describes the citizen's profile, mostly interesting for preferences attributes.",
       type: "object",
       properties: {
-        preferred_languages: {
-          description:
-            "Indicates the User's preferred written or spoken language. Generally used for selecting a localized User interface. Valid values are concatenation of the ISO 639-1 two letter language code, an underscore, and the ISO 3166-1 2 letter country code; e.g., 'en_US' specifies the language English and country US.",
-          $ref: "#/definitions/PreferredLanguages"
-        }
+        preferred_languages: { $ref: "#/definitions/PreferredLanguages" }
       }
     },
     ExtendedProfile: {
@@ -290,11 +279,7 @@ export const specs = {
       type: "object",
       properties: {
         email: { $ref: "#/definitions/EmailAddress" },
-        preferred_languages: {
-          description:
-            "Indicates the User's preferred written or spoken language. Generally used for selecting a localized User interface. Valid values are concatenation of the ISO 639-1 two letter language code, an underscore, and the ISO 3166-1 2 letter country code; e.g., 'en_US' specifies the language English and country US.",
-          $ref: "#/definitions/PreferredLanguages"
-        },
+        preferred_languages: { $ref: "#/definitions/PreferredLanguages" },
         version: { type: "integer" }
       }
     },
@@ -334,7 +319,9 @@ export const specs = {
     },
     PreferredLanguages: {
       type: "array",
-      items: { $ref: "#/definitions/PreferredLanguage" }
+      items: { $ref: "#/definitions/PreferredLanguage" },
+      description:
+        "Indicates the User's preferred written or spoken languages in order of preference. Generally used for selecting a localized User interface. Valid values are concatenation of the ISO 639-1 two letter language code, an underscore, and the ISO 3166-1 2 letter country code; e.g., 'en_US' specifies the language English and country US."
     }
   },
   responses: {},
@@ -346,8 +333,27 @@ export const specs = {
       minimum: 1,
       description:
         "An opaque identifier that points to the next item in the collection."
+    },
+    FiscalCode: {
+      name: "fiscal_code",
+      in: "path",
+      type: "string",
+      maxLength: 16,
+      minLength: 16,
+      required: true,
+      description: "The fiscal code of the user, all upper case.",
+      pattern:
+        "[A-Z]{6}[0-9LMNPQRSTUV]{2}[ABCDEHLMPRST][0-9LMNPQRSTUV]{2}[A-Z][0-9LMNPQRSTUV]{3}[A-Z]"
     }
   },
   consumes: ["application/json"],
-  produces: ["application/json"]
+  produces: ["application/json"],
+  securityDefinitions: {
+    SubscriptionKey: {
+      type: "apiKey",
+      name: "Ocp-Apim-Subscription-Key",
+      in: "header",
+      description: "The API key obtained through the developer portal."
+    }
+  }
 };

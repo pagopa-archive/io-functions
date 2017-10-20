@@ -1,0 +1,41 @@
+@startuml
+
+skinparam monochrome true
+
+abstract class DocumentDbModel
+
+abstract class DocumentDbVersionedModel
+
+class Message {
+  +UUID id
+  +UUID organizationId
+  +FiscalCode fiscalCode
+}
+
+class Notification {
+  +UUID id
+  +UUID messageId
+}
+
+class Organization {
+  +UUID id
+}
+
+class Profile {
+  +FiscalCode fiscalCode
+}
+
+DocumentDbModel <|-- DocumentDbVersionedModel
+
+DocumentDbModel <|-- Message
+
+DocumentDbModel <|-- Notification
+
+DocumentDbVersionedModel <|-- Organization
+
+DocumentDbVersionedModel <|-- Profile
+
+Organization "1" o-left- "many" Message
+Message "1" o-left- "?" Notification
+
+@enduml
