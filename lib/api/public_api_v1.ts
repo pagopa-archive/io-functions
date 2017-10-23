@@ -129,6 +129,8 @@ export const specs = {
     },
     "/info": {
       get: {
+        operationId: "getInfo",
+        summary: "API test endpoint",
         responses: {
           "200": {
             description: "Returns success if the API-Key is right.",

@@ -106,6 +106,8 @@ paths:
     - $ref: "#/parameters/FiscalCode"
   "/info":
     get:
+      operationId: getInfo
+      summary: An endpoint to test authenticated access to the API backend.
       responses:
         '200':
           description: Returns success if the API-Key is right.
@@ -114,7 +116,7 @@ paths:
             properties: {}
         '401':
           description: Returns unauthorized when the API-key if empty or wrong.
-      description: An endpoint to test authenticated access to the API backend.
+      description: API test endpoint
 definitions:
   ProblemJson:
     title: Problem Type
