@@ -37,6 +37,10 @@ describe("ResponseSuccessJson", () => {
 
 describe("ResponseSuccessJsonIterator", () => {
   it("should stream an empty iterator as json", async () => {
+    const mockIteratorResult = {
+      items: [],
+      page_size: 0
+    };
     const mockIterator = {
       executeNext: jest.fn(() => Promise.resolve(right(some([]))))
     };
@@ -49,10 +53,14 @@ describe("ResponseSuccessJsonIterator", () => {
 
     await flushPromises();
     expect(mockResponse.status).toHaveBeenCalledWith(200);
-    expect(mockResponse.json).toHaveBeenCalledWith([]);
+    expect(mockResponse.json).toHaveBeenCalledWith(mockIteratorResult);
   });
 
   it("should stream an iterator with a single page as json", async () => {
+    const mockIteratorResult = {
+      items: [{ data: "a" }],
+      page_size: 1
+    };
     const mockIterator = {
       executeNext: jest.fn()
     };
@@ -73,25 +81,20 @@ describe("ResponseSuccessJsonIterator", () => {
     await flushPromises();
     expect(mockIterator.executeNext).toHaveBeenCalledTimes(2);
     expect(mockResponse.status).toHaveBeenCalledWith(200);
-    expect(mockResponse.json).toHaveBeenCalledWith([{ data: "a" }]);
+    expect(mockResponse.json).toHaveBeenCalledWith(mockIteratorResult);
   });
 
   it("should remove the kind attribute", async () => {
+    const mockIteratorkindlessResult = {
+      items: [{ data: "a" }],
+      page_size: 1
+    };
     const mockIterator = {
       executeNext: jest.fn()
     };
 
     mockIterator.executeNext.mockImplementationOnce(() =>
-      Promise.resolve(
-        right(
-          some([
-            {
-              data: "a",
-              kind: "IResponse"
-            }
-          ])
-        )
-      )
+      Promise.resolve(right(some([{ data: "a", kind: "IResponse" }])))
     );
     mockIterator.executeNext.mockImplementationOnce(() =>
       Promise.resolve(right(none))
@@ -104,6 +107,6 @@ describe("ResponseSuccessJsonIterator", () => {
     streamingResponse.apply(mockResponse);
 
     await flushPromises();
-    expect(mockResponse.json).toHaveBeenCalledWith([{ data: "a" }]);
+    expect(mockResponse.json).toHaveBeenCalledWith(mockIteratorkindlessResult);
   });
 });
