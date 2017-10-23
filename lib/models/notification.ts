@@ -125,7 +125,9 @@ export class NotificationModel extends DocumentDbModel<
   INewNotification,
   IRetrievedNotification
 > {
+  // tslint:disable-next-line:readonly-keyword
   protected dbClient: DocumentDb.DocumentClient;
+  // tslint:disable-next-line:readonly-keyword
   protected collectionUri: DocumentDbUtils.IDocumentDbCollectionUri;
 
   /**
