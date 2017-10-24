@@ -43,6 +43,7 @@ const currentPackageJson = JSON.parse(fs.readFileSync(packageJsonPath));
 const currentVersion = semver.parse(currentPackageJson.version);
 const releaseVersionValue = `${currentVersion.major}.${currentVersion.minor}.${currentVersion.patch}`;
 const nextVersionValue = `${semver.inc(releaseVersionValue, "minor")}-SNAPSHOT`;
+const releaseVersionFuncpackBranchName = `funcpack-release-v${releaseVersionValue}`;
 
 /**
  * Transform a mjml template to a Typescript function outputting HTML.
@@ -98,6 +99,22 @@ gulp.task("yarn:test", () => {
   return gulp.src(TYPESCRIPT_SOURCE_DIR)
     .pipe(exec(`yarn test`))
     .pipe(exec.reporter());
+});
+
+/**
+ * Package Azure Functions code and dependencines in a single file
+ */
+gulp.task("yarn:funcpack", () => {
+  return gulp.src(TYPESCRIPT_SOURCE_DIR)
+    .pipe(exec("yarn run funcpack pack ./"))
+    .pipe(exec.reporter());
+});
+
+/**
+ * Checks out the release branch
+ */
+gulp.task("git:checkout:release", (cb) => {
+  return git.checkout(GIT_RELEASE_BRANCH, {}, cb);
 });
 
 /**
@@ -199,6 +216,29 @@ gulp.task("release:git:tag:release", (cb) => {
 })
 
 /**
+ * Creates a new branch for storing funcpack assets
+ */
+gulp.task("release:git:checkout:funcpack", (cb) => {
+  return git.checkout(releaseVersionFuncpackBranchName, { args: "-b" }, cb);
+});
+
+/**
+ * Adds funcpack assets
+ */
+gulp.task("release:git:commit:funcpack", (cb) => {
+  return gulp.src(["*/function.json", ".funcpack/index.js"])
+    .pipe(git.add({ args: "-f" })) // force because .gitignore contains *.js
+    .pipe(git.commit(`Adds funcpack assets for release ${releaseVersionValue}`));
+});
+
+/**
+ * Pushes funcpack branch to origin
+ */
+gulp.task("release:git:push:funcpack", (cb) => {
+  return git.push(GIT_ORIGIN, releaseVersionFuncpackBranchName, { args: "-u" }, cb);
+});
+
+/**
  * Bump the version to the snapshot version
  */
 gulp.task("release:bump:next", () => {
@@ -234,6 +274,15 @@ gulp.task("release", function (cb) {
     "release:git:commit:release",
     // tag the previous commit with v$version (eg. v1.2, v1.2.3).
     "release:git:tag:release",
+    // checkout a new branch funcpack-release-vx.x.x
+    "release:git:checkout:funcpack",
+    // build and run funcpack
+    "yarn:build",
+    "yarn:funcpack",
+    // commits and pushes funcpack branch
+    "release:git:push:funcpack",
+    // check out the release branch (master)
+    "git:checkout:release",
     // bumps the version to the next snapshot version:
     // increase the minor version segment of the current version and set the
     // qualifier to '-SNAPSHOT' (eg. 1.2.1-SNAPSHOT -> 1.3.0-SNAPSHOT)
