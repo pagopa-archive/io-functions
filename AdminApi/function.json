@@ -1,0 +1,18 @@
+{
+  "scriptFile": "index.js",
+  "disabled": false,
+  "bindings": [
+    {
+      "authLevel" : "function",
+      "type"      : "httpTrigger",
+      "direction" : "in",
+      "name"      : "req",
+      "methods"   : [ "get", "post" ],
+      "route"     : "adm/v1/{*segments}"
+    }, {
+      "type"      : "http",
+      "direction" : "out",
+      "name"      : "res"
+    }
+  ]
+}
