@@ -241,7 +241,7 @@ gulp.task("release", function (cb) {
     // commit the changes in package.json
     "release:git:commit:next",
     // push changes to origin
-    "git:push:master",
+    "git:push:branch",
     "git:push:tags",
     (err) => {
       if (err) {
