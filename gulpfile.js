@@ -280,6 +280,7 @@ gulp.task("release", function (cb) {
     "yarn:build",
     "yarn:funcpack",
     // commits and pushes funcpack branch
+    "release:git:commit:funcpack",
     "release:git:push:funcpack",
     // check out the release branch (master)
     "git:checkout:release",
