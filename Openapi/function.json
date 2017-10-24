@@ -1,18 +1,22 @@
 {
-  "scriptFile": "index.js",
-  "disabled": false,
-  "bindings": [
-    {
-      "authLevel" : "anonymous",
-      "type"      : "httpTrigger",
-      "direction" : "in",
-      "name"      : "req",
-      "methods"   : [ "get" ],
-      "route"     : "api/v1/swagger.json"
-    }, {
-      "type"      : "http",
-      "direction" : "out",
-      "name"      : "res"
-    }
-  ]
+ "scriptFile": "../lib/index.js",
+ "disabled": false,
+ "bindings": [
+  {
+   "authLevel": "anonymous",
+   "type": "httpTrigger",
+   "direction": "in",
+   "name": "req",
+   "methods": [
+    "get"
+   ],
+   "route": "api/v1/swagger.json"
+  },
+  {
+   "type": "http",
+   "direction": "out",
+   "name": "res"
+  }
+ ],
+ "entryPoint": "Openapi"
 }
