@@ -136,4 +136,24 @@ export class ServiceModel extends DocumentDbModelVersioned<
   ): Promise<Either<DocumentDb.QueryError, Option<IRetrievedService>>> {
     return super.findLastVersionByModelId("services", "serviceId", serviceId);
   }
+
+  /**
+   * Searches for one Service associated to the provided Subscription Id
+   *
+   * @param subscriptionId
+   */
+  public findBySubscriptionId(
+    subscriptionId: string
+  ): Promise<Either<DocumentDb.QueryError, Option<IRetrievedService>>> {
+    const subscriptionIdParamName = "@subscriptionId";
+    return DocumentDbUtils.queryOneDocument(this.dbClient, this.collectionUri, {
+      parameters: [
+        {
+          name: subscriptionIdParamName,
+          value: subscriptionId
+        }
+      ],
+      query: `SELECT * FROM "services" m WHERE (m.subscriptionId = ${subscriptionIdParamName}) ORDER BY m.version DESC`
+    });
+  }
 }

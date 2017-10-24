@@ -44,7 +44,7 @@ describe("findOneServiceById", () => {
       servicesCollectionUrl
     );
 
-    const result = await model.findByServiceId("id");
+    const result = await model.findBySubscriptionId("id");
 
     expect(result.isRight).toBeTruthy();
     if (result.isRight) {
@@ -67,7 +67,7 @@ describe("findOneServiceById", () => {
       servicesCollectionUrl
     );
 
-    const result = await model.findByServiceId("id");
+    const result = await model.findBySubscriptionId("id");
 
     expect(result.isRight).toBeTruthy();
     if (result.isRight) {

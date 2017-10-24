@@ -28,7 +28,11 @@ import {
 } from "../utils/response";
 
 import { left, right } from "../utils/either";
-import { isNonEmptyString } from "../utils/strings";
+import {
+  isNonEmptyString,
+  ObjectIdGenerator,
+  ulidGenerator
+} from "../utils/strings";
 
 type IUpsertServiceHandler = (
   auth: IAzureApiAuthorization,
@@ -53,7 +57,10 @@ const ServicePayloadMiddleware: IRequestMiddleware<
     authorizedRecipients: request.body.authorized_recipients,
     departmentName: request.body.department_name,
     organizationName: request.body.organization_name,
-    serviceId: request.body.subscription_id,
+    // request.body.service_id is undefined when the service
+    // is going to be created (and not updated)
+    // anyways it's overridden in CreateServiceHandler()
+    serviceId: request.body.service_id,
     serviceName: request.body.service_name,
     subscriptionId: request.body.subscription_id
   };
@@ -88,12 +95,14 @@ const ServicePayloadMiddleware: IRequestMiddleware<
 };
 
 export function CreateServiceHandler(
-  serviceModel: ServiceModel
+  serviceModel: ServiceModel,
+  generateObjectId: ObjectIdGenerator
 ): IUpsertServiceHandler {
   return async (_, serviceModelPayload) => {
+    const serviceId = generateObjectId();
     const errorOrService = await serviceModel.create(
-      serviceModelPayload,
-      serviceModelPayload.serviceId
+      { ...serviceModelPayload, serviceId },
+      serviceId
     );
     if (errorOrService.isRight) {
       return ResponseSuccessJson(errorOrService.right);
@@ -109,7 +118,7 @@ export function CreateServiceHandler(
 export function CreateService(
   serviceModel: ServiceModel
 ): express.RequestHandler {
-  const handler = CreateServiceHandler(serviceModel);
+  const handler = CreateServiceHandler(serviceModel, ulidGenerator);
   const middlewaresWrap = withRequestMiddlewares(
     AzureApiAuthMiddleware(new Set([UserGroup.ApiServiceWrite])),
     ServicePayloadMiddleware
