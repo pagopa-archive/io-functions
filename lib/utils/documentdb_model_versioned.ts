@@ -2,7 +2,7 @@ import * as DocumentDb from "documentdb";
 import * as DocumentDbUtils from "./documentdb";
 import { DocumentDbModel } from "./documentdb_model";
 
-import { Option, some } from "ts-option";
+import { Option, option, some } from "ts-option";
 
 import { NonNegativeNumber, toNonNegativeNumber } from "./numbers";
 
@@ -19,6 +19,11 @@ export type ModelId = string & IModelIdTag;
  */
 export function isModelId(s: string): s is ModelId {
   return typeof s === "string" && s.length > 0;
+}
+
+// tslint:disable-next-line:no-any
+export function toModelId(s: any): Option<ModelId> {
+  return option(s).filter(isModelId);
 }
 
 /**
@@ -68,7 +73,7 @@ export abstract class DocumentDbModelVersioned<
   ): Promise<Either<DocumentDb.QueryError, TR>> {
     // the first version of a profile is 0
     const initialVersion = toNonNegativeNumber(0).get;
-    // the ID of each profile version is composed of the profile ID and its version
+    // the ID of each document version is composed of the document ID and its version
     // this makes it possible to detect conflicting updates (concurrent creation of
     // profiles with the same profile ID and version)
     const modelId = this.getModelId(document);
@@ -96,7 +101,7 @@ export abstract class DocumentDbModelVersioned<
     partitionKey: string,
     f: (current: T) => T
   ): Promise<Either<DocumentDb.QueryError, Option<TR>>> {
-    // fetch the notification
+    // fetch the document
     const errorOrMaybeCurrent = await this.find(objectId, partitionKey);
     if (errorOrMaybeCurrent.isLeft) {
       // if the query returned an error, forward it

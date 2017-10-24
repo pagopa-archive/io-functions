@@ -4,7 +4,6 @@
 
 import { IContext } from "azure-function-express";
 
-import * as express from "express";
 import * as winston from "winston";
 
 import * as ApplicationInsights from "applicationinsights";
@@ -30,42 +29,10 @@ import { CreateMessage, GetMessage, GetMessages } from "./controllers/messages";
 import { GetProfile, UpsertProfile } from "./controllers/profiles";
 import { toNonEmptyString } from "./utils/strings";
 
-import * as helmet from "helmet";
-import * as csp from "helmet-csp";
-import * as referrerPolicy from "referrer-policy";
+import { getSecureExpressApp } from "./utils/express";
 
 // Setup Express
-const app = express();
-
-// Set header `referrer-policy` to `no-referrer`
-app.use(referrerPolicy());
-
-// Set up Content Security Policy
-app.use(
-  csp({
-    directives: {
-      defaultSrc: ["'none'"],
-      upgradeInsecureRequests: true
-    }
-  })
-);
-
-// Set up the following HTTP headers
-// (see https://helmetjs.github.io/ for default values)
-//    strict-transport-security: max-age=15552000; includeSubDomains
-//    transfer-encoding: chunked
-//    x-content-type-options: nosniff
-//    x-dns-prefetch-control: off
-//    x-download-options: noopen
-//    x-frame-options: DENY
-//    x-xss-protection →1; mode=block
-app.use(
-  helmet({
-    frameguard: {
-      action: "deny"
-    }
-  })
-);
+const app = getSecureExpressApp();
 
 // Setup DocumentDB
 

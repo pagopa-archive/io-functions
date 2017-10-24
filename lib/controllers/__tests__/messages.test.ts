@@ -62,8 +62,9 @@ const someUserAttributes: IAzureUserAttributes = {
   service: {
     departmentName: toNonEmptyString("IT").get,
     organizationName: toNonEmptyString("AgID").get,
-    serviceId: "test" as ModelId,
-    serviceName: toNonEmptyString("Test").get
+    serviceId: toNonEmptyString("test").get,
+    serviceName: toNonEmptyString("Test").get,
+    subscriptionId: toNonEmptyString("MySubscriptionId").get
   }
 };
 
@@ -975,10 +976,8 @@ describe("CreateMessage", () => {
 
   it("respond with 403 if the user cannot be identified", async () => {
     const headers: IHeaders = {
-      // "x-subscription-id": "u123",
-      "x-user-groups": "ApiMessageWrite",
-      // "x-user-id": "u123",
-      "x-user-note": "serviceId: 123"
+      "x-subscription-id": "someId",
+      "x-user-groups": "ApiMessageWrite"
     };
     const createMessage = CreateMessage({} as any, {} as any, {} as any);
     const mockResponse = MockResponse();

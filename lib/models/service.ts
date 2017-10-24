@@ -11,6 +11,7 @@ import { Either } from "../utils/either";
 
 import { FiscalCode } from "../api/definitions/FiscalCode";
 
+import { nonEmptyStringToModelId } from "../utils/conversions";
 import { NonNegativeNumber } from "../utils/numbers";
 import { NonEmptyString } from "../utils/strings";
 
@@ -18,7 +19,7 @@ import { NonEmptyString } from "../utils/strings";
  * Base interface for Service objects
  */
 export interface IService {
-  readonly serviceId: ModelId;
+  readonly serviceId: NonEmptyString;
   // the name of the department within the service
   readonly departmentName: NonEmptyString;
   // the name of the service
@@ -27,6 +28,8 @@ export interface IService {
   readonly organizationName: NonEmptyString;
   // list of authorized fiscal codes
   readonly authorizedRecipients?: ReadonlyArray<FiscalCode>;
+  // user's subscription linked to this service
+  readonly subscriptionId: NonEmptyString;
 }
 
 /**
@@ -48,8 +51,8 @@ export interface IRetrievedService
   extends IService,
     DocumentDb.RetrievedDocument,
     IVersionedModel {
+  readonly id: NonEmptyString;
   readonly kind: "IRetrievedService";
-  readonly serviceId: ModelId; // serviceId should never change
 }
 
 function toRetrieved(result: DocumentDb.RetrievedDocument): IRetrievedService {
@@ -60,7 +63,7 @@ function toRetrieved(result: DocumentDb.RetrievedDocument): IRetrievedService {
 }
 
 function getModelId(o: IService): ModelId {
-  return o.serviceId;
+  return nonEmptyStringToModelId(o.serviceId);
 }
 
 function updateModelId(
@@ -74,7 +77,6 @@ function updateModelId(
     kind: "INewService",
     version
   };
-
   return newService;
 }
 
@@ -83,7 +85,8 @@ function toBaseType(o: IRetrievedService): IService {
     departmentName: o.departmentName,
     organizationName: o.organizationName,
     serviceId: o.serviceId,
-    serviceName: o.serviceName
+    serviceName: o.serviceName,
+    subscriptionId: o.subscriptionId
   };
 }
 
@@ -132,25 +135,5 @@ export class ServiceModel extends DocumentDbModelVersioned<
     serviceId: string
   ): Promise<Either<DocumentDb.QueryError, Option<IRetrievedService>>> {
     return super.findLastVersionByModelId("services", "serviceId", serviceId);
-  }
-
-  /**
-   * Searches for one Service associated to the provided Subscription Key
-   *
-   * @param subscriptionKey
-   */
-  public findBySubscriptionKey(
-    subscriptionKey: string
-  ): Promise<Either<DocumentDb.QueryError, Option<IRetrievedService>>> {
-    const subscriptionKeyParamName = "@subscriptionKey";
-    return DocumentDbUtils.queryOneDocument(this.dbClient, this.collectionUri, {
-      parameters: [
-        {
-          name: subscriptionKeyParamName,
-          value: subscriptionKey
-        }
-      ],
-      query: `SELECT * FROM "services" m WHERE (m.subscriptionKey = ${subscriptionKeyParamName}) ORDER BY m.version DESC`
-    });
   }
 }

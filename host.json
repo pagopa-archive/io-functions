@@ -9,6 +9,7 @@
   "functions": [
     "PublicApiV1",
     "Openapi",
+    "AdminApi",
     "CreatedMessageQueueHandler",
     "EmailNotificationsQueueHandler"
   ],

@@ -21,7 +21,7 @@ import {
 // The user email will be passed in this header by the API Gateway
 const HEADER_USER_EMAIL = "x-user-email";
 
-const HEADER_USER_SUBSCRIPTION_KEY = "x-user-key";
+const HEADER_USER_SUBSCRIPTION_KEY = "x-subscription-id";
 
 /**
  * The attributes extracted from the user's "Note"
@@ -39,14 +39,8 @@ export interface IAzureUserAttributes {
  *
  * The middleware expects the following headers:
  *
- *   x-user-note:     The Note field associated to the user (URL encoded
- *                    using .NET Uri.EscapeUriString().
- *
- * The Note field is optional, and when defined is expected to be a YAML data
- * structure providing the following attributes associated to the authenticated
- * user:
- *
- *   serviceId:  The identifier of the service of this user
+ *   x-subscription-id:     The user's subscription id, used to retrieve
+ *                          the associated Service
  *
  * On success, the middleware provides an IUserAttributes.
  *
@@ -72,11 +66,11 @@ export function AzureUserAttributesMiddleware(
 
     const userEmail = maybeUserEmail.get;
 
-    const maybeUserSubscriptionKeyHeader = toNonEmptyString(
+    const maybeUserSubscriptionIdHeader = toNonEmptyString(
       request.header(HEADER_USER_SUBSCRIPTION_KEY)
     );
 
-    if (maybeUserSubscriptionKeyHeader.isEmpty) {
+    if (maybeUserSubscriptionIdHeader.isEmpty) {
       return left(
         ResponseErrorInternal(
           `Missing or empty ${HEADER_USER_SUBSCRIPTION_KEY} header`
@@ -84,18 +78,16 @@ export function AzureUserAttributesMiddleware(
       );
     }
 
-    const subscriptionKey = maybeUserSubscriptionKeyHeader.get;
+    const subscriptionId = maybeUserSubscriptionIdHeader.get;
 
-    // we don't want to log full subscription keys
-    const truncatedSubscriptionKey = subscriptionKey.substr(0, 3) + "...";
-
-    const errorOrMaybeService = await serviceModel.findBySubscriptionKey(
-      subscriptionKey
+    // serviceId is keyed by subscriptionId value
+    const errorOrMaybeService = await serviceModel.findByServiceId(
+      subscriptionId
     );
 
     if (errorOrMaybeService.isLeft) {
       winston.error(
-        `Error while retrieving service|${truncatedSubscriptionKey}|${errorOrMaybeService.left}`
+        `Error while retrieving service|${subscriptionId}|${errorOrMaybeService.left}`
       );
       return left(
         ResponseErrorQuery(
@@ -108,7 +100,7 @@ export function AzureUserAttributesMiddleware(
     const maybeService = errorOrMaybeService.right;
 
     if (maybeService.isEmpty) {
-      winston.error(`Service not found|${truncatedSubscriptionKey}`);
+      winston.error(`Service not found|${subscriptionId}`);
       return left(ResponseErrorForbiddenNotAuthorized);
     }
 

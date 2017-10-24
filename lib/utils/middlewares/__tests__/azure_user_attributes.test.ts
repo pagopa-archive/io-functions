@@ -61,11 +61,11 @@ describe("AzureUserAttributesMiddleware", () => {
 
   it("should fail on invalid key", async () => {
     const serviceModel = {
-      findBySubscriptionKey: jest.fn()
+      findByServiceId: jest.fn()
     };
     const headers: IHeaders = {
-      "x-user-email": "test@example.com",
-      "x-user-key": undefined
+      "x-subscription-id": undefined,
+      "x-user-email": "test@example.com"
     };
 
     const mockRequest = {
@@ -76,7 +76,7 @@ describe("AzureUserAttributesMiddleware", () => {
 
     const result = await middleware(mockRequest as any);
     expect(mockRequest.header.mock.calls[0][0]).toBe("x-user-email");
-    expect(mockRequest.header.mock.calls[1][0]).toBe("x-user-key");
+    expect(mockRequest.header.mock.calls[1][0]).toBe("x-subscription-id");
     expect(result.isLeft).toBeTruthy();
     if (result.isLeft) {
       expect(result.left.kind).toEqual("IResponseErrorInternal");
@@ -85,12 +85,12 @@ describe("AzureUserAttributesMiddleware", () => {
 
   it("should fail if the user service does not exist", async () => {
     const serviceModel = {
-      findBySubscriptionKey: jest.fn(() => Promise.resolve(right(none)))
+      findByServiceId: jest.fn(() => Promise.resolve(right(none)))
     };
 
     const headers: IHeaders = {
-      "x-user-email": "test@example.com",
-      "x-user-key": "MySubscriptionKey"
+      "x-subscription-id": "MySubscriptionId",
+      "x-user-email": "test@example.com"
     };
 
     const mockRequest = {
@@ -102,9 +102,9 @@ describe("AzureUserAttributesMiddleware", () => {
     const result = await middleware(mockRequest as any);
 
     expect(mockRequest.header.mock.calls[0][0]).toBe("x-user-email");
-    expect(mockRequest.header.mock.calls[1][0]).toBe("x-user-key");
-    expect(serviceModel.findBySubscriptionKey).toHaveBeenCalledWith(
-      headers["x-user-key"]
+    expect(mockRequest.header.mock.calls[1][0]).toBe("x-subscription-id");
+    expect(serviceModel.findByServiceId).toHaveBeenCalledWith(
+      headers["x-subscription-id"]
     );
     expect(result.isLeft).toBeTruthy();
     if (result.isLeft) {
@@ -121,14 +121,14 @@ describe("AzureUserAttributesMiddleware", () => {
     };
 
     const serviceModel = {
-      findBySubscriptionKey: jest.fn(() =>
+      findByServiceId: jest.fn(() =>
         Promise.resolve(right(some(mockOrg as any)))
       )
     };
 
     const headers: IHeaders = {
-      "x-user-email": "test@example.com",
-      "x-user-key": "MySubscriptionKey"
+      "x-subscription-id": "MySubscriptionId",
+      "x-user-email": "test@example.com"
     };
 
     const mockRequest = {
@@ -139,9 +139,9 @@ describe("AzureUserAttributesMiddleware", () => {
 
     const result = await middleware(mockRequest as any);
     expect(mockRequest.header.mock.calls[0][0]).toBe("x-user-email");
-    expect(mockRequest.header.mock.calls[1][0]).toBe("x-user-key");
-    expect(serviceModel.findBySubscriptionKey).toHaveBeenCalledWith(
-      headers["x-user-key"]
+    expect(mockRequest.header.mock.calls[1][0]).toBe("x-subscription-id");
+    expect(serviceModel.findByServiceId).toHaveBeenCalledWith(
+      headers["x-subscription-id"]
     );
     expect(result.isRight);
     if (result.isRight) {
@@ -154,12 +154,12 @@ describe("AzureUserAttributesMiddleware", () => {
 
   it("should fail in case of error when fetching the user service", async () => {
     const serviceModel = {
-      findBySubscriptionKey: jest.fn(() => Promise.resolve(left("error")))
+      findByServiceId: jest.fn(() => Promise.resolve(left("error")))
     };
 
     const headers: IHeaders = {
-      "x-user-email": "test@example.com",
-      "x-user-key": "MySubscriptionKey"
+      "x-subscription-id": "MySubscriptionId",
+      "x-user-email": "test@example.com"
     };
 
     const mockRequest = {
@@ -170,9 +170,9 @@ describe("AzureUserAttributesMiddleware", () => {
 
     const result = await middleware(mockRequest as any);
     expect(mockRequest.header.mock.calls[0][0]).toBe("x-user-email");
-    expect(mockRequest.header.mock.calls[1][0]).toBe("x-user-key");
-    expect(serviceModel.findBySubscriptionKey).toHaveBeenCalledWith(
-      headers["x-user-key"]
+    expect(mockRequest.header.mock.calls[1][0]).toBe("x-subscription-id");
+    expect(serviceModel.findByServiceId).toHaveBeenCalledWith(
+      headers["x-subscription-id"]
     );
     expect(result.isLeft);
     if (result.isLeft) {
