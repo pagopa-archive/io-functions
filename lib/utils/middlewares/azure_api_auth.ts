@@ -31,10 +31,10 @@ export enum UserGroup {
   // profiles: create and update full profile
   ApiProfileWrite = "ApiProfileWrite",
 
-  // organizations: read organization attributes
-  ApiOrganizationRead = "ApiOrganizationRead",
-  // organizations: create and update organizations
-  ApiOrganizationWrite = "ApiOrganizationWrite",
+  // services: read services attributes
+  ApiServiceRead = "ApiServiceRead",
+  // services: create and update services
+  ApiServiceWrite = "ApiServiceWrite",
 
   // messages: read sent message
   ApiMessageRead = "ApiMessageRead",

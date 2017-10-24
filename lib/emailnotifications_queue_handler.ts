@@ -220,7 +220,7 @@ export async function handleNotification(
   }
 
   // use the provided subject if present, or else use the default subject line
-  // TODO: generate the default subject from the organization/client metadata
+  // TODO: generate the default subject from the service/client metadata
   const subject = messageContent.subject
     ? messageContent.subject
     : toMessageSubject("A new notification for you.").get;

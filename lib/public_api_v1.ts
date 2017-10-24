@@ -21,8 +21,8 @@ import { createAzureFunctionHandler } from "azure-function-express";
 
 import { MessageModel } from "./models/message";
 import { NotificationModel } from "./models/notification";
-import { OrganizationModel } from "./models/organization";
 import { ProfileModel } from "./models/profile";
+import { ServiceModel } from "./models/service";
 
 import { GetDebug } from "./controllers/debug";
 import { GetInfo } from "./controllers/info";
@@ -83,9 +83,9 @@ const profilesCollectionUrl = documentDbUtils.getCollectionUri(
   documentDbDatabaseUrl,
   "profiles"
 );
-const organizationsCollectionUrl = documentDbUtils.getCollectionUri(
+const servicesCollectionUrl = documentDbUtils.getCollectionUri(
   documentDbDatabaseUrl,
-  "organizations"
+  "services"
 );
 const notificationsCollectionUrl = documentDbUtils.getCollectionUri(
   documentDbDatabaseUrl,
@@ -102,10 +102,7 @@ const messageModel = new MessageModel(
   messagesCollectionUrl,
   toNonEmptyString(MESSAGE_CONTAINER_NAME).get
 );
-const organizationModel = new OrganizationModel(
-  documentClient,
-  organizationsCollectionUrl
-);
+const serviceModel = new ServiceModel(documentClient, servicesCollectionUrl);
 const notificationModel = new NotificationModel(
   documentClient,
   notificationsCollectionUrl
@@ -117,7 +114,7 @@ const appInsightsClient = new ApplicationInsights.TelemetryClient();
 
 // Setup handlers
 
-const debugHandler = GetDebug(organizationModel);
+const debugHandler = GetDebug(serviceModel);
 app.get("/api/v1/debug", debugHandler);
 app.post("/api/v1/debug", debugHandler);
 
@@ -126,12 +123,12 @@ app.post("/api/v1/profiles/:fiscalcode", UpsertProfile(profileModel));
 
 app.get(
   "/api/v1/messages/:fiscalcode/:id",
-  GetMessage(organizationModel, messageModel, notificationModel)
+  GetMessage(serviceModel, messageModel, notificationModel)
 );
 app.get("/api/v1/messages/:fiscalcode", GetMessages(messageModel));
 app.post(
   "/api/v1/messages/:fiscalcode",
-  CreateMessage(appInsightsClient, organizationModel, messageModel)
+  CreateMessage(appInsightsClient, serviceModel, messageModel)
 );
 
 app.get("/api/v1/info", GetInfo());

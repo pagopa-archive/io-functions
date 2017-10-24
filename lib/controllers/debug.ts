@@ -23,7 +23,7 @@ import {
   IAzureUserAttributes
 } from "../utils/middlewares/azure_user_attributes";
 
-import { OrganizationModel } from "../models/organization";
+import { ServiceModel } from "../models/service";
 
 import { IResponseSuccessJson, ResponseSuccessJson } from "../utils/response";
 
@@ -59,14 +59,12 @@ const getDebugHandler: GetDebug = (request, auth, userAttributes) => {
   });
 };
 
-export function GetDebug(
-  organizationModel: OrganizationModel
-): express.RequestHandler {
+export function GetDebug(serviceModel: ServiceModel): express.RequestHandler {
   const azureApiMiddleware = AzureApiAuthMiddleware(
     new Set([UserGroup.ApiDebugRead])
   );
   const azureUserAttributesMiddleware = AzureUserAttributesMiddleware(
-    organizationModel
+    serviceModel
   );
   const middlewaresWrap = withRequestMiddlewares(
     ExpressRequestMiddleware,

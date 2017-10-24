@@ -526,7 +526,7 @@ describe("test processReject function", () => {
       notificationId: toNonEmptyString("yyy").get,
       senderMetadata: {
         departmentName: toNonEmptyString("aaa").get,
-        organizationName: toNonEmptyString("bbb").get,
+        organizationName: toNonEmptyString("agid").get,
         serviceName: toNonEmptyString("ccc").get
       }
     };
@@ -567,14 +567,14 @@ Lorem ipsum
     const body = toMessageBodyMarkdown(markdown).get;
     const metadata: ICreatedMessageEventSenderMetadata = {
       departmentName: toNonEmptyString("departmentXXX").get,
-      organizationName: toNonEmptyString("organizationYYY").get,
+      organizationName: toNonEmptyString("organizationXXX").get,
       serviceName: toNonEmptyString("serviceZZZ").get
     };
 
     const result = await generateDocumentHtml(subject, body, metadata);
     expect(result.indexOf("This is the subject")).toBeGreaterThan(0);
     expect(result.indexOf("departmentXXX")).toBeGreaterThan(0);
-    expect(result.indexOf("organizationYYY")).toBeGreaterThan(0);
+    expect(result.indexOf("organizationXXX")).toBeGreaterThan(0);
     expect(result.indexOf("serviceZZZ")).toBeGreaterThan(0);
     expect(result.indexOf("<h1>This is an H1</h1>")).toBeGreaterThan(0);
     expect(result.indexOf("<h2>This is an H2</h2>")).toBeGreaterThan(0);

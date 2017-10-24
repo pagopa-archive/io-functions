@@ -62,7 +62,7 @@ import { mapResultIterator } from "../utils/documentdb";
 import { ICreatedMessageEvent } from "../models/created_message_event";
 
 import { NotificationModel } from "../models/notification";
-import { OrganizationModel } from "../models/organization";
+import { ServiceModel } from "../models/service";
 
 import {
   IMessage,
@@ -113,7 +113,7 @@ function retrievedMessageToPublic(
   return {
     fiscal_code: retrievedMessage.fiscalCode,
     id: retrievedMessage.id,
-    sender_organization_id: retrievedMessage.senderOrganizationId
+    sender_service_id: retrievedMessage.senderServiceId
   };
 }
 
@@ -187,8 +187,8 @@ export function CreateMessageHandler(
   generateObjectId: ObjectIdGenerator
 ): ICreateMessageHandler {
   return async (context, auth, userAttributes, fiscalCode, messagePayload) => {
-    // extract the user organization
-    const userOrganization = userAttributes.organization;
+    // extract the user service
+    const userService = userAttributes.service;
 
     // base appinsights event attributes for convenience (used later)
     const appInsightsEventName = "api.messages.create";
@@ -198,7 +198,7 @@ export function CreateMessageHandler(
         messagePayload.default_addresses &&
           messagePayload.default_addresses.email
       ).toString(),
-      senderOrganizationId: userOrganization.organizationId,
+      senderServiceId: userService.serviceId,
       senderUserId: auth.userId
     };
 
@@ -211,7 +211,10 @@ export function CreateMessageHandler(
     if (auth.groups.has(UserGroup.ApiLimitedMessageWrite)) {
       // user is in limited message creation mode, check whether he's sending
       // the message to an authorized recipient
-      if (!userAttributes.authorizedRecipients.has(fiscalCode)) {
+      if (
+        !userAttributes.service.authorizedRecipients ||
+        userAttributes.service.authorizedRecipients.indexOf(fiscalCode) === -1
+      ) {
         return ResponseErrorForbiddenNotAuthorizedForRecipient;
       }
     } else if (!auth.groups.has(UserGroup.ApiMessageWrite)) {
@@ -236,7 +239,7 @@ export function CreateMessageHandler(
       fiscalCode,
       id: generateObjectId(),
       kind: "INewMessageWithoutContent",
-      senderOrganizationId: userOrganization.organizationId,
+      senderServiceId: userService.serviceId,
       senderUserId: auth.userId
     };
 
@@ -274,7 +277,7 @@ export function CreateMessageHandler(
     const retrievedMessage = errorOrMessage.right;
 
     winston.debug(
-      `CreateMessageHandler|message created|${userOrganization.organizationId}|${retrievedMessage.id}`
+      `CreateMessageHandler|message created|${userService.serviceId}|${retrievedMessage.id}`
     );
 
     //
@@ -292,9 +295,9 @@ export function CreateMessageHandler(
       message: newMessageWithoutContent,
       messageContent,
       senderMetadata: {
-        departmentName: userAttributes.departmentName,
-        organizationName: userAttributes.organization.name,
-        serviceName: userAttributes.serviceName
+        departmentName: userAttributes.service.departmentName,
+        organizationName: userAttributes.service.organizationName,
+        serviceName: userAttributes.service.serviceName
       }
     };
 
@@ -334,7 +337,7 @@ export function CreateMessageHandler(
  */
 export function CreateMessage(
   applicationInsightsClient: ApplicationInsights.TelemetryClient,
-  organizationModel: OrganizationModel,
+  serviceModel: ServiceModel,
   messageModel: MessageModel
 ): express.RequestHandler {
   const handler = CreateMessageHandler(
@@ -350,7 +353,7 @@ export function CreateMessage(
       new Set([UserGroup.ApiMessageWrite, UserGroup.ApiLimitedMessageWrite])
     ),
     // extracts custom user attributes from the request
-    AzureUserAttributesMiddleware(organizationModel),
+    AzureUserAttributesMiddleware(serviceModel),
     // extracts the fiscal code from the request params
     FiscalCodeMiddleware,
     // extracts the create message payload from the request body
@@ -371,9 +374,9 @@ export function GetMessageHandler(
     const canListMessages = userAuth.groups.has(UserGroup.ApiMessageList);
     if (!canListMessages) {
       // since this is not a trusted application we must allow only accessing messages
-      // that have been sent by the organization he belongs to
-      if (!userAttributes.organization) {
-        // the user doesn't have any organization associated, so we can't continue
+      // that have been sent by the service he belongs to
+      if (!userAttributes.service) {
+        // the user doesn't have any service associated, so we can't continue
         return ResponseErrorForbiddenNotAuthorized;
       }
     }
@@ -406,9 +409,8 @@ export function GetMessageHandler(
     // a trusted application or he is the sender of the message
     const isUserAllowed =
       canListMessages ||
-      (userAttributes.organization &&
-        retrievedMessage.senderOrganizationId ===
-          userAttributes.organization.organizationId);
+      (userAttributes.service &&
+        retrievedMessage.senderServiceId === userAttributes.service.serviceId);
 
     if (!isUserAllowed) {
       // the user is not allowed to see the message
@@ -450,7 +452,7 @@ export function GetMessageHandler(
  * Wraps a GetMessage handler inside an Express request handler.
  */
 export function GetMessage(
-  organizationModel: OrganizationModel,
+  serviceModel: ServiceModel,
   messageModel: MessageModel,
   notificationModel: NotificationModel
 ): express.RequestHandler {
@@ -459,7 +461,7 @@ export function GetMessage(
     AzureApiAuthMiddleware(
       new Set([UserGroup.ApiMessageRead, UserGroup.ApiMessageList])
     ),
-    AzureUserAttributesMiddleware(organizationModel),
+    AzureUserAttributesMiddleware(serviceModel),
     FiscalCodeMiddleware,
     RequiredIdParamMiddleware
   );
