@@ -244,7 +244,7 @@ describe("CreateMessageHandler", () => {
 
     const anAuthorizedService = {
       ...someUserAttributes.service,
-      authorizedRecipients: [aFiscalCode]
+      authorizedRecipients: new Set([aFiscalCode])
     };
 
     const someAuthorizedUserAttributes = {

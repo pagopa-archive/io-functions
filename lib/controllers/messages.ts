@@ -213,7 +213,7 @@ export function CreateMessageHandler(
       // the message to an authorized recipient
       if (
         !userAttributes.service.authorizedRecipients ||
-        userAttributes.service.authorizedRecipients.indexOf(fiscalCode) === -1
+        !userAttributes.service.authorizedRecipients.has(fiscalCode)
       ) {
         return ResponseErrorForbiddenNotAuthorizedForRecipient;
       }

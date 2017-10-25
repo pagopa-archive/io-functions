@@ -232,8 +232,7 @@ describe("queryDocuments", () => {
     expect(clientMock.queryDocuments).toHaveBeenCalledTimes(1);
     expect(clientMock.queryDocuments).toBeCalledWith(
       collectionUriFixture.uri,
-      "QUERY",
-      expect.any(Object)
+      "QUERY"
     );
     const result = await iterator.executeNext();
     expect(iteratorMock.executeNext).toBeCalled();
@@ -259,8 +258,7 @@ describe("queryDocuments", () => {
     expect(clientMock.queryDocuments).toHaveBeenCalledTimes(1);
     expect(clientMock.queryDocuments).toBeCalledWith(
       collectionUriFixture.uri,
-      "QUERY",
-      expect.any(Object)
+      "QUERY"
     );
     const result = await iterator.executeNext();
     expect(iteratorMock.executeNext).toBeCalled();
@@ -295,8 +293,7 @@ describe("queryOneDocument", () => {
     expect(clientMock.queryDocuments).toHaveBeenCalledTimes(1);
     expect(clientMock.queryDocuments).toBeCalledWith(
       collectionUriFixture.uri,
-      "QUERY",
-      expect.any(Object)
+      "QUERY"
     );
     expect(iteratorMock.executeNext).toBeCalled();
     expect(result.isRight).toBeTruthy();
@@ -321,8 +318,7 @@ describe("queryOneDocument", () => {
     expect(clientMock.queryDocuments).toHaveBeenCalledTimes(1);
     expect(clientMock.queryDocuments).toBeCalledWith(
       collectionUriFixture.uri,
-      "QUERY",
-      expect.any(Object)
+      "QUERY"
     );
     expect(iteratorMock.executeNext).toBeCalled();
     expect(result.isRight).toBeTruthy();
@@ -346,8 +342,7 @@ describe("queryOneDocument", () => {
     expect(clientMock.queryDocuments).toHaveBeenCalledTimes(1);
     expect(clientMock.queryDocuments).toBeCalledWith(
       collectionUriFixture.uri,
-      "QUERY",
-      expect.any(Object)
+      "QUERY"
     );
     expect(iteratorMock.executeNext).toBeCalled();
     expect(result.isLeft).toBeTruthy();

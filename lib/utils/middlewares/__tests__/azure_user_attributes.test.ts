@@ -113,7 +113,8 @@ describe("AzureUserAttributesMiddleware", () => {
   });
 
   it("should fetch and return the user service from the custom attributes", async () => {
-    const mockOrg = {
+    const mockService = {
+      authorizedRecipients: [],
       departmentName: "MyDept",
       organizationName: "MyService",
       serviceId: "serviceId",
@@ -122,7 +123,7 @@ describe("AzureUserAttributesMiddleware", () => {
 
     const serviceModel = {
       findOneByServiceId: jest.fn(() =>
-        Promise.resolve(right(some(mockOrg as any)))
+        Promise.resolve(right(some(mockService as any)))
       )
     };
 
@@ -146,9 +147,10 @@ describe("AzureUserAttributesMiddleware", () => {
     expect(result.isRight);
     if (result.isRight) {
       const attributes = result.right;
-      expect(attributes.service).toEqual(mockOrg);
-      expect(attributes.service.departmentName).toEqual(mockOrg.departmentName);
-      expect(attributes.service.serviceName).toEqual(mockOrg.serviceName);
+      expect(attributes.service).toEqual({
+        ...mockService,
+        authorizedRecipients: new Set()
+      });
     }
   });
 

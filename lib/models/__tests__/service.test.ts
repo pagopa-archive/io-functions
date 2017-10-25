@@ -6,7 +6,12 @@ import * as DocumentDbUtils from "../../utils/documentdb";
 import { toNonNegativeNumber } from "../../utils/numbers";
 import { toNonEmptyString } from "../../utils/strings";
 
-import { IRetrievedService, IService, ServiceModel } from "../service";
+import {
+  IAuthorizedService,
+  IRetrievedService,
+  ServiceModel,
+  toService
+} from "../service";
 
 const aDatabaseUri = DocumentDbUtils.getDatabaseUri("mockdb");
 const servicesCollectionUrl = DocumentDbUtils.getCollectionUri(
@@ -87,14 +92,17 @@ describe("createService", () => {
 
     const model = new ServiceModel(clientMock, servicesCollectionUrl);
 
-    const newService: IService = {
+    const newService: IAuthorizedService = {
       departmentName: toNonEmptyString("MyService").get,
       organizationName: toNonEmptyString("MyService").get,
       serviceId: toNonEmptyString(aServiceId).get,
       serviceName: toNonEmptyString("MyService").get
     };
 
-    const result = await model.create(newService, newService.serviceId);
+    const result = await model.create(
+      toService(newService),
+      newService.serviceId
+    );
 
     expect(clientMock.createDocument).toHaveBeenCalledTimes(1);
     expect(clientMock.createDocument.mock.calls[0][1].kind).toBeUndefined();
@@ -119,14 +127,17 @@ describe("createService", () => {
 
     const model = new ServiceModel(clientMock, servicesCollectionUrl);
 
-    const newService: IService = {
+    const newService: IAuthorizedService = {
       departmentName: toNonEmptyString("MyService").get,
       organizationName: toNonEmptyString("MyService").get,
       serviceId: toNonEmptyString(aServiceId).get,
       serviceName: toNonEmptyString("MyService").get
     };
 
-    const result = await model.create(newService, newService.serviceId);
+    const result = await model.create(
+      toService(newService),
+      newService.serviceId
+    );
 
     expect(clientMock.createDocument).toHaveBeenCalledTimes(1);
 

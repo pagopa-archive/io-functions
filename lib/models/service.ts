@@ -9,7 +9,7 @@ import {
 import { Option } from "ts-option";
 import { Either } from "../utils/either";
 
-import { FiscalCode } from "../api/definitions/FiscalCode";
+import { FiscalCode, isFiscalCode } from "../api/definitions/FiscalCode";
 
 import { nonEmptyStringToModelId } from "../utils/conversions";
 import { NonNegativeNumber } from "../utils/numbers";
@@ -18,7 +18,7 @@ import { NonEmptyString } from "../utils/strings";
 /**
  * Base interface for Service objects
  */
-export interface IService {
+interface IBaseService {
   // this equals user's subscriptionId
   readonly serviceId: NonEmptyString;
   // the name of the department within the service
@@ -27,8 +27,15 @@ export interface IService {
   readonly serviceName: NonEmptyString;
   // the name of the organization
   readonly organizationName: NonEmptyString;
+}
+
+/**
+ * Interface needed to interact with
+ * retrieved services from database
+ */
+export interface IService extends IBaseService {
   // list of authorized fiscal codes
-  readonly authorizedRecipients?: ReadonlySet<FiscalCode>;
+  readonly authorizedRecipients?: ReadonlyArray<FiscalCode>;
 }
 
 /**
@@ -52,6 +59,29 @@ export interface IRetrievedService
     IVersionedModel {
   readonly id: NonEmptyString;
   readonly kind: "IRetrievedService";
+}
+
+export interface IAuthorizedService extends IBaseService {
+  // list of authorized fiscal codes
+  readonly authorizedRecipients?: ReadonlySet<FiscalCode>;
+}
+
+export function toAuthorizedService(service: IService): IAuthorizedService {
+  return {
+    ...service,
+    authorizedRecipients: service.authorizedRecipients
+      ? new Set(service.authorizedRecipients.filter(isFiscalCode))
+      : new Set()
+  };
+}
+
+export function toService(service: IAuthorizedService): IService {
+  return {
+    ...service,
+    authorizedRecipients: service.authorizedRecipients
+      ? Array.from(service.authorizedRecipients).filter(isFiscalCode)
+      : []
+  };
 }
 
 function toRetrieved(result: DocumentDb.RetrievedDocument): IRetrievedService {
@@ -122,17 +152,6 @@ export class ServiceModel extends DocumentDbModelVersioned<
     this.dbClient = dbClient;
     // tslint:disable-next-line:no-object-mutation
     this.collectionUri = collectionUrl;
-  }
-
-  /**
-   * Searches for one Service associated to the provided ID
-   *
-   * @param fiscalCode
-   */
-  public findByServiceId(
-    serviceId: string
-  ): Promise<Either<DocumentDb.QueryError, Option<IRetrievedService>>> {
-    return super.findLastVersionByModelId("services", "serviceId", serviceId);
   }
 
   public findOneByServiceId(

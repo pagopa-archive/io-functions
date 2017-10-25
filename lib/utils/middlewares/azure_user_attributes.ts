@@ -7,7 +7,11 @@ import * as winston from "winston";
 import { left, right } from "../either";
 import { EmailString, toEmailString, toNonEmptyString } from "../strings";
 
-import { IService, ServiceModel } from "../../models/service";
+import {
+  IAuthorizedService,
+  ServiceModel,
+  toAuthorizedService
+} from "../../models/service";
 import { IRequestMiddleware } from "../request_middleware";
 import {
   IResponseErrorForbiddenNotAuthorized,
@@ -31,7 +35,7 @@ export interface IAzureUserAttributes {
   // the email of the registered user
   readonly email: EmailString;
   // the service associated to the user
-  readonly service: IService;
+  readonly service: IAuthorizedService;
 }
 
 /**
@@ -108,14 +112,10 @@ export function AzureUserAttributesMiddleware(
       return left(ResponseErrorForbiddenNotAuthorized);
     }
 
-    // const authorizedRecipients = service.authorizedRecipients
-    //   ? new Set(service.authorizedRecipients.filter(isFiscalCode))
-    //   : new Set();
-
     const authInfo: IAzureUserAttributes = {
       email: userEmail,
       kind: "IAzureUserAttributes",
-      service: maybeService.get
+      service: toAuthorizedService(maybeService.get)
     };
 
     return right(authInfo);

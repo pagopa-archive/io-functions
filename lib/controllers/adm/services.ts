@@ -76,7 +76,7 @@ const ServicePayloadMiddleware: IRequestMiddleware<
 > = request => {
   const body = request.body;
   const servicePayload: IService = {
-    authorizedRecipients: new Set(body.authorized_recipients),
+    authorizedRecipients: body.authorized_recipients,
     departmentName: body.department_name,
     organizationName: body.organization_name,
     serviceId: body.service_id,
