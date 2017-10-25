@@ -36,12 +36,7 @@ import {
 } from "../../utils/response";
 
 import { left, right } from "../../utils/either";
-import {
-  isNonEmptyString,
-  NonEmptyString,
-  ObjectIdGenerator,
-  ulidGenerator
-} from "../../utils/strings";
+import { isNonEmptyString, NonEmptyString } from "../../utils/strings";
 
 type ICreateServiceHandler = (
   auth: IAzureApiAuthorization,
@@ -116,6 +111,13 @@ export function UpdateServiceHandler(
   serviceModel: ServiceModel
 ): IUpdateServiceHandler {
   return async (_, serviceId, serviceModelPayload) => {
+    if (serviceModelPayload.serviceId !== serviceId) {
+      return ResponseErrorValidation(
+        "Error validating payload",
+        "Value of `service_id` in the request body must match " +
+          "the value of `service_id` path parameter"
+      );
+    }
     const errorOrMaybeService = await serviceModel.findOneByServiceId(
       serviceId
     );
@@ -168,20 +170,12 @@ export function UpdateServiceHandler(
 }
 
 export function CreateServiceHandler(
-  serviceModel: ServiceModel,
-  generateObjectId: ObjectIdGenerator
+  serviceModel: ServiceModel
 ): ICreateServiceHandler {
   return async (_, serviceModelPayload) => {
-    if (serviceModelPayload.serviceId) {
-      return ResponseErrorValidation(
-        "Error validating payload",
-        "service_id must be empty or undefined"
-      );
-    }
-    const serviceId = generateObjectId();
     const errorOrService = await serviceModel.create(
-      { ...serviceModelPayload, serviceId },
-      serviceId
+      serviceModelPayload,
+      serviceModelPayload.serviceId
     );
     if (errorOrService.isRight) {
       return ResponseSuccessJson(errorOrService.right);
@@ -197,7 +191,7 @@ export function CreateServiceHandler(
 export function CreateService(
   serviceModel: ServiceModel
 ): express.RequestHandler {
-  const handler = CreateServiceHandler(serviceModel, ulidGenerator);
+  const handler = CreateServiceHandler(serviceModel);
   const middlewaresWrap = withRequestMiddlewares(
     AzureApiAuthMiddleware(new Set([UserGroup.ApiServiceWrite])),
     ServicePayloadMiddleware
@@ -215,11 +209,13 @@ export function UpdateService(
   const middlewaresWrap = withRequestMiddlewares(
     AzureApiAuthMiddleware(new Set([UserGroup.ApiServiceWrite])),
     RequiredParamMiddleware(params => {
-      const serviceId = params.serviceId;
+      const serviceId = params.serviceid;
       if (isNonEmptyString(serviceId)) {
         return right(serviceId);
       } else {
-        return left("serviceId must be a non empty string");
+        return left(
+          "Value of `serviceid` parameter must be a non empty string"
+        );
       }
     }),
     ServicePayloadMiddleware
