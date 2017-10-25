@@ -54,35 +54,26 @@ IF NOT DEFINED KUDU_SYNC_CMD (
 
 echo Handling function App deployment.
 
-if "%SCM_USE_FUNCPACK%" == "1" (
-  call :DeployWithFuncPack
+if "%SCM_USE_FUNCPACK_BUILD%" == "1" (
+  call :DeployWithFuncPackBuild
 ) else (
   call :DeployWithoutFuncPack
 )
 
 goto end
 
-:DeployWithFuncPack
+:DeployWithFuncPackBuild
 setlocal
 
-echo Using funcpack to optimize cold start
+echo Deploying funcpack build
 
 :: 1. Copy to local storage
 echo Copying repository files to local storage
 xcopy "%DEPLOYMENT_SOURCE%" "%DEPLOYMENT_TEMP%" /seyiq
 IF !ERRORLEVEL! NEQ 0 goto error
 
-:: 2. Restore npm
-call :RestoreNpmPackages "%DEPLOYMENT_TEMP%"
-
-:: 3. FuncPack
-pushd "%DEPLOYMENT_TEMP%"
-call funcpack pack .
-IF !ERRORLEVEL! NEQ 0 goto error
-popd
-
 :: 4. KuduSync
-call :ExecuteCmd "%KUDU_SYNC_CMD%" -v 50 -f "%DEPLOYMENT_TEMP%" -t "%DEPLOYMENT_TARGET%" -n "%NEXT_MANIFEST_PATH%" -p "%PREVIOUS_MANIFEST_PATH%" -i ".git;.hg;.deployment;deploy.cmd;node_modules"
+call :ExecuteCmd "%KUDU_SYNC_CMD%" -v 50 -f "%DEPLOYMENT_TEMP%" -t "%DEPLOYMENT_TARGET%" -n "%NEXT_MANIFEST_PATH%" -p "%PREVIOUS_MANIFEST_PATH%" -i ".git;.hg;.deployment;deploy.cmd;node_modules;lib;docs;api;templates"
 IF !ERRORLEVEL! NEQ 0 goto error
 
 exit /b %ERRORLEVEL%
@@ -95,7 +86,7 @@ echo Not using funcpack because SCM_USE_FUNCPACK is not set to 1
 
 :: 1. KuduSync
 IF /I "%IN_PLACE_DEPLOYMENT%" NEQ "1" (
-  call :ExecuteCmd "%KUDU_SYNC_CMD%" -v 50 -f "%DEPLOYMENT_SOURCE%" -t "%DEPLOYMENT_TARGET%" -n "%NEXT_MANIFEST_PATH%" -p "%PREVIOUS_MANIFEST_PATH%" -i ".git;.hg;.deployment;deploy.cmd"
+  call :ExecuteCmd "%KUDU_SYNC_CMD%" -v 50 -f "%DEPLOYMENT_SOURCE%" -t "%DEPLOYMENT_TARGET%" -n "%NEXT_MANIFEST_PATH%" -p "%PREVIOUS_MANIFEST_PATH%" -i ".git;.hg;.deployment;deploy.cmd;docs"
   IF !ERRORLEVEL! NEQ 0 goto error
 )
 
