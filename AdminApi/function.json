@@ -8,7 +8,7 @@
       "direction" : "in",
       "name"      : "req",
       "methods"   : [ "get", "post", "put" ],
-      "route"     : "adm/v1/{*segments}"
+      "route"     : "adm/{*segments}"
     }, {
       "type"      : "http",
       "direction" : "out",
