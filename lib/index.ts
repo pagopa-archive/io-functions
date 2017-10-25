@@ -1,5 +1,4 @@
-// tslint:disable-next-line:no-object-mutation
-module.exports = {
+export = {
   CreatedMessageQueueHandler: require("./created_message_queue_handler"),
   EmailNotificationsQueueHandler: require("./emailnotifications_queue_handler"),
   Openapi: require("./openapi"),
