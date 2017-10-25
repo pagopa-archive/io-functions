@@ -1,6 +1,9 @@
 // tslint:disable:no-any
 // tslint:disable:no-null-keyword
 
+// tslint:disable-next-line:no-object-mutation
+process.env.COSMOSDB_NAME = "anyDbName";
+
 import * as NodeMailer from "nodemailer";
 
 import MockTransport = require("nodemailer-mock-transport");
