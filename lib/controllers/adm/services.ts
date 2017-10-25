@@ -5,7 +5,7 @@ import * as express from "express";
 
 import {
   IRetrievedService,
-  IService,
+  ISerializableService,
   ServiceModel
 } from "../../models/service";
 
@@ -45,7 +45,7 @@ import {
 
 type ICreateServiceHandler = (
   auth: IAzureApiAuthorization,
-  service: IService
+  service: ISerializableService
 ) => Promise<
   | IResponseSuccessJson<IRetrievedService>
   | IResponseErrorValidation
@@ -56,7 +56,7 @@ type ICreateServiceHandler = (
 type IUpdateServiceHandler = (
   auth: IAzureApiAuthorization,
   serviceId: NonEmptyString,
-  service: IService
+  service: ISerializableService
 ) => Promise<
   | IResponseSuccessJson<IRetrievedService>
   | IResponseErrorValidation
@@ -72,10 +72,10 @@ type IUpdateServiceHandler = (
  */
 const ServicePayloadMiddleware: IRequestMiddleware<
   IResponseErrorValidation,
-  IService
+  ISerializableService
 > = request => {
   const body = request.body;
-  const servicePayload: IService = {
+  const servicePayload: ISerializableService = {
     authorizedRecipients: body.authorized_recipients,
     departmentName: body.department_name,
     organizationName: body.organization_name,

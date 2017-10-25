@@ -33,7 +33,7 @@ interface IBaseService {
  * Interface needed to interact with
  * retrieved services from database
  */
-export interface IService extends IBaseService {
+export interface ISerializableService extends IBaseService {
   // list of authorized fiscal codes
   readonly authorizedRecipients?: ReadonlyArray<FiscalCode>;
 }
@@ -42,7 +42,7 @@ export interface IService extends IBaseService {
  * Interface for new Service objects
  */
 export interface INewService
-  extends IService,
+  extends ISerializableService,
     DocumentDb.NewDocument,
     IVersionedModel {
   readonly kind: "INewService";
@@ -54,7 +54,7 @@ export interface INewService
  * Existing Service records have a version number.
  */
 export interface IRetrievedService
-  extends IService,
+  extends ISerializableService,
     DocumentDb.RetrievedDocument,
     IVersionedModel {
   readonly id: NonEmptyString;
@@ -66,7 +66,9 @@ export interface IAuthorizedService extends IBaseService {
   readonly authorizedRecipients?: ReadonlySet<FiscalCode>;
 }
 
-export function toAuthorizedService(service: IService): IAuthorizedService {
+export function toAuthorizedService(
+  service: ISerializableService
+): IAuthorizedService {
   return {
     ...service,
     authorizedRecipients: service.authorizedRecipients
@@ -75,7 +77,7 @@ export function toAuthorizedService(service: IService): IAuthorizedService {
   };
 }
 
-export function toService(service: IAuthorizedService): IService {
+export function toService(service: IAuthorizedService): ISerializableService {
   return {
     ...service,
     authorizedRecipients: service.authorizedRecipients
@@ -91,12 +93,12 @@ function toRetrieved(result: DocumentDb.RetrievedDocument): IRetrievedService {
   } as IRetrievedService;
 }
 
-function getModelId(o: IService): ModelId {
+function getModelId(o: ISerializableService): ModelId {
   return nonEmptyStringToModelId(o.serviceId);
 }
 
 function updateModelId(
-  o: IService,
+  o: ISerializableService,
   id: string,
   version: NonNegativeNumber
 ): INewService {
@@ -109,7 +111,7 @@ function updateModelId(
   return newService;
 }
 
-function toBaseType(o: IRetrievedService): IService {
+function toBaseType(o: IRetrievedService): ISerializableService {
   return {
     departmentName: o.departmentName,
     organizationName: o.organizationName,
@@ -122,7 +124,7 @@ function toBaseType(o: IRetrievedService): IService {
  * A model for handling Services
  */
 export class ServiceModel extends DocumentDbModelVersioned<
-  IService,
+  ISerializableService,
   INewService,
   IRetrievedService
 > {

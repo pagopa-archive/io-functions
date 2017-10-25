@@ -162,7 +162,7 @@ describe("update", () => {
     const model = new ServiceModel(clientMock, servicesCollectionUrl);
 
     const result = await model.update(
-      aRetrievedService.serviceId,
+      aRetrievedService.id,
       aRetrievedService.serviceId,
       p => {
         return {
