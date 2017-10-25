@@ -3,8 +3,7 @@ import * as helmet from "helmet";
 import * as csp from "helmet-csp";
 import * as referrerPolicy from "referrer-policy";
 
-export function getSecureExpressApp(): express.Express {
-  const app = express();
+export function secureExpressApp(app: express.Express): void {
   // Set header `referrer-policy` to `no-referrer`
   app.use(referrerPolicy());
 
@@ -34,5 +33,4 @@ export function getSecureExpressApp(): express.Express {
       }
     })
   );
-  return app;
 }

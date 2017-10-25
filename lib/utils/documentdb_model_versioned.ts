@@ -99,7 +99,7 @@ export abstract class DocumentDbModelVersioned<
   public async update(
     objectId: string,
     partitionKey: string,
-    f: (current: T) => T | TR
+    f: (current: T) => T
   ): Promise<Either<DocumentDb.QueryError, Option<TR>>> {
     // fetch the document
     const errorOrMaybeCurrent = await this.find(objectId, partitionKey);

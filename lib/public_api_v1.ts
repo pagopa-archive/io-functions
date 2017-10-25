@@ -29,10 +29,12 @@ import { CreateMessage, GetMessage, GetMessages } from "./controllers/messages";
 import { GetProfile, UpsertProfile } from "./controllers/profiles";
 import { toNonEmptyString } from "./utils/strings";
 
-import { getSecureExpressApp } from "./utils/express";
+import * as express from "express";
+import { secureExpressApp } from "./utils/express";
 
 // Setup Express
-const app = getSecureExpressApp();
+const app = express();
+secureExpressApp(app);
 
 // Setup DocumentDB
 

@@ -3,39 +3,45 @@
  */
 import * as express from "express";
 
-import { IRetrievedService, IService, ServiceModel } from "../models/service";
+import {
+  IRetrievedService,
+  IService,
+  ServiceModel
+} from "../../models/service";
 
 import {
   AzureApiAuthMiddleware,
   IAzureApiAuthorization,
   UserGroup
-} from "../utils/middlewares/azure_api_auth";
+} from "../../utils/middlewares/azure_api_auth";
+
+import { RequiredParamMiddleware } from "../../utils/middlewares/required_param";
 
 import {
   IRequestMiddleware,
   withRequestMiddlewares,
   wrapRequestHandler
-} from "../utils/request_middleware";
-
-import { PathParamMiddleware } from "../utils/middlewares/path_param";
+} from "../../utils/request_middleware";
 
 import {
   IResponseErrorInternal,
+  IResponseErrorNotFound,
   IResponseErrorQuery,
   IResponseErrorValidation,
   IResponseSuccessJson,
+  ResponseErrorNotFound,
   ResponseErrorQuery,
   ResponseErrorValidation,
   ResponseSuccessJson
-} from "../utils/response";
+} from "../../utils/response";
 
-import { left, right } from "../utils/either";
+import { left, right } from "../../utils/either";
 import {
   isNonEmptyString,
   NonEmptyString,
   ObjectIdGenerator,
   ulidGenerator
-} from "../utils/strings";
+} from "../../utils/strings";
 
 type ICreateServiceHandler = (
   auth: IAzureApiAuthorization,
@@ -50,12 +56,13 @@ type ICreateServiceHandler = (
 type IUpdateServiceHandler = (
   auth: IAzureApiAuthorization,
   serviceId: NonEmptyString,
-  service: IRetrievedService
+  service: IService
 ) => Promise<
   | IResponseSuccessJson<IRetrievedService>
   | IResponseErrorValidation
   | IResponseErrorQuery
   | IResponseErrorInternal
+  | IResponseErrorNotFound
 >;
 
 /**
@@ -67,17 +74,7 @@ const ServicePayloadMiddleware: IRequestMiddleware<
   IResponseErrorValidation,
   IService
 > = request => {
-  const servicePayload: IService = {
-    authorizedRecipients: request.body.authorized_recipients,
-    departmentName: request.body.department_name,
-    organizationName: request.body.organization_name,
-    // request.body.service_id is undefined when the service
-    // is going to be created (and not updated)
-    // anyways it's overridden in CreateServiceHandler()
-    serviceId: request.body.service_id,
-    serviceName: request.body.service_name,
-    subscriptionId: request.body.subscription_id
-  };
+  const servicePayload: IService = request.body;
 
   const nonEmptyFields: { readonly [k: string]: string } = {
     department_name: servicePayload.departmentName,
@@ -124,7 +121,7 @@ export function UpdateServiceHandler(
 
     const maybeService = errorOrMaybeService.right;
     if (maybeService.isEmpty) {
-      return ResponseErrorValidation(
+      return ResponseErrorNotFound(
         "Error",
         "Could not find a service with the provided serviceId"
       );
@@ -210,7 +207,14 @@ export function UpdateService(
   const handler = UpdateServiceHandler(serviceModel);
   const middlewaresWrap = withRequestMiddlewares(
     AzureApiAuthMiddleware(new Set([UserGroup.ApiServiceWrite])),
-    PathParamMiddleware("serviceid", isNonEmptyString),
+    RequiredParamMiddleware(params => {
+      const serviceId = params.serviceId;
+      if (isNonEmptyString(serviceId)) {
+        return right(serviceId);
+      } else {
+        return left("serviceId must be a non empty string");
+      }
+    }),
     ServicePayloadMiddleware
   );
   return wrapRequestHandler(middlewaresWrap(handler));

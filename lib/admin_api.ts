@@ -17,14 +17,16 @@ import { createAzureFunctionHandler } from "azure-function-express";
 
 import { ServiceModel } from "./models/service";
 
-import { CreateService, UpdateService } from "./controllers/admin_services";
+import { CreateService, UpdateService } from "./controllers/adm/services";
 
 import { GetDebug } from "./controllers/debug";
 
-import { getSecureExpressApp } from "./utils/express";
+import * as express from "express";
+import { secureExpressApp } from "./utils/express";
 
 // Setup Express
-const app = getSecureExpressApp();
+const app = express();
+secureExpressApp(app);
 
 // Setup DocumentDB
 
@@ -49,12 +51,12 @@ const serviceModel = new ServiceModel(documentClient, servicesCollectionUrl);
 // Setup handlers
 
 const debugHandler = GetDebug(serviceModel);
-app.get("/adm/v1/debug", debugHandler);
-app.post("/adm/v1/debug", debugHandler);
+app.get("/adm/debug", debugHandler);
+app.post("/adm/debug", debugHandler);
 
-app.post("/adm/v1/services", CreateService(serviceModel));
+app.post("/adm/services", CreateService(serviceModel));
 
-app.put("/adm/v1/services/:serviceid", UpdateService(serviceModel));
+app.put("/adm/services/:serviceid", UpdateService(serviceModel));
 
 const azureFunctionHandler = createAzureFunctionHandler(app);
 
