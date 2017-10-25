@@ -224,7 +224,11 @@ export function queryDocuments<T>(
   collectionUri: IDocumentDbCollectionUri,
   query: DocumentDb.DocumentQuery
 ): IResultIterator<T & DocumentDb.RetrievedDocument> {
-  const documentIterator = client.queryDocuments(collectionUri.uri, query);
+  const documentIterator = client.queryDocuments(collectionUri.uri, query, {
+    // enableCrossPartitionQuery is mandatory if you want to query for fields
+    // other than the partitionKey and Id
+    enableCrossPartitionQuery: true
+  });
   const resultIterator: IResultIterator<T & DocumentDb.RetrievedDocument> = {
     executeNext: () => {
       return new Promise(resolve => {

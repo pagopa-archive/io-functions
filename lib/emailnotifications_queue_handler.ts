@@ -48,7 +48,9 @@ const COSMOSDB_URI: string = process.env.CUSTOMCONNSTR_COSMOSDB_URI;
 const COSMOSDB_KEY: string = process.env.CUSTOMCONNSTR_COSMOSDB_KEY;
 
 // TODO: read from env vars
-const documentDbDatabaseUrl = documentDbUtils.getDatabaseUri("development");
+const documentDbDatabaseUrl = documentDbUtils.getDatabaseUri(
+  process.env.COSMOSDB_NAME
+);
 const notificationsCollectionUrl = documentDbUtils.getCollectionUri(
   documentDbDatabaseUrl,
   "notifications"

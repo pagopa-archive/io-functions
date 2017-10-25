@@ -153,7 +153,13 @@ export class ServiceModel extends DocumentDbModelVersioned<
           value: subscriptionId
         }
       ],
-      query: `SELECT * FROM "services" m WHERE (m.subscriptionId = ${subscriptionIdParamName}) ORDER BY m.version DESC`
+      query: `SELECT * FROM services m WHERE (m.subscriptionId = ${subscriptionIdParamName}) ORDER BY m.version DESC`
     });
+  }
+
+  public findOneByServiceId(
+    serviceId: NonEmptyString
+  ): Promise<Either<DocumentDb.QueryError, Option<IRetrievedService>>> {
+    return super.findLastVersionByModelId("services", "serviceId", serviceId);
   }
 }

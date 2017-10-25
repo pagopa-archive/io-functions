@@ -266,6 +266,10 @@ export function CreateMessageHandler(
         }
       });
 
+      winston.debug(
+        `CreateMessageHandler|error|${JSON.stringify(errorOrMessage.left)}`
+      );
+
       // return an error response
       return ResponseErrorQuery(
         "Error while creating Message",

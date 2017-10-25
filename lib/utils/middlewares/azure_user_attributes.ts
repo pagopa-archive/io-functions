@@ -86,11 +86,13 @@ export function AzureUserAttributesMiddleware(
 
     if (errorOrMaybeService.isLeft) {
       winston.error(
-        `Error while retrieving service|${subscriptionId}|${errorOrMaybeService.left}`
+        `No service found for subscription|${subscriptionId}|${JSON.stringify(
+          errorOrMaybeService.left
+        )}`
       );
       return left(
         ResponseErrorQuery(
-          `Error while retrieving service`,
+          `Error while retrieving the service tied to the provided subscription id`,
           errorOrMaybeService.left
         )
       );

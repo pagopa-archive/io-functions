@@ -206,7 +206,7 @@ async function updateExistingProfileFromPayload(
   | IResponseErrorInternal
 > {
   const errorOrMaybeProfile = await profileModel.update(
-    existingProfile.fiscalCode,
+    existingProfile.id,
     existingProfile.fiscalCode,
     p => {
       return {
