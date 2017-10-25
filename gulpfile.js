@@ -43,7 +43,8 @@ const currentPackageJson = JSON.parse(fs.readFileSync(packageJsonPath));
 const currentVersion = semver.parse(currentPackageJson.version);
 const releaseVersionValue = `${currentVersion.major}.${currentVersion.minor}.${currentVersion.patch}`;
 const nextVersionValue = `${semver.inc(releaseVersionValue, "minor")}-SNAPSHOT`;
-const releaseVersionFuncpackBranchName = `funcpack-release-v${releaseVersionValue}`;
+const funcpackBranchPrefix = "funcpack-release";
+const releaseVersionFuncpackBranchName = `${funcpackBranchPrefix}-v${releaseVersionValue}`;
 
 /**
  * Transform a mjml template to a Typescript function outputting HTML.
@@ -239,6 +240,13 @@ gulp.task("release:git:push:funcpack", (cb) => {
 });
 
 /**
+ * Updates the remote "latest" funcpack branch to the current funcpack branch
+ */
+gulp.task("release:git:push:funcpack:latest", (cb) => {
+  return git.push(GIT_ORIGIN, `${releaseVersionFuncpackBranchName}:${funcpackBranchPrefix}-latest`, { args: "-f" }, cb);
+});
+
+/**
  * Bump the version to the snapshot version
  */
 gulp.task("release:bump:next", () => {
@@ -282,6 +290,7 @@ gulp.task("release", function (cb) {
     // commits and pushes funcpack branch
     "release:git:commit:funcpack",
     "release:git:push:funcpack",
+    "release:git:push:funcpack:latest",
     // check out the release branch (master)
     "git:checkout:release",
     // bumps the version to the next snapshot version:
