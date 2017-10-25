@@ -32,7 +32,7 @@ const COSMOSDB_URI: string = process.env.CUSTOMCONNSTR_COSMOSDB_URI;
 const COSMOSDB_KEY: string = process.env.CUSTOMCONNSTR_COSMOSDB_KEY;
 
 const documentDbDatabaseUrl = documentDbUtils.getDatabaseUri(
-  process.env.COSMODB_NAME
+  process.env.COSMOSDB_NAME
 );
 
 const servicesCollectionUrl = documentDbUtils.getCollectionUri(

@@ -101,7 +101,9 @@ export function AzureUserAttributesMiddleware(
     const maybeService = errorOrMaybeService.right;
 
     if (maybeService.isEmpty) {
-      winston.error(`Service not found|${subscriptionId}`);
+      winston.error(
+        `AzureUserAttributesMiddleware|Service not found|${subscriptionId}`
+      );
       return left(ResponseErrorForbiddenNotAuthorized);
     }
 
