@@ -77,7 +77,9 @@ export function toAuthorizedService(
   };
 }
 
-export function toService(service: IAuthorizedService): ISerializableService {
+export function toSerializableService(
+  service: IAuthorizedService
+): ISerializableService {
   return {
     ...service,
     authorizedRecipients: service.authorizedRecipients
