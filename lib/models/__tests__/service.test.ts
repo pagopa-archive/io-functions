@@ -10,7 +10,7 @@ import {
   IAuthorizedService,
   IRetrievedService,
   ServiceModel,
-  toService
+  toSerializableService
 } from "../service";
 
 const aDatabaseUri = DocumentDbUtils.getDatabaseUri("mockdb");
@@ -100,7 +100,7 @@ describe("createService", () => {
     };
 
     const result = await model.create(
-      toService(newService),
+      toSerializableService(newService),
       newService.serviceId
     );
 
@@ -135,7 +135,7 @@ describe("createService", () => {
     };
 
     const result = await model.create(
-      toService(newService),
+      toSerializableService(newService),
       newService.serviceId
     );
 
