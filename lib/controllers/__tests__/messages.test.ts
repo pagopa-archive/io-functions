@@ -63,8 +63,7 @@ const someUserAttributes: IAzureUserAttributes = {
     departmentName: toNonEmptyString("IT").get,
     organizationName: toNonEmptyString("AgID").get,
     serviceId: toNonEmptyString("test").get,
-    serviceName: toNonEmptyString("Test").get,
-    subscriptionId: toNonEmptyString("MySubscriptionId").get
+    serviceName: toNonEmptyString("Test").get
   }
 };
 

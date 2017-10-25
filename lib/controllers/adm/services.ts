@@ -74,13 +74,20 @@ const ServicePayloadMiddleware: IRequestMiddleware<
   IResponseErrorValidation,
   IService
 > = request => {
-  const servicePayload: IService = request.body;
+  const body = request.body;
+  const servicePayload: IService = {
+    authorizedRecipients: new Set(body.authorized_recipients),
+    departmentName: body.department_name,
+    organizationName: body.organization_name,
+    serviceId: body.service_id,
+    serviceName: body.service_name
+  };
 
   const nonEmptyFields: { readonly [k: string]: string } = {
     department_name: servicePayload.departmentName,
     organization_name: servicePayload.organizationName,
-    service_name: servicePayload.serviceName,
-    subscription_id: servicePayload.subscriptionId
+    service_id: servicePayload.serviceId,
+    service_name: servicePayload.serviceName
   };
 
   const errors = Object.keys(nonEmptyFields)

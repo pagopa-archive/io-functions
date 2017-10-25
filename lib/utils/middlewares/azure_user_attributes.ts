@@ -80,7 +80,8 @@ export function AzureUserAttributesMiddleware(
 
     const subscriptionId = maybeUserSubscriptionIdHeader.get;
 
-    const errorOrMaybeService = await serviceModel.findBySubscriptionId(
+    // serviceId equals subscriptionId
+    const errorOrMaybeService = await serviceModel.findOneByServiceId(
       subscriptionId
     );
 

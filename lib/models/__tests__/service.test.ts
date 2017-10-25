@@ -25,7 +25,6 @@ const aRetrievedService: IRetrievedService = {
   organizationName: toNonEmptyString("MyOrg").get,
   serviceId: toNonEmptyString(aServiceId).get,
   serviceName: toNonEmptyString("MyService").get,
-  subscriptionId: toNonEmptyString("MySubscriptionId").get,
   version: toNonNegativeNumber(0).get
 };
 
@@ -44,7 +43,7 @@ describe("findOneServiceById", () => {
       servicesCollectionUrl
     );
 
-    const result = await model.findBySubscriptionId("id");
+    const result = await model.findOneByServiceId(toNonEmptyString("id").get);
 
     expect(result.isRight).toBeTruthy();
     if (result.isRight) {
@@ -67,7 +66,7 @@ describe("findOneServiceById", () => {
       servicesCollectionUrl
     );
 
-    const result = await model.findBySubscriptionId("id");
+    const result = await model.findOneByServiceId(toNonEmptyString("id").get);
 
     expect(result.isRight).toBeTruthy();
     if (result.isRight) {
@@ -92,8 +91,7 @@ describe("createService", () => {
       departmentName: toNonEmptyString("MyService").get,
       organizationName: toNonEmptyString("MyService").get,
       serviceId: toNonEmptyString(aServiceId).get,
-      serviceName: toNonEmptyString("MyService").get,
-      subscriptionId: toNonEmptyString("MySubscriptionId").get
+      serviceName: toNonEmptyString("MyService").get
     };
 
     const result = await model.create(newService, newService.serviceId);
@@ -125,8 +123,7 @@ describe("createService", () => {
       departmentName: toNonEmptyString("MyService").get,
       organizationName: toNonEmptyString("MyService").get,
       serviceId: toNonEmptyString(aServiceId).get,
-      serviceName: toNonEmptyString("MyService").get,
-      subscriptionId: toNonEmptyString("MySubscriptionId").get
+      serviceName: toNonEmptyString("MyService").get
     };
 
     const result = await model.create(newService, newService.serviceId);

@@ -19,6 +19,7 @@ import { NonEmptyString } from "../utils/strings";
  * Base interface for Service objects
  */
 export interface IService {
+  // this equals user's subscriptionId
   readonly serviceId: NonEmptyString;
   // the name of the department within the service
   readonly departmentName: NonEmptyString;
@@ -27,9 +28,7 @@ export interface IService {
   // the name of the organization
   readonly organizationName: NonEmptyString;
   // list of authorized fiscal codes
-  readonly authorizedRecipients?: ReadonlyArray<FiscalCode>;
-  // user's subscription linked to this service
-  readonly subscriptionId: NonEmptyString;
+  readonly authorizedRecipients?: ReadonlySet<FiscalCode>;
 }
 
 /**
@@ -85,8 +84,7 @@ function toBaseType(o: IRetrievedService): IService {
     departmentName: o.departmentName,
     organizationName: o.organizationName,
     serviceId: o.serviceId,
-    serviceName: o.serviceName,
-    subscriptionId: o.subscriptionId
+    serviceName: o.serviceName
   };
 }
 
@@ -135,26 +133,6 @@ export class ServiceModel extends DocumentDbModelVersioned<
     serviceId: string
   ): Promise<Either<DocumentDb.QueryError, Option<IRetrievedService>>> {
     return super.findLastVersionByModelId("services", "serviceId", serviceId);
-  }
-
-  /**
-   * Searches for one Service associated to the provided Subscription Id
-   *
-   * @param subscriptionId
-   */
-  public findBySubscriptionId(
-    subscriptionId: string
-  ): Promise<Either<DocumentDb.QueryError, Option<IRetrievedService>>> {
-    const subscriptionIdParamName = "@subscriptionId";
-    return DocumentDbUtils.queryOneDocument(this.dbClient, this.collectionUri, {
-      parameters: [
-        {
-          name: subscriptionIdParamName,
-          value: subscriptionId
-        }
-      ],
-      query: `SELECT * FROM services m WHERE (m.subscriptionId = ${subscriptionIdParamName}) ORDER BY m.version DESC`
-    });
   }
 
   public findOneByServiceId(

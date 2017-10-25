@@ -61,7 +61,7 @@ describe("AzureUserAttributesMiddleware", () => {
 
   it("should fail on invalid key", async () => {
     const serviceModel = {
-      findBySubscriptionId: jest.fn()
+      findOneByServiceId: jest.fn()
     };
     const headers: IHeaders = {
       "x-subscription-id": undefined,
@@ -85,7 +85,7 @@ describe("AzureUserAttributesMiddleware", () => {
 
   it("should fail if the user service does not exist", async () => {
     const serviceModel = {
-      findBySubscriptionId: jest.fn(() => Promise.resolve(right(none)))
+      findOneByServiceId: jest.fn(() => Promise.resolve(right(none)))
     };
 
     const headers: IHeaders = {
@@ -103,7 +103,7 @@ describe("AzureUserAttributesMiddleware", () => {
 
     expect(mockRequest.header.mock.calls[0][0]).toBe("x-user-email");
     expect(mockRequest.header.mock.calls[1][0]).toBe("x-subscription-id");
-    expect(serviceModel.findBySubscriptionId).toHaveBeenCalledWith(
+    expect(serviceModel.findOneByServiceId).toHaveBeenCalledWith(
       headers["x-subscription-id"]
     );
     expect(result.isLeft).toBeTruthy();
@@ -121,7 +121,7 @@ describe("AzureUserAttributesMiddleware", () => {
     };
 
     const serviceModel = {
-      findBySubscriptionId: jest.fn(() =>
+      findOneByServiceId: jest.fn(() =>
         Promise.resolve(right(some(mockOrg as any)))
       )
     };
@@ -140,7 +140,7 @@ describe("AzureUserAttributesMiddleware", () => {
     const result = await middleware(mockRequest as any);
     expect(mockRequest.header.mock.calls[0][0]).toBe("x-user-email");
     expect(mockRequest.header.mock.calls[1][0]).toBe("x-subscription-id");
-    expect(serviceModel.findBySubscriptionId).toHaveBeenCalledWith(
+    expect(serviceModel.findOneByServiceId).toHaveBeenCalledWith(
       headers["x-subscription-id"]
     );
     expect(result.isRight);
@@ -154,7 +154,7 @@ describe("AzureUserAttributesMiddleware", () => {
 
   it("should fail in case of error when fetching the user service", async () => {
     const serviceModel = {
-      findBySubscriptionId: jest.fn(() => Promise.resolve(left("error")))
+      findOneByServiceId: jest.fn(() => Promise.resolve(left("error")))
     };
 
     const headers: IHeaders = {
@@ -171,7 +171,7 @@ describe("AzureUserAttributesMiddleware", () => {
     const result = await middleware(mockRequest as any);
     expect(mockRequest.header.mock.calls[0][0]).toBe("x-user-email");
     expect(mockRequest.header.mock.calls[1][0]).toBe("x-subscription-id");
-    expect(serviceModel.findBySubscriptionId).toHaveBeenCalledWith(
+    expect(serviceModel.findOneByServiceId).toHaveBeenCalledWith(
       headers["x-subscription-id"]
     );
     expect(result.isLeft);
