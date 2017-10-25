@@ -17,10 +17,6 @@
     "consoleLevel": "verbose",
     "fileLoggingMode": "debugOnly"
   },
-  "watchDirectories": [
-    "node_modules",
-    "lib"
-  ],
   "logger": {
     "categoryFilter": {
       "defaultLevel": "Information",

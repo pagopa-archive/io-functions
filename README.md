@@ -358,16 +358,11 @@ Currently the system emits the following events:
 ## Contributing
 
 The API is developed in TypeScript, all code is under the `lib` directory.
-Currently the TypeScript code gets compiled to Javascript at deploy time on the
-production machine (the build process is triggered by the `deploy.cmd` script).
 
-Each Azure Function is declared in `host.json` and has a top level directory
-associated (e.g., `PublicApiV1`). Each function directory contains a
-`function.json` that describe the bindings and an `index.ts` that exports the
-function handler from the code imported from the `lib` directory.
-
-Each Azure Function has a corresponding `.ts` handler in the `lib` directory
-(e.g., `lib/public_api_v1.ts`).
+Each Azure Function is declared in `host.json` (in the `functions` key) and has
+a top level directory associated (e.g., `PublicApiV1`).
+Each function directory contains a `function.json` that configures the bindings
+and the reference to the function entrypoint from `lib/index.ts`.
 
 ### Code generation from OpenAPI specs
 
@@ -411,3 +406,40 @@ gulp generate:templates
 
 Unit tests gets execute using Jest and are located in the `__tests__`
 sub-directory of the module under test.
+
+### Release process
+
+The release process is implemented as a `gulp` task named `release`.
+
+To cut a new release you simply run:
+
+```shell
+$ gulp release
+[11:16:39] Using gulpfile ~/src/digital-citizenship-functions/gulpfile.js
+[11:16:39] Starting 'release'...
+...
+RELEASE FINISHED SUCCESSFULLY
+[11:17:28] Finished 'release' after 49 s
+```
+
+The `release` task does the following:
+
+1. Runs some sanity checks on the repository.
+1. Runs the unit tests.
+1. Bumps the version to the next release version and adds a version tag.
+1. Compiles the Typescript code into Javascript and runs
+  [azure-functions-pack](https://github.com/Azure/azure-functions-pack) to
+  create a deployable asset - the result is stored in a version-specific branch
+  named `funcpack-release-vX.Y.Z` that is also pushed to `origin`.
+1. Syncs a remote branch named `funcpack-release-latest` to the content of
+  the `funcpack-release-vX.Y.Z` branch.
+1. Bumps the version to the next snapshot version.
+
+### Deployment process
+
+Currently the deployment of the Azure Functions is triggerred by the
+[GitHub continuous deployment](https://docs.microsoft.com/en-us/azure/azure-functions/functions-continuous-deployment)
+trigger, that is linked to the `funcpack-release-latest` branch.
+
+Thus, a deployment gets automatically triggered when by the
+`funcpack-release-latest` branch gets updated by the `release` task.
