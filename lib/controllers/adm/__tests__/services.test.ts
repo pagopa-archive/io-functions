@@ -6,6 +6,8 @@ import { right } from "../../../utils/either";
 import { toNonNegativeNumber } from "../../../utils/numbers";
 import { toNonEmptyString } from "../../../utils/strings";
 
+import { Set } from "json-set-map";
+
 import {
   IAzureApiAuthorization,
   UserGroup
@@ -13,13 +15,13 @@ import {
 
 import {
   IRetrievedService,
-  ISerializableService
+  IService,
+  toAuthorizedRecipientsSet
 } from "../../../models/service";
-import {} from "../adm/services";
 
 import {
   CreateServiceHandler,
-  ServicePayloadMiddleware,
+  // ServicePayloadMiddleware,
   UpdateServiceHandler
 } from "../services";
 
@@ -30,8 +32,8 @@ const anAzureAuthorization: IAzureApiAuthorization = {
   userId: toNonEmptyString("u123").get
 };
 
-const aServicePayloadMock: ISerializableService = {
-  authorizedRecipients: [],
+const aServicePayloadMock: IService = {
+  authorizedRecipients: toAuthorizedRecipientsSet([]),
   departmentName: toNonEmptyString("MyDeptName").get,
   organizationName: toNonEmptyString("MyOrgName").get,
   serviceId: toNonEmptyString("MySubscriptionId").get,
@@ -41,7 +43,7 @@ const aServicePayloadMock: ISerializableService = {
 const aRetrievedService: IRetrievedService = {
   _self: "123",
   _ts: "123",
-  authorizedRecipients: [],
+  authorizedRecipients: toAuthorizedRecipientsSet([]),
   departmentName: toNonEmptyString("MyDeptName").get,
   id: toNonEmptyString("123").get,
   kind: "IRetrievedService",

@@ -56,18 +56,26 @@ export interface IRetrievedService
   readonly kind: "IRetrievedService";
 }
 
+/**
+ * 
+ * @param authorizedRecipients 
+ */
+export function toAuthorizedRecipientsSet(
+  authorizedRecipients: ReadonlyArray<string>
+): ReadonlySet<FiscalCode> {
+  return authorizedRecipients && authorizedRecipients instanceof Array
+    ? new Set(authorizedRecipients.filter(isFiscalCode))
+    : authorizedRecipients instanceof Set
+      ? new Set(Array.from(authorizedRecipients).filter(isFiscalCode))
+      : new Set();
+}
+
 function toRetrieved(result: DocumentDb.RetrievedDocument): IRetrievedService {
-  // We have to accept both Arrays (coming from find() deserialized object)
-  // and Set() (IService instance passed to create() or update())
   return {
     ...result,
-    authorizedRecipients:
-      result.authorizedRecipients &&
-      result.authorizedRecipients instanceof Array
-        ? new Set(result.authorizedRecipients.filter(isFiscalCode))
-        : result.authorizedRecipients instanceof Set
-          ? result.authorizedRecipients
-          : new Set(),
+    authorizedRecipients: toAuthorizedRecipientsSet(
+      result.authorizedRecipients
+    ),
     departmentName: result.departmentName,
     id: toNonEmptyString(result.id).get,
     kind: "IRetrievedService",

@@ -6,7 +6,8 @@ import * as express from "express";
 import {
   IRetrievedService,
   IService,
-  ServiceModel
+  ServiceModel,
+  toAuthorizedRecipientsSet
 } from "../../models/service";
 
 import {
@@ -71,7 +72,7 @@ export const ServicePayloadMiddleware: IRequestMiddleware<
 > = request => {
   const body = request.body;
   const servicePayload: IService = {
-    authorizedRecipients: body.authorized_recipients,
+    authorizedRecipients: toAuthorizedRecipientsSet(body.authorized_recipients),
     departmentName: body.department_name,
     organizationName: body.organization_name,
     serviceId: body.service_id,

@@ -6,9 +6,12 @@ import * as DocumentDbUtils from "../../utils/documentdb";
 import { toNonNegativeNumber } from "../../utils/numbers";
 import { toNonEmptyString } from "../../utils/strings";
 
-import { IRetrievedService, IService, ServiceModel } from "../service";
-
-import { Set } from "json-set-map";
+import {
+  IRetrievedService,
+  IService,
+  ServiceModel,
+  toAuthorizedRecipientsSet
+} from "../service";
 
 const aDatabaseUri = DocumentDbUtils.getDatabaseUri("mockdb");
 const servicesCollectionUrl = DocumentDbUtils.getCollectionUri(
@@ -21,7 +24,7 @@ const aServiceId = "xyz";
 const aRetrievedService: IRetrievedService = {
   _self: "xyz",
   _ts: "xyz",
-  authorizedRecipients: new Set([]),
+  authorizedRecipients: toAuthorizedRecipientsSet([]),
   departmentName: toNonEmptyString("MyDept").get,
   id: toNonEmptyString("xyz").get,
   kind: "IRetrievedService",
@@ -96,7 +99,7 @@ describe("createService", () => {
     const model = new ServiceModel(clientMock, servicesCollectionUrl);
 
     const newService: IService = {
-      authorizedRecipients: new Set([]),
+      authorizedRecipients: toAuthorizedRecipientsSet([]),
       departmentName: toNonEmptyString("MyService").get,
       organizationName: toNonEmptyString("MyService").get,
       serviceId: toNonEmptyString(aServiceId).get,
@@ -129,7 +132,7 @@ describe("createService", () => {
     const model = new ServiceModel(clientMock, servicesCollectionUrl);
 
     const newService: IService = {
-      authorizedRecipients: new Set([]),
+      authorizedRecipients: toAuthorizedRecipientsSet([]),
       departmentName: toNonEmptyString("MyService").get,
       organizationName: toNonEmptyString("MyService").get,
       serviceId: toNonEmptyString(aServiceId).get,
