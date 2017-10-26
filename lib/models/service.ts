@@ -67,22 +67,20 @@ export interface IRetrievedService
  * 
  * @param authorizedRecipients 
  */
-export function toAuthorizedRecipientsSet(
+export function toAuthorizedRecipients(
   authorizedRecipients: ReadonlyArray<string> | ReadonlySet<string>
 ): ReadonlySet<FiscalCode> {
-  return authorizedRecipients && authorizedRecipients instanceof Array
-    ? new Set(authorizedRecipients.filter(isFiscalCode))
-    : authorizedRecipients instanceof Set
-      ? new Set(Array.from(authorizedRecipients).filter(isFiscalCode))
-      : new Set();
+  return new Set(
+    Array.from(authorizedRecipients ? authorizedRecipients : []).filter(
+      isFiscalCode
+    )
+  );
 }
 
 function toRetrieved(result: DocumentDb.RetrievedDocument): IRetrievedService {
   return {
     ...result,
-    authorizedRecipients: toAuthorizedRecipientsSet(
-      result.authorizedRecipients
-    ),
+    authorizedRecipients: toAuthorizedRecipients(result.authorizedRecipients),
     departmentName: result.departmentName,
     id: toNonEmptyString(result.id).get,
     kind: "IRetrievedService",

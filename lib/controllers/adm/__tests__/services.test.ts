@@ -16,7 +16,7 @@ import {
 import {
   IRetrievedService,
   IService,
-  toAuthorizedRecipientsSet
+  toAuthorizedRecipients
 } from "../../../models/service";
 
 import {
@@ -33,7 +33,7 @@ const anAzureAuthorization: IAzureApiAuthorization = {
 };
 
 const aServicePayloadMock: IService = {
-  authorizedRecipients: toAuthorizedRecipientsSet([]),
+  authorizedRecipients: toAuthorizedRecipients([]),
   departmentName: toNonEmptyString("MyDeptName").get,
   organizationName: toNonEmptyString("MyOrgName").get,
   serviceId: toNonEmptyString("MySubscriptionId").get,
@@ -43,7 +43,7 @@ const aServicePayloadMock: IService = {
 const aRetrievedService: IRetrievedService = {
   _self: "123",
   _ts: "123",
-  authorizedRecipients: toAuthorizedRecipientsSet([]),
+  authorizedRecipients: toAuthorizedRecipients([]),
   departmentName: toNonEmptyString("MyDeptName").get,
   id: toNonEmptyString("123").get,
   kind: "IRetrievedService",

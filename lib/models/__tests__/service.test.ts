@@ -10,7 +10,7 @@ import {
   IRetrievedService,
   IService,
   ServiceModel,
-  toAuthorizedRecipientsSet
+  toAuthorizedRecipients
 } from "../service";
 
 const aDatabaseUri = DocumentDbUtils.getDatabaseUri("mockdb");
@@ -24,7 +24,7 @@ const aServiceId = "xyz";
 const aRetrievedService: IRetrievedService = {
   _self: "xyz",
   _ts: "xyz",
-  authorizedRecipients: toAuthorizedRecipientsSet([]),
+  authorizedRecipients: toAuthorizedRecipients([]),
   departmentName: toNonEmptyString("MyDept").get,
   id: toNonEmptyString("xyz").get,
   kind: "IRetrievedService",
@@ -99,7 +99,7 @@ describe("createService", () => {
     const model = new ServiceModel(clientMock, servicesCollectionUrl);
 
     const newService: IService = {
-      authorizedRecipients: toAuthorizedRecipientsSet([]),
+      authorizedRecipients: toAuthorizedRecipients([]),
       departmentName: toNonEmptyString("MyService").get,
       organizationName: toNonEmptyString("MyService").get,
       serviceId: toNonEmptyString(aServiceId).get,
@@ -132,7 +132,7 @@ describe("createService", () => {
     const model = new ServiceModel(clientMock, servicesCollectionUrl);
 
     const newService: IService = {
-      authorizedRecipients: toAuthorizedRecipientsSet([]),
+      authorizedRecipients: toAuthorizedRecipients([]),
       departmentName: toNonEmptyString("MyService").get,
       organizationName: toNonEmptyString("MyService").get,
       serviceId: toNonEmptyString(aServiceId).get,

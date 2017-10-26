@@ -7,7 +7,7 @@ import {
   IRetrievedService,
   IService,
   ServiceModel,
-  toAuthorizedRecipientsSet
+  toAuthorizedRecipients
 } from "../../models/service";
 
 import {
@@ -72,7 +72,7 @@ export const ServicePayloadMiddleware: IRequestMiddleware<
 > = request => {
   const body = request.body;
   const servicePayload: IService = {
-    authorizedRecipients: toAuthorizedRecipientsSet(body.authorized_recipients),
+    authorizedRecipients: toAuthorizedRecipients(body.authorized_recipients),
     departmentName: body.department_name,
     organizationName: body.organization_name,
     serviceId: body.service_id,
@@ -207,7 +207,7 @@ export function UpdateService(
   serviceModel: ServiceModel
 ): express.RequestHandler {
   const handler = UpdateServiceHandler(serviceModel);
-  const requiredserviceIdMiddleware = RequiredParamMiddleware(params => {
+  const requiredServiceIdMiddleware = RequiredParamMiddleware(params => {
     const serviceId = params.serviceid;
     if (isNonEmptyString(serviceId)) {
       return right(serviceId);
@@ -217,7 +217,7 @@ export function UpdateService(
   });
   const middlewaresWrap = withRequestMiddlewares(
     AzureApiAuthMiddleware(new Set([UserGroup.ApiServiceWrite])),
-    requiredserviceIdMiddleware,
+    requiredServiceIdMiddleware,
     ServicePayloadMiddleware
   );
   return wrapRequestHandler(middlewaresWrap(handler));
