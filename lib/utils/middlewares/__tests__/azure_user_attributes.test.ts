@@ -4,6 +4,11 @@ import { none, some } from "ts-option";
 
 import { left, right } from "../../either";
 
+import { IService } from "../../../models/service";
+
+import { toNonEmptyString } from "../../../utils/strings";
+
+import { Set } from "json-set-map";
 import { AzureUserAttributesMiddleware } from "../azure_user_attributes";
 
 interface IHeaders {
@@ -13,6 +18,14 @@ interface IHeaders {
 function lookup(h: IHeaders): (k: string) => string | undefined {
   return (k: string) => h[k];
 }
+
+const aService: IService = {
+  authorizedRecipients: new Set([]),
+  departmentName: toNonEmptyString("MyDept").get,
+  organizationName: toNonEmptyString("MyService").get,
+  serviceId: toNonEmptyString("serviceId").get,
+  serviceName: toNonEmptyString("MyService").get
+};
 
 describe("AzureUserAttributesMiddleware", () => {
   it("should fail on empty user email", async () => {
@@ -113,18 +126,8 @@ describe("AzureUserAttributesMiddleware", () => {
   });
 
   it("should fetch and return the user service from the custom attributes", async () => {
-    const mockService = {
-      authorizedRecipients: [],
-      departmentName: "MyDept",
-      organizationName: "MyService",
-      serviceId: "serviceId",
-      serviceName: "MyService"
-    };
-
     const serviceModel = {
-      findOneByServiceId: jest.fn(() =>
-        Promise.resolve(right(some(mockService as any)))
-      )
+      findOneByServiceId: jest.fn(() => Promise.resolve(right(some(aService))))
     };
 
     const headers: IHeaders = {
@@ -148,7 +151,7 @@ describe("AzureUserAttributesMiddleware", () => {
     if (result.isRight) {
       const attributes = result.right;
       expect(attributes.service).toEqual({
-        ...mockService,
+        ...aService,
         authorizedRecipients: new Set()
       });
     }

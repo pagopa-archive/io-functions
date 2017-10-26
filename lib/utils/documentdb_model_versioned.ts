@@ -136,19 +136,26 @@ export abstract class DocumentDbModelVersioned<
     return createdDocument.mapRight(some);
   }
 
-  protected findLastVersionByModelId<V>(
+  protected async findLastVersionByModelId<V>(
     collectionName: string,
     modelIdField: string,
     modelIdValue: V
   ): Promise<Either<DocumentDb.QueryError, Option<TR>>> {
-    return DocumentDbUtils.queryOneDocument(this.dbClient, this.collectionUri, {
-      parameters: [
-        {
-          name: "@modelId",
-          value: modelIdValue
-        }
-      ],
-      query: `SELECT * FROM ${collectionName} m WHERE (m.${modelIdField} = @modelId) ORDER BY m.version DESC`
-    });
+    const errorOrMaybeDocument = await DocumentDbUtils.queryOneDocument(
+      this.dbClient,
+      this.collectionUri,
+      {
+        parameters: [
+          {
+            name: "@modelId",
+            value: modelIdValue
+          }
+        ],
+        query: `SELECT * FROM ${collectionName} m WHERE (m.${modelIdField} = @modelId) ORDER BY m.version DESC`
+      }
+    );
+    return errorOrMaybeDocument.mapRight(maybeDocument =>
+      maybeDocument.map(this.toRetrieved)
+    );
   }
 }

@@ -6,12 +6,9 @@ import * as DocumentDbUtils from "../../utils/documentdb";
 import { toNonNegativeNumber } from "../../utils/numbers";
 import { toNonEmptyString } from "../../utils/strings";
 
-import {
-  IAuthorizedService,
-  IRetrievedService,
-  ServiceModel,
-  toSerializableService
-} from "../service";
+import { IRetrievedService, IService, ServiceModel } from "../service";
+
+import { Set } from "json-set-map";
 
 const aDatabaseUri = DocumentDbUtils.getDatabaseUri("mockdb");
 const servicesCollectionUrl = DocumentDbUtils.getCollectionUri(
@@ -24,7 +21,7 @@ const aServiceId = "xyz";
 const aRetrievedService: IRetrievedService = {
   _self: "xyz",
   _ts: "xyz",
-  authorizedRecipients: [],
+  authorizedRecipients: new Set([]),
   departmentName: toNonEmptyString("MyDept").get,
   id: toNonEmptyString("xyz").get,
   kind: "IRetrievedService",
@@ -34,10 +31,15 @@ const aRetrievedService: IRetrievedService = {
   version: toNonNegativeNumber(0).get
 };
 
+const aSerializedService = {
+  ...aRetrievedService,
+  authorizedRecipients: []
+};
+
 describe("findOneServiceById", () => {
   it("should resolve a promise to an existing service", async () => {
     const iteratorMock = {
-      executeNext: jest.fn(cb => cb(undefined, ["result"], undefined))
+      executeNext: jest.fn(cb => cb(undefined, [aSerializedService], undefined))
     };
 
     const clientMock = {
@@ -54,7 +56,7 @@ describe("findOneServiceById", () => {
     expect(result.isRight).toBeTruthy();
     if (result.isRight) {
       expect(result.right.isDefined).toBeTruthy();
-      expect(result.right.get).toEqual("result");
+      expect(result.right.get).toEqual(aRetrievedService);
     }
   });
 
@@ -93,7 +95,7 @@ describe("createService", () => {
 
     const model = new ServiceModel(clientMock, servicesCollectionUrl);
 
-    const newService: IAuthorizedService = {
+    const newService: IService = {
       authorizedRecipients: new Set([]),
       departmentName: toNonEmptyString("MyService").get,
       organizationName: toNonEmptyString("MyService").get,
@@ -101,10 +103,7 @@ describe("createService", () => {
       serviceName: toNonEmptyString("MyService").get
     };
 
-    const result = await model.create(
-      toSerializableService(newService),
-      newService.serviceId
-    );
+    const result = await model.create(newService, newService.serviceId);
 
     expect(clientMock.createDocument).toHaveBeenCalledTimes(1);
     expect(clientMock.createDocument.mock.calls[0][1].kind).toBeUndefined();
@@ -129,7 +128,7 @@ describe("createService", () => {
 
     const model = new ServiceModel(clientMock, servicesCollectionUrl);
 
-    const newService: IAuthorizedService = {
+    const newService: IService = {
       authorizedRecipients: new Set([]),
       departmentName: toNonEmptyString("MyService").get,
       organizationName: toNonEmptyString("MyService").get,
@@ -137,10 +136,7 @@ describe("createService", () => {
       serviceName: toNonEmptyString("MyService").get
     };
 
-    const result = await model.create(
-      toSerializableService(newService),
-      newService.serviceId
-    );
+    const result = await model.create(newService, newService.serviceId);
 
     expect(clientMock.createDocument).toHaveBeenCalledTimes(1);
 

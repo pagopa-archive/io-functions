@@ -9,16 +9,18 @@ import {
 import { Option } from "ts-option";
 import { Either } from "../utils/either";
 
+import { Set } from "json-set-map";
+
 import { FiscalCode, isFiscalCode } from "../api/definitions/FiscalCode";
 
 import { nonEmptyStringToModelId } from "../utils/conversions";
 import { NonNegativeNumber } from "../utils/numbers";
-import { NonEmptyString } from "../utils/strings";
+import { NonEmptyString, toNonEmptyString } from "../utils/strings";
 
 /**
  * Base interface for Service objects
  */
-interface IBaseService {
+export interface IService {
   // this equals user's subscriptionId
   readonly serviceId: NonEmptyString;
   // the name of the department within the service
@@ -27,22 +29,15 @@ interface IBaseService {
   readonly serviceName: NonEmptyString;
   // the name of the organization
   readonly organizationName: NonEmptyString;
-}
-
-/**
- * Interface needed to interact with
- * retrieved services from database
- */
-export interface ISerializableService extends IBaseService {
   // list of authorized fiscal codes
-  readonly authorizedRecipients?: ReadonlyArray<FiscalCode>;
+  readonly authorizedRecipients: ReadonlySet<FiscalCode>;
 }
 
 /**
  * Interface for new Service objects
  */
 export interface INewService
-  extends ISerializableService,
+  extends IService,
     DocumentDb.NewDocument,
     IVersionedModel {
   readonly kind: "INewService";
@@ -54,53 +49,41 @@ export interface INewService
  * Existing Service records have a version number.
  */
 export interface IRetrievedService
-  extends ISerializableService,
+  extends IService,
     DocumentDb.RetrievedDocument,
     IVersionedModel {
   readonly id: NonEmptyString;
   readonly kind: "IRetrievedService";
 }
 
-export interface IAuthorizedService extends IBaseService {
-  // list of authorized fiscal codes
-  readonly authorizedRecipients?: ReadonlySet<FiscalCode>;
-}
-
-export function toAuthorizedService(
-  service: ISerializableService
-): IAuthorizedService {
-  return {
-    ...service,
-    authorizedRecipients: service.authorizedRecipients
-      ? new Set(service.authorizedRecipients.filter(isFiscalCode))
-      : new Set()
-  };
-}
-
-export function toSerializableService(
-  service: IAuthorizedService
-): ISerializableService {
-  return {
-    ...service,
-    authorizedRecipients: service.authorizedRecipients
-      ? Array.from(service.authorizedRecipients).filter(isFiscalCode)
-      : []
-  };
-}
-
 function toRetrieved(result: DocumentDb.RetrievedDocument): IRetrievedService {
+  // We have to accept both Arrays (coming from find() deserialized object)
+  // and Set() (IService instance passed to create() or update())
   return {
     ...result,
-    kind: "IRetrievedService"
+    authorizedRecipients:
+      result.authorizedRecipients &&
+      result.authorizedRecipients instanceof Array
+        ? new Set(result.authorizedRecipients.filter(isFiscalCode))
+        : result.authorizedRecipients instanceof Set
+          ? result.authorizedRecipients
+          : new Set(),
+    departmentName: result.departmentName,
+    id: toNonEmptyString(result.id).get,
+    kind: "IRetrievedService",
+    organizationName: result.organizationName,
+    serviceId: result.serviceId,
+    serviceName: result.serviceName,
+    version: result.version
   } as IRetrievedService;
 }
 
-function getModelId(o: ISerializableService): ModelId {
+function getModelId(o: IService): ModelId {
   return nonEmptyStringToModelId(o.serviceId);
 }
 
 function updateModelId(
-  o: ISerializableService,
+  o: IService,
   id: string,
   version: NonNegativeNumber
 ): INewService {
@@ -113,8 +96,9 @@ function updateModelId(
   return newService;
 }
 
-function toBaseType(o: IRetrievedService): ISerializableService {
+function toBaseType(o: IRetrievedService): IService {
   return {
+    authorizedRecipients: new Set(o.authorizedRecipients),
     departmentName: o.departmentName,
     organizationName: o.organizationName,
     serviceId: o.serviceId,
@@ -126,7 +110,7 @@ function toBaseType(o: IRetrievedService): ISerializableService {
  * A model for handling Services
  */
 export class ServiceModel extends DocumentDbModelVersioned<
-  ISerializableService,
+  IService,
   INewService,
   IRetrievedService
 > {

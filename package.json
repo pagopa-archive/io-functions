@@ -45,6 +45,7 @@
     "helmet-csp": "^2.5.1",
     "html-to-text": "^3.3.0",
     "js-yaml": "^3.10.0",
+    "json-set-map": "^1.0.2",
     "nodemailer": "^4.0.1",
     "nodemailer-sendgrid-transport": "^0.2.0",
     "referrer-policy": "^1.1.0",
