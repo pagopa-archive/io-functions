@@ -57,11 +57,18 @@ export interface IRetrievedService
 }
 
 /**
+ * Converts an Array or a Set of strings to a ReadonlySet of fiscalCodes.
+ * 
+ * We need to handle Arrays as this method is called by database finders
+ * who retrieve a plain json object.
+ * 
+ * We need to handle Sets as this method is called on IService objects
+ * passed to create(IService) and update(IService) model methods.
  * 
  * @param authorizedRecipients 
  */
 export function toAuthorizedRecipientsSet(
-  authorizedRecipients: ReadonlyArray<string>
+  authorizedRecipients: ReadonlyArray<string> | ReadonlySet<string>
 ): ReadonlySet<FiscalCode> {
   return authorizedRecipients && authorizedRecipients instanceof Array
     ? new Set(authorizedRecipients.filter(isFiscalCode))
@@ -106,7 +113,7 @@ function updateModelId(
 
 function toBaseType(o: IRetrievedService): IService {
   return {
-    authorizedRecipients: new Set(o.authorizedRecipients),
+    authorizedRecipients: o.authorizedRecipients,
     departmentName: o.departmentName,
     organizationName: o.organizationName,
     serviceId: o.serviceId,
