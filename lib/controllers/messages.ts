@@ -211,10 +211,7 @@ export function CreateMessageHandler(
     if (auth.groups.has(UserGroup.ApiLimitedMessageWrite)) {
       // user is in limited message creation mode, check whether he's sending
       // the message to an authorized recipient
-      if (
-        !userAttributes.service.authorizedRecipients ||
-        !userAttributes.service.authorizedRecipients.has(fiscalCode)
-      ) {
+      if (!userAttributes.service.authorizedRecipients.has(fiscalCode)) {
         return ResponseErrorForbiddenNotAuthorizedForRecipient;
       }
     } else if (!auth.groups.has(UserGroup.ApiMessageWrite)) {

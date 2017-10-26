@@ -65,7 +65,7 @@ type IUpdateServiceHandler = (
  *
  * TODO: validate the payload against a schema.
  */
-const ServicePayloadMiddleware: IRequestMiddleware<
+export const ServicePayloadMiddleware: IRequestMiddleware<
   IResponseErrorValidation,
   ISerializableService
 > = request => {
@@ -206,18 +206,17 @@ export function UpdateService(
   serviceModel: ServiceModel
 ): express.RequestHandler {
   const handler = UpdateServiceHandler(serviceModel);
+  const requiredserviceIdMiddleware = RequiredParamMiddleware(params => {
+    const serviceId = params.serviceid;
+    if (isNonEmptyString(serviceId)) {
+      return right(serviceId);
+    } else {
+      return left("Value of `serviceid` parameter must be a non empty string");
+    }
+  });
   const middlewaresWrap = withRequestMiddlewares(
     AzureApiAuthMiddleware(new Set([UserGroup.ApiServiceWrite])),
-    RequiredParamMiddleware(params => {
-      const serviceId = params.serviceid;
-      if (isNonEmptyString(serviceId)) {
-        return right(serviceId);
-      } else {
-        return left(
-          "Value of `serviceid` parameter must be a non empty string"
-        );
-      }
-    }),
+    requiredserviceIdMiddleware,
     ServicePayloadMiddleware
   );
   return wrapRequestHandler(middlewaresWrap(handler));

@@ -60,6 +60,7 @@ const someUserAttributes: IAzureUserAttributes = {
   email: anEmail,
   kind: "IAzureUserAttributes",
   service: {
+    authorizedRecipients: new Set([]),
     departmentName: toNonEmptyString("IT").get,
     organizationName: toNonEmptyString("AgID").get,
     serviceId: toNonEmptyString("test").get,
