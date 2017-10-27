@@ -95,9 +95,18 @@ gulp.task("yarn:build", () => {
 });
 
 /**
+ * Run the lint task
+ */
+gulp.task("yarn:lint", () => {
+  return gulp.src(TYPESCRIPT_SOURCE_DIR)
+    .pipe(exec(`yarn run lint`))
+    .pipe(exec.reporter());
+});
+
+/**
  * Run the test task
  */
-gulp.task("jest:test", () => {
+gulp.task("jest:test", ["yarn:lint"], () => {
   return gulp.src(TYPESCRIPT_SOURCE_DIR)
     .pipe(jest({
       "coverage": true

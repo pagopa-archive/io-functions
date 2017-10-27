@@ -15,8 +15,7 @@
     "build": "npm-run-all generate:templates build:tsc",
     "lint": "tslint -p . -c tslint.json",
     "prettify": "prettier --write './**/*.ts'",
-    "pretest": "npm run lint",
-    "test": "jest --coverage",
+    "test": "gulp jest:test",
     "generate:models": "ts-node ./api/generate_models.ts",
     "generate:templates": "gulp generate:templates"
   },
