@@ -117,7 +117,7 @@ gulp.task("unit:test", () => {
 /**
  * Run the test task
  */
-gulp.task("test", ["yarn:lint"], () => 
+gulp.task("test", ["yarn:lint"], (cb) => 
   runSequence(["unit:test"],
     (err) => {
       if (err) {
