@@ -3,18 +3,17 @@
  * See also npm tasks in package.json.
  */
 
-const fs = require('fs');
+const fs = require("fs");
 
 const argv = require("yargs").argv;
 const path = require("path");
-const runSequence = require('run-sequence');
+const runSequence = require("run-sequence");
 
 const gulp = require("gulp");
 const textSimple = require("gulp-text-simple");
 const rename = require("gulp-rename");
-const exec = require("gulp-exec");
 const git = require("gulp-git");
-var jest = require('gulp-jest').default;
+const run = require("gulp-run");
 const jsonEditor = require("gulp-json-editor");
 
 const semver = require("semver");
@@ -30,7 +29,7 @@ const GIT_RELEASE_BRANCH = "master";
 const GIT_ORIGIN = "origin";
 
 // resolve the root directory of this project
-const rootDir = path.resolve(argv.rootDir || './') + '/';
+const rootDir = path.resolve(argv.rootDir || "./") + "/";
 
 // path to the root `package.json`
 const packageJsonPath = path.join(rootDir, "package.json");
@@ -81,7 +80,7 @@ gulp.task("generate:templates", () => {
   return gulp
     .src(TEMPLATES_SOURCE)
     .pipe(textSimple(toMjml)())
-    .pipe(rename((filepath) => (filepath.extname = ".ts")))
+    .pipe(rename(filepath => (filepath.extname = ".ts")))
     .pipe(gulp.dest(TEMPLATES_OUTPUT_DIR));
 });
 
@@ -89,92 +88,86 @@ gulp.task("generate:templates", () => {
  * Run the build task
  */
 gulp.task("yarn:build", () => {
-  return gulp.src(TYPESCRIPT_SOURCE_DIR)
-    .pipe(exec(`yarn build`))
-    .pipe(exec.reporter());
+  return gulp
+    .src(TYPESCRIPT_SOURCE_DIR)
+    .pipe(run(`yarn build`));
 });
 
 /**
  * Run the lint task
  */
 gulp.task("yarn:lint", () => {
-  return gulp.src(TYPESCRIPT_SOURCE_DIR)
-    .pipe(exec(`yarn run lint`))
-    .pipe(exec.reporter());
+  return gulp
+    .src(TYPESCRIPT_SOURCE_DIR)
+    .pipe(run(`yarn run lint`));
 });
 
 /**
  * Run unit tests
  */
 gulp.task("unit:test", () => {
-  return gulp.src(TYPESCRIPT_SOURCE_DIR)
-    .pipe(jest({
-      "coverage": true
-    }))
-    .pipe(exec.reporter());
+  return gulp.src(TYPESCRIPT_SOURCE_DIR).pipe(run("jest --coverage"));
 });
 
 /**
  * Run the test task
  */
-gulp.task("test", ["yarn:lint"], (cb) => 
-  runSequence(["unit:test"],
-    (err) => {
-      if (err) {
-        console.log(err.message);
-      }
-      cb(err);
-  })
-);
+gulp.task("test", cb => runSequence("yarn:lint", "unit:test", cb));
 
 /**
  * Package Azure Functions code and dependencines in a single file
  */
 gulp.task("yarn:funcpack", () => {
-  return gulp.src(TYPESCRIPT_SOURCE_DIR)
-    .pipe(exec("yarn run funcpack pack ./"))
-    .pipe(exec.reporter());
+  return gulp
+    .src(TYPESCRIPT_SOURCE_DIR)
+    .pipe(run("yarn run funcpack pack ./"));
 });
 
 /**
  * Checks out the release branch
  */
-gulp.task("git:checkout:release", (cb) => {
+gulp.task("git:checkout:release", cb => {
   return git.checkout(GIT_RELEASE_BRANCH, {}, cb);
 });
 
 /**
  * Fails if repository has untracked files
  */
-gulp.task("git:check:untracked", (cb) => {
-  return git.exec({
-    args: "ls-files --other --exclude-standard"
-  }, (err, stdout) => {
-    if (err) {
-      throw(err);
-    };
-    if (stdout.trim().length > 0) {
-      return cb("Repository must not have untracked files");
+gulp.task("git:check:untracked", cb => {
+  return git.exec(
+    {
+      args: "ls-files --other --exclude-standard"
+    },
+    (err, stdout) => {
+      if (err) {
+        throw err;
+      }
+      if (stdout.trim().length > 0) {
+        return cb("Repository must not have untracked files");
+      }
+      cb();
     }
-    cb();
-  });
+  );
 });
 
 /**
  * Fails if repository has modified files
  */
-gulp.task("git:check:modified", (cb) => {
-  return git.exec({
-    args: "ls-files --modified --exclude-standard"
-  }, (err, stdout) => {
-    if (err) {
-      throw(err);
-    };
-    if (stdout.trim().length > 0) {
-      return cb("Repository must not have modified files");
+gulp.task("git:check:modified", cb => {
+  return git.exec(
+    {
+      args: "ls-files --modified --exclude-standard"
+    },
+    (err, stdout) => {
+      if (err) {
+        throw err;
+      }
+      if (stdout.trim().length > 0) {
+        return cb("Repository must not have modified files");
+      }
+      cb();
     }
-    cb();
-  });
+  );
 });
 
 /**
@@ -185,31 +178,34 @@ gulp.task("git:check:clean", ["git:check:untracked", "git:check:modified"]);
 /**
  * Fails if current branch is not GIT_RELEASE_BRANCH
  */
-gulp.task("git:check:branch", (cb) => {
-  return git.exec({
-    args: "symbolic-ref HEAD"
-  }, (err, stdout) => {
-    if (err) {
-      throw(err);
-    };
-    if (stdout.trim() !== `refs/heads/${GIT_RELEASE_BRANCH}`) {
-      return cb(`You must be on the ${GIT_RELEASE_BRANCH} branch`);
+gulp.task("git:check:branch", cb => {
+  return git.exec(
+    {
+      args: "symbolic-ref HEAD"
+    },
+    (err, stdout) => {
+      if (err) {
+        throw err;
+      }
+      if (stdout.trim() !== `refs/heads/${GIT_RELEASE_BRANCH}`) {
+        return cb(`You must be on the ${GIT_RELEASE_BRANCH} branch`);
+      }
+      cb();
     }
-    cb();
-  });
+  );
 });
 
 /**
  * Push master to origin
  */
-gulp.task("git:push:origin", (cb) => {
+gulp.task("git:push:origin", cb => {
   return git.push(GIT_ORIGIN, GIT_RELEASE_BRANCH, {}, cb);
 });
 
 /**
  * Push the tags to origin
  */
-gulp.task("git:push:tags", (cb) => {
+gulp.task("git:push:tags", cb => {
   return git.push(GIT_ORIGIN, GIT_RELEASE_BRANCH, { args: "--tags" }, cb);
 });
 
@@ -217,10 +213,13 @@ gulp.task("git:push:tags", (cb) => {
  * Bump the version to the release version
  */
 gulp.task("release:bump:release", () => {
-  return gulp.src(packageJsonPath)
-    .pipe(jsonEditor({
-      "version": releaseVersionValue
-    }))
+  return gulp
+    .src(packageJsonPath)
+    .pipe(
+      jsonEditor({
+        version: releaseVersionValue
+      })
+    )
     .pipe(gulp.dest(rootDir));
 });
 
@@ -228,57 +227,74 @@ gulp.task("release:bump:release", () => {
  * Commit package.json with updated release version
  */
 gulp.task("release:git:commit:release", () => {
-  return gulp.src(packageJsonPath)
+  return gulp
+    .src(packageJsonPath)
     .pipe(git.add())
     .pipe(git.commit(`Bumped release ${releaseVersionValue}`));
-})
+});
 
 /**
  * Tag last commit with the release version
  */
-gulp.task("release:git:tag:release", (cb) => {
+gulp.task("release:git:tag:release", cb => {
   const tag = `v${releaseVersionValue}`;
   return git.tag(tag, `Created tag for version ${tag}`, cb);
-})
+});
 
 /**
  * Creates a new branch for storing funcpack assets
  */
-gulp.task("release:git:checkout:funcpack", (cb) => {
+gulp.task("release:git:checkout:funcpack", cb => {
   return git.checkout(releaseVersionFuncpackBranchName, { args: "-b" }, cb);
 });
 
 /**
  * Adds funcpack assets
  */
-gulp.task("release:git:commit:funcpack", (cb) => {
-  return gulp.src(["*/function.json", ".funcpack/index.js"])
+gulp.task("release:git:commit:funcpack", cb => {
+  return gulp
+    .src(["*/function.json", ".funcpack/index.js"])
     .pipe(git.add({ args: "-f" })) // force because .gitignore contains *.js
-    .pipe(git.commit(`Adds funcpack assets for release ${releaseVersionValue}`));
+    .pipe(
+      git.commit(`Adds funcpack assets for release ${releaseVersionValue}`)
+    );
 });
 
 /**
  * Pushes funcpack branch to origin
  */
-gulp.task("release:git:push:funcpack", (cb) => {
-  return git.push(GIT_ORIGIN, releaseVersionFuncpackBranchName, { args: "-u" }, cb);
+gulp.task("release:git:push:funcpack", cb => {
+  return git.push(
+    GIT_ORIGIN,
+    releaseVersionFuncpackBranchName,
+    { args: "-u" },
+    cb
+  );
 });
 
 /**
  * Updates the remote "latest" funcpack branch to the current funcpack branch
  */
-gulp.task("release:git:push:funcpack:latest", (cb) => {
-  return git.push(GIT_ORIGIN, `${releaseVersionFuncpackBranchName}:${funcpackBranchPrefix}-latest`, { args: "-f" }, cb);
+gulp.task("release:git:push:funcpack:latest", cb => {
+  return git.push(
+    GIT_ORIGIN,
+    `${releaseVersionFuncpackBranchName}:${funcpackBranchPrefix}-latest`,
+    { args: "-f" },
+    cb
+  );
 });
 
 /**
  * Bump the version to the snapshot version
  */
 gulp.task("release:bump:next", () => {
-  return gulp.src(packageJsonPath)
-    .pipe(jsonEditor({
-      "version": nextVersionValue
-    }))
+  return gulp
+    .src(packageJsonPath)
+    .pipe(
+      jsonEditor({
+        version: nextVersionValue
+      })
+    )
     .pipe(gulp.dest(rootDir));
 });
 
@@ -286,12 +302,13 @@ gulp.task("release:bump:next", () => {
  * Commit package.json with updated snapshot version
  */
 gulp.task("release:git:commit:next", () => {
-  return gulp.src(packageJsonPath)
+  return gulp
+    .src(packageJsonPath)
     .pipe(git.add())
     .pipe(git.commit(`Bumped release ${nextVersionValue}`));
-})
+});
 
-gulp.task("release", function (cb) {
+gulp.task("release", function(cb) {
   runSequence(
     // check that the release is running on the GIT_RELEASE_BRANCH branch
     "git:check:branch",
@@ -327,14 +344,15 @@ gulp.task("release", function (cb) {
     // push changes to origin
     "git:push:origin",
     "git:push:tags",
-    (err) => {
+    err => {
       if (err) {
         console.log(err.message);
       } else {
-        console.log('RELEASE FINISHED SUCCESSFULLY');
+        console.log("RELEASE FINISHED SUCCESSFULLY");
       }
       cb(err);
-    });
+    }
+  );
 });
 
 gulp.task("default", ["generate:templates"]);
