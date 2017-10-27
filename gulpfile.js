@@ -14,6 +14,7 @@ const textSimple = require("gulp-text-simple");
 const rename = require("gulp-rename");
 const exec = require("gulp-exec");
 const git = require("gulp-git");
+var jest = require('gulp-jest').default;
 const jsonEditor = require("gulp-json-editor");
 
 const semver = require("semver");
@@ -96,9 +97,11 @@ gulp.task("yarn:build", () => {
 /**
  * Run the test task
  */
-gulp.task("yarn:test", () => {
+gulp.task("jest:test", () => {
   return gulp.src(TYPESCRIPT_SOURCE_DIR)
-    .pipe(exec(`yarn test`))
+    .pipe(jest({
+      "coverage": true
+    }))
     .pipe(exec.reporter());
 });
 
@@ -274,7 +277,7 @@ gulp.task("release", function (cb) {
     // the repository has no outstanding changes.
     "git:check:clean",
     // run tests
-    "yarn:test",
+    "jest:test",
     // bumps the version to the next release version:
     // current version without the qualifier (eg. 1.2-SNAPSHOT -> 1.2)
     "release:bump:release",
