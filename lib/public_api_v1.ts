@@ -4,7 +4,6 @@
 
 import { IContext } from "azure-function-express";
 
-import * as express from "express";
 import * as winston from "winston";
 
 import * as ApplicationInsights from "applicationinsights";
@@ -21,8 +20,8 @@ import { createAzureFunctionHandler } from "azure-function-express";
 
 import { MessageModel } from "./models/message";
 import { NotificationModel } from "./models/notification";
-import { OrganizationModel } from "./models/organization";
 import { ProfileModel } from "./models/profile";
+import { ServiceModel } from "./models/service";
 
 import { GetDebug } from "./controllers/debug";
 import { GetInfo } from "./controllers/info";
@@ -30,42 +29,12 @@ import { CreateMessage, GetMessage, GetMessages } from "./controllers/messages";
 import { GetProfile, UpsertProfile } from "./controllers/profiles";
 import { toNonEmptyString } from "./utils/strings";
 
-import * as helmet from "helmet";
-import * as csp from "helmet-csp";
-import * as referrerPolicy from "referrer-policy";
+import * as express from "express";
+import { secureExpressApp } from "./utils/express";
 
 // Setup Express
 const app = express();
-
-// Set header `referrer-policy` to `no-referrer`
-app.use(referrerPolicy());
-
-// Set up Content Security Policy
-app.use(
-  csp({
-    directives: {
-      defaultSrc: ["'none'"],
-      upgradeInsecureRequests: true
-    }
-  })
-);
-
-// Set up the following HTTP headers
-// (see https://helmetjs.github.io/ for default values)
-//    strict-transport-security: max-age=15552000; includeSubDomains
-//    transfer-encoding: chunked
-//    x-content-type-options: nosniff
-//    x-dns-prefetch-control: off
-//    x-download-options: noopen
-//    x-frame-options: DENY
-//    x-xss-protection →1; mode=block
-app.use(
-  helmet({
-    frameguard: {
-      action: "deny"
-    }
-  })
-);
+secureExpressApp(app);
 
 // Setup DocumentDB
 
@@ -74,7 +43,9 @@ const COSMOSDB_KEY: string = process.env.CUSTOMCONNSTR_COSMOSDB_KEY;
 
 const MESSAGE_CONTAINER_NAME: string = process.env.MESSAGE_CONTAINER_NAME;
 
-const documentDbDatabaseUrl = documentDbUtils.getDatabaseUri("development");
+const documentDbDatabaseUrl = documentDbUtils.getDatabaseUri(
+  process.env.COSMOSDB_NAME
+);
 const messagesCollectionUrl = documentDbUtils.getCollectionUri(
   documentDbDatabaseUrl,
   "messages"
@@ -83,9 +54,9 @@ const profilesCollectionUrl = documentDbUtils.getCollectionUri(
   documentDbDatabaseUrl,
   "profiles"
 );
-const organizationsCollectionUrl = documentDbUtils.getCollectionUri(
+const servicesCollectionUrl = documentDbUtils.getCollectionUri(
   documentDbDatabaseUrl,
-  "organizations"
+  "services"
 );
 const notificationsCollectionUrl = documentDbUtils.getCollectionUri(
   documentDbDatabaseUrl,
@@ -102,10 +73,7 @@ const messageModel = new MessageModel(
   messagesCollectionUrl,
   toNonEmptyString(MESSAGE_CONTAINER_NAME).get
 );
-const organizationModel = new OrganizationModel(
-  documentClient,
-  organizationsCollectionUrl
-);
+const serviceModel = new ServiceModel(documentClient, servicesCollectionUrl);
 const notificationModel = new NotificationModel(
   documentClient,
   notificationsCollectionUrl
@@ -117,7 +85,7 @@ const appInsightsClient = new ApplicationInsights.TelemetryClient();
 
 // Setup handlers
 
-const debugHandler = GetDebug(organizationModel);
+const debugHandler = GetDebug(serviceModel);
 app.get("/api/v1/debug", debugHandler);
 app.post("/api/v1/debug", debugHandler);
 
@@ -126,12 +94,12 @@ app.post("/api/v1/profiles/:fiscalcode", UpsertProfile(profileModel));
 
 app.get(
   "/api/v1/messages/:fiscalcode/:id",
-  GetMessage(organizationModel, messageModel, notificationModel)
+  GetMessage(serviceModel, messageModel, notificationModel)
 );
 app.get("/api/v1/messages/:fiscalcode", GetMessages(messageModel));
 app.post(
   "/api/v1/messages/:fiscalcode",
-  CreateMessage(appInsightsClient, organizationModel, messageModel)
+  CreateMessage(appInsightsClient, serviceModel, messageModel)
 );
 
 app.get("/api/v1/info", GetInfo());

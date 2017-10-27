@@ -20,13 +20,17 @@ describe("", () => {
           fiscalCode: "FRLFRC73E04B157I",
           id: "01BTAZ2HS1PWDJERA510FDXYV4",
           kind: "IRetrievedMessage",
-          senderOrganizationId: "agid",
+          senderServiceId: "test",
           senderUserId: "u123"
         },
         messageContent: {
           bodyMarkdown: aMessageBodyMarkdown
         },
-        senderMetadata: { departmentName: "IT", serviceName: "Test" }
+        senderMetadata: {
+          departmentName: "IT",
+          organizationName: "AgID",
+          serviceName: "Test"
+        }
       }
     ];
     payloads.forEach(payload => {

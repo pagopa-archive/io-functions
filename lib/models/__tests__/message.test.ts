@@ -47,7 +47,7 @@ const aNewMessageWithContent: INewMessageWithContent = {
   fiscalCode: aFiscalCode,
   id: toNonEmptyString("A_MESSAGE_ID").get,
   kind: "INewMessageWithContent",
-  senderOrganizationId: "agid" as ModelId,
+  senderServiceId: "agid" as ModelId,
   senderUserId: toNonEmptyString("u123").get
 };
 

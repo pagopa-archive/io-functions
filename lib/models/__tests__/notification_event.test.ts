@@ -22,7 +22,7 @@ const aMessageContent: IMessageContent = {
 
 const aSenderMetadata: ICreatedMessageEventSenderMetadata = {
   departmentName: toNonEmptyString("IT").get,
-  organizationName: toNonEmptyString("agid").get,
+  organizationName: toNonEmptyString("AgID").get,
   serviceName: toNonEmptyString("Test").get
 };
 

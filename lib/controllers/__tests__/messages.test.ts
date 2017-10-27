@@ -57,15 +57,15 @@ const anEmail = toEmailString("test@example.com").get;
 const aMessageBodyMarkdown = toMessageBodyMarkdown("test".repeat(80)).get;
 
 const someUserAttributes: IAzureUserAttributes = {
-  authorizedRecipients: new Set(),
-  departmentName: toNonEmptyString("IT").get,
   email: anEmail,
   kind: "IAzureUserAttributes",
-  organization: {
-    name: toNonEmptyString("AgID").get,
-    organizationId: "agid" as ModelId
-  },
-  serviceName: toNonEmptyString("Test").get
+  service: {
+    authorizedRecipients: new Set([]),
+    departmentName: toNonEmptyString("IT").get,
+    organizationName: toNonEmptyString("AgID").get,
+    serviceId: toNonEmptyString("test").get,
+    serviceName: toNonEmptyString("Test").get
+  }
 };
 
 const aUserAuthenticationDeveloper: IAzureApiAuthorization = {
@@ -96,7 +96,7 @@ const aNewMessageWithoutContent: INewMessageWithoutContent = {
   fiscalCode: aFiscalCode,
   id: toNonEmptyString("A_MESSAGE_ID").get,
   kind: "INewMessageWithoutContent",
-  senderOrganizationId: "agid" as ModelId,
+  senderServiceId: "test" as ModelId,
   senderUserId: toNonEmptyString("u123").get
 };
 
@@ -110,7 +110,7 @@ const aRetrievedMessageWithoutContent: IRetrievedMessageWithoutContent = {
 const aPublicExtendedMessage: CreatedMessage = {
   fiscal_code: aNewMessageWithoutContent.fiscalCode,
   id: "A_MESSAGE_ID",
-  sender_organization_id: aNewMessageWithoutContent.senderOrganizationId
+  sender_service_id: aNewMessageWithoutContent.senderServiceId
 };
 
 describe("CreateMessageHandler", () => {
@@ -136,7 +136,7 @@ describe("CreateMessageHandler", () => {
         ...aUserAuthenticationDeveloper,
         groups: new Set([UserGroup.ApiLimitedMessageWrite])
       },
-      { ...someUserAttributes, authorizedRecipients: new Set([]) },
+      { ...someUserAttributes },
       aFiscalCode,
       aMessagePayload
     );
@@ -206,7 +206,7 @@ describe("CreateMessageHandler", () => {
       properties: {
         hasCustomSubject: "false",
         hasDefaultEmail: "false",
-        senderOrganizationId: "agid",
+        senderServiceId: "test",
         senderUserId: "u123",
         success: "true"
       }
@@ -243,16 +243,23 @@ describe("CreateMessageHandler", () => {
       log: jest.fn()
     };
 
+    const anAuthorizedService = {
+      ...someUserAttributes.service,
+      authorizedRecipients: new Set([aFiscalCode])
+    };
+
+    const someAuthorizedUserAttributes = {
+      ...someUserAttributes,
+      service: anAuthorizedService
+    };
+
     const result = await createMessageHandler(
       mockContext as any,
       {
         ...aUserAuthenticationDeveloper,
         groups: new Set([UserGroup.ApiLimitedMessageWrite])
       },
-      {
-        ...someUserAttributes,
-        authorizedRecipients: new Set([aFiscalCode])
-      },
+      someAuthorizedUserAttributes,
       aFiscalCode,
       aMessagePayload
     );
@@ -285,7 +292,7 @@ describe("CreateMessageHandler", () => {
       properties: {
         hasCustomSubject: "false",
         hasDefaultEmail: "false",
-        senderOrganizationId: "agid",
+        senderServiceId: "test",
         senderUserId: "u123",
         success: "true"
       }
@@ -368,7 +375,7 @@ describe("CreateMessageHandler", () => {
       properties: {
         hasCustomSubject: "true",
         hasDefaultEmail: "false",
-        senderOrganizationId: "agid",
+        senderServiceId: "test",
         senderUserId: "u123",
         success: "true"
       }
@@ -457,7 +464,7 @@ describe("CreateMessageHandler", () => {
       properties: {
         hasCustomSubject: "false",
         hasDefaultEmail: "true",
-        senderOrganizationId: "agid",
+        senderServiceId: "test",
         senderUserId: "u123",
         success: "true"
       }
@@ -599,7 +606,7 @@ describe("CreateMessageHandler", () => {
         error: "IResponseErrorQuery",
         hasCustomSubject: "false",
         hasDefaultEmail: "false",
-        senderOrganizationId: "agid",
+        senderServiceId: "test",
         senderUserId: "u123",
         success: "false"
       }
@@ -688,7 +695,7 @@ describe("GetMessageHandler", () => {
   it("should respond with forbidden if requesting user is not the sender", async () => {
     const message = {
       ...aRetrievedMessageWithoutContent,
-      senderOrganizationId: "anotherOrg"
+      senderServiceId: "anotherOrg"
     };
 
     const mockMessageModel = {
@@ -969,10 +976,8 @@ describe("CreateMessage", () => {
 
   it("respond with 403 if the user cannot be identified", async () => {
     const headers: IHeaders = {
-      // "x-subscription-id": "u123",
-      "x-user-groups": "ApiMessageWrite",
-      // "x-user-id": "u123",
-      "x-user-note": "organizationId: 123"
+      "x-subscription-id": "someId",
+      "x-user-groups": "ApiMessageWrite"
     };
     const createMessage = CreateMessage({} as any, {} as any, {} as any);
     const mockResponse = MockResponse();

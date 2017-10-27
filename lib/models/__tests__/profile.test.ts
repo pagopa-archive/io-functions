@@ -30,7 +30,7 @@ const aRetrievedProfile: IRetrievedProfile = {
 describe("findOneProfileByFiscalCode", () => {
   it("should resolve a promise to an existing profile", async () => {
     const iteratorMock = {
-      executeNext: jest.fn(cb => cb(undefined, ["result"], undefined))
+      executeNext: jest.fn(cb => cb(undefined, [aRetrievedProfile], undefined))
     };
 
     const clientMock = {
@@ -47,7 +47,7 @@ describe("findOneProfileByFiscalCode", () => {
     expect(result.isRight).toBeTruthy();
     if (result.isRight) {
       expect(result.right.isDefined).toBeTruthy();
-      expect(result.right.get).toEqual("result");
+      expect(result.right.get).toEqual(aRetrievedProfile);
     }
   });
 

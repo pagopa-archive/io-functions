@@ -51,8 +51,8 @@ interface IMessageBase {
   // the fiscal code of the recipient
   readonly fiscalCode: FiscalCode;
 
-  // the identifier of the Organization of the sender
-  readonly senderOrganizationId: string;
+  // the identifier of the service of the sender
+  readonly senderServiceId: string;
 
   // the userId of the sender (this is opaque and depends on the API gateway)
   readonly senderUserId: NonEmptyString;
@@ -88,7 +88,7 @@ const isIMessageBase = is<IMessageBase>(
   arg =>
     arg &&
     isFiscalCode(arg.fiscalCode) &&
-    isNonEmptyString(arg.senderOrganizationId) &&
+    isNonEmptyString(arg.senderServiceId) &&
     isNonEmptyString(arg.senderUserId)
 );
 
@@ -227,13 +227,13 @@ function toBaseType(o: IRetrievedMessage): IMessage {
     return {
       content: o.content,
       fiscalCode: o.fiscalCode,
-      senderOrganizationId: o.senderOrganizationId,
+      senderServiceId: o.senderServiceId,
       senderUserId: o.senderUserId
     };
   } else {
     return {
       fiscalCode: o.fiscalCode,
-      senderOrganizationId: o.senderOrganizationId,
+      senderServiceId: o.senderServiceId,
       senderUserId: o.senderUserId
     };
   }

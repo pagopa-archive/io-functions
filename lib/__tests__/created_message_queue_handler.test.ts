@@ -1,5 +1,6 @@
 // tslint:disable:no-any
-
+// tslint:disable-next-line:no-object-mutation
+process.env.COSMOSDB_NAME = "anyDbName";
 import {
   handleMessage,
   index,
@@ -117,7 +118,7 @@ describe("test index function", () => {
       fiscalCode: aWrongFiscalCode,
       id: toNonEmptyString("xyz").get,
       kind: "INewMessageWithoutContent",
-      senderOrganizationId: "",
+      senderServiceId: "",
       senderUserId: toNonEmptyString("u123").get
     };
 
@@ -168,7 +169,7 @@ describe("test index function", () => {
       fiscalCode: aCorrectFiscalCode,
       id: toNonEmptyString("xyz").get,
       kind: "IRetrievedMessage",
-      senderOrganizationId: "",
+      senderServiceId: "",
     };
 
     const aMessageEvent: ICreatedMessageEvent = {

@@ -25,7 +25,7 @@ export interface CreatedMessage {
 
   readonly content?: MessageContent;
 
-  readonly sender_organization_id: string;
+  readonly sender_service_id: string;
 }
 
 export function isCreatedMessage(arg: any): arg is CreatedMessage {
@@ -39,7 +39,7 @@ export function isCreatedMessage(arg: any): arg is CreatedMessage {
     (arg.content === undefined ||
       arg.content === null ||
       isMessageContent(arg.content)) &&
-    typeof arg.sender_organization_id === "string" &&
+    typeof arg.sender_service_id === "string" &&
     true
   );
 }

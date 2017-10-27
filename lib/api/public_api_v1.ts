@@ -215,9 +215,9 @@ export const specs = {
         fiscal_code: { $ref: "#/definitions/FiscalCode" },
         time_to_live: { $ref: "#/definitions/TimeToLive" },
         content: { $ref: "#/definitions/MessageContent" },
-        sender_organization_id: { type: "string" }
+        sender_service_id: { type: "string" }
       },
-      required: ["fiscal_code", "sender_organization_id"]
+      required: ["fiscal_code", "sender_service_id"]
     },
     MessageResponse: {
       type: "object",

@@ -1,0 +1,25 @@
+{
+  "scriptFile": "../lib/index.js",
+  "disabled": false,
+  "bindings": [
+   {
+    "authLevel": "function",
+    "type": "httpTrigger",
+    "direction": "in",
+    "name": "req",
+    "methods": [
+     "get",
+     "post",
+     "put"
+    ],
+    "route": "adm/{*segments}"
+   },
+   {
+    "type": "http",
+    "direction": "out",
+    "name": "res"
+   }
+  ],
+  "entryPoint": "AdminApi"
+ }
+ 

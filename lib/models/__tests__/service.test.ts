@@ -3,59 +3,67 @@
 import * as DocumentDb from "documentdb";
 
 import * as DocumentDbUtils from "../../utils/documentdb";
-import { ModelId } from "../../utils/documentdb_model_versioned";
 import { toNonNegativeNumber } from "../../utils/numbers";
 import { toNonEmptyString } from "../../utils/strings";
 
 import {
-  IOrganization,
-  IRetrievedOrganization,
-  OrganizationModel
-} from "../organization";
+  IRetrievedService,
+  IService,
+  ServiceModel,
+  toAuthorizedRecipients
+} from "../service";
 
 const aDatabaseUri = DocumentDbUtils.getDatabaseUri("mockdb");
-const organizationsCollectionUrl = DocumentDbUtils.getCollectionUri(
+const servicesCollectionUrl = DocumentDbUtils.getCollectionUri(
   aDatabaseUri,
-  "organizations"
+  "services"
 );
 
-const aOrganizationId = "xyz" as ModelId;
+const aServiceId = "xyz";
 
-const aRetrievedOrganization: IRetrievedOrganization = {
+const aRetrievedService: IRetrievedService = {
   _self: "xyz",
   _ts: "xyz",
-  id: "xyz",
-  kind: "IRetrievedOrganization",
-  name: toNonEmptyString("MyOrganization").get,
-  organizationId: aOrganizationId,
+  authorizedRecipients: toAuthorizedRecipients([]),
+  departmentName: toNonEmptyString("MyDept").get,
+  id: toNonEmptyString("xyz").get,
+  kind: "IRetrievedService",
+  organizationName: toNonEmptyString("MyOrg").get,
+  serviceId: toNonEmptyString(aServiceId).get,
+  serviceName: toNonEmptyString("MyService").get,
   version: toNonNegativeNumber(0).get
 };
 
-describe("findOneOrganizationById", () => {
-  it("should resolve a promise to an existing organization", async () => {
+const aSerializedService = {
+  ...aRetrievedService,
+  authorizedRecipients: []
+};
+
+describe("findOneServiceById", () => {
+  it("should resolve a promise to an existing service", async () => {
     const iteratorMock = {
-      executeNext: jest.fn(cb => cb(undefined, ["result"], undefined))
+      executeNext: jest.fn(cb => cb(undefined, [aSerializedService], undefined))
     };
 
     const clientMock = {
       queryDocuments: jest.fn((__, ___) => iteratorMock)
     };
 
-    const model = new OrganizationModel(
+    const model = new ServiceModel(
       (clientMock as any) as DocumentDb.DocumentClient,
-      organizationsCollectionUrl
+      servicesCollectionUrl
     );
 
-    const result = await model.findByOrganizationId("id");
+    const result = await model.findOneByServiceId(toNonEmptyString("id").get);
 
     expect(result.isRight).toBeTruthy();
     if (result.isRight) {
       expect(result.right.isDefined).toBeTruthy();
-      expect(result.right.get).toEqual("result");
+      expect(result.right.get).toEqual(aRetrievedService);
     }
   });
 
-  it("should resolve a promise to an empty value if no organization is found", async () => {
+  it("should resolve a promise to an empty value if no service is found", async () => {
     const iteratorMock = {
       executeNext: jest.fn(cb => cb(undefined, [], undefined))
     };
@@ -64,12 +72,12 @@ describe("findOneOrganizationById", () => {
       queryDocuments: jest.fn((__, ___) => iteratorMock)
     };
 
-    const model = new OrganizationModel(
+    const model = new ServiceModel(
       (clientMock as any) as DocumentDb.DocumentClient,
-      organizationsCollectionUrl
+      servicesCollectionUrl
     );
 
-    const result = await model.findByOrganizationId("id");
+    const result = await model.findOneByServiceId(toNonEmptyString("id").get);
 
     expect(result.isRight).toBeTruthy();
     if (result.isRight) {
@@ -78,8 +86,8 @@ describe("findOneOrganizationById", () => {
   });
 });
 
-describe("createOrganization", () => {
-  it("should create a new organization", async () => {
+describe("createService", () => {
+  it("should create a new service", async () => {
     const clientMock: any = {
       createDocument: jest.fn((_, newDocument, __, cb) => {
         cb(undefined, {
@@ -88,30 +96,28 @@ describe("createOrganization", () => {
       })
     };
 
-    const model = new OrganizationModel(clientMock, organizationsCollectionUrl);
+    const model = new ServiceModel(clientMock, servicesCollectionUrl);
 
-    const newOrganization: IOrganization = {
-      name: toNonEmptyString("MyOrganization").get,
-      organizationId: aOrganizationId
+    const newService: IService = {
+      authorizedRecipients: toAuthorizedRecipients([]),
+      departmentName: toNonEmptyString("MyService").get,
+      organizationName: toNonEmptyString("MyService").get,
+      serviceId: toNonEmptyString(aServiceId).get,
+      serviceName: toNonEmptyString("MyService").get
     };
 
-    const result = await model.create(
-      newOrganization,
-      newOrganization.organizationId
-    );
+    const result = await model.create(newService, newService.serviceId);
 
     expect(clientMock.createDocument).toHaveBeenCalledTimes(1);
     expect(clientMock.createDocument.mock.calls[0][1].kind).toBeUndefined();
     expect(clientMock.createDocument.mock.calls[0][2]).toHaveProperty(
       "partitionKey",
-      aOrganizationId
+      aServiceId
     );
     expect(result.isRight).toBeTruthy();
     if (result.isRight) {
-      expect(result.right.organizationId).toEqual(
-        newOrganization.organizationId
-      );
-      expect(result.right.id).toEqual(`${aOrganizationId}-${"0".repeat(16)}`);
+      expect(result.right.serviceId).toEqual(newService.serviceId);
+      expect(result.right.id).toEqual(`${aServiceId}-${"0".repeat(16)}`);
       expect(result.right.version).toEqual(0);
     }
   });
@@ -123,17 +129,17 @@ describe("createOrganization", () => {
       })
     };
 
-    const model = new OrganizationModel(clientMock, organizationsCollectionUrl);
+    const model = new ServiceModel(clientMock, servicesCollectionUrl);
 
-    const newOrganization: IOrganization = {
-      name: toNonEmptyString("MyOrganization").get,
-      organizationId: aOrganizationId
+    const newService: IService = {
+      authorizedRecipients: toAuthorizedRecipients([]),
+      departmentName: toNonEmptyString("MyService").get,
+      organizationName: toNonEmptyString("MyService").get,
+      serviceId: toNonEmptyString(aServiceId).get,
+      serviceName: toNonEmptyString("MyService").get
     };
 
-    const result = await model.create(
-      newOrganization,
-      newOrganization.organizationId
-    );
+    const result = await model.create(newService, newService.serviceId);
 
     expect(clientMock.createDocument).toHaveBeenCalledTimes(1);
 
@@ -145,23 +151,21 @@ describe("createOrganization", () => {
 });
 
 describe("update", () => {
-  it("should update an existing organization", async () => {
+  it("should update an existing service", async () => {
     const clientMock: any = {
       createDocument: jest.fn((_, newDocument, __, cb) => {
         cb(undefined, {
           ...newDocument
         });
       }),
-      readDocument: jest.fn((_, __, cb) =>
-        cb(undefined, aRetrievedOrganization)
-      )
+      readDocument: jest.fn((_, __, cb) => cb(undefined, aRetrievedService))
     };
 
-    const model = new OrganizationModel(clientMock, organizationsCollectionUrl);
+    const model = new ServiceModel(clientMock, servicesCollectionUrl);
 
     const result = await model.update(
-      aRetrievedOrganization.organizationId,
-      aRetrievedOrganization.organizationId,
+      aRetrievedService.id,
+      aRetrievedService.serviceId,
       p => {
         return {
           ...p
@@ -173,20 +177,16 @@ describe("update", () => {
     expect(clientMock.createDocument.mock.calls[0][1].kind).toBeUndefined();
     expect(clientMock.createDocument.mock.calls[0][2]).toHaveProperty(
       "partitionKey",
-      aOrganizationId
+      aServiceId
     );
     expect(result.isRight).toBeTruthy();
     if (result.isRight) {
       expect(result.right.isDefined).toBeTruthy();
-      const updatedOrganization = result.right.get;
-      expect(updatedOrganization.organizationId).toEqual(
-        aRetrievedOrganization.organizationId
-      );
-      expect(updatedOrganization.id).toEqual(
-        `${aOrganizationId}-${"0".repeat(15)}1`
-      );
-      expect(updatedOrganization.version).toEqual(1);
-      expect(updatedOrganization.name).toEqual("MyOrganization");
+      const updatedService = result.right.get;
+      expect(updatedService.serviceId).toEqual(aRetrievedService.serviceId);
+      expect(updatedService.id).toEqual(`${aServiceId}-${"0".repeat(15)}1`);
+      expect(updatedService.version).toEqual(1);
+      expect(updatedService.serviceName).toEqual(aRetrievedService.serviceName);
     }
   });
 
@@ -196,9 +196,9 @@ describe("update", () => {
       readDocument: jest.fn((_, __, cb) => cb("error"))
     };
 
-    const model = new OrganizationModel(clientMock, organizationsCollectionUrl);
+    const model = new ServiceModel(clientMock, servicesCollectionUrl);
 
-    const result = await model.update(aOrganizationId, aOrganizationId, o => o);
+    const result = await model.update(aServiceId, aServiceId, o => o);
 
     expect(clientMock.readDocument).toHaveBeenCalledTimes(1);
     expect(clientMock.createDocument).not.toHaveBeenCalled();
@@ -212,14 +212,12 @@ describe("update", () => {
   it("should resolve the promise to an error value in case of a createDocument error", async () => {
     const clientMock: any = {
       createDocument: jest.fn((_, __, ___, cb) => cb("error")),
-      readDocument: jest.fn((_, __, cb) =>
-        cb(undefined, aRetrievedOrganization)
-      )
+      readDocument: jest.fn((_, __, cb) => cb(undefined, aRetrievedService))
     };
 
-    const model = new OrganizationModel(clientMock, organizationsCollectionUrl);
+    const model = new ServiceModel(clientMock, servicesCollectionUrl);
 
-    const result = await model.update(aOrganizationId, aOrganizationId, o => o);
+    const result = await model.update(aServiceId, aServiceId, o => o);
 
     expect(clientMock.readDocument).toHaveBeenCalledTimes(1);
     expect(clientMock.createDocument).toHaveBeenCalledTimes(1);

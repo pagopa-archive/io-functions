@@ -6,9 +6,9 @@ import { isNonEmptyString, NonEmptyString } from "../utils/strings";
  * Sender metadata associated to a message
  */
 export interface ICreatedMessageEventSenderMetadata {
+  readonly serviceName: NonEmptyString;
   readonly organizationName: NonEmptyString;
   readonly departmentName: NonEmptyString;
-  readonly serviceName: NonEmptyString;
 }
 
 export const isICreatedMessageEventSenderMetadata = is<
