@@ -65,7 +65,8 @@ export interface IRetrievedService
  * We need to handle Sets as this method is called on IService objects
  * passed to create(IService) and update(IService) model methods.
  * 
- * @param authorizedRecipients 
+ * @param authorizedRecipients  Array or Set of authorized fiscal codes
+ *                              for this service.
  */
 export function toAuthorizedRecipients(
   authorizedRecipients: ReadonlyArray<string> | ReadonlySet<string> | undefined

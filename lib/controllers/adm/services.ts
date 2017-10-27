@@ -30,6 +30,7 @@ import {
   IResponseErrorQuery,
   IResponseErrorValidation,
   IResponseSuccessJson,
+  ResponseErrorInternal,
   ResponseErrorNotFound,
   ResponseErrorQuery,
   ResponseErrorValidation,
@@ -160,10 +161,7 @@ export function UpdateServiceHandler(
 
     const maybeUpdatedService = errorOrMaybeUpdatedService.right;
     if (maybeUpdatedService.isEmpty) {
-      return ResponseErrorValidation(
-        "Error while updating the existing service",
-        "Cannot find the updated service"
-      );
+      return ResponseErrorInternal("Error while updating the existing service");
     }
 
     return ResponseSuccessJson(maybeUpdatedService.get);
