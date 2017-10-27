@@ -15,8 +15,7 @@
     "build": "npm-run-all generate:templates build:tsc",
     "lint": "tslint -p . -c tslint.json",
     "prettify": "prettier --write './**/*.ts'",
-    "pretest": "npm run lint",
-    "test": "jest --coverage",
+    "test": "gulp test",
     "generate:models": "ts-node ./api/generate_models.ts",
     "generate:templates": "gulp generate:templates"
   },
@@ -41,6 +40,7 @@
     "dotenv": "^4.0.0",
     "express": "^4.15.3",
     "fs-extra": "^4.0.1",
+    "gulp-jest": "^2.0.0",
     "helmet": "^3.8.2",
     "helmet-csp": "^2.5.1",
     "html-to-text": "^3.3.0",
