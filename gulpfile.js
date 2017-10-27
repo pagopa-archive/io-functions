@@ -104,15 +104,28 @@ gulp.task("yarn:lint", () => {
 });
 
 /**
- * Run the test task
+ * Run unit tests
  */
-gulp.task("jest:test", ["yarn:lint"], () => {
+gulp.task("unit:test", () => {
   return gulp.src(TYPESCRIPT_SOURCE_DIR)
     .pipe(jest({
       "coverage": true
     }))
     .pipe(exec.reporter());
 });
+
+/**
+ * Run the test task
+ */
+gulp.task("test", ["yarn:lint"], () => 
+  runSequence(["unit:test"],
+    (err) => {
+      if (err) {
+        console.log(err.message);
+      }
+      cb(err);
+  })
+);
 
 /**
  * Package Azure Functions code and dependencines in a single file
@@ -286,7 +299,7 @@ gulp.task("release", function (cb) {
     // the repository has no outstanding changes.
     "git:check:clean",
     // run tests
-    "jest:test",
+    "test",
     // bumps the version to the next release version:
     // current version without the qualifier (eg. 1.2-SNAPSHOT -> 1.2)
     "release:bump:release",
