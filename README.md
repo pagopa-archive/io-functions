@@ -443,3 +443,17 @@ trigger, that is linked to the `funcpack-release-latest` branch.
 
 Thus, a deployment gets automatically triggered when by the
 `funcpack-release-latest` branch gets updated by the `release` task.
+
+#### Rollback
+
+The rollback process is manual right now, if you want to revert to version
+`x.y.z` you must reset the `funcpack-release-latest` branch to the release
+branch you want to revert to:
+
+```shell
+git fetch
+git checkout -t origin/funcpack-release-latest
+git reset --hard origin/funcpack-release-x.y.z
+git push -f
+```
+
