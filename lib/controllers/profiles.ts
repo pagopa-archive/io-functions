@@ -4,11 +4,11 @@
 
 import * as express from "express";
 
-import { left, right } from "../utils/either";
-
+import { option } from "ts-option";
 import { ExtendedProfile } from "../api/definitions/ExtendedProfile";
 import { FiscalCode } from "../api/definitions/FiscalCode";
 import { LimitedProfile } from "../api/definitions/LimitedProfile";
+import { left, right } from "../utils/either";
 
 import {
   AzureApiAuthMiddleware,
@@ -153,23 +153,28 @@ export const ProfilePayloadMiddleware: IRequestMiddleware<
   IResponseErrorValidation,
   IProfilePayload
 > = request => {
-  const email = request.body.email;
-  if (email && !isNonEmptyString(email)) {
-    return Promise.resolve(
-      left(
-        ResponseErrorValidation(
-          "Invalid email",
-          "email must be a non-empty string"
+  return new Promise(resolve => {
+    option(request.body)
+      .map(body => body.email)
+      .filter(isNonEmptyString)
+      .map(email =>
+        resolve(
+          right({
+            email
+          })
         )
       )
-    );
-  }
-
-  return Promise.resolve(
-    right({
-      email
-    })
-  );
+      .getOrElse(() => {
+        resolve(
+          left(
+            ResponseErrorValidation(
+              "Invalid email",
+              "email must be a non-empty string"
+            )
+          )
+        );
+      });
+  });
 };
 
 async function createNewProfileFromPayload(
