@@ -1,5 +1,5 @@
 {
- "scriptFile": "../lib/index.js",
+ "scriptFile": "../.funcpack/index.js",
  "disabled": false,
  "bindings": [
   {
@@ -10,5 +10,7 @@
    "connection": "QueueStorageConnection"
   }
  ],
- "entryPoint": "EmailNotificationsQueueHandler"
+ "entryPoint": "EmailNotificationsQueueHandler",
+ "_originalEntryPoint": "EmailNotificationsQueueHandler",
+ "_originalScriptFile": "../lib/index.js"
 }
