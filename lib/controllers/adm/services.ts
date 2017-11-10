@@ -172,6 +172,9 @@ export function UpdateServiceHandler(
   };
 }
 
+/**
+ * Extracts the serviceId value from the URL path parameter.
+ */
 const requiredServiceIdMiddleware = RequiredParamMiddleware(params => {
   const serviceId = params.serviceid;
   if (isNonEmptyString(serviceId)) {
@@ -224,7 +227,7 @@ export function GetServiceHandler(
 }
 
 /**
- * Wraps a CreateService handler inside an Express request handler.
+ * Wraps a GetService handler inside an Express request handler.
  */
 export function GetService(serviceModel: ServiceModel): express.RequestHandler {
   const handler = GetServiceHandler(serviceModel);
