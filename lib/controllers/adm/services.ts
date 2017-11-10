@@ -43,11 +43,15 @@ import { isNonEmptyString, NonEmptyString } from "../../utils/strings";
 type ICreateServiceHandler = (
   auth: IAzureApiAuthorization,
   service: IService
+) => Promise<IResponseSuccessJson<IRetrievedService> | IResponseErrorQuery>;
+
+type IGetServiceHandler = (
+  auth: IAzureApiAuthorization,
+  serviceId: NonEmptyString
 ) => Promise<
   | IResponseSuccessJson<IRetrievedService>
-  | IResponseErrorValidation
+  | IResponseErrorNotFound
   | IResponseErrorQuery
-  | IResponseErrorInternal
 >;
 
 type IUpdateServiceHandler = (
@@ -168,6 +172,18 @@ export function UpdateServiceHandler(
   };
 }
 
+/**
+ * Extracts the serviceId value from the URL path parameter.
+ */
+const requiredServiceIdMiddleware = RequiredParamMiddleware(params => {
+  const serviceId = params.serviceid;
+  if (isNonEmptyString(serviceId)) {
+    return right(serviceId);
+  } else {
+    return left("Value of `serviceid` parameter must be a non empty string");
+  }
+});
+
 export function CreateServiceHandler(
   serviceModel: ServiceModel
 ): ICreateServiceHandler {
@@ -182,6 +198,44 @@ export function CreateServiceHandler(
       return ResponseErrorQuery("Error", errorOrService.left);
     }
   };
+}
+
+export function GetServiceHandler(
+  serviceModel: ServiceModel
+): IGetServiceHandler {
+  return async (_, serviceId) => {
+    const errorOrMaybeService = await serviceModel.findOneByServiceId(
+      serviceId
+    );
+    if (errorOrMaybeService.isRight) {
+      const maybeService = errorOrMaybeService.right;
+      if (maybeService.isEmpty) {
+        return ResponseErrorNotFound(
+          "Service not found",
+          "The service you requested was not found in the system."
+        );
+      } else {
+        return ResponseSuccessJson(maybeService.get);
+      }
+    } else {
+      return ResponseErrorQuery(
+        "Error while retrieving the service",
+        errorOrMaybeService.left
+      );
+    }
+  };
+}
+
+/**
+ * Wraps a GetService handler inside an Express request handler.
+ */
+export function GetService(serviceModel: ServiceModel): express.RequestHandler {
+  const handler = GetServiceHandler(serviceModel);
+  const middlewaresWrap = withRequestMiddlewares(
+    AzureApiAuthMiddleware(new Set([UserGroup.ApiServiceRead])),
+    requiredServiceIdMiddleware
+  );
+  return wrapRequestHandler(middlewaresWrap(handler));
 }
 
 /**
@@ -205,14 +259,6 @@ export function UpdateService(
   serviceModel: ServiceModel
 ): express.RequestHandler {
   const handler = UpdateServiceHandler(serviceModel);
-  const requiredServiceIdMiddleware = RequiredParamMiddleware(params => {
-    const serviceId = params.serviceid;
-    if (isNonEmptyString(serviceId)) {
-      return right(serviceId);
-    } else {
-      return left("Value of `serviceid` parameter must be a non empty string");
-    }
-  });
   const middlewaresWrap = withRequestMiddlewares(
     AzureApiAuthMiddleware(new Set([UserGroup.ApiServiceWrite])),
     requiredServiceIdMiddleware,

@@ -17,7 +17,11 @@ import { createAzureFunctionHandler } from "azure-function-express";
 
 import { ServiceModel } from "./models/service";
 
-import { CreateService, UpdateService } from "./controllers/adm/services";
+import {
+  CreateService,
+  GetService,
+  UpdateService
+} from "./controllers/adm/services";
 
 import { GetDebug } from "./controllers/debug";
 
@@ -54,8 +58,8 @@ const debugHandler = GetDebug(serviceModel);
 app.get("/adm/debug", debugHandler);
 app.post("/adm/debug", debugHandler);
 
+app.get("/adm/services/:serviceId", GetService(serviceModel));
 app.post("/adm/services", CreateService(serviceModel));
-
 app.put("/adm/services/:serviceid", UpdateService(serviceModel));
 
 const azureFunctionHandler = createAzureFunctionHandler(app);

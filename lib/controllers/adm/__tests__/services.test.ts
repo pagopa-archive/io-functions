@@ -24,6 +24,8 @@ import {
 import {
   CreateService,
   CreateServiceHandler,
+  GetService,
+  GetServiceHandler,
   ServicePayloadMiddleware,
   UpdateService,
   UpdateServiceHandler
@@ -56,6 +58,66 @@ const aRetrievedService: IRetrievedService = {
   serviceName: toNonEmptyString("MyServiceName").get,
   version: toNonNegativeNumber(1).get
 };
+
+describe("GetServiceHandler", () => {
+  it("should get an existing service", async () => {
+    const serviceModelMock = {
+      findOneByServiceId: jest.fn(() => {
+        return Promise.resolve(right(some(aRetrievedService)));
+      })
+    };
+    const aServiceId = toNonEmptyString("1").get;
+    const getServiceHandler = GetServiceHandler(serviceModelMock as any);
+    const response = await getServiceHandler(anAzureAuthorization, aServiceId);
+    expect(serviceModelMock.findOneByServiceId).toHaveBeenCalledWith(
+      aServiceId
+    );
+    expect(response.kind).toBe("IResponseSuccessJson");
+    if (response.kind === "IResponseSuccessJson") {
+      expect(response.value).toEqual(aRetrievedService);
+    }
+  });
+  it("should fail on errors during get", async () => {
+    const serviceModelMock = {
+      findOneByServiceId: jest.fn(() => {
+        return Promise.resolve(left(none));
+      })
+    };
+    const aServiceId = toNonEmptyString("1").get;
+    const getServiceHandler = GetServiceHandler(serviceModelMock as any);
+    const response = await getServiceHandler(anAzureAuthorization, aServiceId);
+    expect(serviceModelMock.findOneByServiceId).toHaveBeenCalledWith(
+      aServiceId
+    );
+    expect(response.kind).toBe("IResponseErrorQuery");
+  });
+  it("should return not found if the service does not exist", async () => {
+    const serviceModelMock = {
+      findOneByServiceId: jest.fn(() => {
+        return Promise.resolve(right(none));
+      })
+    };
+    const aServiceId = toNonEmptyString("1").get;
+    const getServiceHandler = GetServiceHandler(serviceModelMock as any);
+    const response = await getServiceHandler(anAzureAuthorization, aServiceId);
+    expect(serviceModelMock.findOneByServiceId).toHaveBeenCalledWith(
+      aServiceId
+    );
+    expect(response.kind).toBe("IResponseErrorNotFound");
+  });
+});
+
+describe("GetService", () => {
+  it("should set up middlewares", async () => {
+    const withRequestMiddlewaresSpy = jest
+      .spyOn(middlewares, "withRequestMiddlewares")
+      .mockReturnValueOnce(jest.fn());
+    GetService({} as any);
+    expect(withRequestMiddlewaresSpy).toHaveBeenCalledTimes(1);
+    jest.clearAllMocks();
+    jest.resetAllMocks();
+  });
+});
 
 describe("CreateServiceHandler", () => {
   it("should create a new service", async () => {
