@@ -28,7 +28,19 @@ paths:
           description: Message found.
           schema:
             $ref: "#/definitions/MessageResponse"
-          examples: {}
+          examples:
+            application/json:
+              message:
+                id: '1'
+                fiscal_code: QXJNTX9RCRVD6V4O
+                time_to_live: 3600
+                content:
+                  subject: aliquip sint nulla in estinut
+                  markdown: Excepteur estinut inincididunt laboris culpa officiaeuexercitation
+                    quisLorem in et est
+                sender_organization_id: '1'
+              notification:
+                email: QUEUED
         '404':
           description: No message found for the provided ID.
   "/messages/{fiscal_code}":
@@ -53,6 +65,27 @@ paths:
                   items:
                     $ref: "#/definitions/CreatedMessage"
             - $ref: "#/definitions/PaginationResponse"
+          examples:
+            application/json:
+              items:
+              - id: '1'
+                fiscal_code: PUPFHK4TD3MWL20W
+                time_to_live: 3600
+                content:
+                  subject: amet sunt dolor nulla esseesseanim
+                  markdown: eu irure esseesseanim ut eiusmodirure proidentdolor auteirure
+                    aliqua enim sinttempor labore
+                sender_organization_id: '1'
+              - id: '2'
+                fiscal_code: PKTINH4QDQUV696L
+                time_to_live: 3600
+                content:
+                  subject: idUt quis tempor esseesseanim
+                  markdown: eiusmod involuptate eiusmod sint adtempor Duis enimdoloraliquip
+                    Duissunt dolore non
+                sender_organization_id: '2'
+              page_size: 2
+              next: https://example.com/next
         '404':
           description: No message found.
       parameters:
@@ -68,6 +101,15 @@ paths:
         in: body
         schema:
           $ref: "#/definitions/NewMessage"
+        x-examples:
+          application/json:
+            time_to_live: 3600
+            content:
+              subject: ipsum labore deserunt fugiat
+              markdown: culpa nisi deserunt fugiatautesintdodeseruntesse reprehenderit
+                incididuntlaboris
+            default_addresses:
+              email: foobar@example.com
       responses:
         '201':
           description: Message created.
@@ -77,6 +119,8 @@ paths:
               description: |-
                 Location (URL) of created message resource.
                 A GET request to this URL returns the message status and details.
+          examples:
+            application/json: {}
         '400':
           description: Invalid payload.
           schema:
@@ -99,15 +143,45 @@ paths:
             allOf:
             - $ref: "#/definitions/LimitedProfile"
             - $ref: "#/definitions/ExtendedProfile"
-          examples: {}
+          examples:
+            application/json:
+              email: foobar@example.com
+              version: 0
         '404':
           description: No user found for the provided fiscal code.
     parameters:
     - $ref: "#/parameters/FiscalCode"
+    post:
+      responses:
+        '200':
+          description: Profile updated.
+          schema:
+            allOf:
+            - $ref: "#/definitions/LimitedProfile"
+            - $ref: "#/definitions/ExtendedProfile"
+          examples:
+            application/json:
+              email: foobar@example.com
+              version: 0
+        '400':
+          description: Invalid payload.
+        '500':
+          description: Profile cannot be updated.
+      description: Create or update the preferences for the user identified by the
+        provided fiscal code.
+      operationId: upsertProfile
+      summary: Set User's Preferences
+      parameters:
+      - in: body
+        name: body
+        schema:
+          $ref: "#/definitions/ExtendedProfile"
+        x-examples:
+          application/json:
+            email: foobar@example.com
   "/info":
     get:
       operationId: getInfo
-      summary: An endpoint to test authenticated access to the API backend.
       responses:
         '200':
           description: Returns success if the API-Key is right.
@@ -116,7 +190,8 @@ paths:
             properties: {}
         '401':
           description: Returns unauthorized when the API-key if empty or wrong.
-      description: API test endpoint
+      description: An endpoint to test authenticated access to the API backend.
+      summary: API test endpoint
 definitions:
   ProblemJson:
     title: Problem Type
@@ -316,6 +391,7 @@ parameters:
     type: string
     minimum: 1
     description: An opaque identifier that points to the next item in the collection.
+    x-example: '1'
   FiscalCode:
     name: fiscal_code
     in: path
@@ -325,6 +401,7 @@ parameters:
     required: true
     description: The fiscal code of the user, all upper case.
     pattern: "[A-Z]{6}[0-9LMNPQRSTUV]{2}[ABCDEHLMPRST][0-9LMNPQRSTUV]{2}[A-Z][0-9LMNPQRSTUV]{3}[A-Z]"
+    x-example: SPNDNL80R13C555X
 consumes:
 - application/json
 produces:
