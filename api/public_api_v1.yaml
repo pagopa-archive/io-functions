@@ -38,7 +38,7 @@ paths:
                   subject: aliquip sint nulla in estinut
                   markdown: Excepteur estinut inincididunt laboris culpa officiaeuexercitation
                     quisLorem in et est
-                sender_organization_id: '1'
+                sender_service_id: '1'
               notification:
                 email: QUEUED
         '404':
@@ -75,7 +75,7 @@ paths:
                   subject: amet sunt dolor nulla esseesseanim
                   markdown: eu irure esseesseanim ut eiusmodirure proidentdolor auteirure
                     aliqua enim sinttempor labore
-                sender_organization_id: '1'
+                sender_service_id: '1'
               - id: '2'
                 fiscal_code: PKTINH4QDQUV696L
                 time_to_live: 3600
@@ -83,7 +83,7 @@ paths:
                   subject: idUt quis tempor esseesseanim
                   markdown: eiusmod involuptate eiusmod sint adtempor Duis enimdoloraliquip
                     Duissunt dolore non
-                sender_organization_id: '2'
+                sender_service_id: '2'
               page_size: 2
               next: https://example.com/next
         '404':
@@ -271,11 +271,11 @@ definitions:
         $ref: "#/definitions/TimeToLive"
       content:
         $ref: "#/definitions/MessageContent"
-      sender_organization_id:
+      sender_service_id:
         type: string
     required:
     - fiscal_code
-    - sender_organization_id
+    - sender_service_id
   MessageResponse:
     type: object
     properties:
