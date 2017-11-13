@@ -38,15 +38,15 @@ export const specs = {
             examples: {
               "application/json": {
                 message: {
-                  id: "1",
+                  id: "01BX9NSMKAAAS5PSP2FATZM6BQ",
                   fiscal_code: "QXJNTX9RCRVD6V4O",
                   time_to_live: 3600,
                   content: {
-                    subject: "aliquip sint nulla in estinut",
+                    subject: "message subject, aliquip sint nulla in estinut",
                     markdown:
                       "Excepteur estinut inincididunt laboris culpa officiaeuexercitation quisLorem in et est"
                   },
-                  sender_service_id: "1"
+                  sender_service_id: "01BX9NSMKVXXS5PSP2FATZM6QX"
                 },
                 notification: { email: "QUEUED" }
               }
@@ -84,7 +84,7 @@ export const specs = {
               "application/json": {
                 items: [
                   {
-                    id: "1",
+                    id: "01BX9NSMKVXXS5PSP2FATZMYYY",
                     fiscal_code: "PUPFHK4TD3MWL20W",
                     time_to_live: 3600,
                     content: {
@@ -92,10 +92,10 @@ export const specs = {
                       markdown:
                         "eu irure esseesseanim ut eiusmodirure proidentdolor auteirure aliqua enim sinttempor labore"
                     },
-                    sender_service_id: "1"
+                    sender_service_id: "01BX9NSMKVXXS5PSP2FATZMZZZ"
                   },
                   {
-                    id: "2",
+                    id: "01BX9NSMKVXXS5PSP2FATZM123",
                     fiscal_code: "PKTINH4QDQUV696L",
                     time_to_live: 3600,
                     content: {
@@ -103,7 +103,7 @@ export const specs = {
                       markdown:
                         "eiusmod involuptate eiusmod sint adtempor Duis enimdoloraliquip Duissunt dolore non"
                     },
-                    sender_service_id: "2"
+                    sender_service_id: "01BX9NSMKVXXS5PSP2FATZMWWW"
                   }
                 ],
                 page_size: 2,
@@ -426,7 +426,7 @@ export const specs = {
       minimum: 1,
       description:
         "An opaque identifier that points to the next item in the collection.",
-      "x-example": "1"
+      "x-example": "01BX9NSMKVXXS5PSP2FATZM123"
     },
     FiscalCode: {
       name: "fiscal_code",
