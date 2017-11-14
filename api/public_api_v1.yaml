@@ -321,7 +321,7 @@ definitions:
     example: |-
       # This is a markdown header
 
-      to show how easy markdown can be converted to **HTML**
+      to show how easily markdown can be converted to **HTML**
 
       Remember: this has to be a long text.
   PaginationResponse:

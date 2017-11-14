@@ -341,7 +341,7 @@ export const specs = {
       minLength: 80,
       maxLength: 10000,
       example:
-        "# This is a markdown header\n\nto show how easy markdown can be converted to **HTML**\n\nRemember: this has to be a long text."
+        "# This is a markdown header\n\nto show how easily markdown can be converted to **HTML**\n\nRemember: this has to be a long text."
     },
     PaginationResponse: {
       type: "object",
