@@ -35,7 +35,22 @@ export const specs = {
           "200": {
             description: "Message found.",
             schema: { $ref: "#/definitions/MessageResponse" },
-            examples: {}
+            examples: {
+              "application/json": {
+                message: {
+                  id: "01BX9NSMKAAAS5PSP2FATZM6BQ",
+                  fiscal_code: "QXJNTX9RCRVD6V4O",
+                  time_to_live: 3600,
+                  content: {
+                    subject: "message subject, aliquip sint nulla in estinut",
+                    markdown:
+                      "Excepteur estinut inincididunt laboris culpa officiaeuexercitation quisLorem in et est"
+                  },
+                  sender_service_id: "01BX9NSMKVXXS5PSP2FATZM6QX"
+                },
+                notification: { email: "QUEUED" }
+              }
+            }
           },
           "404": { description: "No message found for the provided ID." }
         }
@@ -64,6 +79,36 @@ export const specs = {
                 },
                 { $ref: "#/definitions/PaginationResponse" }
               ]
+            },
+            examples: {
+              "application/json": {
+                items: [
+                  {
+                    id: "01BX9NSMKVXXS5PSP2FATZMYYY",
+                    fiscal_code: "PUPFHK4TD3MWL20W",
+                    time_to_live: 3600,
+                    content: {
+                      subject: "amet sunt dolor nulla esseesseanim",
+                      markdown:
+                        "eu irure esseesseanim ut eiusmodirure proidentdolor auteirure aliqua enim sinttempor labore"
+                    },
+                    sender_service_id: "01BX9NSMKVXXS5PSP2FATZMZZZ"
+                  },
+                  {
+                    id: "01BX9NSMKVXXS5PSP2FATZM123",
+                    fiscal_code: "PKTINH4QDQUV696L",
+                    time_to_live: 3600,
+                    content: {
+                      subject: "idUt quis tempor esseesseanim",
+                      markdown:
+                        "eiusmod involuptate eiusmod sint adtempor Duis enimdoloraliquip Duissunt dolore non"
+                    },
+                    sender_service_id: "01BX9NSMKVXXS5PSP2FATZMWWW"
+                  }
+                ],
+                page_size: 2,
+                next: "https://example.com/next"
+              }
             }
           },
           "404": { description: "No message found." }
@@ -79,7 +124,18 @@ export const specs = {
           {
             name: "message",
             in: "body",
-            schema: { $ref: "#/definitions/NewMessage" }
+            schema: { $ref: "#/definitions/NewMessage" },
+            "x-examples": {
+              "application/json": {
+                time_to_live: 3600,
+                content: {
+                  subject: "ipsum labore deserunt fugiat",
+                  markdown:
+                    "culpa nisi deserunt fugiatautesintdodeseruntesse reprehenderit incididuntlaboris"
+                },
+                default_addresses: { email: "foobar@example.com" }
+              }
+            }
           }
         ],
         responses: {
@@ -91,7 +147,8 @@ export const specs = {
                 description:
                   "Location (URL) of created message resource.\nA GET request to this URL returns the message status and details."
               }
-            }
+            },
+            examples: { "application/json": {} }
           },
           "400": {
             description: "Invalid payload.",
@@ -120,17 +177,50 @@ export const specs = {
                 { $ref: "#/definitions/ExtendedProfile" }
               ]
             },
-            examples: {}
+            examples: {
+              "application/json": { email: "foobar@example.com", version: 0 }
+            }
           },
           "404": { description: "No user found for the provided fiscal code." }
         }
       },
-      parameters: [{ $ref: "#/parameters/FiscalCode" }]
+      parameters: [{ $ref: "#/parameters/FiscalCode" }],
+      post: {
+        responses: {
+          "200": {
+            description: "Profile updated.",
+            schema: {
+              allOf: [
+                { $ref: "#/definitions/LimitedProfile" },
+                { $ref: "#/definitions/ExtendedProfile" }
+              ]
+            },
+            examples: {
+              "application/json": { email: "foobar@example.com", version: 0 }
+            }
+          },
+          "400": { description: "Invalid payload." },
+          "500": { description: "Profile cannot be updated." }
+        },
+        description:
+          "Create or update the preferences for the user identified by the provided fiscal code.",
+        operationId: "upsertProfile",
+        summary: "Set User's Preferences",
+        parameters: [
+          {
+            in: "body",
+            name: "body",
+            schema: { $ref: "#/definitions/ExtendedProfile" },
+            "x-examples": {
+              "application/json": { email: "foobar@example.com" }
+            }
+          }
+        ]
+      }
     },
     "/info": {
       get: {
         operationId: "getInfo",
-        summary: "API test endpoint",
         responses: {
           "200": {
             description: "Returns success if the API-Key is right.",
@@ -142,7 +232,8 @@ export const specs = {
           }
         },
         description:
-          "An endpoint to test authenticated access to the API backend."
+          "An endpoint to test authenticated access to the API backend.",
+        summary: "API test endpoint"
       }
     }
   },
@@ -334,7 +425,8 @@ export const specs = {
       type: "string",
       minimum: 1,
       description:
-        "An opaque identifier that points to the next item in the collection."
+        "An opaque identifier that points to the next item in the collection.",
+      "x-example": "01BX9NSMKVXXS5PSP2FATZM123"
     },
     FiscalCode: {
       name: "fiscal_code",
@@ -345,7 +437,8 @@ export const specs = {
       required: true,
       description: "The fiscal code of the user, all upper case.",
       pattern:
-        "[A-Z]{6}[0-9LMNPQRSTUV]{2}[ABCDEHLMPRST][0-9LMNPQRSTUV]{2}[A-Z][0-9LMNPQRSTUV]{3}[A-Z]"
+        "[A-Z]{6}[0-9LMNPQRSTUV]{2}[ABCDEHLMPRST][0-9LMNPQRSTUV]{2}[A-Z][0-9LMNPQRSTUV]{3}[A-Z]",
+      "x-example": "SPNDNL80R13C555X"
     }
   },
   consumes: ["application/json"],
