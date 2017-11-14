@@ -100,7 +100,7 @@ export function ResponseSuccessRedirectToResource<T, V>(
     apply: res =>
       res
         .set("Location", url)
-        .status(202)
+        .status(201)
         .json(payload),
     kind: "IResponseSuccessRedirectToResource",
     payload,

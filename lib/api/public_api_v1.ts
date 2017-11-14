@@ -148,7 +148,9 @@ export const specs = {
                   "Location (URL) of created message resource.\nA GET request to this URL returns the message status and details."
               }
             },
-            examples: { "application/json": {} }
+            examples: {
+              "application/json": { id: "01BX9NSMKVXXS5PSP2FATZMYYY" }
+            }
           },
           "400": {
             description: "Invalid payload.",

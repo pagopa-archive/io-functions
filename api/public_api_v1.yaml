@@ -130,7 +130,8 @@ paths:
                 Location (URL) of created message resource.
                 A GET request to this URL returns the message status and details.
           examples:
-            application/json: {}
+            application/json:
+              id: 01BX9NSMKVXXS5PSP2FATZMYYY
         '400':
           description: Invalid payload.
           schema:
