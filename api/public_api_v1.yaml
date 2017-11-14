@@ -93,7 +93,7 @@ paths:
                     felis id, sodales euismod velit. Lorem ipsum dolor sit amet, consectetur adipiscing elit.
                 sender_service_id: 01BX9NSMKVXXS5PSP2FATZMWWW
               page_size: 2
-              next: https://example.com/next            
+              next: https://example.com/next
         '404':
           description: No message found.
       parameters:
@@ -130,7 +130,7 @@ paths:
                 Location (URL) of created message resource.
                 A GET request to this URL returns the message status and details.
           examples:
-            application/json: {}                
+            application/json: {}
         '400':
           description: Invalid payload.
           schema:
@@ -188,7 +188,7 @@ paths:
           $ref: "#/definitions/ExtendedProfile"
         x-examples:
           application/json:
-            email: foobar@example.com    
+            email: foobar@example.com
   "/info":
     get:
       operationId: getInfo
@@ -201,7 +201,7 @@ paths:
         '401':
           description: Returns unauthorized when the API-key if empty or wrong.
       description: An endpoint to test authenticated access to the API backend.
-      summary: API test endpoint      
+      summary: API test endpoint
 definitions:
   ProblemJson:
     title: Problem Type
@@ -414,7 +414,7 @@ parameters:
     type: string
     minimum: 1
     description: An opaque identifier that points to the next item in the collection.
-    x-example: 01BX9NSMKVXXS5PSP2FATZM123    
+    x-example: 01BX9NSMKVXXS5PSP2FATZM123
   FiscalCode:
     name: fiscal_code
     in: path
@@ -424,7 +424,7 @@ parameters:
     required: true
     description: The fiscal code of the user, all upper case.
     pattern: "[A-Z]{6}[0-9LMNPQRSTUV]{2}[ABCDEHLMPRST][0-9LMNPQRSTUV]{2}[A-Z][0-9LMNPQRSTUV]{3}[A-Z]"
-    x-example: SPNDNL80R13C555X    
+    x-example: SPNDNL80R13C555X
 consumes:
 - application/json
 produces:
