@@ -328,7 +328,7 @@ export function CreateMessageHandler(
     return ResponseSuccessRedirectToResource(
       newMessageWithoutContent,
       `/api/v1/messages/${fiscalCode}/${newMessageWithoutContent.id}`,
-      {}
+      { id: newMessageWithoutContent.id }
     );
   };
 }
