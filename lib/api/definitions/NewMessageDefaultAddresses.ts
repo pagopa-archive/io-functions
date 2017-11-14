@@ -9,7 +9,7 @@
 import { isEmailAddress, EmailAddress } from "./EmailAddress";
 
 /**
- * Default addresses for notifying the recipient of the message.
+ * Default addresses for notifying the recipient of the message in case no address for the related channel is set in his profile.
  */
 
 import { option, Option } from "ts-option";

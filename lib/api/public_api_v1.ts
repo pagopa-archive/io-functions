@@ -178,7 +178,7 @@ export const specs = {
               ]
             },
             examples: {
-              "application/json": { email: "foobar@example.com", version: 0 }
+              "application/json": { email: "foobar@example.com", version: 1 }
             }
           },
           "404": { description: "No user found for the provided fiscal code." }
@@ -260,7 +260,7 @@ export const specs = {
           type: "string",
           description:
             "A human readable explanation specific to this occurrence of the\nproblem.\n",
-          example: "Connection to database timed out"
+          example: "There was an error processing the request"
         },
         instance: {
           type: "string",
@@ -291,7 +291,8 @@ export const specs = {
     },
     NotificationChannelStatus: {
       type: "string",
-      "x-extensible-enum": ["QUEUED", "SENT_TO_CHANNEL"]
+      "x-extensible-enum": ["QUEUED", "SENT_TO_CHANNEL"],
+      example: "SENT_TO_CHANNEL"
     },
     NotificationStatus: {
       title: "NotificationStatus",
@@ -322,21 +323,25 @@ export const specs = {
       type: "string",
       description: "User's fiscal code.",
       pattern:
-        "^[A-Z]{6}[0-9LMNPQRSTUV]{2}[ABCDEHLMPRST][0-9LMNPQRSTUV]{2}[A-Z][0-9LMNPQRSTUV]{3}[A-Z]$"
+        "^[A-Z]{6}[0-9LMNPQRSTUV]{2}[ABCDEHLMPRST][0-9LMNPQRSTUV]{2}[A-Z][0-9LMNPQRSTUV]{3}[A-Z]$",
+      example: "SPNDNL80R13C555X"
     },
     MessageSubject: {
       type: "string",
       description:
         "The (optional) subject of the message - note that only some notification\nchannels support the display of a subject. When a subject is not provided,\none gets generated from the client attributes.",
       minLength: 10,
-      maxLength: 120
+      maxLength: 120,
+      example: "Welcome new user !"
     },
     MessageBodyMarkdown: {
       type: "string",
       description:
         "The full version of the message, in plain text or Markdown format. The\ncontent of this field will be delivered to channels that don't have any\nlimit in terms of content size (e.g. email, etc...).",
       minLength: 80,
-      maxLength: 10000
+      maxLength: 10000,
+      example:
+        "# This is a markdown header\n\nto show how easy markdown can be converted to **HTML**\n\nRemember: this has to be a long text."
     },
     PaginationResponse: {
       type: "object",
@@ -346,13 +351,15 @@ export const specs = {
         page_size: {
           type: "integer",
           minimum: 1,
-          description: "Number of items returned for each page."
+          description: "Number of items returned for each page.",
+          example: 2
         },
         next: {
           type: "string",
           description:
             "Contains an URL to GET the next #<page_size> results in the retrieved collection of items.",
-          format: "uri"
+          format: "uri",
+          example: "https://example.com/?p=0XXX2"
         }
       }
     },
@@ -381,7 +388,8 @@ export const specs = {
       minimum: 3600,
       maximum: 31536000,
       description:
-        "This parameter specifies for how long (in seconds) the system will try to deliver the message to the channels configured by the user."
+        "This parameter specifies for how long (in seconds) the system will try to deliver the message to the channels configured by the user.",
+      example: 3600
     },
     HttpStatusCode: {
       type: "integer",
@@ -391,24 +399,23 @@ export const specs = {
       minimum: 100,
       maximum: 600,
       exclusiveMaximum: true,
-      example: 503
+      example: 200
     },
     NewMessageDefaultAddresses: {
       type: "object",
       description:
-        "Default addresses for notifying the recipient of the message.",
-      properties: {
-        email: {
-          $ref: "#/definitions/EmailAddress",
-          description:
-            "The recipient will be notified to this email address in case no email is set in the recipient profile."
-        }
-      }
+        "Default addresses for notifying the recipient of the message in case no address for the related channel is set in his profile.",
+      properties: { email: { $ref: "#/definitions/EmailAddress" } }
     },
-    EmailAddress: { type: "string", format: "email" },
+    EmailAddress: {
+      type: "string",
+      format: "email",
+      example: "foobar@example.com"
+    },
     PreferredLanguage: {
       type: "string",
-      "x-extensible-enum": ["it_IT", "en_GB", "es_ES", "de_DE", "fr_FR"]
+      "x-extensible-enum": ["it_IT", "en_GB", "es_ES", "de_DE", "fr_FR"],
+      example: "it_IT"
     },
     PreferredLanguages: {
       type: "array",
