@@ -1,5 +1,6 @@
 # Digital Citizenship APIs
 
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/58e9cc58362f43e1bfdb0a52435cf117)](https://www.codacy.com/app/cloudify/digital-citizenship-functions?utm_source=github.com&utm_medium=referral&utm_content=teamdigitale/digital-citizenship-functions&utm_campaign=badger)
 [![CircleCI](https://circleci.com/gh/teamdigitale/digital-citizenship-functions/tree/master.svg?style=svg)](https://circleci.com/gh/teamdigitale/digital-citizenship-functions/tree/master)
 
 [![dependencies](https://david-dm.org/teamdigitale/digital-citizenship-functions/status.svg)](https://david-dm.org/teamdigitale/digital-citizenship-functions)
