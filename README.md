@@ -14,6 +14,8 @@
 
 [![Known Vulnerabilities](https://snyk.io/test/github/teamdigitale/digital-citizenship-functions/badge.svg)](https://snyk.io/test/github/teamdigitale/digital-citizenship-functions)
 
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/58e9cc58362f43e1bfdb0a52435cf117)](https://www.codacy.com/app/cloudify/digital-citizenship-functions?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=teamdigitale/digital-citizenship-functions&amp;utm_campaign=Badge_Grade)
+
 ## Introduction
 
 This is the implementation of the Digital Citizenship API, a set of services
