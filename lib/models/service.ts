@@ -15,7 +15,11 @@ import { FiscalCode, isFiscalCode } from "../api/definitions/FiscalCode";
 
 import { nonEmptyStringToModelId } from "../utils/conversions";
 import { NonNegativeNumber } from "../utils/numbers";
-import { NonEmptyString, toNonEmptyString } from "../utils/strings";
+import {
+  isNonEmptyString,
+  NonEmptyString,
+  toNonEmptyString
+} from "../utils/strings";
 
 /**
  * Base interface for Service objects
@@ -31,6 +35,8 @@ export interface IService {
   readonly organizationName: NonEmptyString;
   // list of authorized fiscal codes
   readonly authorizedRecipients: ReadonlySet<FiscalCode>;
+  // authorized source CIDRs
+  readonly authorizedCIDRs: ReadonlySet<NonEmptyString>;
 }
 
 /**
@@ -74,9 +80,20 @@ export function toAuthorizedRecipients(
   return new Set(Array.from(authorizedRecipients || []).filter(isFiscalCode));
 }
 
+/**
+ * @see toAuthorizedRecipients
+ * @param authorizedCIDRs   Array or Set of authorized CIDRs for this service.
+ */
+export function toAuthorizedCIDRs(
+  authorizedCIDRs: ReadonlyArray<string> | undefined
+): ReadonlySet<NonEmptyString> {
+  return new Set(Array.from(authorizedCIDRs || []).filter(isNonEmptyString));
+}
+
 function toRetrieved(result: DocumentDb.RetrievedDocument): IRetrievedService {
   return {
     ...result,
+    authorizedCIDRs: toAuthorizedCIDRs(result.authorizedCIDRs),
     authorizedRecipients: toAuthorizedRecipients(result.authorizedRecipients),
     departmentName: result.departmentName,
     id: toNonEmptyString(result.id).toUndefined(),
@@ -108,6 +125,7 @@ function updateModelId(
 
 function toBaseType(o: IRetrievedService): IService {
   return {
+    authorizedCIDRs: o.authorizedCIDRs,
     authorizedRecipients: o.authorizedRecipients,
     departmentName: o.departmentName,
     organizationName: o.organizationName,

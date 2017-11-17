@@ -2,9 +2,19 @@
  * Handler for debug endpoint
  */
 
+import {
+  checkSourceIpForHandler,
+  clientIPAndCidrTuple as ipTuple
+} from "../utils/source_ip_check";
+
 import * as express from "express";
 
 import { right } from "fp-ts/lib/Either";
+
+import {
+  ClientIp,
+  ClientIpMiddleware
+} from "../utils/middlewares/client_ip_middleware";
 
 import {
   IRequestMiddleware,
@@ -36,12 +46,13 @@ const ExpressRequestMiddleware: IRequestMiddleware<
 // type definition of the debug endpoint
 type GetDebug = (
   request: express.Request,
+  clientIp: ClientIp,
   auth: IAzureApiAuthorization,
   attributes: IAzureUserAttributes
 ) => Promise<IResponseSuccessJson<object>>;
 
-const getDebugHandler: GetDebug = (request, auth, userAttributes) => {
-  return new Promise((resolve, _) => {
+const getDebugHandler: GetDebug = (request, _, auth, userAttributes) => {
+  return new Promise((resolve, __) => {
     resolve(
       ResponseSuccessJson({
         auth: {
@@ -68,8 +79,13 @@ export function GetDebug(serviceModel: ServiceModel): express.RequestHandler {
   );
   const middlewaresWrap = withRequestMiddlewares(
     ExpressRequestMiddleware,
+    ClientIpMiddleware,
     azureApiMiddleware,
     azureUserAttributesMiddleware
   );
-  return wrapRequestHandler(middlewaresWrap(getDebugHandler));
+  return wrapRequestHandler(
+    middlewaresWrap(
+      checkSourceIpForHandler(getDebugHandler, (_, c, __, u) => ipTuple(c, u))
+    )
+  );
 }

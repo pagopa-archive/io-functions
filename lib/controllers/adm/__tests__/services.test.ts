@@ -18,6 +18,7 @@ import {
 import {
   IRetrievedService,
   IService,
+  toAuthorizedCIDRs,
   toAuthorizedRecipients
 } from "../../../models/service";
 
@@ -44,6 +45,7 @@ const anAzureAuthorization: IAzureApiAuthorization = {
 };
 
 const aServicePayload: IService = {
+  authorizedCIDRs: toAuthorizedCIDRs([]),
   authorizedRecipients: toAuthorizedRecipients([]),
   departmentName: _getO(toNonEmptyString("MyDeptName")),
   organizationName: _getO(toNonEmptyString("MyOrgName")),
@@ -54,6 +56,7 @@ const aServicePayload: IService = {
 const aRetrievedService: IRetrievedService = {
   _self: "123",
   _ts: "123",
+  authorizedCIDRs: toAuthorizedCIDRs([]),
   authorizedRecipients: toAuthorizedRecipients([]),
   departmentName: _getO(toNonEmptyString("MyDeptName")),
   id: _getO(toNonEmptyString("123")),
@@ -73,7 +76,12 @@ describe("GetServiceHandler", () => {
     };
     const aServiceId = _getO(toNonEmptyString("1"));
     const getServiceHandler = GetServiceHandler(serviceModelMock as any);
-    const response = await getServiceHandler(anAzureAuthorization, aServiceId);
+    const response = await getServiceHandler(
+      anAzureAuthorization,
+      undefined as any, // not used
+      undefined as any, // not used
+      aServiceId
+    );
     expect(serviceModelMock.findOneByServiceId).toHaveBeenCalledWith(
       aServiceId
     );
@@ -90,7 +98,12 @@ describe("GetServiceHandler", () => {
     };
     const aServiceId = _getO(toNonEmptyString("1"));
     const getServiceHandler = GetServiceHandler(serviceModelMock as any);
-    const response = await getServiceHandler(anAzureAuthorization, aServiceId);
+    const response = await getServiceHandler(
+      anAzureAuthorization,
+      undefined as any, // not used
+      undefined as any, // not used
+      aServiceId
+    );
     expect(serviceModelMock.findOneByServiceId).toHaveBeenCalledWith(
       aServiceId
     );
@@ -104,7 +117,12 @@ describe("GetServiceHandler", () => {
     };
     const aServiceId = _getO(toNonEmptyString("1"));
     const getServiceHandler = GetServiceHandler(serviceModelMock as any);
-    const response = await getServiceHandler(anAzureAuthorization, aServiceId);
+    const response = await getServiceHandler(
+      anAzureAuthorization,
+      undefined as any, // not used
+      undefined as any, // not used
+      aServiceId
+    );
     expect(serviceModelMock.findOneByServiceId).toHaveBeenCalledWith(
       aServiceId
     );
@@ -139,6 +157,8 @@ describe("CreateServiceHandler", () => {
 
     const response = await createServiceHandler(
       anAzureAuthorization,
+      undefined as any, // not used
+      undefined as any, // not used
       aServicePayload
     );
 
@@ -160,6 +180,8 @@ describe("CreateServiceHandler", () => {
     const createServiceHandler = CreateServiceHandler(serviceModelMock as any);
     const response = await createServiceHandler(
       anAzureAuthorization,
+      undefined as any, // not used
+      undefined as any, // not used
       aServicePayload
     );
     expect(serviceModelMock.create).toHaveBeenCalledWith(
@@ -199,6 +221,8 @@ describe("UpdateServiceHandler", () => {
     const aDepartmentName = "UpdateDept";
     const response = await updateServiceHandler(
       anAzureAuthorization,
+      undefined as any, // not used
+      undefined as any, // not used
       aServicePayload.serviceId,
       {
         ...aServicePayload,
@@ -221,6 +245,8 @@ describe("UpdateServiceHandler", () => {
     const updateServiceHandler = UpdateServiceHandler({} as any);
     const response = await updateServiceHandler(
       anAzureAuthorization,
+      undefined as any, // not used
+      undefined as any, // not used
       aServicePayload.serviceId,
       {
         ...aServicePayload,
@@ -238,6 +264,8 @@ describe("UpdateServiceHandler", () => {
     const updateServiceHandler = UpdateServiceHandler(serviceModelMock as any);
     const response = await updateServiceHandler(
       anAzureAuthorization,
+      undefined as any, // not used
+      undefined as any, // not used
       aServicePayload.serviceId,
       aServicePayload
     );
@@ -255,6 +283,8 @@ describe("UpdateServiceHandler", () => {
     const updateServiceHandler = UpdateServiceHandler(serviceModelMock as any);
     const response = await updateServiceHandler(
       anAzureAuthorization,
+      undefined as any, // not used
+      undefined as any, // not used
       aServicePayload.serviceId,
       aServicePayload
     );
@@ -275,6 +305,8 @@ describe("UpdateServiceHandler", () => {
     const updateServiceHandler = UpdateServiceHandler(serviceModelMock as any);
     const response = await updateServiceHandler(
       anAzureAuthorization,
+      undefined as any, // not used
+      undefined as any, // not used
       aServicePayload.serviceId,
       aServicePayload
     );
@@ -300,6 +332,8 @@ describe("UpdateServiceHandler", () => {
     const updateServiceHandler = UpdateServiceHandler(serviceModelMock as any);
     const response = await updateServiceHandler(
       anAzureAuthorization,
+      undefined as any, // not used
+      undefined as any, // not used
       aServicePayload.serviceId,
       aServicePayload
     );

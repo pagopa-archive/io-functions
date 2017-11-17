@@ -11,6 +11,16 @@ import { FiscalCode } from "../api/definitions/FiscalCode";
 import { LimitedProfile } from "../api/definitions/LimitedProfile";
 
 import {
+  AzureUserAttributesMiddleware,
+  IAzureUserAttributes
+} from "../utils/middlewares/azure_user_attributes";
+
+import {
+  ClientIp,
+  ClientIpMiddleware
+} from "../utils/middlewares/client_ip_middleware";
+
+import {
   AzureApiAuthMiddleware,
   IAzureApiAuthorization,
   UserGroup
@@ -37,8 +47,15 @@ import {
   ResponseSuccessJson
 } from "../utils/response";
 
+import {
+  checkSourceIpForHandler,
+  clientIPAndCidrTuple as ipTuple
+} from "../utils/source_ip_check";
+
 import { EmailAddress } from "../api/definitions/EmailAddress";
+
 import { IProfile, IRetrievedProfile, ProfileModel } from "../models/profile";
+import { ServiceModel } from "../models/service";
 
 function toExtendedProfile(profile: IRetrievedProfile): ExtendedProfile {
   return {
@@ -59,6 +76,8 @@ function toLimitedProfile(_: IRetrievedProfile): LimitedProfile {
  */
 type IGetProfileHandler = (
   auth: IAzureApiAuthorization,
+  clientIp: ClientIp,
+  attrs: IAzureUserAttributes,
   fiscalCode: FiscalCode
 ) => Promise<
   | IResponseSuccessJson<LimitedProfile>
@@ -75,6 +94,8 @@ type IGetProfileHandler = (
  */
 type IUpsertProfileHandler = (
   auth: IAzureApiAuthorization,
+  clientIp: ClientIp,
+  attrs: IAzureUserAttributes,
   fiscalCode: FiscalCode,
   profileModelPayload: IProfilePayload
 ) => Promise<
@@ -90,7 +111,7 @@ type IUpsertProfileHandler = (
 export function GetProfileHandler(
   profileModel: ProfileModel
 ): IGetProfileHandler {
-  return async (auth, fiscalCode) => {
+  return async (auth, _, __, fiscalCode) => {
     const errorOrMaybeProfile = await profileModel.findOneProfileByFiscalCode(
       fiscalCode
     );
@@ -124,15 +145,27 @@ export function GetProfileHandler(
 /**
  * Wraps a GetProfile handler inside an Express request handler.
  */
-export function GetProfile(profileModel: ProfileModel): express.RequestHandler {
+export function GetProfile(
+  serviceModel: ServiceModel,
+  profileModel: ProfileModel
+): express.RequestHandler {
   const handler = GetProfileHandler(profileModel);
+  const azureUserAttributesMiddleware = AzureUserAttributesMiddleware(
+    serviceModel
+  );
   const middlewaresWrap = withRequestMiddlewares(
     AzureApiAuthMiddleware(
       new Set([UserGroup.ApiLimitedProfileRead, UserGroup.ApiFullProfileRead])
     ),
+    ClientIpMiddleware,
+    azureUserAttributesMiddleware,
     FiscalCodeMiddleware
   );
-  return wrapRequestHandler(middlewaresWrap(handler));
+  return wrapRequestHandler(
+    middlewaresWrap(
+      checkSourceIpForHandler(handler, (_, c, u, __) => ipTuple(c, u))
+    )
+  );
 }
 
 /**
@@ -253,7 +286,7 @@ async function updateExistingProfileFromPayload(
 export function UpsertProfileHandler(
   profileModel: ProfileModel
 ): IUpsertProfileHandler {
-  return async (_, fiscalCode, profileModelPayload) => {
+  return async (_, __, ___, fiscalCode, profileModelPayload) => {
     const errorOrMaybeProfile = await profileModel.findOneProfileByFiscalCode(
       fiscalCode
     );
@@ -284,13 +317,23 @@ export function UpsertProfileHandler(
  * Wraps an UpsertProfile handler inside an Express request handler.
  */
 export function UpsertProfile(
+  serviceModel: ServiceModel,
   profileModel: ProfileModel
 ): express.RequestHandler {
   const handler = UpsertProfileHandler(profileModel);
+  const azureUserAttributesMiddleware = AzureUserAttributesMiddleware(
+    serviceModel
+  );
   const middlewaresWrap = withRequestMiddlewares(
     AzureApiAuthMiddleware(new Set([UserGroup.ApiProfileWrite])),
+    ClientIpMiddleware,
+    azureUserAttributesMiddleware,
     FiscalCodeMiddleware,
     ProfilePayloadMiddleware
   );
-  return wrapRequestHandler(middlewaresWrap(handler));
+  return wrapRequestHandler(
+    middlewaresWrap(
+      checkSourceIpForHandler(handler, (_, c, u, __, ___) => ipTuple(c, u))
+    )
+  );
 }

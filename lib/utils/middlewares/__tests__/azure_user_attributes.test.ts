@@ -4,7 +4,7 @@ import { none, Option, some, Some } from "fp-ts/lib/Option";
 
 import { isLeft, isRight, left, right } from "fp-ts/lib/Either";
 
-import { IService } from "../../../models/service";
+import { IService, toAuthorizedCIDRs } from "../../../models/service";
 
 import { toNonEmptyString } from "../../../utils/strings";
 
@@ -25,6 +25,7 @@ function lookup(h: IHeaders): (k: string) => string | undefined {
 }
 
 const aService: IService = {
+  authorizedCIDRs: toAuthorizedCIDRs([]),
   authorizedRecipients: new Set([]),
   departmentName: _getO(toNonEmptyString("MyDept")),
   organizationName: _getO(toNonEmptyString("MyService")),

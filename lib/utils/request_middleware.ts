@@ -136,6 +136,31 @@ export function withRequestMiddlewares<
   handler: (v1: T1, v2: T2, v3: T3, v4: T4, v5: T5) => Promise<RH>
 ) => RequestHandler<RH | R1 | R2 | R3 | R4 | R5>;
 
+export function withRequestMiddlewares<
+  RH extends IResponse,
+  R1 extends IResponse,
+  R2 extends IResponse,
+  R3 extends IResponse,
+  R4 extends IResponse,
+  R5 extends IResponse,
+  R6 extends IResponse,
+  T1,
+  T2,
+  T3,
+  T4,
+  T5,
+  T6
+>(
+  v1: IRequestMiddleware<R1, T1>,
+  v2: IRequestMiddleware<R2, T2>,
+  v3: IRequestMiddleware<R3, T3>,
+  v4: IRequestMiddleware<R4, T4>,
+  v5: IRequestMiddleware<R5, T5>,
+  v6: IRequestMiddleware<R6, T6>
+): (
+  handler: (v1: T1, v2: T2, v3: T3, v4: T4, v5: T5, v6: T6) => Promise<RH>
+) => RequestHandler<RH | R1 | R2 | R3 | R4 | R5 | R6>;
+
 /**
  * Returns a request handler wrapped with the provided middlewares.
  *
@@ -154,26 +179,29 @@ export function withRequestMiddlewares<
   R3 extends IResponse,
   R4 extends IResponse,
   R5 extends IResponse,
+  R6 extends IResponse,
   T1,
   T2,
   T3,
   T4,
-  T5
+  T5,
+  T6
 >(
   v1: IRequestMiddleware<R1, T1>,
   v2?: IRequestMiddleware<R2, T2>,
   v3?: IRequestMiddleware<R3, T3>,
   v4?: IRequestMiddleware<R4, T4>,
-  v5?: IRequestMiddleware<R5, T5>
+  v5?: IRequestMiddleware<R5, T5>,
+  v6?: IRequestMiddleware<R6, T6>
 ): (
-  handler: (v1: T1, v2?: T2, v3?: T3, v4?: T4, v5?: T5) => Promise<RH>
-) => RequestHandler<R1 | R2 | R3 | R4 | R5 | RH> {
+  handler: (v1: T1, v2?: T2, v3?: T3, v4?: T4, v5?: T5, v6?: T6) => Promise<RH>
+) => RequestHandler<R1 | R2 | R3 | R4 | R5 | R6 | RH> {
   return handler => {
     // The outer promise with resolve to a type that can either be the the type returned
     // by the handler or one of the types returned by any of the middlewares (i.e., when
     // a middleware returns an error response).
     return request =>
-      new Promise<R1 | R2 | R3 | R4 | R5 | RH>((resolve, reject) => {
+      new Promise<R1 | R2 | R3 | R4 | R5 | R6 | RH>((resolve, reject) => {
         // we execute each middleware in sequence, stopping at the first middleware that is
         // undefined or when a middleware returns an error response.
         // when we find an undefined middleware, we call the handler with all the results of
@@ -210,6 +238,25 @@ export function withRequestMiddlewares<
                             // 5th middleware returned a response
                             // stop processing the middlewares
                             resolve(r5.value);
+                          } else if (v6 !== undefined) {
+                            v6(request).then(r6 => {
+                              if (isLeft(r6)) {
+                                // 6th middleware returned a response
+                                // stop processing the middlewares
+                                resolve(r6.value);
+                              } else {
+                                // 6th middleware returned a value
+                                // run handler
+                                handler(
+                                  r1.value,
+                                  r2.value,
+                                  r3.value,
+                                  r4.value,
+                                  r5.value,
+                                  r6.value
+                                ).then(resolve, reject);
+                              }
+                            }, reject);
                           } else {
                             // 5th middleware returned a value
                             // run handler

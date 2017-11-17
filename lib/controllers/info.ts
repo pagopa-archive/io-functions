@@ -5,6 +5,16 @@
 import * as express from "express";
 
 import {
+  AzureUserAttributesMiddleware,
+  IAzureUserAttributes
+} from "../utils/middlewares/azure_user_attributes";
+
+import {
+  ClientIp,
+  ClientIpMiddleware
+} from "../utils/middlewares/client_ip_middleware";
+
+import {
   withRequestMiddlewares,
   wrapRequestHandler
 } from "../utils/request_middleware";
@@ -15,7 +25,14 @@ import {
   UserGroup
 } from "../utils/middlewares/azure_api_auth";
 
+import {
+  checkSourceIpForHandler,
+  clientIPAndCidrTuple as ipTuple
+} from "../utils/source_ip_check";
+
 import { IResponseSuccessJson, ResponseSuccessJson } from "../utils/response";
+
+import { ServiceModel } from "../models/service";
 
 interface IResponseInfo {
   readonly status: "OK";
@@ -23,10 +40,12 @@ interface IResponseInfo {
 
 // type definition of the info endpoint
 type GetInfo = (
-  auth: IAzureApiAuthorization
+  auth: IAzureApiAuthorization,
+  clientIp: ClientIp,
+  userAttributes: IAzureUserAttributes
 ) => Promise<IResponseSuccessJson<IResponseInfo>>;
 
-const getInfoHandler: GetInfo = _ => {
+const getInfoHandler: GetInfo = (_, __, ___) => {
   return new Promise(resolve => {
     const info: IResponseInfo = {
       status: "OK"
@@ -36,10 +55,21 @@ const getInfoHandler: GetInfo = _ => {
 };
 
 // TODO: give access to a more specific group, see #150738263
-export function GetInfo(): express.RequestHandler {
-  const azureApiMiddleware = AzureApiAuthMiddleware(
+export function GetInfo(serviceModel: ServiceModel): express.RequestHandler {
+  const azureUserAttributesMiddleware = AzureUserAttributesMiddleware(
+    serviceModel
+  );
+  const azureApiAuthMiddleware = AzureApiAuthMiddleware(
     new Set([UserGroup.ApiInfoRead])
   );
-  const middlewaresWrap = withRequestMiddlewares(azureApiMiddleware);
-  return wrapRequestHandler(middlewaresWrap(getInfoHandler));
+  const middlewaresWrap = withRequestMiddlewares(
+    azureApiAuthMiddleware,
+    ClientIpMiddleware,
+    azureUserAttributesMiddleware
+  );
+  return wrapRequestHandler(
+    middlewaresWrap(
+      checkSourceIpForHandler(getInfoHandler, (_, c, u) => ipTuple(c, u))
+    )
+  );
 }

@@ -23,6 +23,10 @@ interface IEmailStringTag {
   readonly kind: "IEmailStringTag";
 }
 
+interface IIPStringTag {
+  readonly kind: "IIPStringTag";
+}
+
 // a generator of identifiers
 export type ObjectIdGenerator = () => NonEmptyString;
 
@@ -108,4 +112,20 @@ export function toEmailString(
   arg: any
 ): Option<EmailString> {
   return fromNullable(arg).filter(isEmailString);
+}
+
+/**
+ * A string that represents an IP (v4 or v6).
+ */
+export type IPString = string & IIPStringTag;
+
+export const isIPString = is<IPString>(arg => {
+  return typeof arg === "string" && validator.isIP(arg);
+});
+
+export function toIPString(
+  // tslint:disable-next-line:no-any
+  arg: any
+): Option<IPString> {
+  return fromNullable(arg).filter(isIPString);
 }
