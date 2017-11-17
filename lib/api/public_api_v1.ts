@@ -132,8 +132,7 @@ export const specs = {
                   subject: "ipsum labore deserunt fugiat",
                   markdown:
                     "Nullam dapibus metus sed elementum efficitur. Curabitur facilisis sagittis risus nec sodales. Vestibulum in eros sapien. Donec ac odio sit amet dui semper ornare eget nec odio. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Praesent nibh ex, mattis sit amet felis id, sodales euismod velit. Lorem ipsum dolor sit amet, consectetur adipiscing elit."
-                },
-                default_addresses: { email: "foobar@example.com" }
+                }
               }
             }
           }
