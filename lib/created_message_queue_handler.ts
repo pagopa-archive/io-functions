@@ -47,6 +47,9 @@ import { Either, left, right } from "./utils/either";
 import { toNonEmptyString } from "./utils/strings";
 import { Tuple2 } from "./utils/tuples";
 
+// Whether we're in a production environment
+const isProduction = process.env.NODE_ENV === "production";
+
 // Setup DocumentDB
 
 const COSMOSDB_URI: string = process.env.CUSTOMCONNSTR_COSMOSDB_URI;
@@ -54,7 +57,6 @@ const COSMOSDB_KEY: string = process.env.CUSTOMCONNSTR_COSMOSDB_KEY;
 
 const MESSAGE_CONTAINER_NAME: string = process.env.MESSAGE_CONTAINER_NAME;
 
-// TODO: read from env vars
 const documentDbDatabaseUrl = documentDbUtils.getDatabaseUri(
   process.env.COSMOSDB_NAME
 );
@@ -275,7 +277,8 @@ export function processReject(
  */
 export function index(context: IContextWithBindings): void {
   // redirect winston logs to Azure Functions log
-  configureAzureContextTransport(context, winston, "debug");
+  const logLevel = isProduction ? "info" : "debug";
+  configureAzureContextTransport(context, winston, logLevel);
   winston.debug(`bindings|${JSON.stringify(context.bindings)}`);
 
   const createdMessageEvent = context.bindings.createdMessage;

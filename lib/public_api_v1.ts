@@ -32,6 +32,9 @@ import { toNonEmptyString } from "./utils/strings";
 import * as express from "express";
 import { secureExpressApp } from "./utils/express";
 
+// Whether we're in a production environment
+const isProduction = process.env.NODE_ENV === "production";
+
 // Setup Express
 const app = express();
 secureExpressApp(app);
@@ -108,7 +111,8 @@ const azureFunctionHandler = createAzureFunctionHandler(app);
 
 // Binds the express app to an Azure Function handler
 export function index(context: IContext<{}>): void {
-  configureAzureContextTransport(context, winston, "debug");
+  const logLevel = isProduction ? "info" : "debug";
+  configureAzureContextTransport(context, winston, logLevel);
   setAppContext(app, context);
   azureFunctionHandler(context);
 }
