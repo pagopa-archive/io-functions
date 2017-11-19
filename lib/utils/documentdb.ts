@@ -263,7 +263,9 @@ export function queryOneDocument<T>(
   client: DocumentDb.DocumentClient,
   collectionUrl: IDocumentDbCollectionUri,
   query: DocumentDb.DocumentQuery
-): Promise<Either<DocumentDb.QueryError, Option<T>>> {
+): Promise<
+  Either<DocumentDb.QueryError, Option<T & DocumentDb.RetrievedDocument>>
+> {
   // get a result iterator for the query
   const iterator = queryDocuments<T>(client, collectionUrl, query);
   return new Promise((resolve, reject) => {
@@ -287,7 +289,7 @@ export function queryOneDocument<T>(
               }
             })
             .getOrElse(() => {
-              resolve(right(none as Option<T>));
+              resolve(right(none as Option<T & DocumentDb.RetrievedDocument>));
             });
         })
         .mapLeft(error => {
@@ -384,7 +386,7 @@ export function replaceDocument<T>(
 
 /**
  * Create or update media attached to a document.
- * 
+ *
  * @param client        the cosmosdb client
  * @param documentUri   the uri of the document
  * @param attachment    the media (link) to the attachment
@@ -414,7 +416,7 @@ export function upsertAttachment<T>(
 
 /**
  * Get all media attached to a document.
- * 
+ *
  * @param client        the cosmosdb client
  * @param documentUri   the uri of the document
  * @param options       request options for the REST API call
