@@ -16,12 +16,14 @@ import { configureAzureContextTransport } from "./utils/logging";
 
 import * as documentDbUtils from "./utils/documentdb";
 
-import { Option, option } from "ts-option";
+import { fromNullable, isNone, Option } from "fp-ts/lib/Option";
 
 import { BlobService, createBlobService } from "azure-storage";
 
 import { NewMessageDefaultAddresses } from "./api/definitions/NewMessageDefaultAddresses";
 import { NotificationChannelStatus } from "./api/definitions/NotificationChannelStatus";
+
+import { getRequiredStringEnv } from "./utils/env";
 
 import {
   ICreatedMessageEvent,
@@ -44,7 +46,7 @@ import { INotificationEvent } from "./models/notification_event";
 import { ProfileModel } from "./models/profile";
 
 import { Either, isLeft, isRight, left, right } from "fp-ts/lib/Either";
-import { toNonEmptyString } from "./utils/strings";
+import { NonEmptyString } from "./utils/strings";
 import { Tuple2 } from "./utils/tuples";
 
 // Whether we're in a production environment
@@ -52,14 +54,12 @@ const isProduction = process.env.NODE_ENV === "production";
 
 // Setup DocumentDB
 
-const COSMOSDB_URI: string = process.env.CUSTOMCONNSTR_COSMOSDB_URI;
-const COSMOSDB_KEY: string = process.env.CUSTOMCONNSTR_COSMOSDB_KEY;
+const cosmosDbUri = getRequiredStringEnv("CUSTOMCONNSTR_COSMOSDB_URI");
+const cosmosDbKey = getRequiredStringEnv("CUSTOMCONNSTR_COSMOSDB_KEY");
+const cosmosDbName = getRequiredStringEnv("COSMOSDB_NAME");
+const messageContainerName = getRequiredStringEnv("MESSAGE_CONTAINER_NAME");
 
-const MESSAGE_CONTAINER_NAME: string = process.env.MESSAGE_CONTAINER_NAME;
-
-const documentDbDatabaseUrl = documentDbUtils.getDatabaseUri(
-  process.env.COSMOSDB_NAME
-);
+const documentDbDatabaseUrl = documentDbUtils.getDatabaseUri(cosmosDbName);
 const profilesCollectionUrl = documentDbUtils.getCollectionUri(
   documentDbDatabaseUrl,
   "profiles"
@@ -73,7 +73,7 @@ const notificationsCollectionUrl = documentDbUtils.getCollectionUri(
   "notifications"
 );
 
-const STORAGE_CONNECTION_STRING = process.env.AzureWebJobsStorage;
+const storageConnectionString = getRequiredStringEnv("AzureWebJobsStorage");
 
 /**
  * Input and output bindings for this function
@@ -158,12 +158,12 @@ export async function handleMessage(
   // attempt to resolve an email notification
   //
   const maybeProfileEmail = maybeProfile
-    .flatMap(profile => option(profile.email))
+    .chain(profile => fromNullable(profile.email))
     .map(email => Tuple2(email, NotificationAddressSource.PROFILE_ADDRESS));
   const maybeDefaultEmail = defaultAddresses
-    .flatMap(addresses => option(addresses.email))
+    .chain(addresses => fromNullable(addresses.email))
     .map(email => Tuple2(email, NotificationAddressSource.DEFAULT_ADDRESS));
-  const maybeEmail = maybeProfileEmail.orElse(() => maybeDefaultEmail);
+  const maybeEmail = maybeProfileEmail.alt(maybeDefaultEmail);
   const maybeEmailNotification: Option<
     INotificationChannelEmail
   > = maybeEmail.map(({ e1: toAddress, e2: addressSource }) => {
@@ -175,7 +175,7 @@ export async function handleMessage(
   });
 
   // check whether there's at least a channel we can send the notification to
-  if (maybeEmailNotification.isEmpty) {
+  if (isNone(maybeEmailNotification)) {
     // no channels to notify the user
     return left(ProcessingError.NO_ADDRESSES);
   }
@@ -185,11 +185,9 @@ export async function handleMessage(
   // generated a notification, we set the field to undefined
   const notification: INewNotification = {
     // if we have an emailNotification, we initialize its status
-    emailNotification: maybeEmailNotification.isDefined
-      ? maybeEmailNotification.get
-      : undefined,
+    emailNotification: maybeEmailNotification.toUndefined(),
     fiscalCode: newMessageWithoutContent.fiscalCode,
-    id: toNonEmptyString(ulid()).get,
+    id: ulid() as NonEmptyString,
     kind: "INewNotification",
     messageId: newMessageWithoutContent.id
   };
@@ -301,7 +299,7 @@ export function index(context: IContextWithBindings): void {
   // it is an ICreatedMessageEvent
   const newMessageWithoutContent = createdMessageEvent.message;
   const messageContent = createdMessageEvent.messageContent;
-  const defaultAddresses = option(createdMessageEvent.defaultAddresses);
+  const defaultAddresses = fromNullable(createdMessageEvent.defaultAddresses);
   const senderMetadata = createdMessageEvent.senderMetadata;
 
   winston.info(
@@ -309,21 +307,21 @@ export function index(context: IContextWithBindings): void {
   );
 
   // setup required models
-  const documentClient = new DocumentDBClient(COSMOSDB_URI, {
-    masterKey: COSMOSDB_KEY
+  const documentClient = new DocumentDBClient(cosmosDbUri, {
+    masterKey: cosmosDbKey
   });
   const profileModel = new ProfileModel(documentClient, profilesCollectionUrl);
   const messageModel = new MessageModel(
     documentClient,
     messagesCollectionUrl,
-    toNonEmptyString(MESSAGE_CONTAINER_NAME).get
+    messageContainerName
   );
   const notificationModel = new NotificationModel(
     documentClient,
     notificationsCollectionUrl
   );
 
-  const blobService = createBlobService(STORAGE_CONNECTION_STRING);
+  const blobService = createBlobService(storageConnectionString);
 
   // now we can trigger the notifications for the message
   handleMessage(

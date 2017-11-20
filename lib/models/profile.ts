@@ -7,7 +7,7 @@ import {
 } from "../utils/documentdb_model_versioned";
 
 import { Either } from "fp-ts/lib/Either";
-import { Option } from "ts-option";
+import { Option } from "fp-ts/lib/Option";
 
 import { EmailAddress } from "../api/definitions/EmailAddress";
 import { FiscalCode } from "../api/definitions/FiscalCode";

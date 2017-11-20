@@ -1,6 +1,6 @@
 // tslint:disable:no-any
 
-import { none, some } from "ts-option";
+import { none, Option, some, Some } from "fp-ts/lib/Option";
 
 import { isLeft, isRight, left, right } from "fp-ts/lib/Either";
 import { toNonNegativeNumber } from "../../../utils/numbers";
@@ -31,32 +31,37 @@ import {
   UpdateServiceHandler
 } from "../services";
 
+// DANGEROUS, only use in tests
+function _getO<T>(o: Option<T>): T {
+  return (o as Some<T>).value;
+}
+
 const anAzureAuthorization: IAzureApiAuthorization = {
   groups: new Set([UserGroup.ApiServiceWrite]),
   kind: "IAzureApiAuthorization",
-  subscriptionId: toNonEmptyString("s123").get,
-  userId: toNonEmptyString("u123").get
+  subscriptionId: _getO(toNonEmptyString("s123")),
+  userId: _getO(toNonEmptyString("u123"))
 };
 
 const aServicePayload: IService = {
   authorizedRecipients: toAuthorizedRecipients([]),
-  departmentName: toNonEmptyString("MyDeptName").get,
-  organizationName: toNonEmptyString("MyOrgName").get,
-  serviceId: toNonEmptyString("MySubscriptionId").get,
-  serviceName: toNonEmptyString("MyServiceName").get
+  departmentName: _getO(toNonEmptyString("MyDeptName")),
+  organizationName: _getO(toNonEmptyString("MyOrgName")),
+  serviceId: _getO(toNonEmptyString("MySubscriptionId")),
+  serviceName: _getO(toNonEmptyString("MyServiceName"))
 };
 
 const aRetrievedService: IRetrievedService = {
   _self: "123",
   _ts: "123",
   authorizedRecipients: toAuthorizedRecipients([]),
-  departmentName: toNonEmptyString("MyDeptName").get,
-  id: toNonEmptyString("123").get,
+  departmentName: _getO(toNonEmptyString("MyDeptName")),
+  id: _getO(toNonEmptyString("123")),
   kind: "IRetrievedService",
-  organizationName: toNonEmptyString("MyOrgName").get,
-  serviceId: toNonEmptyString("MySubscriptionId").get,
-  serviceName: toNonEmptyString("MyServiceName").get,
-  version: toNonNegativeNumber(1).get
+  organizationName: _getO(toNonEmptyString("MyOrgName")),
+  serviceId: _getO(toNonEmptyString("MySubscriptionId")),
+  serviceName: _getO(toNonEmptyString("MyServiceName")),
+  version: _getO(toNonNegativeNumber(1))
 };
 
 describe("GetServiceHandler", () => {
@@ -66,7 +71,7 @@ describe("GetServiceHandler", () => {
         return Promise.resolve(right(some(aRetrievedService)));
       })
     };
-    const aServiceId = toNonEmptyString("1").get;
+    const aServiceId = _getO(toNonEmptyString("1"));
     const getServiceHandler = GetServiceHandler(serviceModelMock as any);
     const response = await getServiceHandler(anAzureAuthorization, aServiceId);
     expect(serviceModelMock.findOneByServiceId).toHaveBeenCalledWith(
@@ -83,7 +88,7 @@ describe("GetServiceHandler", () => {
         return Promise.resolve(left(none));
       })
     };
-    const aServiceId = toNonEmptyString("1").get;
+    const aServiceId = _getO(toNonEmptyString("1"));
     const getServiceHandler = GetServiceHandler(serviceModelMock as any);
     const response = await getServiceHandler(anAzureAuthorization, aServiceId);
     expect(serviceModelMock.findOneByServiceId).toHaveBeenCalledWith(
@@ -97,7 +102,7 @@ describe("GetServiceHandler", () => {
         return Promise.resolve(right(none));
       })
     };
-    const aServiceId = toNonEmptyString("1").get;
+    const aServiceId = _getO(toNonEmptyString("1"));
     const getServiceHandler = GetServiceHandler(serviceModelMock as any);
     const response = await getServiceHandler(anAzureAuthorization, aServiceId);
     expect(serviceModelMock.findOneByServiceId).toHaveBeenCalledWith(
@@ -197,7 +202,7 @@ describe("UpdateServiceHandler", () => {
       aServicePayload.serviceId,
       {
         ...aServicePayload,
-        departmentName: toNonEmptyString(aDepartmentName).get
+        departmentName: _getO(toNonEmptyString(aDepartmentName))
       }
     );
     expect(serviceModelMock.findOneByServiceId).toHaveBeenCalledWith(
@@ -208,7 +213,7 @@ describe("UpdateServiceHandler", () => {
     if (response.kind === "IResponseSuccessJson") {
       expect(response.value).toEqual({
         ...aRetrievedService,
-        departmentName: toNonEmptyString(aDepartmentName).get
+        departmentName: _getO(toNonEmptyString(aDepartmentName))
       });
     }
   });
@@ -219,7 +224,7 @@ describe("UpdateServiceHandler", () => {
       aServicePayload.serviceId,
       {
         ...aServicePayload,
-        serviceId: toNonEmptyString(aServicePayload.serviceId + "x").get
+        serviceId: _getO(toNonEmptyString(aServicePayload.serviceId + "x"))
       }
     );
     expect(response.kind).toBe("IResponseErrorValidation");

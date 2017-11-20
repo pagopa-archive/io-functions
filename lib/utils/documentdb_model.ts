@@ -2,7 +2,7 @@ import * as DocumentDb from "documentdb";
 import * as DocumentDbUtils from "../utils/documentdb";
 
 import { Either, isLeft, left, right } from "fp-ts/lib/Either";
-import { none, Option, option, some } from "ts-option";
+import { fromNullable, isNone, none, Option, some } from "fp-ts/lib/Option";
 
 /**
  * A persisted data model backed by a DocumentDB client: this base class
@@ -128,11 +128,11 @@ export abstract class DocumentDbModel<
 
     const maybeCurrent = errorOrMaybeCurrent.value;
 
-    if (maybeCurrent.isEmpty) {
+    if (isNone(maybeCurrent)) {
       return right(maybeCurrent);
     }
 
-    const currentRetrievedDocument = maybeCurrent.get;
+    const currentRetrievedDocument = maybeCurrent.value;
     const currentObject = this.toBaseType(currentRetrievedDocument);
 
     const updatedObject = updater(currentObject);
@@ -179,7 +179,7 @@ export abstract class DocumentDbModel<
     }
 
     // return the attachment media information
-    return right(option(attachmentMeta.value));
+    return right(fromNullable(attachmentMeta.value));
   }
 
   public async getAttachments(

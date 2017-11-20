@@ -10,7 +10,7 @@
  * User's fiscal code.
  */
 
-import { Option } from "ts-option";
+import { Option } from "fp-ts/lib/Option";
 
 import {
   isPatternString,

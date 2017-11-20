@@ -15,7 +15,7 @@ import {
  * 
  */
 
-import { option, Option } from "ts-option";
+import { fromNullable, Option } from "fp-ts/lib/Option";
 
 export interface NotificationStatus {
   readonly email?: NotificationChannelStatus;
@@ -32,5 +32,5 @@ export function isNotificationStatus(arg: any): arg is NotificationStatus {
 }
 
 export function toNotificationStatus(arg: any): Option<NotificationStatus> {
-  return option(arg).filter(isNotificationStatus);
+  return fromNullable(arg).filter(isNotificationStatus);
 }

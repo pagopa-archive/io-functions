@@ -10,7 +10,7 @@
  * Indicates the User's preferred written or spoken languages in order of preference. Generally used for selecting a localized User interface. Valid values are concatenation of the ISO 639-1 two letter language code, an underscore, and the ISO 3166-1 2 letter country code; e.g., 'en_US' specifies the language English and country US.
  */
 
-import { option, Option } from "ts-option";
+import { fromNullable, Option } from "fp-ts/lib/Option";
 
 import { isPreferredLanguage, PreferredLanguage } from "./PreferredLanguage";
 
@@ -21,5 +21,5 @@ export function isPreferredLanguages(arg: any): arg is PreferredLanguages {
 }
 
 export function toPreferredLanguages(arg: any): Option<PreferredLanguages> {
-  return option(arg).filter(isPreferredLanguages);
+  return fromNullable(arg).filter(isPreferredLanguages);
 }

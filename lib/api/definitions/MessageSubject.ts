@@ -12,7 +12,7 @@ channels support the display of a subject. When a subject is not provided,
 one gets generated from the client attributes.
  */
 
-import { Option } from "ts-option";
+import { Option } from "fp-ts/lib/Option";
 
 import {
   isWithinRangeString,

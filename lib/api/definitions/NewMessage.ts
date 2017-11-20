@@ -17,7 +17,7 @@ import {
  * 
  */
 
-import { option, Option } from "ts-option";
+import { fromNullable, Option } from "fp-ts/lib/Option";
 
 export interface NewMessage {
   readonly time_to_live?: TimeToLive;
@@ -42,5 +42,5 @@ export function isNewMessage(arg: any): arg is NewMessage {
 }
 
 export function toNewMessage(arg: any): Option<NewMessage> {
-  return option(arg).filter(isNewMessage);
+  return fromNullable(arg).filter(isNewMessage);
 }

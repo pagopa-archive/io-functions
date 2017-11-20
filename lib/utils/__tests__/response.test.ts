@@ -5,7 +5,7 @@ import * as Express from "express";
 import { response as MockResponse } from "jest-mock-express";
 
 import { right } from "fp-ts/lib/Either";
-import { none, some } from "ts-option";
+import { none, some } from "fp-ts/lib/Option";
 
 import { ResponseSuccessJson, ResponseSuccessJsonIterator } from "../response";
 

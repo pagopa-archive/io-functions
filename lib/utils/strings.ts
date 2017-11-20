@@ -2,7 +2,7 @@ import is from "ts-is";
 import * as ulid from "ulid";
 import * as validator from "validator";
 
-import { option, Option } from "ts-option";
+import { fromNullable, Option } from "fp-ts/lib/Option";
 
 interface IWithinRangeStringTag<L extends number, H extends number> {
   readonly lower: L;
@@ -26,8 +26,7 @@ interface IEmailStringTag {
 // a generator of identifiers
 export type ObjectIdGenerator = () => NonEmptyString;
 
-export const ulidGenerator: ObjectIdGenerator = () =>
-  toNonEmptyString(ulid()).get;
+export const ulidGenerator: ObjectIdGenerator = () => ulid() as NonEmptyString;
 
 /**
  * A string guaranteed to have a length within the range [L,H)
@@ -50,7 +49,7 @@ export function toWithinRangeString<L extends number, H extends number>(
   l: L,
   h: H
 ): Option<WithinRangeString<L, H>> {
-  return option(arg).filter(_ => isWithinRangeString(_, l, h));
+  return fromNullable(arg).filter(_ => isWithinRangeString(_, l, h));
 }
 
 /**
@@ -64,7 +63,7 @@ export const isNonEmptyString = is<NonEmptyString>(
 
 // tslint:disable-next-line:no-any
 export function toNonEmptyString(s: any): Option<NonEmptyString> {
-  return option(s).filter(isNonEmptyString);
+  return fromNullable(s).filter(isNonEmptyString);
 }
 
 /**
@@ -85,7 +84,7 @@ export function toPatternString<P extends string>(
   arg: any,
   p: P
 ): Option<PatternString<P>> {
-  return option(arg).filter(_ => isPatternString(_, p));
+  return fromNullable(arg).filter(_ => isPatternString(_, p));
 }
 
 /**
@@ -108,5 +107,5 @@ export function toEmailString(
   // tslint:disable-next-line:no-any
   arg: any
 ): Option<EmailString> {
-  return option(arg).filter(isEmailString);
+  return fromNullable(arg).filter(isEmailString);
 }

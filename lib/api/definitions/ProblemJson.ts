@@ -12,7 +12,7 @@ import { isHttpStatusCode, HttpStatusCode } from "./HttpStatusCode";
  * 
  */
 
-import { option, Option } from "ts-option";
+import { fromNullable, Option } from "fp-ts/lib/Option";
 
 export interface ProblemJson {
   readonly type?: string;
@@ -49,5 +49,5 @@ export function isProblemJson(arg: any): arg is ProblemJson {
 }
 
 export function toProblemJson(arg: any): Option<ProblemJson> {
-  return option(arg).filter(isProblemJson);
+  return fromNullable(arg).filter(isProblemJson);
 }

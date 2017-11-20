@@ -12,7 +12,7 @@ of the problem.
 
  */
 
-import { Option } from "ts-option";
+import { Option } from "fp-ts/lib/Option";
 
 import {
   isWithinRangeNumber,

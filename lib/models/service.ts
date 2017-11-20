@@ -7,7 +7,7 @@ import {
 } from "../utils/documentdb_model_versioned";
 
 import { Either } from "fp-ts/lib/Either";
-import { Option } from "ts-option";
+import { Option } from "fp-ts/lib/Option";
 
 import { Set } from "json-set-map";
 
@@ -79,7 +79,7 @@ function toRetrieved(result: DocumentDb.RetrievedDocument): IRetrievedService {
     ...result,
     authorizedRecipients: toAuthorizedRecipients(result.authorizedRecipients),
     departmentName: result.departmentName,
-    id: toNonEmptyString(result.id).get,
+    id: toNonEmptyString(result.id).toUndefined(),
     kind: "IRetrievedService",
     organizationName: result.organizationName,
     serviceId: result.serviceId,

@@ -1,5 +1,6 @@
 // tslint:disable:no-object-mutation
 // tslint:disable:no-any
+import { NonEmptyString } from "../strings";
 
 import * as DocumentDb from "documentdb";
 
@@ -53,7 +54,7 @@ jest.mock("../documentdb");
 import * as DocumentDbUtils from "../documentdb";
 
 const aDbClient: DocumentDb.DocumentClient = {} as any;
-const aDatabaseUri = DocumentDbUtils.getDatabaseUri("mydb");
+const aDatabaseUri = DocumentDbUtils.getDatabaseUri("mydb" as NonEmptyString);
 const aCollectionUri = DocumentDbUtils.getCollectionUri(
   aDatabaseUri,
   "mydocuments"
@@ -163,8 +164,8 @@ describe("find", () => {
     );
     expect(isRight(result));
     if (isRight(result)) {
-      expect(result.value.isDefined);
-      expect(result.value.get).toEqual({
+      expect(result.value.isSome());
+      expect(result.value.toUndefined()).toEqual({
         id: "test-id-1",
         kind: "IRetrievedMyDocument",
         test: "test"
@@ -181,7 +182,7 @@ describe("find", () => {
     const result = await model.find("test-id-1", "test-partition");
     expect(isRight(result));
     if (isRight(result)) {
-      expect(result.value.isEmpty);
+      expect(result.value.isNone());
     }
   });
 
@@ -242,8 +243,8 @@ describe("update", () => {
     );
     expect(isRight(result));
     if (isRight(result)) {
-      expect(result.value.isDefined);
-      expect(result.value.get).toEqual({
+      expect(result.value.isSome());
+      expect(result.value.toUndefined()).toEqual({
         id: "test-id-1",
         kind: "IRetrievedMyDocument",
         test: "test",
@@ -262,7 +263,7 @@ describe("update", () => {
     expect(DocumentDbUtils.replaceDocument).not.toHaveBeenCalled();
     expect(isRight(result));
     if (isRight(result)) {
-      expect(result.value.isEmpty);
+      expect(result.value.isNone());
     }
   });
 
@@ -328,7 +329,7 @@ describe("attach", () => {
     });
     expect(isRight(result)).toBeTruthy();
     if (isRight(result)) {
-      expect(result.value.isEmpty).toBeFalsy();
+      expect(result.value.isNone()).toBeFalsy();
       result.value.map(r => expect(r).toEqual(anAttachment));
     }
     upsertAttachmentSpy.mockReset();

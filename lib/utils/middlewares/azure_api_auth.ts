@@ -1,5 +1,5 @@
 import { left, right } from "fp-ts/lib/Either";
-import { Option, option } from "ts-option";
+import { fromNullable, isNone, isSome, Option, Some } from "fp-ts/lib/Option";
 
 import { IRequestMiddleware } from "../request_middleware";
 import {
@@ -58,7 +58,7 @@ export enum UserGroup {
  * Looks up a UserGroup by name
  */
 function toUserGroup(name: string): Option<UserGroup> {
-  return option(UserGroup[name as keyof typeof UserGroup]);
+  return fromNullable(UserGroup[name as keyof typeof UserGroup]);
 }
 
 /**
@@ -81,8 +81,8 @@ function getGroupsFromHeader(groupsHeader: string): Set<UserGroup> {
     groupsHeader
       .split(",")
       .map(v => toUserGroup(v))
-      .filter(g => g.isDefined)
-      .map(g => g.get)
+      .filter(g => isSome(g))
+      .map(g => (g as Some<UserGroup>).value)
   );
 }
 
@@ -115,7 +115,7 @@ export function AzureApiAuthMiddleware(
         request.header("x-subscription-id")
       );
 
-      if (maybeUserId.isEmpty || maybeSubscriptionId.isEmpty) {
+      if (isNone(maybeUserId) || isNone(maybeSubscriptionId)) {
         // we cannot proceed unless we cannot associate the request to a
         // valid user and a subscription
         return resolve(
@@ -128,8 +128,8 @@ export function AzureApiAuthMiddleware(
         );
       }
 
-      const userId = maybeUserId.get;
-      const subscriptionId = maybeSubscriptionId.get;
+      const userId = maybeUserId.value;
+      const subscriptionId = maybeSubscriptionId.value;
 
       // to correctly process the request, we must associate the correct
       // authorizations to the user that made the request; to do so, we
@@ -143,7 +143,7 @@ export function AzureApiAuthMiddleware(
         .map(getGroupsFromHeader) // extract the groups from the header
         .filter(hs => hs.size > 0); // filter only if set of groups is non empty
 
-      if (maybeGroups.isEmpty) {
+      if (isNone(maybeGroups)) {
         // the use as no valid authorization groups
         return resolve(
           left<
@@ -156,7 +156,7 @@ export function AzureApiAuthMiddleware(
       }
 
       // now we have some valid groups that the users is part of
-      const groups = maybeGroups.get;
+      const groups = maybeGroups.value;
 
       // helper that checks whether the user is part of a specific group
       const userHasOneGroup = (name: UserGroup) => groups.has(name);

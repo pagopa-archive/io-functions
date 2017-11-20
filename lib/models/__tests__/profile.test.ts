@@ -1,5 +1,6 @@
 // tslint:disable:no-any
 import { isLeft, isRight } from "fp-ts/lib/Either";
+import { isSome, Option, Some } from "fp-ts/lib/Option";
 
 import * as DocumentDb from "documentdb";
 
@@ -7,25 +8,34 @@ import * as DocumentDbUtils from "../../utils/documentdb";
 
 import { toFiscalCode } from "../../api/definitions/FiscalCode";
 import { toNonNegativeNumber } from "../../utils/numbers";
-import { toEmailString, toNonEmptyString } from "../../utils/strings";
+import {
+  NonEmptyString,
+  toEmailString,
+  toNonEmptyString
+} from "../../utils/strings";
 
 import { IProfile, IRetrievedProfile, ProfileModel } from "../profile";
 
-const aDatabaseUri = DocumentDbUtils.getDatabaseUri("mockdb");
+// DANGEROUS, only use in tests
+function _getO<T>(o: Option<T>): T {
+  return (o as Some<T>).value;
+}
+
+const aDatabaseUri = DocumentDbUtils.getDatabaseUri("mockdb" as NonEmptyString);
 const profilesCollectionUrl = DocumentDbUtils.getCollectionUri(
   aDatabaseUri,
   "profiles"
 );
 
-const aFiscalCode = toFiscalCode("FRLFRC74E04B157I").get;
+const aFiscalCode = _getO(toFiscalCode("FRLFRC74E04B157I"));
 
 const aRetrievedProfile: IRetrievedProfile = {
   _self: "xyz",
   _ts: "xyz",
   fiscalCode: aFiscalCode,
-  id: toNonEmptyString("xyz").get,
+  id: _getO(toNonEmptyString("xyz")),
   kind: "IRetrievedProfile",
-  version: toNonNegativeNumber(0).get
+  version: _getO(toNonNegativeNumber(0))
 };
 
 describe("findOneProfileByFiscalCode", () => {
@@ -47,8 +57,8 @@ describe("findOneProfileByFiscalCode", () => {
 
     expect(isRight(result)).toBeTruthy();
     if (isRight(result)) {
-      expect(result.value.isDefined).toBeTruthy();
-      expect(result.value.get).toEqual(aRetrievedProfile);
+      expect(result.value.isSome()).toBeTruthy();
+      expect(result.value.toUndefined()).toEqual(aRetrievedProfile);
     }
   });
 
@@ -70,7 +80,7 @@ describe("findOneProfileByFiscalCode", () => {
 
     expect(isRight(result)).toBeTruthy();
     if (isRight(result)) {
-      expect(result.value.isEmpty).toBeTruthy();
+      expect(result.value.isNone()).toBeTruthy();
     }
   });
 });
@@ -150,7 +160,7 @@ describe("update", () => {
       p => {
         return {
           ...p,
-          email: toEmailString("new@example.com").get
+          email: _getO(toEmailString("new@example.com"))
         };
       }
     );
@@ -163,12 +173,14 @@ describe("update", () => {
     );
     expect(isRight(result)).toBeTruthy();
     if (isRight(result)) {
-      expect(result.value.isDefined).toBeTruthy();
-      const updatedProfile = result.value.get;
-      expect(updatedProfile.fiscalCode).toEqual(aRetrievedProfile.fiscalCode);
-      expect(updatedProfile.id).toEqual(`${aFiscalCode}-${"0".repeat(15)}1`);
-      expect(updatedProfile.version).toEqual(1);
-      expect(updatedProfile.email).toEqual("new@example.com");
+      expect(result.value.isSome()).toBeTruthy();
+      if (isSome(result.value)) {
+        const updatedProfile = result.value.value;
+        expect(updatedProfile.fiscalCode).toEqual(aRetrievedProfile.fiscalCode);
+        expect(updatedProfile.id).toEqual(`${aFiscalCode}-${"0".repeat(15)}1`);
+        expect(updatedProfile.version).toEqual(1);
+        expect(updatedProfile.email).toEqual("new@example.com");
+      }
     }
   });
 

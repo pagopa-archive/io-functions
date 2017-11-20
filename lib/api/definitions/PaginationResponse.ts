@@ -10,7 +10,7 @@
  * Pagination response parameters.
  */
 
-import { option, Option } from "ts-option";
+import { fromNullable, Option } from "fp-ts/lib/Option";
 
 export interface PaginationResponse {
   readonly page_size?: number;
@@ -32,5 +32,5 @@ export function isPaginationResponse(arg: any): arg is PaginationResponse {
 }
 
 export function toPaginationResponse(arg: any): Option<PaginationResponse> {
-  return option(arg).filter(isPaginationResponse);
+  return fromNullable(arg).filter(isPaginationResponse);
 }

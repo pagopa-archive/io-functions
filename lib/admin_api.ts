@@ -1,6 +1,8 @@
 /**
  * Main entrypoint for the Administration APIs handlers
  */
+import { getRequiredStringEnv } from "./utils/env";
+
 import { IContext } from "azure-function-express";
 
 import * as winston from "winston";
@@ -37,20 +39,19 @@ secureExpressApp(app);
 
 // Setup DocumentDB
 
-const COSMOSDB_URI: string = process.env.CUSTOMCONNSTR_COSMOSDB_URI;
-const COSMOSDB_KEY: string = process.env.CUSTOMCONNSTR_COSMOSDB_KEY;
+const cosmosDbUri = getRequiredStringEnv("CUSTOMCONNSTR_COSMOSDB_URI");
+const cosmosDbKey = getRequiredStringEnv("CUSTOMCONNSTR_COSMOSDB_KEY");
+const cosmosDbName = getRequiredStringEnv("COSMOSDB_NAME");
 
-const documentDbDatabaseUrl = documentDbUtils.getDatabaseUri(
-  process.env.COSMOSDB_NAME
-);
+const documentDbDatabaseUrl = documentDbUtils.getDatabaseUri(cosmosDbName);
 
 const servicesCollectionUrl = documentDbUtils.getCollectionUri(
   documentDbDatabaseUrl,
   "services"
 );
 
-const documentClient = new DocumentDBClient(COSMOSDB_URI, {
-  masterKey: COSMOSDB_KEY
+const documentClient = new DocumentDBClient(cosmosDbUri, {
+  masterKey: cosmosDbKey
 });
 
 const serviceModel = new ServiceModel(documentClient, servicesCollectionUrl);

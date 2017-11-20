@@ -1,11 +1,12 @@
 // tslint:disable:no-any
 import { isLeft, isRight } from "fp-ts/lib/Either";
+import { isSome, Option, Some } from "fp-ts/lib/Option";
 
 import * as DocumentDb from "documentdb";
 
 import * as DocumentDbUtils from "../../utils/documentdb";
 import { toNonNegativeNumber } from "../../utils/numbers";
-import { toNonEmptyString } from "../../utils/strings";
+import { NonEmptyString, toNonEmptyString } from "../../utils/strings";
 
 import {
   IRetrievedService,
@@ -14,7 +15,12 @@ import {
   toAuthorizedRecipients
 } from "../service";
 
-const aDatabaseUri = DocumentDbUtils.getDatabaseUri("mockdb");
+// DANGEROUS, only use in tests
+function _getO<T>(o: Option<T>): T {
+  return (o as Some<T>).value;
+}
+
+const aDatabaseUri = DocumentDbUtils.getDatabaseUri("mockdb" as NonEmptyString);
 const servicesCollectionUrl = DocumentDbUtils.getCollectionUri(
   aDatabaseUri,
   "services"
@@ -26,13 +32,13 @@ const aRetrievedService: IRetrievedService = {
   _self: "xyz",
   _ts: "xyz",
   authorizedRecipients: toAuthorizedRecipients([]),
-  departmentName: toNonEmptyString("MyDept").get,
-  id: toNonEmptyString("xyz").get,
+  departmentName: _getO(toNonEmptyString("MyDept")),
+  id: _getO(toNonEmptyString("xyz")),
   kind: "IRetrievedService",
-  organizationName: toNonEmptyString("MyOrg").get,
-  serviceId: toNonEmptyString(aServiceId).get,
-  serviceName: toNonEmptyString("MyService").get,
-  version: toNonNegativeNumber(0).get
+  organizationName: _getO(toNonEmptyString("MyOrg")),
+  serviceId: _getO(toNonEmptyString(aServiceId)),
+  serviceName: _getO(toNonEmptyString("MyService")),
+  version: _getO(toNonNegativeNumber(0))
 };
 
 const aSerializedService = {
@@ -55,12 +61,14 @@ describe("findOneServiceById", () => {
       servicesCollectionUrl
     );
 
-    const result = await model.findOneByServiceId(toNonEmptyString("id").get);
+    const result = await model.findOneByServiceId(
+      _getO(toNonEmptyString("id"))
+    );
 
     expect(isRight(result)).toBeTruthy();
     if (isRight(result)) {
-      expect(result.value.isDefined).toBeTruthy();
-      expect(result.value.get).toEqual(aRetrievedService);
+      expect(result.value.isSome()).toBeTruthy();
+      expect(result.value.toUndefined()).toEqual(aRetrievedService);
     }
   });
 
@@ -78,11 +86,13 @@ describe("findOneServiceById", () => {
       servicesCollectionUrl
     );
 
-    const result = await model.findOneByServiceId(toNonEmptyString("id").get);
+    const result = await model.findOneByServiceId(
+      _getO(toNonEmptyString("id"))
+    );
 
     expect(isRight(result)).toBeTruthy();
     if (isRight(result)) {
-      expect(result.value.isEmpty).toBeTruthy();
+      expect(result.value.isNone()).toBeTruthy();
     }
   });
 });
@@ -101,10 +111,10 @@ describe("createService", () => {
 
     const newService: IService = {
       authorizedRecipients: toAuthorizedRecipients([]),
-      departmentName: toNonEmptyString("MyService").get,
-      organizationName: toNonEmptyString("MyService").get,
-      serviceId: toNonEmptyString(aServiceId).get,
-      serviceName: toNonEmptyString("MyService").get
+      departmentName: _getO(toNonEmptyString("MyService")),
+      organizationName: _getO(toNonEmptyString("MyService")),
+      serviceId: _getO(toNonEmptyString(aServiceId)),
+      serviceName: _getO(toNonEmptyString("MyService"))
     };
 
     const result = await model.create(newService, newService.serviceId);
@@ -134,10 +144,10 @@ describe("createService", () => {
 
     const newService: IService = {
       authorizedRecipients: toAuthorizedRecipients([]),
-      departmentName: toNonEmptyString("MyService").get,
-      organizationName: toNonEmptyString("MyService").get,
-      serviceId: toNonEmptyString(aServiceId).get,
-      serviceName: toNonEmptyString("MyService").get
+      departmentName: _getO(toNonEmptyString("MyService")),
+      organizationName: _getO(toNonEmptyString("MyService")),
+      serviceId: _getO(toNonEmptyString(aServiceId)),
+      serviceName: _getO(toNonEmptyString("MyService"))
     };
 
     const result = await model.create(newService, newService.serviceId);
@@ -182,12 +192,16 @@ describe("update", () => {
     );
     expect(isRight(result)).toBeTruthy();
     if (isRight(result)) {
-      expect(result.value.isDefined).toBeTruthy();
-      const updatedService = result.value.get;
-      expect(updatedService.serviceId).toEqual(aRetrievedService.serviceId);
-      expect(updatedService.id).toEqual(`${aServiceId}-${"0".repeat(15)}1`);
-      expect(updatedService.version).toEqual(1);
-      expect(updatedService.serviceName).toEqual(aRetrievedService.serviceName);
+      expect(result.value.isSome()).toBeTruthy();
+      if (isSome(result.value)) {
+        const updatedService = result.value.value;
+        expect(updatedService.serviceId).toEqual(aRetrievedService.serviceId);
+        expect(updatedService.id).toEqual(`${aServiceId}-${"0".repeat(15)}1`);
+        expect(updatedService.version).toEqual(1);
+        expect(updatedService.serviceName).toEqual(
+          aRetrievedService.serviceName
+        );
+      }
     }
   });
 

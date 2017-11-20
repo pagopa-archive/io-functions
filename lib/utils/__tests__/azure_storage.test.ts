@@ -42,7 +42,7 @@ describe("upsertBlobFromText", () => {
     );
     expect(isRight(result)).toBeTruthy();
     if (isRight(result)) {
-      expect(result.value.get).toEqual(aBlobResult);
+      expect(result.value.toUndefined()).toEqual(aBlobResult);
     }
     spy.mockReset();
   });
@@ -70,7 +70,7 @@ describe("upsertBlobFromObject", () => {
     );
     expect(isRight(result)).toBeTruthy();
     if (isRight(result)) {
-      expect(result.value.get).toEqual(aBlobResult);
+      expect(result.value.toUndefined()).toEqual(aBlobResult);
     }
     spy.mockReset();
   });

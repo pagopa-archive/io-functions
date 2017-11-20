@@ -5,7 +5,7 @@
 import * as express from "express";
 
 import { isLeft, isRight, left, right } from "fp-ts/lib/Either";
-import { option } from "ts-option";
+import { fromNullable, isNone, isSome } from "fp-ts/lib/Option";
 import { ExtendedProfile } from "../api/definitions/ExtendedProfile";
 import { FiscalCode } from "../api/definitions/FiscalCode";
 import { LimitedProfile } from "../api/definitions/LimitedProfile";
@@ -96,8 +96,8 @@ export function GetProfileHandler(
     );
     if (isRight(errorOrMaybeProfile)) {
       const maybeProfile = errorOrMaybeProfile.value;
-      if (maybeProfile.isDefined) {
-        const profile = maybeProfile.get;
+      if (isSome(maybeProfile)) {
+        const profile = maybeProfile.value;
         if (auth.groups.has(UserGroup.ApiFullProfileRead)) {
           // if the client is a trusted application we return the
           // extended profile
@@ -154,7 +154,7 @@ export const ProfilePayloadMiddleware: IRequestMiddleware<
   IProfilePayload
 > = request => {
   return new Promise(resolve => {
-    option(request.body)
+    fromNullable(request.body)
       .map(body => body.email)
       .filter(isNonEmptyString)
       .map(email =>
@@ -230,7 +230,7 @@ async function updateExistingProfileFromPayload(
 
   const maybeProfile = errorOrMaybeProfile.value;
 
-  if (maybeProfile.isEmpty) {
+  if (isNone(maybeProfile)) {
     // this should never happen since if the profile doesn't exist this function
     // will never be called, but let's deal with this anyway, you never know
     return ResponseErrorInternal(
@@ -238,7 +238,7 @@ async function updateExistingProfileFromPayload(
     );
   }
 
-  const profile = maybeProfile.get;
+  const profile = maybeProfile.value;
 
   const publicExtendedProfile = toExtendedProfile(profile);
 
@@ -259,7 +259,7 @@ export function UpsertProfileHandler(
     );
     if (isRight(errorOrMaybeProfile)) {
       const maybeProfile = errorOrMaybeProfile.value;
-      if (maybeProfile.isEmpty) {
+      if (isNone(maybeProfile)) {
         // create a new profile
         return createNewProfileFromPayload(
           profileModel,
@@ -270,7 +270,7 @@ export function UpsertProfileHandler(
         // update existing profile
         return updateExistingProfileFromPayload(
           profileModel,
-          maybeProfile.get,
+          maybeProfile.value,
           profileModelPayload
         );
       }

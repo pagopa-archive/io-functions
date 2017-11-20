@@ -1,6 +1,7 @@
 /**
  * Main entrypoint for the public APIs handlers
  */
+import { getRequiredStringEnv } from "./utils/env";
 
 import { IContext } from "azure-function-express";
 
@@ -27,7 +28,6 @@ import { GetDebug } from "./controllers/debug";
 import { GetInfo } from "./controllers/info";
 import { CreateMessage, GetMessage, GetMessages } from "./controllers/messages";
 import { GetProfile, UpsertProfile } from "./controllers/profiles";
-import { toNonEmptyString } from "./utils/strings";
 
 import * as express from "express";
 import { secureExpressApp } from "./utils/express";
@@ -41,14 +41,12 @@ secureExpressApp(app);
 
 // Setup DocumentDB
 
-const COSMOSDB_URI: string = process.env.CUSTOMCONNSTR_COSMOSDB_URI;
-const COSMOSDB_KEY: string = process.env.CUSTOMCONNSTR_COSMOSDB_KEY;
+const cosmosDbUri = getRequiredStringEnv("CUSTOMCONNSTR_COSMOSDB_URI");
+const cosmosDbKey = getRequiredStringEnv("CUSTOMCONNSTR_COSMOSDB_KEY");
+const cosmosDbName = getRequiredStringEnv("COSMOSDB_NAME");
+const messageContainerName = getRequiredStringEnv("MESSAGE_CONTAINER_NAME");
 
-const MESSAGE_CONTAINER_NAME: string = process.env.MESSAGE_CONTAINER_NAME;
-
-const documentDbDatabaseUrl = documentDbUtils.getDatabaseUri(
-  process.env.COSMOSDB_NAME
-);
+const documentDbDatabaseUrl = documentDbUtils.getDatabaseUri(cosmosDbName);
 const messagesCollectionUrl = documentDbUtils.getCollectionUri(
   documentDbDatabaseUrl,
   "messages"
@@ -66,15 +64,15 @@ const notificationsCollectionUrl = documentDbUtils.getCollectionUri(
   "notifications"
 );
 
-const documentClient = new DocumentDBClient(COSMOSDB_URI, {
-  masterKey: COSMOSDB_KEY
+const documentClient = new DocumentDBClient(cosmosDbUri, {
+  masterKey: cosmosDbKey
 });
 
 const profileModel = new ProfileModel(documentClient, profilesCollectionUrl);
 const messageModel = new MessageModel(
   documentClient,
   messagesCollectionUrl,
-  toNonEmptyString(MESSAGE_CONTAINER_NAME).get
+  messageContainerName
 );
 const serviceModel = new ServiceModel(documentClient, servicesCollectionUrl);
 const notificationModel = new NotificationModel(

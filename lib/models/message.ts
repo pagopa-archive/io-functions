@@ -5,7 +5,7 @@ import * as DocumentDbUtils from "../utils/documentdb";
 import { DocumentDbModel } from "../utils/documentdb_model";
 
 import { Either, isLeft, left, right } from "fp-ts/lib/Either";
-import { Option } from "ts-option";
+import { Option } from "fp-ts/lib/Option";
 import { isNonEmptyString, NonEmptyString } from "../utils/strings";
 
 import {

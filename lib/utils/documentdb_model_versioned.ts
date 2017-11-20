@@ -2,7 +2,7 @@ import * as DocumentDb from "documentdb";
 import * as DocumentDbUtils from "./documentdb";
 import { DocumentDbModel } from "./documentdb_model";
 
-import { Option, option, some } from "ts-option";
+import { fromNullable, isNone, Option, some, Some } from "fp-ts/lib/Option";
 
 import { NonNegativeNumber, toNonNegativeNumber } from "./numbers";
 
@@ -23,7 +23,7 @@ export function isModelId(s: string): s is ModelId {
 
 // tslint:disable-next-line:no-any
 export function toModelId(s: any): Option<ModelId> {
-  return option(s).filter(isModelId);
+  return fromNullable(s).filter(isModelId);
 }
 
 /**
@@ -72,7 +72,8 @@ export abstract class DocumentDbModelVersioned<
     partitionKey: string
   ): Promise<Either<DocumentDb.QueryError, TR>> {
     // the first version of a profile is 0
-    const initialVersion = toNonNegativeNumber(0).get;
+    const initialVersion = (toNonNegativeNumber(0) as Some<NonNegativeNumber>)
+      .value;
     // the ID of each document version is composed of the document ID and its version
     // this makes it possible to detect conflicting updates (concurrent creation of
     // profiles with the same profile ID and version)
@@ -110,19 +111,19 @@ export abstract class DocumentDbModelVersioned<
 
     const maybeCurrent = errorOrMaybeCurrent.value;
 
-    if (maybeCurrent.isEmpty) {
+    if (isNone(maybeCurrent)) {
       return right(maybeCurrent);
     }
 
-    const currentRetrievedDocument = maybeCurrent.get;
+    const currentRetrievedDocument = maybeCurrent.value;
     const currentObject = this.toBaseType(currentRetrievedDocument);
 
     const updatedObject = f(currentObject);
 
     const modelId = this.getModelId(updatedObject);
-    const nextVersion = toNonNegativeNumber(
+    const nextVersion = (toNonNegativeNumber(
       currentRetrievedDocument.version + 1
-    ).get;
+    ) as Some<NonNegativeNumber>).value;
     const versionedModelId = generateVersionedModelId(modelId, nextVersion);
 
     const newDocument = this.versionateModel(

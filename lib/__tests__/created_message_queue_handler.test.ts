@@ -1,6 +1,17 @@
 // tslint:disable:no-any
+
+// set a dummy value for the env vars needed by the handler
+// tslint:disable-next-line:no-object-mutation
+process.env.CUSTOMCONNSTR_COSMOSDB_URI = "anyCosmosDbUri";
+// tslint:disable-next-line:no-object-mutation
+process.env.CUSTOMCONNSTR_COSMOSDB_KEY = "anyCosmosDbKey";
 // tslint:disable-next-line:no-object-mutation
 process.env.COSMOSDB_NAME = "anyDbName";
+// tslint:disable-next-line:no-object-mutation
+process.env.MESSAGE_CONTAINER_NAME = "anyMessageContainerName";
+// tslint:disable-next-line:no-object-mutation
+process.env.AzureWebJobsStorage = "anyAzureWebJobsStorage";
+
 import {
   handleMessage,
   index,
@@ -11,7 +22,7 @@ import {
 import { ICreatedMessageEvent } from "../models/created_message_event";
 import { IMessageContent, INewMessageWithoutContent } from "../models/message";
 
-import { none, some } from "ts-option";
+import { none, Option, some, Some } from "fp-ts/lib/Option";
 import { FiscalCode, toFiscalCode } from "../api/definitions/FiscalCode";
 import { toMessageBodyMarkdown } from "../api/definitions/MessageBodyMarkdown";
 import { NotificationChannelStatus } from "../api/definitions/NotificationChannelStatus";
@@ -28,50 +39,55 @@ import * as winston from "winston";
 import { toNonNegativeNumber } from "../utils/numbers";
 import { toEmailString, toNonEmptyString } from "../utils/strings";
 
-const aCorrectFiscalCode = toFiscalCode("FRLFRC74E04B157I").get;
+// DANGEROUS, only use in tests
+function _getO<T>(o: Option<T>): T {
+  return (o as Some<T>).value;
+}
+
+const aCorrectFiscalCode = _getO(toFiscalCode("FRLFRC74E04B157I"));
 const aWrongFiscalCode = "FRLFRC74E04B157" as FiscalCode;
-const anEmail = toEmailString("x@example.com").get;
+const anEmail = _getO(toEmailString("x@example.com"));
 const anEmailNotification: INotificationChannelEmail = {
   addressSource: NotificationAddressSource.PROFILE_ADDRESS,
   status: NotificationChannelStatus.QUEUED,
   toAddress: anEmail
 };
 
-const aMessageBodyMarkdown = toMessageBodyMarkdown("test".repeat(80)).get;
+const aMessageBodyMarkdown = _getO(toMessageBodyMarkdown("test".repeat(80)));
 
 const aRetrievedProfileWithEmail: IRetrievedProfile = {
   _self: "123",
   _ts: "123",
   email: anEmail,
   fiscalCode: aCorrectFiscalCode,
-  id: toNonEmptyString("123").get,
+  id: _getO(toNonEmptyString("123")),
   kind: "IRetrievedProfile",
-  version: toNonNegativeNumber(1).get
+  version: _getO(toNonNegativeNumber(1))
 };
 
 const aRetrievedProfileWithoutEmail: IRetrievedProfile = {
   _self: "123",
   _ts: "123",
   fiscalCode: aCorrectFiscalCode,
-  id: toNonEmptyString("123").get,
+  id: _getO(toNonEmptyString("123")),
   kind: "IRetrievedProfile",
-  version: toNonNegativeNumber(1).get
+  version: _getO(toNonNegativeNumber(1))
 };
 
 const aCreatedNotificationWithEmail: INewNotification = {
   emailNotification: anEmailNotification,
   fiscalCode: aCorrectFiscalCode,
-  id: toNonEmptyString("123").get,
+  id: _getO(toNonEmptyString("123")),
   kind: "INewNotification",
-  messageId: toNonEmptyString("123").get
+  messageId: _getO(toNonEmptyString("123"))
 };
 
 const aCreatedNotificationWithoutEmail: INewNotification = {
   emailNotification: undefined,
   fiscalCode: aCorrectFiscalCode,
-  id: toNonEmptyString("123").get,
+  id: _getO(toNonEmptyString("123")),
   kind: "INewNotification",
-  messageId: toNonEmptyString("123").get
+  messageId: _getO(toNonEmptyString("123"))
 };
 
 const aBlobService = {};
@@ -116,10 +132,10 @@ describe("test index function", () => {
   it("should return failure if createdMessage is invalid (wrong fiscal code)", async () => {
     const aMessage: INewMessageWithoutContent = {
       fiscalCode: aWrongFiscalCode,
-      id: toNonEmptyString("xyz").get,
+      id: _getO(toNonEmptyString("xyz")),
       kind: "INewMessageWithoutContent",
       senderServiceId: "",
-      senderUserId: toNonEmptyString("u123").get
+      senderUserId: _getO(toNonEmptyString("u123"))
     };
 
     const aMessageEvent: ICreatedMessageEvent = {
@@ -128,9 +144,9 @@ describe("test index function", () => {
         bodyMarkdown: aMessageBodyMarkdown
       },
       senderMetadata: {
-        departmentName: toNonEmptyString("IT").get,
-        organizationName: toNonEmptyString("agid").get,
-        serviceName: toNonEmptyString("Test").get
+        departmentName: _getO(toNonEmptyString("IT")),
+        organizationName: _getO(toNonEmptyString("agid")),
+        serviceName: _getO(toNonEmptyString("Test"))
       }
     };
 
@@ -165,9 +181,9 @@ describe("test index function", () => {
     const aMessage: IRetrievedMessage = {
       _self: "",
       _ts: "",
-      bodyShort: toBodyShort("xyz").get,
+      bodyShort: _getO(toBodyShort("xyz")),
       fiscalCode: aCorrectFiscalCode,
-      id: toNonEmptyString("xyz").get,
+      id: _getO(toNonEmptyString("xyz")),
       kind: "IRetrievedMessage",
       senderServiceId: "",
     };
