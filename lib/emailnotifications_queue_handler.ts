@@ -42,15 +42,18 @@ import {
 } from "./api/definitions/MessageSubject";
 import defaultEmailTemplate from "./templates/html/default";
 
+// Whether we're in a production environment
+const isProduction = process.env.NODE_ENV === "production";
+
 // Setup DocumentDB
 
 const COSMOSDB_URI: string = process.env.CUSTOMCONNSTR_COSMOSDB_URI;
 const COSMOSDB_KEY: string = process.env.CUSTOMCONNSTR_COSMOSDB_KEY;
 
-// TODO: read from env vars
 const documentDbDatabaseUrl = documentDbUtils.getDatabaseUri(
   process.env.COSMOSDB_NAME
 );
+
 const notificationsCollectionUrl = documentDbUtils.getCollectionUri(
   documentDbDatabaseUrl,
   "notifications"
@@ -360,7 +363,8 @@ export function processReject(
  * Function handler
  */
 export function index(context: IContextWithBindings): void {
-  configureAzureContextTransport(context, winston, "debug");
+  const logLevel = isProduction ? "info" : "debug";
+  configureAzureContextTransport(context, winston, logLevel);
   winston.debug(`STARTED|${context.invocationId}`);
 
   // Setup ApplicationInsights
