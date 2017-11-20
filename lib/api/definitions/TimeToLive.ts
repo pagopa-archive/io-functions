@@ -10,7 +10,7 @@
  * This parameter specifies for how long (in seconds) the system will try to deliver the message to the channels configured by the user.
  */
 
-import { Option } from "ts-option";
+import { Option } from "fp-ts/lib/Option";
 
 import {
   isWithinRangeNumber,

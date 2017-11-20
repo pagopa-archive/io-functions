@@ -1,3 +1,4 @@
+import { isNone } from "fp-ts/lib/Option";
 /*
  * Implements the API handlers for the Message resource.
  */
@@ -398,7 +399,7 @@ export function GetMessageHandler(
     }
 
     const maybeDocument = errorOrMaybeDocument.value;
-    if (maybeDocument.isEmpty) {
+    if (isNone(maybeDocument)) {
       // the document does not exist
       return ResponseErrorNotFound(
         "Message not found",
@@ -406,7 +407,7 @@ export function GetMessageHandler(
       );
     }
 
-    const retrievedMessage = maybeDocument.get;
+    const retrievedMessage = maybeDocument.value;
 
     // the user is allowed to see the message when he is either
     // a trusted application or he is the sender of the message
@@ -442,8 +443,8 @@ export function GetMessageHandler(
 
     const messageStatus: MessageResponse = {
       message: retrievedMessageToPublic(retrievedMessage),
-      notification: maybeNotificationStatus.isDefined
-        ? maybeNotificationStatus.get
+      notification: maybeNotificationStatus.isSome()
+        ? maybeNotificationStatus.toUndefined()
         : undefined
     };
 

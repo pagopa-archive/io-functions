@@ -1,7 +1,7 @@
 import * as express from "express";
 
 import { left, right } from "fp-ts/lib/Either";
-import { Option, option } from "ts-option";
+import { fromNullable, Option } from "fp-ts/lib/Option";
 
 import { IRequestMiddleware } from "../request_middleware";
 
@@ -21,7 +21,7 @@ export function setAppContext(
 export function getAppContext<T>(
   request: express.Request
 ): Option<IContext<T>> {
-  return option(request.app.get(CONTEXT_IDENTIFIER));
+  return fromNullable(request.app.get(CONTEXT_IDENTIFIER));
 }
 
 /**
@@ -36,15 +36,14 @@ export function ContextMiddleware<T>(): IRequestMiddleware<
 > {
   return request =>
     new Promise(resolve =>
-      getAppContext<T>(request).match({
-        none: () =>
+      getAppContext<T>(request).fold(
+        () =>
           resolve(
             left<IResponseErrorInternal, IContext<T>>(
               ResponseErrorInternal("Cannot get context from request")
             )
           ),
-        some: context =>
-          resolve(right<IResponseErrorInternal, IContext<T>>(context))
-      })
+        context => resolve(right<IResponseErrorInternal, IContext<T>>(context))
+      )
     );
 }

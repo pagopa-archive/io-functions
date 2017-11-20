@@ -10,7 +10,7 @@
  * 
  */
 
-import { option, Option } from "ts-option";
+import { fromNullable, Option } from "fp-ts/lib/Option";
 
 export enum NotificationChannelStatus {
   "QUEUED" = "QUEUED",
@@ -27,5 +27,5 @@ export function isNotificationChannelStatus(
 export function toNotificationChannelStatus(
   arg: any
 ): Option<NotificationChannelStatus> {
-  return option(arg).filter(isNotificationChannelStatus);
+  return fromNullable(arg).filter(isNotificationChannelStatus);
 }

@@ -10,7 +10,7 @@ import is from "ts-is";
 import * as DocumentDbUtils from "../utils/documentdb";
 import { DocumentDbModel } from "../utils/documentdb_model";
 
-import { Option } from "ts-option";
+import { Option } from "fp-ts/lib/Option";
 
 import { EmailAddress, isEmailAddress } from "../api/definitions/EmailAddress";
 import { FiscalCode, isFiscalCode } from "../api/definitions/FiscalCode";

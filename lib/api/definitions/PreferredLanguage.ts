@@ -10,7 +10,7 @@
  * 
  */
 
-import { option, Option } from "ts-option";
+import { fromNullable, Option } from "fp-ts/lib/Option";
 
 export enum PreferredLanguage {
   "it_IT" = "it_IT",
@@ -29,5 +29,5 @@ export function isPreferredLanguage(arg: any): arg is PreferredLanguage {
 }
 
 export function toPreferredLanguage(arg: any): Option<PreferredLanguage> {
-  return option(arg).filter(isPreferredLanguage);
+  return fromNullable(arg).filter(isPreferredLanguage);
 }

@@ -1,5 +1,6 @@
 // tslint:disable:no-null-keyword
 // tslint:disable:no-any
+import { Option, Some } from "fp-ts/lib/Option";
 
 import { toNonEmptyString } from "../../utils/strings";
 
@@ -11,19 +12,24 @@ import { IMessageContent } from "../message";
 
 import { ICreatedMessageEventSenderMetadata } from "../created_message_sender_metadata";
 
-const aMessageId = toNonEmptyString("A_MESSAGE_ID").get;
-const aNotificationId = toNonEmptyString("A_NOTIFICATION_ID").get;
+// DANGEROUS, only use in tests
+function _getO<T>(o: Option<T>): T {
+  return (o as Some<T>).value;
+}
 
-const aMessageBodyMarkdown = toMessageBodyMarkdown("test".repeat(80)).get;
+const aMessageId = _getO(toNonEmptyString("A_MESSAGE_ID"));
+const aNotificationId = _getO(toNonEmptyString("A_NOTIFICATION_ID"));
+
+const aMessageBodyMarkdown = _getO(toMessageBodyMarkdown("test".repeat(80)));
 
 const aMessageContent: IMessageContent = {
   bodyMarkdown: aMessageBodyMarkdown
 };
 
 const aSenderMetadata: ICreatedMessageEventSenderMetadata = {
-  departmentName: toNonEmptyString("IT").get,
-  organizationName: toNonEmptyString("AgID").get,
-  serviceName: toNonEmptyString("Test").get
+  departmentName: _getO(toNonEmptyString("IT")),
+  organizationName: _getO(toNonEmptyString("AgID")),
+  serviceName: _getO(toNonEmptyString("Test"))
 };
 
 describe("isNotificationEvent", () => {

@@ -1,20 +1,23 @@
 // tslint:disable:no-any
+import { NonEmptyString } from "../strings";
 
 import * as DocumentDb from "documentdb";
 
 import { isLeft, isRight, right } from "fp-ts/lib/Either";
-import { none, some } from "ts-option";
+import { none, some } from "fp-ts/lib/Option";
 
 import * as DocumentDbUtils from "../documentdb";
 
 describe("getDatabaseUri", () => {
   it("should generate a database Uri", () => {
-    expect(DocumentDbUtils.getDatabaseUri("mydb").uri).toEqual("dbs/mydb");
+    expect(
+      DocumentDbUtils.getDatabaseUri("mydb" as NonEmptyString).uri
+    ).toEqual("dbs/mydb");
   });
 });
 
 describe("getCollectionUri", () => {
-  const dbUriFixture = DocumentDbUtils.getDatabaseUri("mydb");
+  const dbUriFixture = DocumentDbUtils.getDatabaseUri("mydb" as NonEmptyString);
 
   it("should generate a collection Uri", () => {
     expect(
@@ -24,7 +27,7 @@ describe("getCollectionUri", () => {
 });
 
 describe("readDatabase", () => {
-  const dbUriFixture = DocumentDbUtils.getDatabaseUri("mydb");
+  const dbUriFixture = DocumentDbUtils.getDatabaseUri("mydb" as NonEmptyString);
   const dbFixture = {} as DocumentDb.DatabaseMeta;
 
   it("should resolve a promise with the database", async () => {
@@ -60,7 +63,7 @@ describe("readDatabase", () => {
 });
 
 describe("readCollection", () => {
-  const dbUriFixture = DocumentDbUtils.getDatabaseUri("mydb");
+  const dbUriFixture = DocumentDbUtils.getDatabaseUri("mydb" as NonEmptyString);
   const collectionUriFixture = DocumentDbUtils.getCollectionUri(
     dbUriFixture,
     "mycollection"
@@ -99,7 +102,7 @@ describe("readCollection", () => {
 });
 
 describe("createDocument", () => {
-  const dbUriFixture = DocumentDbUtils.getDatabaseUri("mydb");
+  const dbUriFixture = DocumentDbUtils.getDatabaseUri("mydb" as NonEmptyString);
   const collectionUriFixture = DocumentDbUtils.getCollectionUri(
     dbUriFixture,
     "mycollection"
@@ -144,7 +147,7 @@ describe("createDocument", () => {
 });
 
 describe("readDocument", () => {
-  const dbUriFixture = DocumentDbUtils.getDatabaseUri("mydb");
+  const dbUriFixture = DocumentDbUtils.getDatabaseUri("mydb" as NonEmptyString);
   const collectionUriFixture = DocumentDbUtils.getCollectionUri(
     dbUriFixture,
     "mycollection"
@@ -211,7 +214,7 @@ describe("readDocument", () => {
 });
 
 describe("queryDocuments", () => {
-  const dbUriFixture = DocumentDbUtils.getDatabaseUri("mydb");
+  const dbUriFixture = DocumentDbUtils.getDatabaseUri("mydb" as NonEmptyString);
   const collectionUriFixture = DocumentDbUtils.getCollectionUri(
     dbUriFixture,
     "mycollection"
@@ -238,8 +241,8 @@ describe("queryDocuments", () => {
     expect(iteratorMock.executeNext).toBeCalled();
     expect(isRight(result)).toBeTruthy();
     if (isRight(result)) {
-      expect(result.value.isDefined).toBeTruthy();
-      expect(result.value.get).toEqual(["result"]);
+      expect(result.value.isSome()).toBeTruthy();
+      expect(result.value.toUndefined()).toEqual(["result"]);
     }
   });
 
@@ -270,7 +273,7 @@ describe("queryDocuments", () => {
 });
 
 describe("queryOneDocument", () => {
-  const dbUriFixture = DocumentDbUtils.getDatabaseUri("mydb");
+  const dbUriFixture = DocumentDbUtils.getDatabaseUri("mydb" as NonEmptyString);
   const collectionUriFixture = DocumentDbUtils.getCollectionUri(
     dbUriFixture,
     "mycollection"
@@ -298,8 +301,8 @@ describe("queryOneDocument", () => {
     expect(iteratorMock.executeNext).toBeCalled();
     expect(isRight(result)).toBeTruthy();
     if (isRight(result)) {
-      expect(result.value.isDefined).toBeTruthy();
-      expect(result.value.get).toEqual("result1");
+      expect(result.value.isSome()).toBeTruthy();
+      expect(result.value.toUndefined()).toEqual("result1");
     }
   });
 
@@ -323,7 +326,7 @@ describe("queryOneDocument", () => {
     expect(iteratorMock.executeNext).toBeCalled();
     expect(isRight(result)).toBeTruthy();
     if (isRight(result)) {
-      expect(result.value.isEmpty).toBeTruthy();
+      expect(result.value.isNone()).toBeTruthy();
     }
   });
 
@@ -376,12 +379,12 @@ describe("mapResultIterator", () => {
     expect(iteratorMock.executeNext).toHaveBeenCalledTimes(2);
     expect(isRight(result1)).toBeTruthy();
     if (isRight(result1)) {
-      expect(result1.value.isDefined);
-      expect(result1.value.get).toEqual([2, 4]);
+      expect(result1.value.isSome());
+      expect(result1.value.toUndefined()).toEqual([2, 4]);
     }
     expect(isRight(result1)).toBeTruthy();
     if (isRight(result1)) {
-      expect(result1.value.isEmpty);
+      expect(result1.value.isNone());
     }
   });
 });
@@ -410,7 +413,7 @@ describe("iteratorToArray", () => {
 });
 
 describe("upsertAttachment", () => {
-  const aDbUri = DocumentDbUtils.getDatabaseUri("mydb");
+  const aDbUri = DocumentDbUtils.getDatabaseUri("mydb" as NonEmptyString);
   const aCollectionUri = DocumentDbUtils.getCollectionUri(
     aDbUri,
     "mycollection"
@@ -447,7 +450,7 @@ describe("upsertAttachment", () => {
 });
 
 describe("queryAttachments", () => {
-  const aDbUri = DocumentDbUtils.getDatabaseUri("mydb");
+  const aDbUri = DocumentDbUtils.getDatabaseUri("mydb" as NonEmptyString);
   const aCollectionUri = DocumentDbUtils.getCollectionUri(
     aDbUri,
     "mycollection"
@@ -475,8 +478,8 @@ describe("queryAttachments", () => {
     expect(iteratorMock.executeNext).toBeCalled();
     expect(isRight(result)).toBeTruthy();
     if (isRight(result)) {
-      expect(result.value.isDefined).toBeTruthy();
-      expect(result.value.get).toEqual(["result"]);
+      expect(result.value.isSome()).toBeTruthy();
+      expect(result.value.toUndefined()).toEqual(["result"]);
     }
   });
 });

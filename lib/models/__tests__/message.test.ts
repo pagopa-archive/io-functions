@@ -11,7 +11,7 @@ import { toMessageBodyMarkdown } from "../../api/definitions/MessageBodyMarkdown
 
 import { NonEmptyString, toNonEmptyString } from "../../utils/strings";
 
-import { option } from "ts-option";
+import { fromNullable, Option, Some } from "fp-ts/lib/Option";
 
 import {
   IMessageContent,
@@ -25,31 +25,34 @@ import { ModelId } from "../../utils/documentdb_model_versioned";
 jest.mock("../../utils/azure_storage");
 import * as azureStorageUtils from "../../utils/azure_storage";
 
-const MESSAGE_CONTAINER_NAME: NonEmptyString = toNonEmptyString(
-  "message-content"
-).get;
+// DANGEROUS, only use in tests
+function _getO<T>(o: Option<T>): T {
+  return (o as Some<T>).value;
+}
 
-const aDatabaseUri = DocumentDbUtils.getDatabaseUri("mockdb");
+const MESSAGE_CONTAINER_NAME = "message-content" as NonEmptyString;
+
+const aDatabaseUri = DocumentDbUtils.getDatabaseUri("mockdb" as NonEmptyString);
 const aMessagesCollectionUrl = DocumentDbUtils.getCollectionUri(
   aDatabaseUri,
   "messages"
 );
 
-const aMessageBodyMarkdown = toMessageBodyMarkdown("test".repeat(80)).get;
+const aMessageBodyMarkdown = _getO(toMessageBodyMarkdown("test".repeat(80)));
 
 const aMessageContent: IMessageContent = {
   bodyMarkdown: aMessageBodyMarkdown
 };
 
-const aFiscalCode = toFiscalCode("FRLFRC74E04B157I").get;
+const aFiscalCode = _getO(toFiscalCode("FRLFRC74E04B157I"));
 
 const aNewMessageWithContent: INewMessageWithContent = {
   content: aMessageContent,
   fiscalCode: aFiscalCode,
-  id: toNonEmptyString("A_MESSAGE_ID").get,
+  id: _getO(toNonEmptyString("A_MESSAGE_ID")),
   kind: "INewMessageWithContent",
   senderServiceId: "agid" as ModelId,
-  senderUserId: toNonEmptyString("u123").get
+  senderUserId: _getO(toNonEmptyString("u123"))
 };
 
 const aRetrievedMessageWithContent: IRetrievedMessageWithContent = {
@@ -148,8 +151,8 @@ describe("find", () => {
     });
     expect(isRight(result)).toBeTruthy();
     if (isRight(result)) {
-      expect(result.value.isDefined).toBeTruthy();
-      expect(result.value.get).toEqual(aRetrievedMessageWithContent);
+      expect(result.value.isSome()).toBeTruthy();
+      expect(result.value.toUndefined()).toEqual(aRetrievedMessageWithContent);
     }
   });
 
@@ -193,7 +196,7 @@ describe("find", () => {
 
     expect(isRight(result)).toBeTruthy();
     if (isRight(result)) {
-      expect(result.value.isEmpty).toBeTruthy();
+      expect(result.value.isNone()).toBeTruthy();
     }
   });
 });
@@ -224,8 +227,8 @@ describe("findMessages", () => {
 
     expect(isRight(result)).toBeTruthy();
     if (isRight(result)) {
-      expect(result.value.isDefined).toBeTruthy();
-      expect(result.value.get).toEqual(["result"]);
+      expect(result.value.isSome()).toBeTruthy();
+      expect(result.value.toUndefined()).toEqual(["result"]);
     }
   });
 });
@@ -258,8 +261,8 @@ describe("findMessageForRecipient", () => {
     });
     expect(isRight(result)).toBeTruthy();
     if (isRight(result)) {
-      expect(result.value.isDefined).toBeTruthy();
-      expect(result.value.get).toEqual(aRetrievedMessageWithContent);
+      expect(result.value.isSome()).toBeTruthy();
+      expect(result.value.toUndefined()).toEqual(aRetrievedMessageWithContent);
     }
   });
 
@@ -277,14 +280,14 @@ describe("findMessageForRecipient", () => {
     );
 
     const result = await model.findMessageForRecipient(
-      toFiscalCode("FRLFRC73E04B157I").get,
+      _getO(toFiscalCode("FRLFRC73E04B157I")),
       aRetrievedMessageWithContent.id
     );
 
     expect(clientMock.readDocument).toHaveBeenCalledTimes(1);
     expect(isRight(result)).toBeTruthy();
     if (isRight(result)) {
-      expect(result.value.isEmpty).toBeTruthy();
+      expect(result.value.isNone()).toBeTruthy();
     }
   });
 
@@ -300,7 +303,7 @@ describe("findMessageForRecipient", () => {
     );
 
     const result = await model.findMessageForRecipient(
-      toFiscalCode("FRLFRC73E04B157I").get,
+      _getO(toFiscalCode("FRLFRC73E04B157I")),
       aRetrievedMessageWithContent.id
     );
 
@@ -333,7 +336,7 @@ describe("attachStoredContent", () => {
     );
     const upsertBlobFromObjectSpy = jest
       .spyOn(azureStorageUtils, "upsertBlobFromObject")
-      .mockReturnValueOnce(right(option(aBlobResult)));
+      .mockReturnValueOnce(right(fromNullable(aBlobResult)));
     const attachSpy = jest.spyOn(model, "attach");
     const attachment = await model.attachStoredContent(
       aBlobService as any,

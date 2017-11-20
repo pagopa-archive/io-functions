@@ -13,7 +13,7 @@ import { isPreferredLanguages, PreferredLanguages } from "./PreferredLanguages";
  * Describes the citizen's profile, mostly interesting for preferences attributes.
  */
 
-import { option, Option } from "ts-option";
+import { fromNullable, Option } from "fp-ts/lib/Option";
 
 export interface ExtendedProfile {
   readonly email?: EmailAddress;
@@ -40,5 +40,5 @@ export function isExtendedProfile(arg: any): arg is ExtendedProfile {
 }
 
 export function toExtendedProfile(arg: any): Option<ExtendedProfile> {
-  return option(arg).filter(isExtendedProfile);
+  return fromNullable(arg).filter(isExtendedProfile);
 }

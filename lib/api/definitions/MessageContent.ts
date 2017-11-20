@@ -16,7 +16,7 @@ import {
  * 
  */
 
-import { option, Option } from "ts-option";
+import { fromNullable, Option } from "fp-ts/lib/Option";
 
 export interface MessageContent {
   readonly subject?: MessageSubject;
@@ -36,5 +36,5 @@ export function isMessageContent(arg: any): arg is MessageContent {
 }
 
 export function toMessageContent(arg: any): Option<MessageContent> {
-  return option(arg).filter(isMessageContent);
+  return fromNullable(arg).filter(isMessageContent);
 }

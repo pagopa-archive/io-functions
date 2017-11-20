@@ -1,3 +1,4 @@
+import { isNone } from "fp-ts/lib/Option";
 /*
  * A middle ware that extracts custom user attributes from the request.
  */
@@ -57,7 +58,7 @@ export function AzureUserAttributesMiddleware(
   return async request => {
     const maybeUserEmail = toEmailString(request.header(HEADER_USER_EMAIL));
 
-    if (maybeUserEmail.isEmpty) {
+    if (isNone(maybeUserEmail)) {
       return left(
         ResponseErrorInternal(
           `Missing, empty or invalid ${HEADER_USER_EMAIL} header`
@@ -65,13 +66,13 @@ export function AzureUserAttributesMiddleware(
       );
     }
 
-    const userEmail = maybeUserEmail.get;
+    const userEmail = maybeUserEmail.value;
 
     const maybeUserSubscriptionIdHeader = toNonEmptyString(
       request.header(HEADER_USER_SUBSCRIPTION_KEY)
     );
 
-    if (maybeUserSubscriptionIdHeader.isEmpty) {
+    if (isNone(maybeUserSubscriptionIdHeader)) {
       return left(
         ResponseErrorInternal(
           `Missing or empty ${HEADER_USER_SUBSCRIPTION_KEY} header`
@@ -79,7 +80,7 @@ export function AzureUserAttributesMiddleware(
       );
     }
 
-    const subscriptionId = maybeUserSubscriptionIdHeader.get;
+    const subscriptionId = maybeUserSubscriptionIdHeader.value;
 
     // serviceId equals subscriptionId
     const errorOrMaybeService = await serviceModel.findOneByServiceId(
@@ -102,7 +103,7 @@ export function AzureUserAttributesMiddleware(
 
     const maybeService = errorOrMaybeService.value;
 
-    if (maybeService.isEmpty) {
+    if (isNone(maybeService)) {
       winston.error(
         `AzureUserAttributesMiddleware|Service not found|${subscriptionId}`
       );
@@ -112,7 +113,7 @@ export function AzureUserAttributesMiddleware(
     const authInfo: IAzureUserAttributes = {
       email: userEmail,
       kind: "IAzureUserAttributes",
-      service: maybeService.get
+      service: maybeService.value
     };
 
     return right(authInfo);

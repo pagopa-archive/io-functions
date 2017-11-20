@@ -15,7 +15,7 @@ import { is{{ realPropName }}, {{ realPropName }} } from "./{{ realPropName }}";
  * {{ definition.description | safe }}
  */
 {% if definition.type == "object" %}
-import { option, Option } from "ts-option";
+import { fromNullable, Option } from "fp-ts/lib/Option";
 
 export interface {{ definitionName }} {
 {% for propName, prop in definition.properties %}
@@ -45,11 +45,11 @@ export function is{{ definitionName }}(arg: any): arg is {{ definitionName }} {
 }
 
 export function to{{ definitionName }}(arg: any): Option<{{ definitionName }}> {
-  return option(arg).filter(is{{ definitionName }});
+  return fromNullable(arg).filter(is{{ definitionName }});
 }
 
 {% elif definition.type == "integer" %}
-import { Option } from "ts-option";
+import { Option } from "fp-ts/lib/Option";
 
 import { isWithinRangeNumber, toWithinRangeNumber, WithinRangeNumber } from "../../utils/numbers";
 
@@ -68,7 +68,7 @@ export type {{ definitionName }} = number;
   {% endif %}
 {% elif definition.type == "string" %}
   {% if definition.pattern %}
-import { Option } from "ts-option";
+import { Option } from "fp-ts/lib/Option";
 
 import { isPatternString, toPatternString, PatternString } from "../../utils/strings";
 
@@ -82,7 +82,7 @@ export function to{{ definitionName }}(arg: any): Option<{{ definitionName }}> {
   return toPatternString(arg, "{{ definition.pattern }}");
 }
   {% elif definition.minLength and definition.maxLength %}
-import { Option } from "ts-option";
+import { Option } from "fp-ts/lib/Option";
 
 import { isWithinRangeString, toWithinRangeString, WithinRangeString } from "../../utils/strings";
 
@@ -107,7 +107,7 @@ export const to{{ definitionName }} = toEmailString;
 
   {% elif definition["x-extensible-enum"] %}
 
-import { option, Option } from "ts-option";
+import { fromNullable, Option } from "fp-ts/lib/Option";
 
 export enum {{ definitionName }} {
     {% for enum in definition["x-extensible-enum"] %}
@@ -120,7 +120,7 @@ export function is{{ definitionName }}(arg: any): arg is {{ definitionName }} {
 }
 
 export function to{{ definitionName }}(arg: any): Option<{{ definitionName }}> {
-  return option(arg).filter(is{{ definitionName }});
+  return fromNullable(arg).filter(is{{ definitionName }});
 }
 
   {% else %}
@@ -128,7 +128,7 @@ export type {{ definitionName }} = string;
   {% endif %}
 {% elif definition.type == "array" %}
 
-import { option, Option } from "ts-option";
+import { fromNullable, Option } from "fp-ts/lib/Option";
 
   {% if definition.items.$ref %}
 
@@ -152,7 +152,7 @@ export function is{{ definitionName }}(arg: any): arg is {{ definitionName }} {
   {% endif %}
 
 export function to{{ definitionName }}(arg: any): Option<{{ definitionName }}> {
-  return option(arg).filter(is{{ definitionName }});
+  return fromNullable(arg).filter(is{{ definitionName }});
 }
 
 {% else %}

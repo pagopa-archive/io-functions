@@ -12,7 +12,7 @@ import { isPreferredLanguages, PreferredLanguages } from "./PreferredLanguages";
  * Describes the citizen's profile, mostly interesting for preferences attributes.
  */
 
-import { option, Option } from "ts-option";
+import { fromNullable, Option } from "fp-ts/lib/Option";
 
 export interface LimitedProfile {
   readonly preferred_languages?: PreferredLanguages;
@@ -29,5 +29,5 @@ export function isLimitedProfile(arg: any): arg is LimitedProfile {
 }
 
 export function toLimitedProfile(arg: any): Option<LimitedProfile> {
-  return option(arg).filter(isLimitedProfile);
+  return fromNullable(arg).filter(isLimitedProfile);
 }

@@ -1,3 +1,4 @@
+import { NonEmptyString } from "./strings";
 /*
  * Utility functions for interacting with DocumentDB
  *
@@ -10,7 +11,7 @@
 
 import * as DocumentDb from "documentdb";
 
-import { none, Option, some } from "ts-option";
+import { isNone, none, Option, some } from "fp-ts/lib/Option";
 
 import { Either, isLeft, left, right } from "fp-ts/lib/Either";
 
@@ -61,7 +62,9 @@ export interface IResultIterator<T> {
  *
  * @param databaseId The name of the database
  */
-export function getDatabaseUri(databaseId: string): IDocumentDbDatabaseUri {
+export function getDatabaseUri(
+  databaseId: NonEmptyString
+): IDocumentDbDatabaseUri {
   return {
     databaseId,
     kind: "DocumentDbDatabaseUri",
@@ -404,12 +407,12 @@ export async function iteratorToArray<T>(
     const errorOrMaybeDocuments = await i.executeNext();
     if (
       isLeft(errorOrMaybeDocuments) ||
-      errorOrMaybeDocuments.value.isEmpty ||
-      errorOrMaybeDocuments.value.get.length === 0
+      isNone(errorOrMaybeDocuments.value) ||
+      errorOrMaybeDocuments.value.value.length === 0
     ) {
       return a;
     }
-    const result = errorOrMaybeDocuments.value.get;
+    const result = errorOrMaybeDocuments.value.value;
     return iterate(a.concat(...result));
   }
   return iterate([]);

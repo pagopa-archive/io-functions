@@ -16,6 +16,8 @@ import { DocumentClient as DocumentDBClient } from "documentdb";
 import * as documentDbUtils from "./utils/documentdb";
 
 import { Either, isLeft, left, right } from "fp-ts/lib/Either";
+import { isNone, Some } from "fp-ts/lib/Option";
+import { getRequiredStringEnv } from "./utils/env";
 
 import { IContext } from "azure-functions-types";
 
@@ -47,12 +49,11 @@ const isProduction = process.env.NODE_ENV === "production";
 
 // Setup DocumentDB
 
-const COSMOSDB_URI: string = process.env.CUSTOMCONNSTR_COSMOSDB_URI;
-const COSMOSDB_KEY: string = process.env.CUSTOMCONNSTR_COSMOSDB_KEY;
+const cosmosDbUri = getRequiredStringEnv("CUSTOMCONNSTR_COSMOSDB_URI");
+const cosmosDbKey = getRequiredStringEnv("CUSTOMCONNSTR_COSMOSDB_KEY");
+const cosmosDbName = getRequiredStringEnv("COSMOSDB_NAME");
 
-const documentDbDatabaseUrl = documentDbUtils.getDatabaseUri(
-  process.env.COSMOSDB_NAME
-);
+const documentDbDatabaseUrl = documentDbUtils.getDatabaseUri(cosmosDbName);
 
 const notificationsCollectionUrl = documentDbUtils.getCollectionUri(
   documentDbDatabaseUrl,
@@ -63,7 +64,7 @@ const notificationsCollectionUrl = documentDbUtils.getCollectionUri(
 // setup NodeMailer
 //
 
-const SENDGRID_KEY: string = process.env.CUSTOMCONNSTR_SENDGRID_KEY;
+const sendgridKey = getRequiredStringEnv("CUSTOMCONNSTR_SENDGRID_KEY");
 
 //
 // options used when converting an HTML message to pure text
@@ -203,7 +204,7 @@ export async function handleNotification(
 
   const maybeNotification = errorOrMaybeNotification.value;
 
-  if (maybeNotification.isEmpty) {
+  if (isNone(maybeNotification)) {
     // it may happen that the object is not yet visible to this function due to latency?
     winston.warn(
       `Notification not found|notification=${notificationId}|message=${messageId}`
@@ -212,7 +213,7 @@ export async function handleNotification(
   }
 
   // we have the notification
-  const notification = maybeNotification.get;
+  const notification = maybeNotification.value;
 
   const emailNotification = notification.emailNotification;
   if (!emailNotification) {
@@ -228,7 +229,8 @@ export async function handleNotification(
   // TODO: generate the default subject from the service/client metadata
   const subject = messageContent.subject
     ? messageContent.subject
-    : toMessageSubject("A new notification for you.").get;
+    : (toMessageSubject("A new notification for you.") as Some<MessageSubject>)
+        .value;
 
   const documentHtml = await generateDocumentHtml(
     subject,
@@ -392,8 +394,8 @@ export function index(context: IContextWithBindings): void {
   );
 
   // setup required models
-  const documentClient = new DocumentDBClient(COSMOSDB_URI, {
-    masterKey: COSMOSDB_KEY
+  const documentClient = new DocumentDBClient(cosmosDbUri, {
+    masterKey: cosmosDbKey
   });
   const notificationModel = new NotificationModel(
     documentClient,
@@ -403,7 +405,7 @@ export function index(context: IContextWithBindings): void {
   const mailerTransporter = NodeMailer.createTransport(
     sendGridTransport({
       auth: {
-        api_key: SENDGRID_KEY
+        api_key: sendgridKey
       }
     })
   );

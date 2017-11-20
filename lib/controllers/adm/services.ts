@@ -38,6 +38,7 @@ import {
 } from "../../utils/response";
 
 import { isLeft, isRight, left, right } from "fp-ts/lib/Either";
+import { isNone } from "fp-ts/lib/Option";
 import { isNonEmptyString, NonEmptyString } from "../../utils/strings";
 
 type ICreateServiceHandler = (
@@ -137,14 +138,14 @@ export function UpdateServiceHandler(
     }
 
     const maybeService = errorOrMaybeService.value;
-    if (maybeService.isEmpty) {
+    if (isNone(maybeService)) {
       return ResponseErrorNotFound(
         "Error",
         "Could not find a service with the provided serviceId"
       );
     }
 
-    const existingService = maybeService.get;
+    const existingService = maybeService.value;
 
     const errorOrMaybeUpdatedService = await serviceModel.update(
       existingService.id,
@@ -166,11 +167,11 @@ export function UpdateServiceHandler(
     }
 
     const maybeUpdatedService = errorOrMaybeUpdatedService.value;
-    if (maybeUpdatedService.isEmpty) {
+    if (isNone(maybeUpdatedService)) {
       return ResponseErrorInternal("Error while updating the existing service");
     }
 
-    return ResponseSuccessJson(maybeUpdatedService.get);
+    return ResponseSuccessJson(maybeUpdatedService.value);
   };
 }
 
@@ -213,13 +214,13 @@ export function GetServiceHandler(
     );
     if (isRight(errorOrMaybeService)) {
       const maybeService = errorOrMaybeService.value;
-      if (maybeService.isEmpty) {
+      if (isNone(maybeService)) {
         return ResponseErrorNotFound(
           "Service not found",
           "The service you requested was not found in the system."
         );
       } else {
-        return ResponseSuccessJson(maybeService.get);
+        return ResponseSuccessJson(maybeService.value);
       }
     } else {
       return ResponseErrorQuery(

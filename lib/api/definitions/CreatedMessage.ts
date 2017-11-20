@@ -14,7 +14,7 @@ import { isMessageContent, MessageContent } from "./MessageContent";
  * 
  */
 
-import { option, Option } from "ts-option";
+import { fromNullable, Option } from "fp-ts/lib/Option";
 
 export interface CreatedMessage {
   readonly id?: string;
@@ -45,5 +45,5 @@ export function isCreatedMessage(arg: any): arg is CreatedMessage {
 }
 
 export function toCreatedMessage(arg: any): Option<CreatedMessage> {
-  return option(arg).filter(isCreatedMessage);
+  return fromNullable(arg).filter(isCreatedMessage);
 }

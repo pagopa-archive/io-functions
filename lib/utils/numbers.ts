@@ -2,8 +2,8 @@
  * Useful tagged types for numbers
  */
 
+import { fromNullable, Option } from "fp-ts/lib/Option";
 import is from "ts-is";
-import { Option, option } from "ts-option";
 
 interface IWithinRangeNumberTag<L extends number, H extends number> {
   readonly lower: L;
@@ -42,7 +42,7 @@ export function toWithinRangeNumber<L extends number, H extends number>(
   l: L,
   h: H
 ): Option<WithinRangeNumber<L, H>> {
-  return option(arg).filter(_ => isWithinRangeNumber(_, l, h));
+  return fromNullable(arg).filter(_ => isWithinRangeNumber(_, l, h));
 }
 
 /**
@@ -62,5 +62,5 @@ export const isNonNegativeNumber = is<NonNegativeNumber>(
  */
 // tslint:disable-next-line:no-any
 export function toNonNegativeNumber(arg: any): Option<NonNegativeNumber> {
-  return option(arg).filter(isNonNegativeNumber);
+  return fromNullable(arg).filter(isNonNegativeNumber);
 }

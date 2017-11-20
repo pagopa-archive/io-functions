@@ -12,7 +12,7 @@ content of this field will be delivered to channels that don't have any
 limit in terms of content size (e.g. email, etc...).
  */
 
-import { Option } from "ts-option";
+import { Option } from "fp-ts/lib/Option";
 
 import {
   isWithinRangeString,

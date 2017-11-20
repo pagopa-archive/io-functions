@@ -3,7 +3,7 @@
  */
 import * as azureStorage from "azure-storage";
 import { Either, left, right } from "fp-ts/lib/Either";
-import { Option, option } from "ts-option";
+import { fromNullable, Option } from "fp-ts/lib/Option";
 
 /**
  * Create a new blob (media) from plain text.
@@ -33,7 +33,7 @@ export function upsertBlobFromText(
         } else {
           return resolve(
             right<Error, Option<azureStorage.BlobService.BlobResult>>(
-              option(result)
+              fromNullable(result)
             )
           );
         }

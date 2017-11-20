@@ -1,14 +1,21 @@
 // tslint:disable:no-any
 // tslint:disable:no-null-keyword
 
+// set a dummy value for the env vars needed by the handler
+// tslint:disable-next-line:no-object-mutation
+process.env.CUSTOMCONNSTR_COSMOSDB_URI = "anyCosmosDbUri";
+// tslint:disable-next-line:no-object-mutation
+process.env.CUSTOMCONNSTR_COSMOSDB_KEY = "anyCosmosDbKey";
 // tslint:disable-next-line:no-object-mutation
 process.env.COSMOSDB_NAME = "anyDbName";
+// tslint:disable-next-line:no-object-mutation
+process.env.CUSTOMCONNSTR_SENDGRID_KEY = "anySendgridKey";
 
 import * as NodeMailer from "nodemailer";
 
 import MockTransport = require("nodemailer-mock-transport");
 
-import { none, some } from "ts-option";
+import { none, Option, some, Some } from "fp-ts/lib/Option";
 
 import { isLeft, isRight, left, right } from "fp-ts/lib/Either";
 import { toEmailString, toNonEmptyString } from "../utils/strings";
@@ -36,22 +43,27 @@ import {
 } from "../models/notification";
 import { INotificationEvent } from "../models/notification_event";
 
-const aFiscalCode = toFiscalCode("FRLFRC74E04B157I").get;
+// DANGEROUS, only use in tests
+function _getO<T>(o: Option<T>): T {
+  return (o as Some<T>).value;
+}
+
+const aFiscalCode = _getO(toFiscalCode("FRLFRC74E04B157I"));
 
 const aNotification: INotification = {
   emailNotification: {
     addressSource: NotificationAddressSource.DEFAULT_ADDRESS,
     status: NotificationChannelStatus.QUEUED,
-    toAddress: toEmailString("pinco@pallino.com").get
+    toAddress: _getO(toEmailString("pinco@pallino.com"))
   },
   fiscalCode: aFiscalCode,
-  messageId: toNonEmptyString("A_MESSAGE_ID").get
+  messageId: _getO(toNonEmptyString("A_MESSAGE_ID"))
 };
 
 const aSenderMetadata: ICreatedMessageEventSenderMetadata = {
-  departmentName: toNonEmptyString("IT").get,
-  organizationName: toNonEmptyString("agid").get,
-  serviceName: toNonEmptyString("Test").get
+  departmentName: _getO(toNonEmptyString("IT")),
+  organizationName: _getO(toNonEmptyString("agid")),
+  serviceName: _getO(toNonEmptyString("Test"))
 };
 
 describe("sendMail", () => {
@@ -493,14 +505,14 @@ describe("test processReject function", () => {
 
     const emailNotificationMock: INotificationEvent = {
       messageContent: {
-        bodyMarkdown: toMessageBodyMarkdown("test".repeat(80)).get
+        bodyMarkdown: _getO(toMessageBodyMarkdown("test".repeat(80)))
       },
-      messageId: toNonEmptyString("xxx").get,
-      notificationId: toNonEmptyString("yyy").get,
+      messageId: _getO(toNonEmptyString("xxx")),
+      notificationId: _getO(toNonEmptyString("yyy")),
       senderMetadata: {
-        departmentName: toNonEmptyString("aaa").get,
-        organizationName: toNonEmptyString("agid").get,
-        serviceName: toNonEmptyString("ccc").get
+        departmentName: _getO(toNonEmptyString("aaa")),
+        organizationName: _getO(toNonEmptyString("agid")),
+        serviceName: _getO(toNonEmptyString("ccc"))
       }
     };
 
@@ -521,7 +533,7 @@ describe("test processReject function", () => {
 });
 describe("generate html document", () => {
   it("should convert markdown to the right html", async () => {
-    const subject = toMessageSubject("This is the subject").get;
+    const subject = _getO(toMessageSubject("This is the subject"));
     const markdown = `
 # This is an H1
 Lorem ipsum
@@ -537,11 +549,11 @@ Lorem ipsum
 2.  McHale
 3.  Parish
 `;
-    const body = toMessageBodyMarkdown(markdown).get;
+    const body = _getO(toMessageBodyMarkdown(markdown));
     const metadata: ICreatedMessageEventSenderMetadata = {
-      departmentName: toNonEmptyString("departmentXXX").get,
-      organizationName: toNonEmptyString("organizationXXX").get,
-      serviceName: toNonEmptyString("serviceZZZ").get
+      departmentName: _getO(toNonEmptyString("departmentXXX")),
+      organizationName: _getO(toNonEmptyString("organizationXXX")),
+      serviceName: _getO(toNonEmptyString("serviceZZZ"))
     };
 
     const result = await generateDocumentHtml(subject, body, metadata);

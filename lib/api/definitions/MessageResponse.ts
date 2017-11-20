@@ -13,7 +13,7 @@ import { isNotificationStatus, NotificationStatus } from "./NotificationStatus";
  * 
  */
 
-import { option, Option } from "ts-option";
+import { fromNullable, Option } from "fp-ts/lib/Option";
 
 export interface MessageResponse {
   readonly message: CreatedMessage;
@@ -33,5 +33,5 @@ export function isMessageResponse(arg: any): arg is MessageResponse {
 }
 
 export function toMessageResponse(arg: any): Option<MessageResponse> {
-  return option(arg).filter(isMessageResponse);
+  return fromNullable(arg).filter(isMessageResponse);
 }

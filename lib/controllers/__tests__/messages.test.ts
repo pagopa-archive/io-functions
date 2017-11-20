@@ -8,7 +8,7 @@ winston.configure({
 import { response as MockResponse } from "jest-mock-express";
 
 import { isLeft, isRight, left, right } from "fp-ts/lib/Either";
-import { none, some } from "ts-option";
+import { none, Option, some, Some } from "fp-ts/lib/Option";
 
 import { ModelId } from "../../utils/documentdb_model_versioned";
 
@@ -44,6 +44,11 @@ import {
   MessagePayloadMiddleware
 } from "../messages";
 
+// DANGEROUS, only use in tests
+function _getO<T>(o: Option<T>): T {
+  return (o as Some<T>).value;
+}
+
 interface IHeaders {
   readonly [key: string]: string | undefined;
 }
@@ -52,34 +57,34 @@ function lookup(h: IHeaders): (k: string) => string | undefined {
   return (k: string) => h[k];
 }
 
-const aFiscalCode = toFiscalCode("FRLFRC74E04B157I").get;
-const anEmail = toEmailString("test@example.com").get;
-const aMessageBodyMarkdown = toMessageBodyMarkdown("test".repeat(80)).get;
+const aFiscalCode = _getO(toFiscalCode("FRLFRC74E04B157I"));
+const anEmail = _getO(toEmailString("test@example.com"));
+const aMessageBodyMarkdown = _getO(toMessageBodyMarkdown("test".repeat(80)));
 
 const someUserAttributes: IAzureUserAttributes = {
   email: anEmail,
   kind: "IAzureUserAttributes",
   service: {
     authorizedRecipients: new Set([]),
-    departmentName: toNonEmptyString("IT").get,
-    organizationName: toNonEmptyString("AgID").get,
-    serviceId: toNonEmptyString("test").get,
-    serviceName: toNonEmptyString("Test").get
+    departmentName: _getO(toNonEmptyString("IT")),
+    organizationName: _getO(toNonEmptyString("AgID")),
+    serviceId: _getO(toNonEmptyString("test")),
+    serviceName: _getO(toNonEmptyString("Test"))
   }
 };
 
 const aUserAuthenticationDeveloper: IAzureApiAuthorization = {
   groups: new Set([UserGroup.ApiMessageRead, UserGroup.ApiMessageWrite]),
   kind: "IAzureApiAuthorization",
-  subscriptionId: toNonEmptyString("s123").get,
-  userId: toNonEmptyString("u123").get
+  subscriptionId: _getO(toNonEmptyString("s123")),
+  userId: _getO(toNonEmptyString("u123"))
 };
 
 const aUserAuthenticationTrustedApplication: IAzureApiAuthorization = {
   groups: new Set([UserGroup.ApiMessageRead, UserGroup.ApiMessageList]),
   kind: "IAzureApiAuthorization",
-  subscriptionId: toNonEmptyString("s123").get,
-  userId: toNonEmptyString("u123").get
+  subscriptionId: _getO(toNonEmptyString("s123")),
+  userId: _getO(toNonEmptyString("u123"))
 };
 
 const aMessagePayload: NewMessage = {
@@ -88,16 +93,16 @@ const aMessagePayload: NewMessage = {
   }
 };
 
-const aCustomSubject = toMessageSubject("A custom subject").get;
+const aCustomSubject = _getO(toMessageSubject("A custom subject"));
 
-const aMessageId = toNonEmptyString("A_MESSAGE_ID").get;
+const aMessageId = _getO(toNonEmptyString("A_MESSAGE_ID"));
 
 const aNewMessageWithoutContent: INewMessageWithoutContent = {
   fiscalCode: aFiscalCode,
-  id: toNonEmptyString("A_MESSAGE_ID").get,
+  id: _getO(toNonEmptyString("A_MESSAGE_ID")),
   kind: "INewMessageWithoutContent",
   senderServiceId: "test" as ModelId,
-  senderUserId: toNonEmptyString("u123").get
+  senderUserId: _getO(toNonEmptyString("u123"))
 };
 
 const aRetrievedMessageWithoutContent: IRetrievedMessageWithoutContent = {
@@ -415,7 +420,7 @@ describe("CreateMessageHandler", () => {
     const messagePayload: NewMessage = {
       ...aMessagePayload,
       default_addresses: {
-        email: toEmailAddress("test@example.com").get
+        email: _getO(toEmailAddress("test@example.com"))
       }
     };
 
@@ -444,7 +449,7 @@ describe("CreateMessageHandler", () => {
     expect(mockContext.bindings).toEqual({
       createdMessage: {
         defaultAddresses: {
-          email: toEmailAddress("test@example.com").get
+          email: _getO(toEmailAddress("test@example.com"))
         },
         message: aNewMessageWithoutContent,
         messageContent: {
@@ -504,7 +509,7 @@ describe("CreateMessageHandler", () => {
     const messagePayload: NewMessage = {
       ...aMessagePayload,
       default_addresses: {
-        email: toEmailAddress("test@example.com").get
+        email: _getO(toEmailAddress("test@example.com"))
       }
     };
 
@@ -752,12 +757,12 @@ describe("GetMessageHandler", () => {
       emailNotification: {
         addressSource: NotificationAddressSource.PROFILE_ADDRESS,
         status: NotificationChannelStatus.SENT_TO_CHANNEL,
-        toAddress: toEmailString("x@example.com").get
+        toAddress: _getO(toEmailString("x@example.com"))
       },
       fiscalCode: aFiscalCode,
-      id: toNonEmptyString("A_NOTIFICATION_ID").get,
+      id: _getO(toNonEmptyString("A_NOTIFICATION_ID")),
       kind: "IRetrievedNotification",
-      messageId: toNonEmptyString("A_MESSAGE_ID").get
+      messageId: _getO(toNonEmptyString("A_MESSAGE_ID"))
     };
 
     const mockMessageModel = {

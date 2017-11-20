@@ -1,7 +1,7 @@
 // tslint:disable:no-any
 
 import { right } from "fp-ts/lib/Either";
-import { none, some } from "ts-option";
+import { none, Option, some, Some } from "fp-ts/lib/Option";
 import { toEmailString, toNonEmptyString } from "../../utils/strings";
 
 import { IRetrievedProfile } from "../../models/profile";
@@ -17,14 +17,19 @@ import { LimitedProfile } from "../../api/definitions/LimitedProfile";
 
 import { toNonNegativeNumber } from "../../utils/numbers";
 
+// DANGEROUS, only use in tests
+function _getO<T>(o: Option<T>): T {
+  return (o as Some<T>).value;
+}
+
 const anAzureAuthorization: IAzureApiAuthorization = {
   groups: new Set([UserGroup.ApiLimitedProfileRead]),
   kind: "IAzureApiAuthorization",
-  subscriptionId: toNonEmptyString("s123").get,
-  userId: toNonEmptyString("u123").get
+  subscriptionId: _getO(toNonEmptyString("s123")),
+  userId: _getO(toNonEmptyString("u123"))
 };
 
-const aFiscalCode = toFiscalCode("FRLFRC74E04B157I").get;
+const aFiscalCode = _getO(toFiscalCode("FRLFRC74E04B157I"));
 
 const aProfilePayloadMock = {
   email: "x@example.com"
@@ -33,11 +38,11 @@ const aProfilePayloadMock = {
 const aRetrievedProfile: IRetrievedProfile = {
   _self: "123",
   _ts: "123",
-  email: toEmailString("x@example.com").get,
+  email: _getO(toEmailString("x@example.com")),
   fiscalCode: aFiscalCode,
-  id: toNonEmptyString("123").get,
+  id: _getO(toNonEmptyString("123")),
   kind: "IRetrievedProfile",
-  version: toNonNegativeNumber(1).get
+  version: _getO(toNonNegativeNumber(1))
 };
 
 const aPublicExtendedProfile: ExtendedProfile = {
@@ -176,7 +181,7 @@ it("should update an existing profile", async () => {
   const upsertProfileHandler = UpsertProfileHandler(profileModelMock as any);
 
   const profilePayloadMock = {
-    email: toEmailString("y@example.com").get
+    email: _getO(toEmailString("y@example.com"))
   };
 
   const response = await upsertProfileHandler(

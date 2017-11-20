@@ -12,7 +12,7 @@ import { isEmailAddress, EmailAddress } from "./EmailAddress";
  * Default addresses for notifying the recipient of the message in case no address for the related channel is set in his profile.
  */
 
-import { option, Option } from "ts-option";
+import { fromNullable, Option } from "fp-ts/lib/Option";
 
 export interface NewMessageDefaultAddresses {
   readonly email?: EmailAddress;
@@ -33,5 +33,5 @@ export function isNewMessageDefaultAddresses(
 export function toNewMessageDefaultAddresses(
   arg: any
 ): Option<NewMessageDefaultAddresses> {
-  return option(arg).filter(isNewMessageDefaultAddresses);
+  return fromNullable(arg).filter(isNewMessageDefaultAddresses);
 }

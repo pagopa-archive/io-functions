@@ -1,5 +1,6 @@
 // tslint:disable:no-any
 import { isLeft, isRight } from "fp-ts/lib/Either";
+import { Option, Some } from "fp-ts/lib/Option";
 
 import * as DocumentDb from "documentdb";
 
@@ -8,7 +9,11 @@ import * as DocumentDbUtils from "../../utils/documentdb";
 import { toFiscalCode } from "../../api/definitions/FiscalCode";
 import { NotificationChannelStatus } from "../../api/definitions/NotificationChannelStatus";
 
-import { toEmailString, toNonEmptyString } from "../../utils/strings";
+import {
+  NonEmptyString,
+  toEmailString,
+  toNonEmptyString
+} from "../../utils/strings";
 
 import {
   INewNotification,
@@ -18,19 +23,24 @@ import {
   NotificationModel
 } from "../notification";
 
-const aDatabaseUri = DocumentDbUtils.getDatabaseUri("mockdb");
+// DANGEROUS, only use in tests
+function _getO<T>(o: Option<T>): T {
+  return (o as Some<T>).value;
+}
+
+const aDatabaseUri = DocumentDbUtils.getDatabaseUri("mockdb" as NonEmptyString);
 const aNotificationsCollectionUri = DocumentDbUtils.getCollectionUri(
   aDatabaseUri,
   "notifications"
 );
 
-const aFiscalCode = toFiscalCode("FRLFRC74E04B157I").get;
+const aFiscalCode = _getO(toFiscalCode("FRLFRC74E04B157I"));
 
 const aNewNotification: INewNotification = {
   fiscalCode: aFiscalCode,
-  id: toNonEmptyString("A_NOTIFICATION_ID").get,
+  id: _getO(toNonEmptyString("A_NOTIFICATION_ID")),
   kind: "INewNotification",
-  messageId: toNonEmptyString("A_MESSAGE_ID").get
+  messageId: _getO(toNonEmptyString("A_MESSAGE_ID"))
 };
 
 const aRetrievedNotification: IRetrievedNotification = {
@@ -125,8 +135,8 @@ describe("find", () => {
     });
     expect(isRight(result)).toBeTruthy();
     if (isRight(result)) {
-      expect(result.value.isDefined).toBeTruthy();
-      expect(result.value.get).toEqual(aRetrievedNotification);
+      expect(result.value.isSome()).toBeTruthy();
+      expect(result.value.toUndefined()).toEqual(aRetrievedNotification);
     }
   });
 
@@ -156,7 +166,7 @@ describe("update", () => {
   const anEmailNotification: INotificationChannelEmail = {
     addressSource: NotificationAddressSource.DEFAULT_ADDRESS,
     status: NotificationChannelStatus.SENT_TO_CHANNEL,
-    toAddress: toEmailString("to@example.com").get
+    toAddress: _getO(toEmailString("to@example.com"))
   };
 
   const updateFunction = jest.fn(n => {
@@ -207,8 +217,8 @@ describe("update", () => {
 
     expect(isRight(result)).toBeTruthy();
     if (isRight(result)) {
-      expect(result.value.isDefined).toBeTruthy();
-      expect(result.value.get).toEqual({
+      expect(result.value.isSome()).toBeTruthy();
+      expect(result.value.toUndefined()).toEqual({
         ...aRetrievedNotification,
         emailNotification: anEmailNotification
       });
