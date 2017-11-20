@@ -6,8 +6,8 @@ import {
   ModelId
 } from "../utils/documentdb_model_versioned";
 
+import { Either } from "fp-ts/lib/Either";
 import { Option } from "ts-option";
-import { Either } from "../utils/either";
 
 import { Set } from "json-set-map";
 
@@ -58,13 +58,13 @@ export interface IRetrievedService
 
 /**
  * Converts an Array or a Set of strings to a ReadonlySet of fiscalCodes.
- * 
+ *
  * We need to handle Arrays as this method is called by database finders
  * who retrieve a plain json object.
- * 
+ *
  * We need to handle Sets as this method is called on IService objects
  * passed to create(IService) and update(IService) model methods.
- * 
+ *
  * @param authorizedRecipients  Array or Set of authorized fiscal codes
  *                              for this service.
  */

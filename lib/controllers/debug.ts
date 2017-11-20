@@ -4,7 +4,7 @@
 
 import * as express from "express";
 
-import { right } from "../utils/either";
+import { right } from "fp-ts/lib/Either";
 
 import {
   IRequestMiddleware,
@@ -31,7 +31,7 @@ import { IResponseSuccessJson, ResponseSuccessJson } from "../utils/response";
 const ExpressRequestMiddleware: IRequestMiddleware<
   never,
   express.Request
-> = request => Promise.resolve(right(request));
+> = request => Promise.resolve(right<never, express.Request>(request));
 
 // type definition of the debug endpoint
 type GetDebug = (

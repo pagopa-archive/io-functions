@@ -15,7 +15,7 @@ import { DocumentClient as DocumentDBClient } from "documentdb";
 
 import * as documentDbUtils from "./utils/documentdb";
 
-import { Either, left, right } from "./utils/either";
+import { Either, isLeft, left, right } from "fp-ts/lib/Either";
 
 import { IContext } from "azure-functions-types";
 
@@ -192,8 +192,8 @@ export async function handleNotification(
     messageId
   );
 
-  if (errorOrMaybeNotification.isLeft) {
-    const error = errorOrMaybeNotification.left;
+  if (isLeft(errorOrMaybeNotification)) {
+    const error = errorOrMaybeNotification.value;
     // we got an error while fetching the notification
     winston.warn(
       `Error while fetching the notification|notification=${notificationId}|message=${messageId}|error=${error.code}`
@@ -201,7 +201,7 @@ export async function handleNotification(
     return left(ProcessingError.TRANSIENT);
   }
 
-  const maybeNotification = errorOrMaybeNotification.right;
+  const maybeNotification = errorOrMaybeNotification.value;
 
   if (maybeNotification.isEmpty) {
     // it may happen that the object is not yet visible to this function due to latency?
@@ -267,7 +267,7 @@ export async function handleNotification(
     transport: "sendgrid"
   };
 
-  if (sendResult.isLeft) {
+  if (isLeft(sendResult)) {
     // track the event of failed delivery
     appInsightsClient.trackEvent({
       name: eventName,
@@ -276,7 +276,7 @@ export async function handleNotification(
         success: "false"
       }
     });
-    const error = sendResult.left;
+    const error = sendResult.value;
     winston.warn(
       `Error while sending email|notification=${notificationId}|message=${messageId}|error=${error.message}`
     );
@@ -302,10 +302,10 @@ export async function handleNotification(
     setEmailNotificationToSent
   );
 
-  if (updateResult.isLeft) {
+  if (isLeft(updateResult)) {
     // we got an error while updating the notification status
     // TODO: this will re-send the email, check whether sendgrid supports idempotent calls (dedup on notificationId)
-    const error = updateResult.left;
+    const error = updateResult.value;
     winston.warn(
       `Error while updating the notification|notification=${notificationId}|message=${messageId}|error=${error.code}`
     );
@@ -323,9 +323,9 @@ export function processResolve(
   result: Either<ProcessingError, ProcessingResult>,
   context: IContextWithBindings
 ): void {
-  if (result.isLeft) {
+  if (isLeft(result)) {
     // if handler returned an error, decide what to do
-    switch (result.left) {
+    switch (result.value) {
       case ProcessingError.TRANSIENT: {
         // transient error, we trigger a retry
         context.done("Transient");

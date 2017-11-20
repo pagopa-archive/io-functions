@@ -1,4 +1,5 @@
 // tslint:disable:no-any
+import { isLeft, isRight } from "fp-ts/lib/Either";
 
 import * as DocumentDb from "documentdb";
 
@@ -58,9 +59,9 @@ describe("createNotification", () => {
     );
 
     expect(clientMock.createDocument.mock.calls[0][1].kind).toBeUndefined();
-    expect(result.isRight).toBeTruthy();
-    if (result.isRight) {
-      expect(result.right).toEqual(aRetrievedNotification);
+    expect(isRight(result)).toBeTruthy();
+    if (isRight(result)) {
+      expect(result.value).toEqual(aRetrievedNotification);
     }
   });
 
@@ -90,9 +91,9 @@ describe("createNotification", () => {
     expect(clientMock.createDocument.mock.calls[0][2]).toEqual({
       partitionKey: aNewNotification.messageId
     });
-    expect(result.isLeft).toBeTruthy();
-    if (result.isLeft) {
-      expect(result.left).toEqual("error");
+    expect(isLeft(result)).toBeTruthy();
+    if (isLeft(result)) {
+      expect(result.value).toEqual("error");
     }
   });
 });
@@ -122,10 +123,10 @@ describe("find", () => {
     expect(clientMock.readDocument.mock.calls[0][1]).toEqual({
       partitionKey: aRetrievedNotification.messageId
     });
-    expect(result.isRight).toBeTruthy();
-    if (result.isRight) {
-      expect(result.right.isDefined).toBeTruthy();
-      expect(result.right.get).toEqual(aRetrievedNotification);
+    expect(isRight(result)).toBeTruthy();
+    if (isRight(result)) {
+      expect(result.value.isDefined).toBeTruthy();
+      expect(result.value.get).toEqual(aRetrievedNotification);
     }
   });
 
@@ -144,9 +145,9 @@ describe("find", () => {
       aRetrievedNotification.fiscalCode
     );
 
-    expect(result.isLeft).toBeTruthy();
-    if (result.isLeft) {
-      expect(result.left).toEqual("error");
+    expect(isLeft(result)).toBeTruthy();
+    if (isLeft(result)) {
+      expect(result.value).toEqual("error");
     }
   });
 });
@@ -204,10 +205,10 @@ describe("update", () => {
 
     expect(clientMock.replaceDocument.mock.calls[0][1].kind).toBeUndefined();
 
-    expect(result.isRight).toBeTruthy();
-    if (result.isRight) {
-      expect(result.right.isDefined).toBeTruthy();
-      expect(result.right.get).toEqual({
+    expect(isRight(result)).toBeTruthy();
+    if (isRight(result)) {
+      expect(result.value.isDefined).toBeTruthy();
+      expect(result.value.get).toEqual({
         ...aRetrievedNotification,
         emailNotification: anEmailNotification
       });
@@ -237,9 +238,9 @@ describe("update", () => {
 
     expect(updateFunction).not.toHaveBeenCalled();
 
-    expect(result.isLeft).toBeTruthy();
-    if (result.isLeft) {
-      expect(result.left).toEqual("error");
+    expect(isLeft(result)).toBeTruthy();
+    if (isLeft(result)) {
+      expect(result.value).toEqual("error");
     }
   });
 
@@ -268,9 +269,9 @@ describe("update", () => {
 
     expect(updateFunction).toHaveBeenCalledTimes(1);
 
-    expect(result.isLeft).toBeTruthy();
-    if (result.isLeft) {
-      expect(result.left).toEqual("error");
+    expect(isLeft(result)).toBeTruthy();
+    if (isLeft(result)) {
+      expect(result.value).toEqual("error");
     }
   });
 });

@@ -10,17 +10,21 @@ import {
   ResponseErrorValidation
 } from "../response";
 
-import { left, right } from "../either";
+import { left, right } from "fp-ts/lib/Either";
 
 const ResolvingMiddleware: IRequestMiddleware<never, string> = req => {
-  return Promise.resolve(right(req.params.dummy));
+  return Promise.resolve(right<never, string>(req.params.dummy));
 };
 
 const RejectingMiddleware: IRequestMiddleware<
   IResponseErrorValidation,
   string
 > = _ => {
-  return Promise.resolve(left(ResponseErrorValidation("NOK", "NOT")));
+  return Promise.resolve(
+    left<IResponseErrorValidation, string>(
+      ResponseErrorValidation("NOK", "NOT")
+    )
+  );
 };
 
 const request = {

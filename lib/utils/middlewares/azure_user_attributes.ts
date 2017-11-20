@@ -4,7 +4,8 @@
 
 import * as winston from "winston";
 
-import { left, right } from "../either";
+import { isLeft, left, right } from "fp-ts/lib/Either";
+
 import { EmailString, toEmailString, toNonEmptyString } from "../strings";
 
 import { IService, ServiceModel } from "../../models/service";
@@ -85,21 +86,21 @@ export function AzureUserAttributesMiddleware(
       subscriptionId
     );
 
-    if (errorOrMaybeService.isLeft) {
+    if (isLeft(errorOrMaybeService)) {
       winston.error(
         `No service found for subscription|${subscriptionId}|${JSON.stringify(
-          errorOrMaybeService.left
+          errorOrMaybeService.value
         )}`
       );
       return left(
         ResponseErrorQuery(
           `Error while retrieving the service tied to the provided subscription id`,
-          errorOrMaybeService.left
+          errorOrMaybeService.value
         )
       );
     }
 
-    const maybeService = errorOrMaybeService.right;
+    const maybeService = errorOrMaybeService.value;
 
     if (maybeService.isEmpty) {
       winston.error(

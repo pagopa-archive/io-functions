@@ -1,4 +1,5 @@
 // tslint:disable:no-any
+import { isLeft, isRight } from "fp-ts/lib/Either";
 
 import { FiscalCodeMiddleware } from "../fiscalcode";
 
@@ -11,9 +12,9 @@ describe("FiscalCodeMiddleware", () => {
     };
 
     return FiscalCodeMiddleware(mockRequest as any).then(result => {
-      expect(result.isLeft).toBeTruthy();
-      if (result.isLeft) {
-        expect(result.left.kind).toBe("IResponseErrorValidation");
+      expect(isLeft(result)).toBeTruthy();
+      if (isLeft(result)) {
+        expect(result.value.kind).toBe("IResponseErrorValidation");
       }
     });
   });
@@ -26,9 +27,9 @@ describe("FiscalCodeMiddleware", () => {
     };
 
     return FiscalCodeMiddleware(mockRequest as any).then(result => {
-      expect(result.isRight).toBeTruthy();
-      if (result.isRight) {
-        expect(result.right).toEqual(mockRequest.params.fiscalcode);
+      expect(isRight(result)).toBeTruthy();
+      if (isRight(result)) {
+        expect(result.value).toEqual(mockRequest.params.fiscalcode);
       }
     });
   });

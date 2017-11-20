@@ -6,7 +6,7 @@ import { Option, option, some } from "ts-option";
 
 import { NonNegativeNumber, toNonNegativeNumber } from "./numbers";
 
-import { Either, right } from "./either";
+import { Either, isLeft, right } from "fp-ts/lib/Either";
 
 interface IModelIdTag {
   readonly kind: "IModelIdTag";
@@ -103,12 +103,12 @@ export abstract class DocumentDbModelVersioned<
   ): Promise<Either<DocumentDb.QueryError, Option<TR>>> {
     // fetch the document
     const errorOrMaybeCurrent = await this.find(objectId, partitionKey);
-    if (errorOrMaybeCurrent.isLeft) {
+    if (isLeft(errorOrMaybeCurrent)) {
       // if the query returned an error, forward it
       return errorOrMaybeCurrent;
     }
 
-    const maybeCurrent = errorOrMaybeCurrent.right;
+    const maybeCurrent = errorOrMaybeCurrent.value;
 
     if (maybeCurrent.isEmpty) {
       return right(maybeCurrent);
@@ -133,7 +133,7 @@ export abstract class DocumentDbModelVersioned<
 
     const createdDocument = await super.create(newDocument, partitionKey);
 
-    return createdDocument.mapRight(some);
+    return createdDocument.map(some);
   }
 
   protected async findLastVersionByModelId<V>(
@@ -154,7 +154,7 @@ export abstract class DocumentDbModelVersioned<
         query: `SELECT * FROM ${collectionName} m WHERE (m.${modelIdField} = @modelId) ORDER BY m.version DESC`
       }
     );
-    return errorOrMaybeDocument.mapRight(maybeDocument =>
+    return errorOrMaybeDocument.map(maybeDocument =>
       maybeDocument.map(this.toRetrieved)
     );
   }

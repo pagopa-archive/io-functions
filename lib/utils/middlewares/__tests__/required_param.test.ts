@@ -1,6 +1,6 @@
 // tslint:disable:no-any
 
-import { left, right } from "../../either";
+import { isLeft, isRight, left, right } from "fp-ts/lib/Either";
 
 import { RequiredParamMiddleware } from "../required_param";
 
@@ -14,9 +14,9 @@ describe("RequiredParamMiddleware", () => {
       }
     } as any);
 
-    expect(result.isRight).toBeTruthy();
-    if (result.isRight) {
-      expect(result.right).toBe("hello");
+    expect(isRight(result)).toBeTruthy();
+    if (isRight(result)) {
+      expect(result.value).toBe("hello");
     }
   });
 
@@ -27,9 +27,9 @@ describe("RequiredParamMiddleware", () => {
       params: {}
     } as any);
 
-    expect(result.isLeft).toBeTruthy();
-    if (result.isLeft) {
-      expect(result.left.kind).toBe("IResponseErrorValidation");
+    expect(isLeft(result)).toBeTruthy();
+    if (isLeft(result)) {
+      expect(result.value.kind).toBe("IResponseErrorValidation");
     }
   });
 });

@@ -6,8 +6,8 @@ import {
   ModelId
 } from "../utils/documentdb_model_versioned";
 
+import { Either } from "fp-ts/lib/Either";
 import { Option } from "ts-option";
-import { Either } from "../utils/either";
 
 import { EmailAddress } from "../api/definitions/EmailAddress";
 import { FiscalCode } from "../api/definitions/FiscalCode";

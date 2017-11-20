@@ -1,6 +1,6 @@
+import { left, right } from "fp-ts/lib/Either";
 import { Option, option } from "ts-option";
 
-import { left, right } from "../either";
 import { IRequestMiddleware } from "../request_middleware";
 import {
   IResponseErrorForbiddenAnonymousUser,
@@ -118,7 +118,14 @@ export function AzureApiAuthMiddleware(
       if (maybeUserId.isEmpty || maybeSubscriptionId.isEmpty) {
         // we cannot proceed unless we cannot associate the request to a
         // valid user and a subscription
-        return resolve(left(ResponseErrorForbiddenAnonymousUser));
+        return resolve(
+          left<
+            | IResponseErrorForbiddenNotAuthorized
+            | IResponseErrorForbiddenAnonymousUser
+            | IResponseErrorForbiddenNoAuthorizationGroups,
+            IAzureApiAuthorization
+          >(ResponseErrorForbiddenAnonymousUser)
+        );
       }
 
       const userId = maybeUserId.get;
@@ -138,7 +145,14 @@ export function AzureApiAuthMiddleware(
 
       if (maybeGroups.isEmpty) {
         // the use as no valid authorization groups
-        return resolve(left(ResponseErrorForbiddenNoAuthorizationGroups));
+        return resolve(
+          left<
+            | IResponseErrorForbiddenNotAuthorized
+            | IResponseErrorForbiddenAnonymousUser
+            | IResponseErrorForbiddenNoAuthorizationGroups,
+            IAzureApiAuthorization
+          >(ResponseErrorForbiddenNoAuthorizationGroups)
+        );
       }
 
       // now we have some valid groups that the users is part of
@@ -153,7 +167,14 @@ export function AzureApiAuthMiddleware(
 
       if (!userHasAnyAllowedGroup) {
         // the user is not allowed here
-        return resolve(left(ResponseErrorForbiddenNotAuthorized));
+        return resolve(
+          left<
+            | IResponseErrorForbiddenNotAuthorized
+            | IResponseErrorForbiddenAnonymousUser
+            | IResponseErrorForbiddenNoAuthorizationGroups,
+            IAzureApiAuthorization
+          >(ResponseErrorForbiddenNotAuthorized)
+        );
       }
 
       // the user is allowed here
@@ -164,6 +185,13 @@ export function AzureApiAuthMiddleware(
         userId
       };
 
-      resolve(right(authInfo));
+      resolve(
+        right<
+          | IResponseErrorForbiddenNotAuthorized
+          | IResponseErrorForbiddenAnonymousUser
+          | IResponseErrorForbiddenNoAuthorizationGroups,
+          IAzureApiAuthorization
+        >(authInfo)
+      );
     });
 }

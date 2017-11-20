@@ -23,8 +23,8 @@ import {
 } from "../models/notification";
 import { IRetrievedProfile } from "../models/profile";
 
+import { isLeft, isRight, left, right } from "fp-ts/lib/Either";
 import * as winston from "winston";
-import { left, right } from "../utils/either";
 import { toNonNegativeNumber } from "../utils/numbers";
 import { toEmailString, toNonEmptyString } from "../utils/strings";
 
@@ -234,10 +234,8 @@ describe("test handleMessage function", () => {
     expect(profileModelMock.findOneProfileByFiscalCode).toHaveBeenCalledWith(
       aCorrectFiscalCode
     );
-    expect(response.isLeft).toBeTruthy();
-    if (response.isLeft) {
-      expect(response.left).toEqual(ProcessingError.TRANSIENT);
-    }
+    expect(isLeft(response)).toBeTruthy();
+    expect(response.value).toEqual(ProcessingError.TRANSIENT);
   });
 
   it("should return NO_ADDRESSES error if no channels can be resolved", async () => {
@@ -264,10 +262,8 @@ describe("test handleMessage function", () => {
     expect(profileModelMock.findOneProfileByFiscalCode).toHaveBeenCalledWith(
       aCorrectFiscalCode
     );
-    expect(response.isLeft).toBeTruthy();
-    if (response.isLeft) {
-      expect(response.left).toEqual(ProcessingError.NO_ADDRESSES);
-    }
+    expect(isLeft(response)).toBeTruthy();
+    expect(response.value).toEqual(ProcessingError.NO_ADDRESSES);
   });
 
   it(
@@ -303,10 +299,8 @@ describe("test handleMessage function", () => {
       expect(profileModelMock.findOneProfileByFiscalCode).toHaveBeenCalledWith(
         aCorrectFiscalCode
       );
-      expect(response.isLeft).toBeTruthy();
-      if (response.isLeft) {
-        expect(response.left).toBe(ProcessingError.NO_ADDRESSES);
-      }
+      expect(isLeft(response)).toBeTruthy();
+      expect(response.value).toBe(ProcessingError.NO_ADDRESSES);
     }
   );
 
@@ -343,12 +337,12 @@ describe("test handleMessage function", () => {
       expect(profileModelMock.findOneProfileByFiscalCode).toHaveBeenCalledWith(
         aCorrectFiscalCode
       );
-      expect(response.isRight).toBeTruthy();
-      if (response.isRight) {
-        expect(response.right.emailNotification).not.toBeUndefined();
-        if (response.right.emailNotification !== undefined) {
-          expect(response.right.emailNotification.toAddress).toBe(anEmail);
-          expect(response.right.emailNotification.addressSource).toBe(
+      expect(isRight(response)).toBeTruthy();
+      if (isRight(response)) {
+        expect(response.value.emailNotification).not.toBeUndefined();
+        if (response.value.emailNotification !== undefined) {
+          expect(response.value.emailNotification.toAddress).toBe(anEmail);
+          expect(response.value.emailNotification.addressSource).toBe(
             NotificationAddressSource.PROFILE_ADDRESS
           );
         }
@@ -398,12 +392,12 @@ describe("test handleMessage function", () => {
       expect(profileModelMock.findOneProfileByFiscalCode).toHaveBeenCalledWith(
         aCorrectFiscalCode
       );
-      expect(response.isRight).toBeTruthy();
-      if (response.isRight) {
-        expect(response.right.emailNotification).not.toBeUndefined();
-        if (response.right.emailNotification !== undefined) {
-          expect(response.right.emailNotification.toAddress).toBe(anEmail);
-          expect(response.right.emailNotification.addressSource).toBe(
+      expect(isRight(response)).toBeTruthy();
+      if (isRight(response)) {
+        expect(response.value.emailNotification).not.toBeUndefined();
+        if (response.value.emailNotification !== undefined) {
+          expect(response.value.emailNotification.toAddress).toBe(anEmail);
+          expect(response.value.emailNotification.addressSource).toBe(
             NotificationAddressSource.DEFAULT_ADDRESS
           );
         }
@@ -446,12 +440,12 @@ describe("test handleMessage function", () => {
       expect(profileModelMock.findOneProfileByFiscalCode).toHaveBeenCalledWith(
         aCorrectFiscalCode
       );
-      expect(response.isRight).toBeTruthy();
-      if (response.isRight) {
-        expect(response.right.emailNotification).not.toBeUndefined();
-        if (response.right.emailNotification !== undefined) {
-          expect(response.right.emailNotification.toAddress).toBe(anEmail);
-          expect(response.right.emailNotification.addressSource).toBe(
+      expect(isRight(response)).toBeTruthy();
+      if (isRight(response)) {
+        expect(response.value.emailNotification).not.toBeUndefined();
+        if (response.value.emailNotification !== undefined) {
+          expect(response.value.emailNotification.toAddress).toBe(anEmail);
+          expect(response.value.emailNotification.addressSource).toBe(
             NotificationAddressSource.DEFAULT_ADDRESS
           );
         }
@@ -520,12 +514,12 @@ describe("test handleMessage function", () => {
       retrievedMessageMock.fiscalCode
     );
 
-    expect(response.isRight).toBeTruthy();
-    if (response.isRight) {
-      expect(response.right.emailNotification).not.toBeUndefined();
-      if (response.right.emailNotification !== undefined) {
-        expect(response.right.emailNotification.toAddress).toBe(anEmail);
-        expect(response.right.emailNotification.addressSource).toBe(
+    expect(isRight(response)).toBeTruthy();
+    if (isRight(response)) {
+      expect(response.value.emailNotification).not.toBeUndefined();
+      if (response.value.emailNotification !== undefined) {
+        expect(response.value.emailNotification.toAddress).toBe(anEmail);
+        expect(response.value.emailNotification.addressSource).toBe(
           NotificationAddressSource.PROFILE_ADDRESS
         );
       }
@@ -593,10 +587,8 @@ describe("test handleMessage function", () => {
       retrievedMessageMock.fiscalCode
     );
 
-    expect(response.isLeft).toBeTruthy();
-    if (response.isLeft) {
-      expect(response.left).toBe(ProcessingError.TRANSIENT);
-    }
+    expect(isLeft(response)).toBeTruthy();
+    expect(response.value).toBe(ProcessingError.TRANSIENT);
   });
 
   it("should return TRANSIENT error if saving notification returns error", async () => {
@@ -629,19 +621,14 @@ describe("test handleMessage function", () => {
     expect(profileModelMock.findOneProfileByFiscalCode).toHaveBeenCalledWith(
       aCorrectFiscalCode
     );
-    expect(response.isLeft).toBeTruthy();
-    if (response.isLeft) {
-      expect(response.left).toEqual(ProcessingError.TRANSIENT);
-    }
+    expect(isLeft(response)).toBeTruthy();
+    expect(response.value).toEqual(ProcessingError.TRANSIENT);
   });
 });
 
 describe("test processResolve function", () => {
   it("should enqueue notification to the email queue if an email is present", async () => {
-    const errorOrNotificationMock = {
-      isRight: () => true,
-      right: aCreatedNotificationWithEmail
-    };
+    const errorOrNotification = right(aCreatedNotificationWithEmail);
 
     const contextMock = {
       bindings: {},
@@ -653,7 +640,7 @@ describe("test processResolve function", () => {
     };
 
     processResolve(
-      errorOrNotificationMock as any,
+      errorOrNotification as any,
       contextMock as any,
       retrievedMessageMock as any,
       {} as any,
@@ -675,10 +662,7 @@ describe("test processResolve function", () => {
   });
 
   it("should not enqueue notification to the email queue if no email is present", async () => {
-    const errorOrNotificationMock = {
-      isRight: () => true,
-      right: aCreatedNotificationWithoutEmail
-    };
+    const errorOrNotification = right(aCreatedNotificationWithoutEmail);
 
     const contextMock = {
       bindings: {
@@ -692,7 +676,7 @@ describe("test processResolve function", () => {
     };
 
     processResolve(
-      errorOrNotificationMock as any,
+      errorOrNotification as any,
       contextMock as any,
       retrievedMessageMock as any,
       {} as any,
@@ -704,10 +688,7 @@ describe("test processResolve function", () => {
   });
 
   it("should not enqueue email notification on error (no profile and no default email)", async () => {
-    const errorOrNotificationMock = {
-      isLeft: () => true,
-      left: ProcessingError.NO_ADDRESSES
-    };
+    const errorOrNotification = left(ProcessingError.NO_ADDRESSES);
 
     const contextMock = {
       bindings: {
@@ -724,7 +705,7 @@ describe("test processResolve function", () => {
     const spy = jest.spyOn(winston, "error");
 
     processResolve(
-      errorOrNotificationMock as any,
+      errorOrNotification as any,
       contextMock as any,
       retrievedMessageMock as any,
       {} as any,
@@ -742,10 +723,7 @@ describe("test processResolve function", () => {
   });
 
   it("should not enqueue notification on error (generic)", async () => {
-    const errorOrNotificationMock = {
-      isLeft: () => true,
-      left: ProcessingError.TRANSIENT
-    };
+    const errorOrNotification = left(ProcessingError.TRANSIENT);
 
     const contextMock = {
       bindings: {
@@ -762,7 +740,7 @@ describe("test processResolve function", () => {
     const spy = jest.spyOn(winston, "error");
 
     processResolve(
-      errorOrNotificationMock as any,
+      errorOrNotification as any,
       contextMock as any,
       retrievedMessageMock as any,
       {} as any,

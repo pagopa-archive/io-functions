@@ -2,7 +2,7 @@
 
 import { none, some } from "ts-option";
 
-import { left, right } from "../../either";
+import { isLeft, isRight, left, right } from "fp-ts/lib/Either";
 
 import { IService } from "../../../models/service";
 
@@ -44,9 +44,9 @@ describe("AzureUserAttributesMiddleware", () => {
     const result = await middleware(mockRequest as any);
     expect(mockRequest.header).toHaveBeenCalledTimes(1);
     expect(mockRequest.header).toHaveBeenCalledWith("x-user-email");
-    expect(result.isLeft).toBeTruthy();
-    if (result.isLeft) {
-      expect(result.left.kind).toEqual("IResponseErrorInternal");
+    expect(isLeft(result)).toBeTruthy();
+    if (isLeft(result)) {
+      expect(result.value.kind).toEqual("IResponseErrorInternal");
     }
   });
 
@@ -66,9 +66,9 @@ describe("AzureUserAttributesMiddleware", () => {
     const result = await middleware(mockRequest as any);
     expect(mockRequest.header).toHaveBeenCalledTimes(1);
     expect(mockRequest.header).toHaveBeenCalledWith("x-user-email");
-    expect(result.isLeft).toBeTruthy();
-    if (result.isLeft) {
-      expect(result.left.kind).toEqual("IResponseErrorInternal");
+    expect(isLeft(result)).toBeTruthy();
+    if (isLeft(result)) {
+      expect(result.value.kind).toEqual("IResponseErrorInternal");
     }
   });
 
@@ -90,9 +90,9 @@ describe("AzureUserAttributesMiddleware", () => {
     const result = await middleware(mockRequest as any);
     expect(mockRequest.header.mock.calls[0][0]).toBe("x-user-email");
     expect(mockRequest.header.mock.calls[1][0]).toBe("x-subscription-id");
-    expect(result.isLeft).toBeTruthy();
-    if (result.isLeft) {
-      expect(result.left.kind).toEqual("IResponseErrorInternal");
+    expect(isLeft(result)).toBeTruthy();
+    if (isLeft(result)) {
+      expect(result.value.kind).toEqual("IResponseErrorInternal");
     }
   });
 
@@ -119,9 +119,9 @@ describe("AzureUserAttributesMiddleware", () => {
     expect(serviceModel.findOneByServiceId).toHaveBeenCalledWith(
       headers["x-subscription-id"]
     );
-    expect(result.isLeft).toBeTruthy();
-    if (result.isLeft) {
-      expect(result.left.kind).toEqual("IResponseErrorForbiddenNotAuthorized");
+    expect(isLeft(result)).toBeTruthy();
+    if (isLeft(result)) {
+      expect(result.value.kind).toEqual("IResponseErrorForbiddenNotAuthorized");
     }
   });
 
@@ -147,9 +147,9 @@ describe("AzureUserAttributesMiddleware", () => {
     expect(serviceModel.findOneByServiceId).toHaveBeenCalledWith(
       headers["x-subscription-id"]
     );
-    expect(result.isRight);
-    if (result.isRight) {
-      const attributes = result.right;
+    expect(isRight(result));
+    if (isRight(result)) {
+      const attributes = result.value;
       expect(attributes.service).toEqual({
         ...aService,
         authorizedRecipients: new Set()
@@ -179,9 +179,9 @@ describe("AzureUserAttributesMiddleware", () => {
     expect(serviceModel.findOneByServiceId).toHaveBeenCalledWith(
       headers["x-subscription-id"]
     );
-    expect(result.isLeft);
-    if (result.isLeft) {
-      expect(result.left.kind).toEqual("IResponseErrorQuery");
+    expect(isLeft(result));
+    if (isLeft(result)) {
+      expect(result.value.kind).toEqual("IResponseErrorQuery");
     }
   });
 });

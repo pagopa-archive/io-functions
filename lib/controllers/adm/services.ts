@@ -37,7 +37,7 @@ import {
   ResponseSuccessJson
 } from "../../utils/response";
 
-import { left, right } from "../../utils/either";
+import { isLeft, isRight, left, right } from "fp-ts/lib/Either";
 import { isNonEmptyString, NonEmptyString } from "../../utils/strings";
 
 type ICreateServiceHandler = (
@@ -102,7 +102,7 @@ export const ServicePayloadMiddleware: IRequestMiddleware<
 
   if (errors.length > 0) {
     return Promise.resolve(
-      left(
+      left<IResponseErrorValidation, IService>(
         ResponseErrorValidation(
           "Invalid field found in Service payload",
           errors.join(" - ")
@@ -110,7 +110,9 @@ export const ServicePayloadMiddleware: IRequestMiddleware<
       )
     );
   }
-  return Promise.resolve(right(servicePayload));
+  return Promise.resolve(
+    right<IResponseErrorValidation, IService>(servicePayload)
+  );
 };
 
 export function UpdateServiceHandler(
@@ -127,14 +129,14 @@ export function UpdateServiceHandler(
     const errorOrMaybeService = await serviceModel.findOneByServiceId(
       serviceId
     );
-    if (errorOrMaybeService.isLeft) {
+    if (isLeft(errorOrMaybeService)) {
       return ResponseErrorQuery(
         "Error trying to retrieve existing service",
-        errorOrMaybeService.left
+        errorOrMaybeService.value
       );
     }
 
-    const maybeService = errorOrMaybeService.right;
+    const maybeService = errorOrMaybeService.value;
     if (maybeService.isEmpty) {
       return ResponseErrorNotFound(
         "Error",
@@ -156,14 +158,14 @@ export function UpdateServiceHandler(
         return updatedService;
       }
     );
-    if (errorOrMaybeUpdatedService.isLeft) {
+    if (isLeft(errorOrMaybeUpdatedService)) {
       return ResponseErrorQuery(
         "Error while updating the existing service",
-        errorOrMaybeUpdatedService.left
+        errorOrMaybeUpdatedService.value
       );
     }
 
-    const maybeUpdatedService = errorOrMaybeUpdatedService.right;
+    const maybeUpdatedService = errorOrMaybeUpdatedService.value;
     if (maybeUpdatedService.isEmpty) {
       return ResponseErrorInternal("Error while updating the existing service");
     }
@@ -194,10 +196,10 @@ export function CreateServiceHandler(
       serviceModelPayload,
       serviceModelPayload.serviceId
     );
-    if (errorOrService.isRight) {
-      return ResponseSuccessJson(errorOrService.right);
+    if (isRight(errorOrService)) {
+      return ResponseSuccessJson(errorOrService.value);
     } else {
-      return ResponseErrorQuery("Error", errorOrService.left);
+      return ResponseErrorQuery("Error", errorOrService.value);
     }
   };
 }
@@ -209,8 +211,8 @@ export function GetServiceHandler(
     const errorOrMaybeService = await serviceModel.findOneByServiceId(
       serviceId
     );
-    if (errorOrMaybeService.isRight) {
-      const maybeService = errorOrMaybeService.right;
+    if (isRight(errorOrMaybeService)) {
+      const maybeService = errorOrMaybeService.value;
       if (maybeService.isEmpty) {
         return ResponseErrorNotFound(
           "Service not found",
@@ -222,7 +224,7 @@ export function GetServiceHandler(
     } else {
       return ResponseErrorQuery(
         "Error while retrieving the service",
-        errorOrMaybeService.left
+        errorOrMaybeService.value
       );
     }
   };

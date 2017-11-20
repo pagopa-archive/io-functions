@@ -1,6 +1,6 @@
 import { FiscalCode, isFiscalCode } from "../../api/definitions/FiscalCode";
 
-import { left, right } from "../either";
+import { left, right } from "fp-ts/lib/Either";
 
 import { IRequestMiddleware } from "../request_middleware";
 import { IResponseErrorValidation, ResponseErrorValidation } from "../response";
@@ -16,12 +16,16 @@ export const FiscalCodeMiddleware: IRequestMiddleware<
 > = request => {
   const fiscalCode: string = request.params.fiscalcode;
   if (isFiscalCode(fiscalCode)) {
-    return Promise.resolve(right(fiscalCode));
+    return Promise.resolve(
+      right<IResponseErrorValidation, FiscalCode>(fiscalCode)
+    );
   } else {
     const validationErrorResponse = ResponseErrorValidation(
       "Bad request",
       `The fiscal code [${fiscalCode}] is not valid.`
     );
-    return Promise.resolve(left(validationErrorResponse));
+    return Promise.resolve(
+      left<IResponseErrorValidation, FiscalCode>(validationErrorResponse)
+    );
   }
 };

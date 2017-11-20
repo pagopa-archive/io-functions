@@ -10,7 +10,7 @@ import MockTransport = require("nodemailer-mock-transport");
 
 import { none, some } from "ts-option";
 
-import { left, right } from "../utils/either";
+import { isLeft, isRight, left, right } from "fp-ts/lib/Either";
 import { toEmailString, toNonEmptyString } from "../utils/strings";
 
 import { toFiscalCode } from "../api/definitions/FiscalCode";
@@ -69,10 +69,8 @@ describe("sendMail", () => {
     expect(transporterMock.sendMail).toHaveBeenCalledTimes(1);
     expect(transporterMock.sendMail.mock.calls[0][0]).toEqual(options);
 
-    expect(result.isRight).toBeTruthy();
-    if (result.isRight) {
-      expect(result.right).toBe("ok");
-    }
+    expect(isRight(result)).toBeTruthy();
+    expect(result.value).toBe("ok");
   });
 
   it("should call sendMail on the Transporter and return the error", async () => {
@@ -86,10 +84,8 @@ describe("sendMail", () => {
 
     expect(transporterMock.sendMail).toHaveBeenCalledTimes(1);
 
-    expect(result.isLeft).toBeTruthy();
-    if (result.isLeft) {
-      expect(result.left).toBe("error");
-    }
+    expect(isLeft(result)).toBeTruthy();
+    expect(result.value).toBe("error");
   });
 });
 
@@ -113,10 +109,8 @@ describe("handleNotification", () => {
       "A_NOTIFICATION_ID",
       "A_MESSAGE_ID"
     );
-    expect(result.isLeft).toBeTruthy();
-    if (result.isLeft) {
-      expect(result.left).toBe(ProcessingError.TRANSIENT);
-    }
+    expect(isLeft(result)).toBeTruthy();
+    expect(result.value).toBe(ProcessingError.TRANSIENT);
   });
 
   it("should return a transient error when the notification does not exist", async () => {
@@ -134,10 +128,8 @@ describe("handleNotification", () => {
       {} as any
     );
 
-    expect(result.isLeft).toBeTruthy();
-    if (result.isLeft) {
-      expect(result.left).toBe(ProcessingError.TRANSIENT);
-    }
+    expect(isLeft(result)).toBeTruthy();
+    expect(result.value).toBe(ProcessingError.TRANSIENT);
   });
 
   it("should return a permanent error when the notification does not contain the email channel", async () => {
@@ -155,10 +147,8 @@ describe("handleNotification", () => {
       {} as any
     );
 
-    expect(result.isLeft).toBeTruthy();
-    if (result.isLeft) {
-      expect(result.left).toBe(ProcessingError.PERMANENT);
-    }
+    expect(isLeft(result)).toBeTruthy();
+    expect(result.value).toBe(ProcessingError.PERMANENT);
   });
 
   it("should send an email notification", async () => {
@@ -235,10 +225,8 @@ describe("handleNotification", () => {
       }
     });
 
-    expect(result.isRight).toBeTruthy();
-    if (result.isRight) {
-      expect(result.right).toBe(ProcessingResult.OK);
-    }
+    expect(isRight(result)).toBeTruthy();
+    expect(result.value).toBe(ProcessingResult.OK);
   });
 
   it("should send an email notification with the text version of the message", async () => {
@@ -285,10 +273,8 @@ HELLO WORLD!
 This is a message from the future!`.replace(/[ \n]+/g, "|")
     );
 
-    expect(result.isRight).toBeTruthy();
-    if (result.isRight) {
-      expect(result.right).toBe(ProcessingResult.OK);
-    }
+    expect(isRight(result)).toBeTruthy();
+    expect(result.value).toBe(ProcessingResult.OK);
   });
 
   it("should send an email notification with the default subject", async () => {
@@ -322,10 +308,8 @@ This is a message from the future!`.replace(/[ \n]+/g, "|")
       "A new notification for you."
     );
 
-    expect(result.isRight).toBeTruthy();
-    if (result.isRight) {
-      expect(result.right).toBe(ProcessingResult.OK);
-    }
+    expect(isRight(result)).toBeTruthy();
+    expect(result.value).toBe(ProcessingResult.OK);
   });
 
   it("should send an email notification with the provided subject", async () => {
@@ -358,10 +342,8 @@ This is a message from the future!`.replace(/[ \n]+/g, "|")
 
     expect(mockTransport.sentMail[0].data.subject).toBe("A custom subject");
 
-    expect(result.isRight).toBeTruthy();
-    if (result.isRight) {
-      expect(result.right).toBe(ProcessingResult.OK);
-    }
+    expect(isRight(result)).toBeTruthy();
+    expect(result.value).toBe(ProcessingResult.OK);
   });
 
   it("should respond with a transient error when email delivery fails", async () => {
@@ -406,10 +388,8 @@ This is a message from the future!`.replace(/[ \n]+/g, "|")
 
     expect(notificationModelMock.update).not.toHaveBeenCalled();
 
-    expect(result.isLeft).toBeTruthy();
-    if (result.isLeft) {
-      expect(result.left).toBe(ProcessingError.TRANSIENT);
-    }
+    expect(isLeft(result)).toBeTruthy();
+    expect(result.value).toBe(ProcessingError.TRANSIENT);
   });
 
   it("should respond with a transient error when notification update fails", async () => {
@@ -455,56 +435,46 @@ This is a message from the future!`.replace(/[ \n]+/g, "|")
       }
     });
 
-    expect(result.isLeft).toBeTruthy();
-    if (result.isLeft) {
-      expect(result.left).toBe(ProcessingError.TRANSIENT);
-    }
+    expect(isLeft(result)).toBeTruthy();
+    expect(result.value).toBe(ProcessingError.TRANSIENT);
   });
 });
 describe("test processResolve function", () => {
   it("should call context.done on success", async () => {
-    const resultMock = {
-      isRight: () => true
-    };
+    const result = right({} as any);
 
     const contextMock = {
       bindings: {},
       done: jest.fn()
     };
 
-    processResolve(resultMock as any, contextMock as any);
+    processResolve(result as any, contextMock as any);
 
     expect(contextMock.done).toHaveBeenCalledTimes(1);
     expect(contextMock.done.mock.calls[0][0]).toBe(undefined);
   });
   it("should call context.done Transient on transient error", async () => {
-    const resultMock = {
-      isLeft: () => true,
-      left: ProcessingError.TRANSIENT
-    };
+    const result = left(ProcessingError.TRANSIENT);
 
     const contextMock = {
       bindings: {},
       done: jest.fn()
     };
 
-    processResolve(resultMock as any, contextMock as any);
+    processResolve(result as any, contextMock as any);
 
     expect(contextMock.done).toHaveBeenCalledTimes(1);
     expect(contextMock.done.mock.calls[0][0]).toBe("Transient");
   });
   it("should call context.done on permanent error", async () => {
-    const resultMock = {
-      isLeft: () => true,
-      left: ProcessingError.PERMANENT
-    };
+    const result = left(ProcessingError.PERMANENT);
 
     const contextMock = {
       bindings: {},
       done: jest.fn()
     };
 
-    processResolve(resultMock as any, contextMock as any);
+    processResolve(result as any, contextMock as any);
 
     expect(contextMock.done).toHaveBeenCalledTimes(1);
     expect(contextMock.done.mock.calls[0][0]).toBe(undefined);

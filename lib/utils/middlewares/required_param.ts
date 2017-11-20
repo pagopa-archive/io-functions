@@ -1,4 +1,4 @@
-import { Either, left, right } from "../either";
+import { Either, isRight, left, right } from "fp-ts/lib/Either";
 
 import { IRequestMiddleware } from "../request_middleware";
 import { IResponseErrorValidation, ResponseErrorValidation } from "../response";
@@ -21,14 +21,14 @@ export function RequiredParamMiddleware<T>(
 ): IRequestMiddleware<IResponseErrorValidation, T> {
   return request => {
     const v = f(request.params);
-    if (v.isRight) {
-      return Promise.resolve(right(v.right));
+    if (isRight(v)) {
+      return Promise.resolve(right<IResponseErrorValidation, T>(v.value));
     } else {
       const response = ResponseErrorValidation(
         "A required parameter is missing",
-        v.left
+        v.value
       );
-      return Promise.resolve(left(response));
+      return Promise.resolve(left<IResponseErrorValidation, T>(response));
     }
   };
 }

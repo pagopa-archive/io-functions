@@ -1,7 +1,8 @@
 import * as express from "express";
 import * as winston from "winston";
 
-import { Either } from "./either";
+import { Either, isLeft } from "fp-ts/lib/Either";
+
 import { IResponse, ResponseErrorInternal } from "./response";
 
 export type RequestHandler<R extends IResponse> = (
@@ -178,53 +179,53 @@ export function withRequestMiddlewares<
         // when we find an undefined middleware, we call the handler with all the results of
         // the executed middlewares
         v1(request).then(r1 => {
-          if (r1.isLeft) {
+          if (isLeft(r1)) {
             // 1st middleware returned a response
             // stop processing the middlewares
-            resolve(r1.left);
+            resolve(r1.value);
           } else if (v2 !== undefined) {
             // 1st middleware returned a value
             // process 2nd middleware
             v2(request).then(r2 => {
-              if (r2.isLeft) {
+              if (isLeft(r2)) {
                 // 2nd middleware returned a response
                 // stop processing the middlewares
-                resolve(r2.left);
+                resolve(r2.value);
               } else if (v3 !== undefined) {
                 // process 3rd middleware
                 v3(request).then(r3 => {
-                  if (r3.isLeft) {
+                  if (isLeft(r3)) {
                     // 3rd middleware returned a response
                     // stop processing the middlewares
-                    resolve(r3.left);
+                    resolve(r3.value);
                   } else if (v4 !== undefined) {
                     v4(request).then(r4 => {
-                      if (r4.isLeft) {
+                      if (isLeft(r4)) {
                         // 4th middleware returned a response
                         // stop processing the middlewares
-                        resolve(r4.left);
+                        resolve(r4.value);
                       } else if (v5 !== undefined) {
                         v5(request).then(r5 => {
-                          if (r5.isLeft) {
+                          if (isLeft(r5)) {
                             // 5th middleware returned a response
                             // stop processing the middlewares
-                            resolve(r5.left);
+                            resolve(r5.value);
                           } else {
                             // 5th middleware returned a value
                             // run handler
                             handler(
-                              r1.right,
-                              r2.right,
-                              r3.right,
-                              r4.right,
-                              r5.right
+                              r1.value,
+                              r2.value,
+                              r3.value,
+                              r4.value,
+                              r5.value
                             ).then(resolve, reject);
                           }
                         }, reject);
                       } else {
                         // 4th middleware returned a value
                         // run handler
-                        handler(r1.right, r2.right, r3.right, r4.right).then(
+                        handler(r1.value, r2.value, r3.value, r4.value).then(
                           resolve,
                           reject
                         );
@@ -233,19 +234,19 @@ export function withRequestMiddlewares<
                   } else {
                     // 3rd middleware returned a value
                     // run handler
-                    handler(r1.right, r2.right, r3.right).then(resolve, reject);
+                    handler(r1.value, r2.value, r3.value).then(resolve, reject);
                   }
                 }, reject);
               } else {
                 // 2nd middleware returned a value
                 // run handler
-                handler(r1.right, r2.right).then(resolve, reject);
+                handler(r1.value, r2.value).then(resolve, reject);
               }
             }, reject);
           } else {
             // 1st middleware returned a value
             // run handler
-            handler(r1.right).then(resolve, reject);
+            handler(r1.value).then(resolve, reject);
           }
         }, reject);
       });

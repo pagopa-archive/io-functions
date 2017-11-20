@@ -2,10 +2,10 @@
 
 import * as DocumentDb from "documentdb";
 
+import { isLeft, isRight, right } from "fp-ts/lib/Either";
 import { none, some } from "ts-option";
 
 import * as DocumentDbUtils from "../documentdb";
-import { right } from "../either";
 
 describe("getDatabaseUri", () => {
   it("should generate a database Uri", () => {
@@ -37,9 +37,9 @@ describe("readDatabase", () => {
     );
     expect(clientMock.readDatabase).toHaveBeenCalledTimes(1);
 
-    expect(result.isRight).toBeTruthy();
-    if (result.isRight) {
-      expect(result.right).toEqual(dbFixture);
+    expect(isRight(result)).toBeTruthy();
+    if (isRight(result)) {
+      expect(result.value).toEqual(dbFixture);
     }
   });
 
@@ -52,9 +52,9 @@ describe("readDatabase", () => {
       dbUriFixture
     );
     expect(clientMock.readDatabase).toHaveBeenCalledTimes(1);
-    expect(result.isLeft).toBeTruthy();
-    if (result.isLeft) {
-      expect(result.left).toEqual("error");
+    expect(isLeft(result)).toBeTruthy();
+    if (isLeft(result)) {
+      expect(result.value).toEqual("error");
     }
   });
 });
@@ -76,9 +76,9 @@ describe("readCollection", () => {
       collectionUriFixture
     );
     expect(clientMock.readCollection).toHaveBeenCalledTimes(1);
-    expect(result.isRight).toBeTruthy();
-    if (result.isRight) {
-      expect(result.right).toEqual(collectionFixture);
+    expect(isRight(result)).toBeTruthy();
+    if (isRight(result)) {
+      expect(result.value).toEqual(collectionFixture);
     }
   });
 
@@ -91,9 +91,9 @@ describe("readCollection", () => {
       collectionUriFixture
     );
     expect(clientMock.readCollection).toHaveBeenCalledTimes(1);
-    expect(result.isLeft).toBeTruthy();
-    if (result.isLeft) {
-      expect(result.left).toEqual("error");
+    expect(isLeft(result)).toBeTruthy();
+    if (isLeft(result)) {
+      expect(result.value).toEqual("error");
     }
   });
 });
@@ -119,9 +119,9 @@ describe("createDocument", () => {
       "fiscalCode"
     );
     expect(clientMock.createDocument).toHaveBeenCalledTimes(1);
-    expect(result.isRight).toBeTruthy();
-    if (result.isRight) {
-      expect(result.right).toEqual(documentFixture);
+    expect(isRight(result)).toBeTruthy();
+    if (isRight(result)) {
+      expect(result.value).toEqual(documentFixture);
     }
   });
 
@@ -136,9 +136,9 @@ describe("createDocument", () => {
       "fiscalCode"
     );
     expect(clientMock.createDocument).toHaveBeenCalledTimes(1);
-    expect(result.isLeft).toBeTruthy();
-    if (result.isLeft) {
-      expect(result.left).toEqual("error");
+    expect(isLeft(result)).toBeTruthy();
+    if (isLeft(result)) {
+      expect(result.value).toEqual("error");
     }
   });
 });
@@ -168,9 +168,9 @@ describe("readDocument", () => {
     expect(clientMock.readDocument.mock.calls[0][1]).toEqual({
       partitionKey: "k"
     });
-    expect(result.isRight).toBeTruthy();
-    if (result.isRight) {
-      expect(result.right).toEqual(documentFixture);
+    expect(isRight(result)).toBeTruthy();
+    if (isRight(result)) {
+      expect(result.value).toEqual(documentFixture);
     }
   });
 
@@ -186,9 +186,9 @@ describe("readDocument", () => {
     );
     expect(clientMock.readDocument).toHaveBeenCalledTimes(1);
     expect(clientMock.readDocument.mock.calls[0][1]).toEqual({ partitionKey: [ "k1", "k2" ] });
-    expect(result.isRight).toBeTruthy();
-    if (result.isRight) {
-      expect(result.right).toEqual(documentFixture);
+    expect(isRight(result)).toBeTruthy();
+    if (isRight(result)) {
+      expect(result.value).toEqual(documentFixture);
     }
   });
   */
@@ -203,9 +203,9 @@ describe("readDocument", () => {
       "k"
     );
     expect(clientMock.readDocument).toHaveBeenCalledTimes(1);
-    expect(result.isLeft).toBeTruthy();
-    if (result.isLeft) {
-      expect(result.left).toEqual("error");
+    expect(isLeft(result)).toBeTruthy();
+    if (isLeft(result)) {
+      expect(result.value).toEqual("error");
     }
   });
 });
@@ -236,10 +236,10 @@ describe("queryDocuments", () => {
     );
     const result = await iterator.executeNext();
     expect(iteratorMock.executeNext).toBeCalled();
-    expect(result.isRight).toBeTruthy();
-    if (result.isRight) {
-      expect(result.right.isDefined).toBeTruthy();
-      expect(result.right.get).toEqual(["result"]);
+    expect(isRight(result)).toBeTruthy();
+    if (isRight(result)) {
+      expect(result.value.isDefined).toBeTruthy();
+      expect(result.value.get).toEqual(["result"]);
     }
   });
 
@@ -262,9 +262,9 @@ describe("queryDocuments", () => {
     );
     const result = await iterator.executeNext();
     expect(iteratorMock.executeNext).toBeCalled();
-    expect(result.isLeft).toBeTruthy();
-    if (result.isLeft) {
-      expect(result.left).toEqual("error");
+    expect(isLeft(result)).toBeTruthy();
+    if (isLeft(result)) {
+      expect(result.value).toEqual("error");
     }
   });
 });
@@ -296,10 +296,10 @@ describe("queryOneDocument", () => {
       "QUERY"
     );
     expect(iteratorMock.executeNext).toBeCalled();
-    expect(result.isRight).toBeTruthy();
-    if (result.isRight) {
-      expect(result.right.isDefined).toBeTruthy();
-      expect(result.right.get).toEqual("result1");
+    expect(isRight(result)).toBeTruthy();
+    if (isRight(result)) {
+      expect(result.value.isDefined).toBeTruthy();
+      expect(result.value.get).toEqual("result1");
     }
   });
 
@@ -321,9 +321,9 @@ describe("queryOneDocument", () => {
       "QUERY"
     );
     expect(iteratorMock.executeNext).toBeCalled();
-    expect(result.isRight).toBeTruthy();
-    if (result.isRight) {
-      expect(result.right.isEmpty).toBeTruthy();
+    expect(isRight(result)).toBeTruthy();
+    if (isRight(result)) {
+      expect(result.value.isEmpty).toBeTruthy();
     }
   });
 
@@ -345,9 +345,9 @@ describe("queryOneDocument", () => {
       "QUERY"
     );
     expect(iteratorMock.executeNext).toBeCalled();
-    expect(result.isLeft).toBeTruthy();
-    if (result.isLeft) {
-      expect(result.left).toEqual("error");
+    expect(isLeft(result)).toBeTruthy();
+    if (isLeft(result)) {
+      expect(result.value).toEqual("error");
     }
   });
 });
@@ -374,14 +374,14 @@ describe("mapResultIterator", () => {
     await mappedIterator.executeNext();
 
     expect(iteratorMock.executeNext).toHaveBeenCalledTimes(2);
-    expect(result1.isRight).toBeTruthy();
-    if (result1.isRight) {
-      expect(result1.right.isDefined);
-      expect(result1.right.get).toEqual([2, 4]);
+    expect(isRight(result1)).toBeTruthy();
+    if (isRight(result1)) {
+      expect(result1.value.isDefined);
+      expect(result1.value.get).toEqual([2, 4]);
     }
-    expect(result1.isRight).toBeTruthy();
-    if (result1.isRight) {
-      expect(result1.right.isEmpty);
+    expect(isRight(result1)).toBeTruthy();
+    if (isRight(result1)) {
+      expect(result1.value.isEmpty);
     }
   });
 });
@@ -439,9 +439,9 @@ describe("upsertAttachment", () => {
       {},
       expect.any(Function)
     );
-    expect(result.isRight).toBeTruthy();
-    if (result.isRight) {
-      expect(result.right).toEqual(anAttachment);
+    expect(isRight(result)).toBeTruthy();
+    if (isRight(result)) {
+      expect(result.value).toEqual(anAttachment);
     }
   });
 });
@@ -473,10 +473,10 @@ describe("queryAttachments", () => {
     );
     const result = await iterator.executeNext();
     expect(iteratorMock.executeNext).toBeCalled();
-    expect(result.isRight).toBeTruthy();
-    if (result.isRight) {
-      expect(result.right.isDefined).toBeTruthy();
-      expect(result.right.get).toEqual(["result"]);
+    expect(isRight(result)).toBeTruthy();
+    if (isRight(result)) {
+      expect(result.value.isDefined).toBeTruthy();
+      expect(result.value.get).toEqual(["result"]);
     }
   });
 });

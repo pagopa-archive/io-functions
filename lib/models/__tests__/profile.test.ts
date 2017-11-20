@@ -1,4 +1,5 @@
 // tslint:disable:no-any
+import { isLeft, isRight } from "fp-ts/lib/Either";
 
 import * as DocumentDb from "documentdb";
 
@@ -44,10 +45,10 @@ describe("findOneProfileByFiscalCode", () => {
 
     const result = await model.findOneProfileByFiscalCode(aFiscalCode);
 
-    expect(result.isRight).toBeTruthy();
-    if (result.isRight) {
-      expect(result.right.isDefined).toBeTruthy();
-      expect(result.right.get).toEqual(aRetrievedProfile);
+    expect(isRight(result)).toBeTruthy();
+    if (isRight(result)) {
+      expect(result.value.isDefined).toBeTruthy();
+      expect(result.value.get).toEqual(aRetrievedProfile);
     }
   });
 
@@ -67,9 +68,9 @@ describe("findOneProfileByFiscalCode", () => {
 
     const result = await model.findOneProfileByFiscalCode(aFiscalCode);
 
-    expect(result.isRight).toBeTruthy();
-    if (result.isRight) {
-      expect(result.right.isEmpty).toBeTruthy();
+    expect(isRight(result)).toBeTruthy();
+    if (isRight(result)) {
+      expect(result.value.isEmpty).toBeTruthy();
     }
   });
 });
@@ -98,11 +99,11 @@ describe("createProfile", () => {
       "partitionKey",
       aFiscalCode
     );
-    expect(result.isRight).toBeTruthy();
-    if (result.isRight) {
-      expect(result.right.fiscalCode).toEqual(newProfile.fiscalCode);
-      expect(result.right.id).toEqual(`${aFiscalCode}-${"0".repeat(16)}`);
-      expect(result.right.version).toEqual(0);
+    expect(isRight(result)).toBeTruthy();
+    if (isRight(result)) {
+      expect(result.value.fiscalCode).toEqual(newProfile.fiscalCode);
+      expect(result.value.id).toEqual(`${aFiscalCode}-${"0".repeat(16)}`);
+      expect(result.value.version).toEqual(0);
     }
   });
 
@@ -123,9 +124,9 @@ describe("createProfile", () => {
 
     expect(clientMock.createDocument).toHaveBeenCalledTimes(1);
 
-    expect(result.isLeft).toBeTruthy();
-    if (result.isLeft) {
-      expect(result.left).toEqual("error");
+    expect(isLeft(result)).toBeTruthy();
+    if (isLeft(result)) {
+      expect(result.value).toEqual("error");
     }
   });
 });
@@ -160,10 +161,10 @@ describe("update", () => {
       "partitionKey",
       aFiscalCode
     );
-    expect(result.isRight).toBeTruthy();
-    if (result.isRight) {
-      expect(result.right.isDefined).toBeTruthy();
-      const updatedProfile = result.right.get;
+    expect(isRight(result)).toBeTruthy();
+    if (isRight(result)) {
+      expect(result.value.isDefined).toBeTruthy();
+      const updatedProfile = result.value.get;
       expect(updatedProfile.fiscalCode).toEqual(aRetrievedProfile.fiscalCode);
       expect(updatedProfile.id).toEqual(`${aFiscalCode}-${"0".repeat(15)}1`);
       expect(updatedProfile.version).toEqual(1);
@@ -184,9 +185,9 @@ describe("update", () => {
     expect(clientMock.readDocument).toHaveBeenCalledTimes(1);
     expect(clientMock.createDocument).not.toHaveBeenCalled();
 
-    expect(result.isLeft).toBeTruthy();
-    if (result.isLeft) {
-      expect(result.left).toEqual("error");
+    expect(isLeft(result)).toBeTruthy();
+    if (isLeft(result)) {
+      expect(result.value).toEqual("error");
     }
   });
 
@@ -203,9 +204,9 @@ describe("update", () => {
     expect(clientMock.readDocument).toHaveBeenCalledTimes(1);
     expect(clientMock.createDocument).toHaveBeenCalledTimes(1);
 
-    expect(result.isLeft).toBeTruthy();
-    if (result.isLeft) {
-      expect(result.left).toEqual("error");
+    expect(isLeft(result)).toBeTruthy();
+    if (isLeft(result)) {
+      expect(result.value).toEqual("error");
     }
   });
 });
