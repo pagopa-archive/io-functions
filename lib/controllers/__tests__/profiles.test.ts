@@ -1,7 +1,7 @@
 // tslint:disable:no-any
 
+import { right } from "fp-ts/lib/Either";
 import { none, some } from "ts-option";
-import { right } from "../../utils/either";
 import { toEmailString, toNonEmptyString } from "../../utils/strings";
 
 import { IRetrievedProfile } from "../../models/profile";

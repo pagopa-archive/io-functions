@@ -3,7 +3,7 @@
 
 import * as DocumentDb from "documentdb";
 
-import { left, right } from "../either";
+import { isLeft, isRight, left, right } from "fp-ts/lib/Either";
 
 import { DocumentDbModel } from "../documentdb_model";
 
@@ -103,9 +103,9 @@ describe("create", () => {
       },
       "test-partition"
     );
-    expect(result.isLeft);
-    if (result.isLeft) {
-      expect(result.left).toBe("error");
+    expect(isLeft(result));
+    if (isLeft(result)) {
+      expect(result.value).toBe("error");
     }
   });
 
@@ -128,9 +128,9 @@ describe("create", () => {
       },
       "test-partition"
     );
-    expect(result.isRight);
-    if (result.isRight) {
-      expect(result.right).toEqual({
+    expect(isRight(result));
+    if (isRight(result)) {
+      expect(result.value).toEqual({
         id: "test-id-1",
         kind: "IRetrievedMyDocument",
         test: "test"
@@ -161,10 +161,10 @@ describe("find", () => {
       documentUri,
       "test-partition"
     );
-    expect(result.isRight);
-    if (result.isRight) {
-      expect(result.right.isDefined);
-      expect(result.right.get).toEqual({
+    expect(isRight(result));
+    if (isRight(result)) {
+      expect(result.value.isDefined);
+      expect(result.value.get).toEqual({
         id: "test-id-1",
         kind: "IRetrievedMyDocument",
         test: "test"
@@ -179,9 +179,9 @@ describe("find", () => {
       Promise.resolve(left({ code: 404, body: "Not found" }))
     );
     const result = await model.find("test-id-1", "test-partition");
-    expect(result.isRight);
-    if (result.isRight) {
-      expect(result.right.isEmpty);
+    expect(isRight(result));
+    if (isRight(result)) {
+      expect(result.value.isEmpty);
     }
   });
 
@@ -192,9 +192,9 @@ describe("find", () => {
       Promise.resolve(left({ code: 500, body: "Error" }))
     );
     const result = await model.find("test-id-1", "test-partition");
-    expect(result.isLeft);
-    if (result.isLeft) {
-      expect(result.left).toEqual({ code: 500, body: "Error" });
+    expect(isLeft(result));
+    if (isLeft(result)) {
+      expect(result.value).toEqual({ code: 500, body: "Error" });
     }
   });
 });
@@ -240,10 +240,10 @@ describe("update", () => {
       },
       "test-partition"
     );
-    expect(result.isRight);
-    if (result.isRight) {
-      expect(result.right.isDefined);
-      expect(result.right.get).toEqual({
+    expect(isRight(result));
+    if (isRight(result)) {
+      expect(result.value.isDefined);
+      expect(result.value.get).toEqual({
         id: "test-id-1",
         kind: "IRetrievedMyDocument",
         test: "test",
@@ -260,9 +260,9 @@ describe("update", () => {
     );
     const result = await model.update("test-id-1", "test-partition", d => d);
     expect(DocumentDbUtils.replaceDocument).not.toHaveBeenCalled();
-    expect(result.isRight);
-    if (result.isRight) {
-      expect(result.right.isEmpty);
+    expect(isRight(result));
+    if (isRight(result)) {
+      expect(result.value.isEmpty);
     }
   });
 
@@ -274,9 +274,9 @@ describe("update", () => {
     );
     const result = await model.update("test-id-1", "test-partition", d => d);
     expect(DocumentDbUtils.replaceDocument).not.toHaveBeenCalled();
-    expect(result.isLeft);
-    if (result.isLeft) {
-      expect(result.left).toEqual({ code: 500, body: "Error" });
+    expect(isLeft(result));
+    if (isLeft(result)) {
+      expect(result.value).toEqual({ code: 500, body: "Error" });
     }
   });
 
@@ -296,9 +296,9 @@ describe("update", () => {
     );
     const result = await model.update("test-id-1", "test-partition", d => d);
     expect(DocumentDbUtils.replaceDocument).toHaveBeenCalledTimes(1);
-    expect(result.isLeft);
-    if (result.isLeft) {
-      expect(result.left).toEqual({ code: 500, body: "Error" });
+    expect(isLeft(result));
+    if (isLeft(result)) {
+      expect(result.value).toEqual({ code: 500, body: "Error" });
     }
   });
 });
@@ -326,10 +326,10 @@ describe("attach", () => {
     ).toBeCalledWith(aDbClient, undefined, anAttachment, {
       partitionKey: aPartitionKey
     });
-    expect(result.isRight).toBeTruthy();
-    if (result.isRight) {
-      expect(result.right.isEmpty).toBeFalsy();
-      result.right.map(r => expect(r).toEqual(anAttachment));
+    expect(isRight(result)).toBeTruthy();
+    if (isRight(result)) {
+      expect(result.value.isEmpty).toBeFalsy();
+      result.value.map(r => expect(r).toEqual(anAttachment));
     }
     upsertAttachmentSpy.mockReset();
     getDocumentUriSpy.mockReset();

@@ -4,11 +4,11 @@
 
 import * as express from "express";
 
+import { isLeft, isRight, left, right } from "fp-ts/lib/Either";
 import { option } from "ts-option";
 import { ExtendedProfile } from "../api/definitions/ExtendedProfile";
 import { FiscalCode } from "../api/definitions/FiscalCode";
 import { LimitedProfile } from "../api/definitions/LimitedProfile";
-import { left, right } from "../utils/either";
 
 import {
   AzureApiAuthMiddleware,
@@ -94,8 +94,8 @@ export function GetProfileHandler(
     const errorOrMaybeProfile = await profileModel.findOneProfileByFiscalCode(
       fiscalCode
     );
-    if (errorOrMaybeProfile.isRight) {
-      const maybeProfile = errorOrMaybeProfile.right;
+    if (isRight(errorOrMaybeProfile)) {
+      const maybeProfile = errorOrMaybeProfile.value;
       if (maybeProfile.isDefined) {
         const profile = maybeProfile.get;
         if (auth.groups.has(UserGroup.ApiFullProfileRead)) {
@@ -115,7 +115,7 @@ export function GetProfileHandler(
     } else {
       return ResponseErrorQuery(
         "Error while retrieving the profile",
-        errorOrMaybeProfile.left
+        errorOrMaybeProfile.value
       );
     }
   };
@@ -159,14 +159,14 @@ export const ProfilePayloadMiddleware: IRequestMiddleware<
       .filter(isNonEmptyString)
       .map(email =>
         resolve(
-          right({
+          right<IResponseErrorValidation, IProfilePayload>({
             email
           })
         )
       )
       .getOrElse(() => {
         resolve(
-          left(
+          left<IResponseErrorValidation, IProfilePayload>(
             ResponseErrorValidation(
               "Invalid email",
               "email must be a non-empty string"
@@ -188,15 +188,15 @@ async function createNewProfileFromPayload(
     fiscalCode
   };
   const errorOrProfile = await profileModel.create(profile, profile.fiscalCode);
-  const errorOrProfileAsPublicExtendedProfile = errorOrProfile.mapRight(
+  const errorOrProfileAsPublicExtendedProfile = errorOrProfile.map(
     toExtendedProfile
   );
-  if (errorOrProfileAsPublicExtendedProfile.isRight) {
-    return ResponseSuccessJson(errorOrProfileAsPublicExtendedProfile.right);
+  if (isRight(errorOrProfileAsPublicExtendedProfile)) {
+    return ResponseSuccessJson(errorOrProfileAsPublicExtendedProfile.value);
   } else {
     return ResponseErrorQuery(
       "Error while creating a new profile",
-      errorOrProfileAsPublicExtendedProfile.left
+      errorOrProfileAsPublicExtendedProfile.value
     );
   }
 }
@@ -221,14 +221,14 @@ async function updateExistingProfileFromPayload(
     }
   );
 
-  if (errorOrMaybeProfile.isLeft) {
+  if (isLeft(errorOrMaybeProfile)) {
     return ResponseErrorQuery(
       "Error while updating the existing profile",
-      errorOrMaybeProfile.left
+      errorOrMaybeProfile.value
     );
   }
 
-  const maybeProfile = errorOrMaybeProfile.right;
+  const maybeProfile = errorOrMaybeProfile.value;
 
   if (maybeProfile.isEmpty) {
     // this should never happen since if the profile doesn't exist this function
@@ -257,8 +257,8 @@ export function UpsertProfileHandler(
     const errorOrMaybeProfile = await profileModel.findOneProfileByFiscalCode(
       fiscalCode
     );
-    if (errorOrMaybeProfile.isRight) {
-      const maybeProfile = errorOrMaybeProfile.right;
+    if (isRight(errorOrMaybeProfile)) {
+      const maybeProfile = errorOrMaybeProfile.value;
       if (maybeProfile.isEmpty) {
         // create a new profile
         return createNewProfileFromPayload(
@@ -275,7 +275,7 @@ export function UpsertProfileHandler(
         );
       }
     } else {
-      return ResponseErrorQuery("Error", errorOrMaybeProfile.left);
+      return ResponseErrorQuery("Error", errorOrMaybeProfile.value);
     }
   };
 }

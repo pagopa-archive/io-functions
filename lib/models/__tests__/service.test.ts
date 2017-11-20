@@ -1,4 +1,5 @@
 // tslint:disable:no-any
+import { isLeft, isRight } from "fp-ts/lib/Either";
 
 import * as DocumentDb from "documentdb";
 
@@ -56,10 +57,10 @@ describe("findOneServiceById", () => {
 
     const result = await model.findOneByServiceId(toNonEmptyString("id").get);
 
-    expect(result.isRight).toBeTruthy();
-    if (result.isRight) {
-      expect(result.right.isDefined).toBeTruthy();
-      expect(result.right.get).toEqual(aRetrievedService);
+    expect(isRight(result)).toBeTruthy();
+    if (isRight(result)) {
+      expect(result.value.isDefined).toBeTruthy();
+      expect(result.value.get).toEqual(aRetrievedService);
     }
   });
 
@@ -79,9 +80,9 @@ describe("findOneServiceById", () => {
 
     const result = await model.findOneByServiceId(toNonEmptyString("id").get);
 
-    expect(result.isRight).toBeTruthy();
-    if (result.isRight) {
-      expect(result.right.isEmpty).toBeTruthy();
+    expect(isRight(result)).toBeTruthy();
+    if (isRight(result)) {
+      expect(result.value.isEmpty).toBeTruthy();
     }
   });
 });
@@ -114,11 +115,11 @@ describe("createService", () => {
       "partitionKey",
       aServiceId
     );
-    expect(result.isRight).toBeTruthy();
-    if (result.isRight) {
-      expect(result.right.serviceId).toEqual(newService.serviceId);
-      expect(result.right.id).toEqual(`${aServiceId}-${"0".repeat(16)}`);
-      expect(result.right.version).toEqual(0);
+    expect(isRight(result)).toBeTruthy();
+    if (isRight(result)) {
+      expect(result.value.serviceId).toEqual(newService.serviceId);
+      expect(result.value.id).toEqual(`${aServiceId}-${"0".repeat(16)}`);
+      expect(result.value.version).toEqual(0);
     }
   });
 
@@ -143,9 +144,9 @@ describe("createService", () => {
 
     expect(clientMock.createDocument).toHaveBeenCalledTimes(1);
 
-    expect(result.isLeft).toBeTruthy();
-    if (result.isLeft) {
-      expect(result.left).toEqual("error");
+    expect(isLeft(result)).toBeTruthy();
+    if (isLeft(result)) {
+      expect(result.value).toEqual("error");
     }
   });
 });
@@ -179,10 +180,10 @@ describe("update", () => {
       "partitionKey",
       aServiceId
     );
-    expect(result.isRight).toBeTruthy();
-    if (result.isRight) {
-      expect(result.right.isDefined).toBeTruthy();
-      const updatedService = result.right.get;
+    expect(isRight(result)).toBeTruthy();
+    if (isRight(result)) {
+      expect(result.value.isDefined).toBeTruthy();
+      const updatedService = result.value.get;
       expect(updatedService.serviceId).toEqual(aRetrievedService.serviceId);
       expect(updatedService.id).toEqual(`${aServiceId}-${"0".repeat(15)}1`);
       expect(updatedService.version).toEqual(1);
@@ -203,9 +204,9 @@ describe("update", () => {
     expect(clientMock.readDocument).toHaveBeenCalledTimes(1);
     expect(clientMock.createDocument).not.toHaveBeenCalled();
 
-    expect(result.isLeft).toBeTruthy();
-    if (result.isLeft) {
-      expect(result.left).toEqual("error");
+    expect(isLeft(result)).toBeTruthy();
+    if (isLeft(result)) {
+      expect(result.value).toEqual("error");
     }
   });
 
@@ -222,9 +223,9 @@ describe("update", () => {
     expect(clientMock.readDocument).toHaveBeenCalledTimes(1);
     expect(clientMock.createDocument).toHaveBeenCalledTimes(1);
 
-    expect(result.isLeft).toBeTruthy();
-    if (result.isLeft) {
-      expect(result.left).toEqual("error");
+    expect(isLeft(result)).toBeTruthy();
+    if (isLeft(result)) {
+      expect(result.value).toEqual("error");
     }
   });
 });

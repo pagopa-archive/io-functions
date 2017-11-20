@@ -2089,6 +2089,10 @@ forwarded@~0.1.0:
   version "0.1.0"
   resolved "https://registry.yarnpkg.com/forwarded/-/forwarded-0.1.0.tgz#19ef9874c4ae1c297bcf078fde63a09b66a84363"
 
+fp-ts@^0.6.3:
+  version "0.6.3"
+  resolved "https://registry.yarnpkg.com/fp-ts/-/fp-ts-0.6.3.tgz#6f25773e45a173b1f4c40be596c4286e2e1c22ec"
+
 frameguard@3.0.0:
   version "3.0.0"
   resolved "https://registry.yarnpkg.com/frameguard/-/frameguard-3.0.0.tgz#7bcad469ee7b96e91d12ceb3959c78235a9272e9"

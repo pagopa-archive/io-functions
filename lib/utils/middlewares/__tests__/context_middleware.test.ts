@@ -22,6 +22,6 @@ describe("ContextMiddleware", () => {
 
     const response = await middleware(request as any);
 
-    response.mapRight(c => expect(c).toEqual(context));
+    response.map(c => expect(c).toEqual(context));
   });
 });

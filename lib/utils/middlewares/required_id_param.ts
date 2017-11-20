@@ -1,4 +1,5 @@
-import { left, right } from "../either";
+import { left, right } from "fp-ts/lib/Either";
+
 import { isNonEmptyString, NonEmptyString } from "../strings";
 
 import { RequiredParamMiddleware } from "./required_param";

@@ -2,7 +2,7 @@
 
 import { none, some } from "ts-option";
 
-import { left, right } from "../../../utils/either";
+import { isLeft, isRight, left, right } from "fp-ts/lib/Either";
 import { toNonNegativeNumber } from "../../../utils/numbers";
 import { toNonEmptyString } from "../../../utils/strings";
 
@@ -334,18 +334,16 @@ describe("ServicePayloadMiddleware", () => {
     const errorOrServicePayload = await ServicePayloadMiddleware({
       body: aRequestBody
     } as any);
-    expect(errorOrServicePayload.isRight).toBeTruthy();
-    if (errorOrServicePayload.isRight) {
-      expect(errorOrServicePayload.right).toEqual(aServicePayload);
-    }
+    expect(isRight(errorOrServicePayload)).toBeTruthy();
+    expect(errorOrServicePayload.value).toEqual(aServicePayload);
   });
   it("should fail if request payload does not validate", async () => {
     const errorOrServicePayload = await ServicePayloadMiddleware({
       body: {}
     } as any);
-    expect(errorOrServicePayload.isRight).toBeFalsy();
-    if (errorOrServicePayload.isLeft) {
-      expect(errorOrServicePayload.left.kind).toBe("IResponseErrorValidation");
+    expect(isLeft(errorOrServicePayload)).toBeTruthy();
+    if (isLeft(errorOrServicePayload)) {
+      expect(errorOrServicePayload.value.kind).toBe("IResponseErrorValidation");
     }
   });
 });

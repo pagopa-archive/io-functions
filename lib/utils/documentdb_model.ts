@@ -1,8 +1,8 @@
 import * as DocumentDb from "documentdb";
 import * as DocumentDbUtils from "../utils/documentdb";
 
+import { Either, isLeft, left, right } from "fp-ts/lib/Either";
 import { none, Option, option, some } from "ts-option";
-import { Either, left, right } from "./either";
 
 /**
  * A persisted data model backed by a DocumentDB client: this base class
@@ -69,7 +69,7 @@ export abstract class DocumentDbModel<
     );
 
     // if the result is successful we map it to a TR type
-    return maybeCreatedDocument.mapRight(this.toRetrieved);
+    return maybeCreatedDocument.map(this.toRetrieved);
   }
 
   /**
@@ -96,14 +96,14 @@ export abstract class DocumentDbModel<
       partitionKey
     );
 
-    if (errorOrDocument.isLeft && errorOrDocument.left.code === 404) {
+    if (isLeft(errorOrDocument) && errorOrDocument.value.code === 404) {
       // if the error is 404 (Not Found), we return an empty value
       return right(none);
     }
 
     // for any other error (errorOrDocument is a left), we return it as is
     // or in case of success, we map the result to a retrieved interface
-    return errorOrDocument.mapRight(r => some(this.toRetrieved(r)));
+    return errorOrDocument.map(r => some(this.toRetrieved(r)));
   }
 
   /**
@@ -121,12 +121,12 @@ export abstract class DocumentDbModel<
   ): Promise<Either<DocumentDb.QueryError, Option<TR>>> {
     // fetch the document
     const errorOrMaybeCurrent = await this.find(documentId, partitionKey);
-    if (errorOrMaybeCurrent.isLeft) {
+    if (isLeft(errorOrMaybeCurrent)) {
       // if the query returned an error, forward it
       return errorOrMaybeCurrent;
     }
 
-    const maybeCurrent = errorOrMaybeCurrent.right;
+    const maybeCurrent = errorOrMaybeCurrent.value;
 
     if (maybeCurrent.isEmpty) {
       return right(maybeCurrent);
@@ -150,12 +150,12 @@ export abstract class DocumentDbModel<
       partitionKey
     );
 
-    return updatedDocument.mapRight(this.toRetrieved).mapRight(some);
+    return updatedDocument.map(this.toRetrieved).map(some);
   }
 
   /**
    * Upsert an attachment for a specified document.
-   * 
+   *
    * @param documentId    the id of the document
    * @param partitionKey  partition key of the document
    * @param attachment    attachment object (contentType and media link)
@@ -174,12 +174,12 @@ export abstract class DocumentDbModel<
       { partitionKey }
     );
 
-    if (attachmentMeta.isLeft) {
-      return left(attachmentMeta.left);
+    if (isLeft(attachmentMeta)) {
+      return left(attachmentMeta.value);
     }
 
     // return the attachment media information
-    return right(option(attachmentMeta.right));
+    return right(option(attachmentMeta.value));
   }
 
   public async getAttachments(

@@ -7,8 +7,8 @@ winston.configure({
 
 import { response as MockResponse } from "jest-mock-express";
 
+import { isLeft, isRight, left, right } from "fp-ts/lib/Either";
 import { none, some } from "ts-option";
-import { left, right } from "../../utils/either";
 
 import { ModelId } from "../../utils/documentdb_model_versioned";
 
@@ -867,10 +867,8 @@ describe("MessagePayloadMiddleware", () => {
           body: f
         };
         const result = await MessagePayloadMiddleware(r as any);
-        expect(result.isRight).toBeTruthy();
-        if (result.isRight) {
-          expect(result.right).toEqual(f);
-        }
+        expect(isRight(result)).toBeTruthy();
+        expect(result.value).toEqual(f);
       })
     );
   });
@@ -921,9 +919,9 @@ describe("MessagePayloadMiddleware", () => {
           body: f
         };
         const result = await MessagePayloadMiddleware(r as any);
-        expect(result.isLeft).toBeTruthy();
-        if (result.isLeft) {
-          expect(result.left.kind).toEqual("IResponseErrorValidation");
+        expect(isLeft(result)).toBeTruthy();
+        if (isLeft(result)) {
+          expect(result.value.kind).toEqual("IResponseErrorValidation");
         }
       })
     );

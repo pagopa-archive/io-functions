@@ -12,7 +12,7 @@ import * as DocumentDb from "documentdb";
 
 import { none, Option, some } from "ts-option";
 
-import { Either, left, right } from "./either";
+import { Either, isLeft, left, right } from "fp-ts/lib/Either";
 
 //
 // Definition of types
@@ -125,9 +125,9 @@ export function readDatabase(
   return new Promise(resolve => {
     client.readDatabase(databaseUri.uri, (err, result) => {
       if (err) {
-        resolve(left(err));
+        resolve(left<DocumentDb.QueryError, DocumentDb.DatabaseMeta>(err));
       } else {
-        resolve(right(result));
+        resolve(right<DocumentDb.QueryError, DocumentDb.DatabaseMeta>(result));
       }
     });
   });
@@ -146,9 +146,11 @@ export function readCollection(
   return new Promise(resolve => {
     client.readCollection(collectionUri.uri, (err, result) => {
       if (err) {
-        resolve(left(err));
+        resolve(left<DocumentDb.QueryError, DocumentDb.CollectionMeta>(err));
       } else {
-        resolve(right(result));
+        resolve(
+          right<DocumentDb.QueryError, DocumentDb.CollectionMeta>(result)
+        );
       }
     });
   });
@@ -175,9 +177,16 @@ export function createDocument<T>(
       },
       (err, created) => {
         if (err) {
-          resolve(left(err));
+          resolve(
+            left<DocumentDb.QueryError, T & DocumentDb.RetrievedDocument>(err)
+          );
         } else {
-          resolve(right(created as T & DocumentDb.RetrievedDocument));
+          resolve(
+            right<
+              DocumentDb.QueryError,
+              T & DocumentDb.RetrievedDocument
+            >(created as T & DocumentDb.RetrievedDocument)
+          );
         }
       }
     );
@@ -203,9 +212,16 @@ export function readDocument<T>(
       },
       (err, result) => {
         if (err) {
-          resolve(left(err));
+          resolve(
+            left<DocumentDb.QueryError, T & DocumentDb.RetrievedDocument>(err)
+          );
         } else {
-          resolve(right(result as T & DocumentDb.RetrievedDocument));
+          resolve(
+            right<
+              DocumentDb.QueryError,
+              T & DocumentDb.RetrievedDocument
+            >(result as T & DocumentDb.RetrievedDocument)
+          );
         }
       }
     );
@@ -230,20 +246,33 @@ export function queryDocuments<T>(
       return new Promise(resolve => {
         documentIterator.executeNext((error, documents, _) => {
           if (error) {
-            resolve(left(error));
+            resolve(
+              left<
+                DocumentDb.QueryError,
+                Option<ReadonlyArray<T & DocumentDb.RetrievedDocument>>
+              >(error)
+            );
           } else if (documents && documents.length > 0) {
             const readonlyDocuments: ReadonlyArray<
               DocumentDb.RetrievedDocument
             > = documents;
             resolve(
-              right(
+              right<
+                DocumentDb.QueryError,
+                Option<ReadonlyArray<T & DocumentDb.RetrievedDocument>>
+              >(
                 some(readonlyDocuments as ReadonlyArray<
                   T & DocumentDb.RetrievedDocument
                 >)
               )
             );
           } else {
-            resolve(right(none));
+            resolve(
+              right<
+                DocumentDb.QueryError,
+                Option<ReadonlyArray<T & DocumentDb.RetrievedDocument>>
+              >(none)
+            );
           }
         });
       });
@@ -275,26 +304,46 @@ export function queryOneDocument<T>(
       // here we may have a query error or possibly a document, if at
       // least one was found
       maybeError
-        .mapRight(maybeDocuments => {
+        .map(maybeDocuments => {
           // it's not an error
           maybeDocuments
             .map(documents => {
               // query resulted in at least a document
               if (documents && documents.length > 0 && documents[0]) {
                 // resolve with the first document
-                resolve(right(some(documents[0])));
+                resolve(
+                  right<
+                    DocumentDb.QueryError,
+                    Option<T & DocumentDb.RetrievedDocument>
+                  >(some(documents[0]))
+                );
               } else {
                 // query result was empty
-                resolve(right(none));
+                resolve(
+                  right<
+                    DocumentDb.QueryError,
+                    Option<T & DocumentDb.RetrievedDocument>
+                  >(none)
+                );
               }
             })
             .getOrElse(() => {
-              resolve(right(none as Option<T & DocumentDb.RetrievedDocument>));
+              resolve(
+                right<
+                  DocumentDb.QueryError,
+                  Option<T & DocumentDb.RetrievedDocument>
+                >(none as Option<T & DocumentDb.RetrievedDocument>)
+              );
             });
         })
         .mapLeft(error => {
           // it's an error
-          resolve(left(error));
+          resolve(
+            left<
+              DocumentDb.QueryError,
+              Option<T & DocumentDb.RetrievedDocument>
+            >(error)
+          );
         });
     }, reject);
   });
@@ -312,18 +361,34 @@ export function mapResultIterator<A, B>(
       new Promise((resolve, reject) =>
         i.executeNext().then(errorOrMaybeDocuments => {
           errorOrMaybeDocuments
-            .mapRight(maybeDocuments => {
+            .map(maybeDocuments => {
               maybeDocuments
                 .map(documents => {
                   if (documents && documents.length > 0) {
-                    resolve(right(some(documents.map(f))));
+                    resolve(
+                      right<DocumentDb.QueryError, Option<ReadonlyArray<B>>>(
+                        some(documents.map(f))
+                      )
+                    );
                   } else {
-                    resolve(right(none));
+                    resolve(
+                      right<DocumentDb.QueryError, Option<ReadonlyArray<B>>>(
+                        none
+                      )
+                    );
                   }
                 })
-                .getOrElse(() => resolve(right(none)));
+                .getOrElse(() =>
+                  resolve(
+                    right<DocumentDb.QueryError, Option<ReadonlyArray<B>>>(none)
+                  )
+                );
             })
-            .mapLeft(error => resolve(left(error)));
+            .mapLeft(error =>
+              resolve(
+                left<DocumentDb.QueryError, Option<ReadonlyArray<B>>>(error)
+              )
+            );
         }, reject)
       )
   };
@@ -338,13 +403,13 @@ export async function iteratorToArray<T>(
   async function iterate(a: ReadonlyArray<T>): Promise<ReadonlyArray<T>> {
     const errorOrMaybeDocuments = await i.executeNext();
     if (
-      errorOrMaybeDocuments.isLeft ||
-      errorOrMaybeDocuments.right.isEmpty ||
-      errorOrMaybeDocuments.right.get.length === 0
+      isLeft(errorOrMaybeDocuments) ||
+      errorOrMaybeDocuments.value.isEmpty ||
+      errorOrMaybeDocuments.value.get.length === 0
     ) {
       return a;
     }
-    const result = errorOrMaybeDocuments.right.get;
+    const result = errorOrMaybeDocuments.value.get;
     return iterate(a.concat(...result));
   }
   return iterate([]);
@@ -373,9 +438,16 @@ export function replaceDocument<T>(
       },
       (err, created) => {
         if (err) {
-          resolve(left(err));
+          resolve(
+            left<DocumentDb.QueryError, T & DocumentDb.RetrievedDocument>(err)
+          );
         } else {
-          resolve(right(created as T & DocumentDb.RetrievedDocument));
+          resolve(
+            right<
+              DocumentDb.QueryError,
+              T & DocumentDb.RetrievedDocument
+            >(created as T & DocumentDb.RetrievedDocument)
+          );
         }
       }
     );
@@ -405,9 +477,16 @@ export function upsertAttachment<T>(
       options,
       (err, meta) => {
         if (err) {
-          resolve(left(err));
+          resolve(
+            left<DocumentDb.QueryError, T & DocumentDb.AttachmentMeta>(err)
+          );
         } else {
-          resolve(right(meta as T & DocumentDb.AttachmentMeta));
+          resolve(
+            right<
+              DocumentDb.QueryError,
+              T & DocumentDb.AttachmentMeta
+            >(meta as T & DocumentDb.AttachmentMeta)
+          );
         }
       }
     );
@@ -432,20 +511,33 @@ export function queryAttachments<T>(
       return new Promise(resolve => {
         attachmentsIterator.executeNext((error, attachments, _) => {
           if (error) {
-            resolve(left(error));
+            resolve(
+              left<
+                DocumentDb.QueryError,
+                Option<ReadonlyArray<T & DocumentDb.AttachmentMeta>>
+              >(error)
+            );
           } else if (attachments && attachments.length > 0) {
             const readonlyAttachments: ReadonlyArray<
               DocumentDb.AttachmentMeta
             > = attachments;
             resolve(
-              right(
+              right<
+                DocumentDb.QueryError,
+                Option<ReadonlyArray<T & DocumentDb.AttachmentMeta>>
+              >(
                 some(readonlyAttachments as ReadonlyArray<
                   T & DocumentDb.AttachmentMeta
                 >)
               )
             );
           } else {
-            resolve(right(none));
+            resolve(
+              right<
+                DocumentDb.QueryError,
+                Option<ReadonlyArray<T & DocumentDb.AttachmentMeta>>
+              >(none)
+            );
           }
         });
       });

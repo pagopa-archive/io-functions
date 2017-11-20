@@ -2,17 +2,17 @@
  * Utility functions to interact with an Azure Blob Storage.
  */
 import * as azureStorage from "azure-storage";
+import { Either, left, right } from "fp-ts/lib/Either";
 import { Option, option } from "ts-option";
-import { Either, left, right } from "./either";
 
 /**
- * Create a new blob (media) from plain text. 
+ * Create a new blob (media) from plain text.
  * Assumes that the container <containerName> already exists.
- * 
+ *
  * @param blobService     the Azure blob service
  * @param containerName   the name of the Azure blob storage container
  * @param blobName        blob storage container name
- * @param text            text to be saved      
+ * @param text            text to be saved
  */
 export function upsertBlobFromText(
   blobService: azureStorage.BlobService,
@@ -27,9 +27,15 @@ export function upsertBlobFromText(
       text,
       (err, result, __) => {
         if (err) {
-          return resolve(left(err));
+          return resolve(
+            left<Error, Option<azureStorage.BlobService.BlobResult>>(err)
+          );
         } else {
-          return resolve(right(option(result)));
+          return resolve(
+            right<Error, Option<azureStorage.BlobService.BlobResult>>(
+              option(result)
+            )
+          );
         }
       }
     )
@@ -37,13 +43,13 @@ export function upsertBlobFromText(
 }
 
 /**
- * Create a new blob (media) from a typed object. 
+ * Create a new blob (media) from a typed object.
  * Assumes that the container <containerName> already exists.
- * 
+ *
  * @param blobService     the Azure blob service
  * @param containerName   the name of the Azure blob storage container
  * @param blobName        blob storage container name
- * @param content         object to be serialized and saved       
+ * @param content         object to be serialized and saved
  */
 export function upsertBlobFromObject<T>(
   blobService: azureStorage.BlobService,

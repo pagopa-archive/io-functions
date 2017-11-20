@@ -1,3 +1,4 @@
+import { isRight } from "fp-ts/lib/Either";
 import { upsertBlobFromText } from "../azure_storage";
 
 jest.mock("azure-storage");
@@ -39,9 +40,9 @@ describe("upsertBlobFromText", () => {
       aRandomText,
       expect.any(Function)
     );
-    expect(result.isRight).toBeTruthy();
-    if (result.isRight) {
-      expect(result.right.get).toEqual(aBlobResult);
+    expect(isRight(result)).toBeTruthy();
+    if (isRight(result)) {
+      expect(result.value.get).toEqual(aBlobResult);
     }
     spy.mockReset();
   });
@@ -67,9 +68,9 @@ describe("upsertBlobFromObject", () => {
       aRandomText,
       expect.any(Function)
     );
-    expect(result.isRight).toBeTruthy();
-    if (result.isRight) {
-      expect(result.right.get).toEqual(aBlobResult);
+    expect(isRight(result)).toBeTruthy();
+    if (isRight(result)) {
+      expect(result.value.get).toEqual(aBlobResult);
     }
     spy.mockReset();
   });

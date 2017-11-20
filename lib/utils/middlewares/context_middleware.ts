@@ -1,7 +1,7 @@
 import * as express from "express";
 
+import { left, right } from "fp-ts/lib/Either";
 import { Option, option } from "ts-option";
-import { left, right } from "../either";
 
 import { IRequestMiddleware } from "../request_middleware";
 
@@ -39,9 +39,12 @@ export function ContextMiddleware<T>(): IRequestMiddleware<
       getAppContext<T>(request).match({
         none: () =>
           resolve(
-            left(ResponseErrorInternal("Cannot get context from request"))
+            left<IResponseErrorInternal, IContext<T>>(
+              ResponseErrorInternal("Cannot get context from request")
+            )
           ),
-        some: context => resolve(right(context))
+        some: context =>
+          resolve(right<IResponseErrorInternal, IContext<T>>(context))
       })
     );
 }

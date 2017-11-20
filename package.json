@@ -39,6 +39,7 @@
     "documentdb": "^1.12.2",
     "dotenv": "^4.0.0",
     "express": "^4.15.3",
+    "fp-ts": "^0.6.3",
     "fs-extra": "^4.0.1",
     "helmet": "^3.8.2",
     "helmet-csp": "^2.5.1",

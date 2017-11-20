@@ -43,7 +43,7 @@ import {
 import { INotificationEvent } from "./models/notification_event";
 import { ProfileModel } from "./models/profile";
 
-import { Either, left, right } from "./utils/either";
+import { Either, isLeft, isRight, left, right } from "fp-ts/lib/Either";
 import { toNonEmptyString } from "./utils/strings";
 import { Tuple2 } from "./utils/tuples";
 
@@ -123,13 +123,13 @@ export async function handleMessage(
     newMessageWithoutContent.fiscalCode
   );
 
-  if (errorOrMaybeProfile.isLeft) {
+  if (isLeft(errorOrMaybeProfile)) {
     // query failed
     return left(ProcessingError.TRANSIENT);
   }
 
   // query succeeded, we may have a profile
-  const maybeProfile = errorOrMaybeProfile.right;
+  const maybeProfile = errorOrMaybeProfile.value;
 
   // whether the recipient wants us to store the message content
   const isMessageStorageEnabled = maybeProfile.exists(
@@ -148,7 +148,7 @@ export async function handleMessage(
 
     winston.debug(`handleMessage|${JSON.stringify(newMessageWithoutContent)}`);
 
-    if (errorOrAttachment.isLeft) {
+    if (isLeft(errorOrAttachment)) {
       // we consider errors while updating message as transient
       return left(ProcessingError.TRANSIENT);
     }
@@ -200,14 +200,14 @@ export async function handleMessage(
     notification.messageId
   );
 
-  if (result.isLeft) {
+  if (isLeft(result)) {
     // saved failed, fail with a transient error
     // TODO: we could check the error to see if it's actually transient
     return left(ProcessingError.TRANSIENT);
   }
 
   // save succeeded, return the saved Notification
-  return right(result.right);
+  return right(result.value);
 }
 
 export function processResolve(
@@ -217,9 +217,9 @@ export function processResolve(
   messageContent: IMessageContent,
   senderMetadata: ICreatedMessageEventSenderMetadata
 ): void {
-  if (errorOrNotification.isRight) {
+  if (isRight(errorOrNotification)) {
     // the notification has been created
-    const notification = errorOrNotification.right;
+    const notification = errorOrNotification.value;
 
     if (notification.emailNotification) {
       // the notification object has been created with an email channel
@@ -237,7 +237,7 @@ export function processResolve(
     context.done();
   } else {
     // the processing failed
-    switch (errorOrNotification.left) {
+    switch (errorOrNotification.value) {
       case ProcessingError.NO_ADDRESSES: {
         winston.error(
           `Fiscal code has no associated profile and no default addresses provided|${newMessageWithoutContent.fiscalCode}`

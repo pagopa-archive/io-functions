@@ -19,7 +19,7 @@ import {
   NotificationChannelStatus
 } from "../api/definitions/NotificationChannelStatus";
 
-import { Either } from "../utils/either";
+import { Either } from "fp-ts/lib/Either";
 import { isNonEmptyString, NonEmptyString } from "../utils/strings";
 
 /**

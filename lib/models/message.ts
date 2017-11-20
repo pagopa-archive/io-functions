@@ -4,8 +4,8 @@ import is from "ts-is";
 import * as DocumentDbUtils from "../utils/documentdb";
 import { DocumentDbModel } from "../utils/documentdb_model";
 
+import { Either, isLeft, left, right } from "fp-ts/lib/Either";
 import { Option } from "ts-option";
-import { Either, left, right } from "../utils/either";
 import { isNonEmptyString, NonEmptyString } from "../utils/strings";
 
 import {
@@ -306,7 +306,7 @@ export class MessageModel extends DocumentDbModel<
   ): Promise<Either<DocumentDb.QueryError, Option<IRetrievedMessage>>> {
     const errorOrMaybeMessage = await this.find(messageId, fiscalCode);
 
-    return errorOrMaybeMessage.mapRight(maybeMessage =>
+    return errorOrMaybeMessage.map(maybeMessage =>
       maybeMessage.filter(m => m.fiscalCode === fiscalCode)
     );
   }
@@ -357,8 +357,8 @@ export class MessageModel extends DocumentDbModel<
       messageContent
     );
 
-    if (errorOrMessageContent.isLeft) {
-      return left(errorOrMessageContent.left);
+    if (isLeft(errorOrMessageContent)) {
+      return left(errorOrMessageContent.value);
     }
 
     const mediaUrl = blobService.getUrl(this.containerName, blobId);
@@ -370,10 +370,10 @@ export class MessageModel extends DocumentDbModel<
       media: mediaUrl
     });
 
-    if (errorOrAttachmentMeta.isLeft) {
-      return left(errorOrAttachmentMeta.left);
+    if (isLeft(errorOrAttachmentMeta)) {
+      return left(errorOrAttachmentMeta.value);
     }
 
-    return right(errorOrAttachmentMeta.right);
+    return right(errorOrAttachmentMeta.value);
   }
 }

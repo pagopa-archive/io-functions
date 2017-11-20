@@ -9,7 +9,7 @@ import * as ApplicationInsights from "applicationinsights";
 
 import { IContext } from "azure-function-express";
 
-import { left, right } from "../utils/either";
+import { isLeft, left, right } from "fp-ts/lib/Either";
 
 import { CreatedMessage } from "../api/definitions/CreatedMessage";
 import { FiscalCode } from "../api/definitions/FiscalCode";
@@ -91,10 +91,12 @@ export const MessagePayloadMiddleware: IRequestMiddleware<
   const requestBody = request.body;
 
   if (isNewMessage(requestBody)) {
-    return Promise.resolve(right(requestBody));
+    return Promise.resolve(
+      right<IResponseErrorValidation, NewMessage>(requestBody)
+    );
   } else {
     return Promise.resolve(
-      left(
+      left<IResponseErrorValidation, NewMessage>(
         ResponseErrorValidation(
           "Request not valid",
           "The request payload does not represent a valid NewMessage"
@@ -250,7 +252,7 @@ export function CreateMessageHandler(
       newMessageWithoutContent.fiscalCode
     );
 
-    if (errorOrMessage.isLeft) {
+    if (isLeft(errorOrMessage)) {
       // we got an error while creating the message
 
       // track the event that a message has failed to be created
@@ -264,18 +266,18 @@ export function CreateMessageHandler(
       });
 
       winston.debug(
-        `CreateMessageHandler|error|${JSON.stringify(errorOrMessage.left)}`
+        `CreateMessageHandler|error|${JSON.stringify(errorOrMessage.value)}`
       );
 
       // return an error response
       return ResponseErrorQuery(
         "Error while creating Message",
-        errorOrMessage.left
+        errorOrMessage.value
       );
     }
 
     // message creation succeeded
-    const retrievedMessage = errorOrMessage.right;
+    const retrievedMessage = errorOrMessage.value;
 
     winston.debug(
       `CreateMessageHandler|message created|${userService.serviceId}|${retrievedMessage.id}`
@@ -387,15 +389,15 @@ export function GetMessageHandler(
       messageId
     );
 
-    if (errorOrMaybeDocument.isLeft) {
+    if (isLeft(errorOrMaybeDocument)) {
       // the query failed
       return ResponseErrorQuery(
         "Error while retrieving the message",
-        errorOrMaybeDocument.left
+        errorOrMaybeDocument.value
       );
     }
 
-    const maybeDocument = errorOrMaybeDocument.right;
+    const maybeDocument = errorOrMaybeDocument.value;
     if (maybeDocument.isEmpty) {
       // the document does not exist
       return ResponseErrorNotFound(
@@ -422,15 +424,15 @@ export function GetMessageHandler(
       retrievedMessage.id
     );
 
-    if (errorOrMaybeNotification.isLeft) {
+    if (isLeft(errorOrMaybeNotification)) {
       // query failed
       return ResponseErrorQuery(
         "Error while retrieving the notification status",
-        errorOrMaybeNotification.left
+        errorOrMaybeNotification.value
       );
     }
 
-    const maybeNotification = errorOrMaybeNotification.right;
+    const maybeNotification = errorOrMaybeNotification.value;
 
     const maybeNotificationStatus = maybeNotification.map(n => {
       return {
