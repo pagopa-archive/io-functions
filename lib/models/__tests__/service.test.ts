@@ -12,6 +12,7 @@ import {
   IRetrievedService,
   IService,
   ServiceModel,
+  toAuthorizedCIDRs,
   toAuthorizedRecipients
 } from "../service";
 
@@ -31,6 +32,7 @@ const aServiceId = "xyz";
 const aRetrievedService: IRetrievedService = {
   _self: "xyz",
   _ts: "xyz",
+  authorizedCIDRs: toAuthorizedCIDRs([]),
   authorizedRecipients: toAuthorizedRecipients([]),
   departmentName: _getO(toNonEmptyString("MyDept")),
   id: _getO(toNonEmptyString("xyz")),
@@ -110,6 +112,7 @@ describe("createService", () => {
     const model = new ServiceModel(clientMock, servicesCollectionUrl);
 
     const newService: IService = {
+      authorizedCIDRs: toAuthorizedCIDRs([]),
       authorizedRecipients: toAuthorizedRecipients([]),
       departmentName: _getO(toNonEmptyString("MyService")),
       organizationName: _getO(toNonEmptyString("MyService")),
@@ -143,6 +146,7 @@ describe("createService", () => {
     const model = new ServiceModel(clientMock, servicesCollectionUrl);
 
     const newService: IService = {
+      authorizedCIDRs: toAuthorizedCIDRs([]),
       authorizedRecipients: toAuthorizedRecipients([]),
       departmentName: _getO(toNonEmptyString("MyService")),
       organizationName: _getO(toNonEmptyString("MyService")),

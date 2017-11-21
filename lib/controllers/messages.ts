@@ -8,6 +8,11 @@ import * as winston from "winston";
 
 import * as ApplicationInsights from "applicationinsights";
 
+import {
+  ClientIp,
+  ClientIpMiddleware
+} from "../utils/middlewares/client_ip_middleware";
+
 import { IContext } from "azure-function-express";
 
 import { isLeft, left, right } from "fp-ts/lib/Either";
@@ -57,6 +62,11 @@ import {
   ResponseSuccessRedirectToResource
 } from "../utils/response";
 import { ObjectIdGenerator, ulidGenerator } from "../utils/strings";
+
+import {
+  checkSourceIpForHandler,
+  clientIPAndCidrTuple as ipTuple
+} from "../utils/source_ip_check";
 
 import { mapResultIterator } from "../utils/documentdb";
 
@@ -131,6 +141,7 @@ function retrievedMessageToPublic(
 type ICreateMessageHandler = (
   context: IContext<IBindings>,
   auth: IAzureApiAuthorization,
+  clientIp: ClientIp,
   attrs: IAzureUserAttributes,
   fiscalCode: FiscalCode,
   messagePayload: NewMessage
@@ -153,6 +164,7 @@ type ICreateMessageHandler = (
  */
 type IGetMessageHandler = (
   auth: IAzureApiAuthorization,
+  clientIp: ClientIp,
   attrs: IAzureUserAttributes,
   fiscalCode: FiscalCode,
   messageId: string
@@ -174,6 +186,8 @@ type IGetMessageHandler = (
  */
 type IGetMessagesHandler = (
   auth: IAzureApiAuthorization,
+  clientIp: ClientIp,
+  attrs: IAzureUserAttributes,
   fiscalCode: FiscalCode
 ) => Promise<
   | IResponseSuccessJsonIterator<CreatedMessage>
@@ -189,7 +203,14 @@ export function CreateMessageHandler(
   messageModel: MessageModel,
   generateObjectId: ObjectIdGenerator
 ): ICreateMessageHandler {
-  return async (context, auth, userAttributes, fiscalCode, messagePayload) => {
+  return async (
+    context,
+    auth,
+    _,
+    userAttributes,
+    fiscalCode,
+    messagePayload
+  ) => {
     // extract the user service
     const userService = userAttributes.service;
 
@@ -356,6 +377,8 @@ export function CreateMessage(
     AzureApiAuthMiddleware(
       new Set([UserGroup.ApiMessageWrite, UserGroup.ApiLimitedMessageWrite])
     ),
+    // extracts the client IP from the request
+    ClientIpMiddleware,
     // extracts custom user attributes from the request
     AzureUserAttributesMiddleware(serviceModel),
     // extracts the fiscal code from the request params
@@ -363,7 +386,13 @@ export function CreateMessage(
     // extracts the create message payload from the request body
     MessagePayloadMiddleware
   );
-  return wrapRequestHandler(middlewaresWrap(handler));
+  return wrapRequestHandler(
+    middlewaresWrap(
+      checkSourceIpForHandler(handler, (_, __, c, u, ___, ____) =>
+        ipTuple(c, u)
+      )
+    )
+  );
 }
 
 /**
@@ -373,7 +402,7 @@ export function GetMessageHandler(
   messageModel: MessageModel,
   notificationModel: NotificationModel
 ): IGetMessageHandler {
-  return async (userAuth, userAttributes, fiscalCode, messageId) => {
+  return async (userAuth, _, userAttributes, fiscalCode, messageId) => {
     // whether the user is a trusted application (i.e. can access all messages for a user)
     const canListMessages = userAuth.groups.has(UserGroup.ApiMessageList);
     if (!canListMessages) {
@@ -465,11 +494,16 @@ export function GetMessage(
     AzureApiAuthMiddleware(
       new Set([UserGroup.ApiMessageRead, UserGroup.ApiMessageList])
     ),
+    ClientIpMiddleware,
     AzureUserAttributesMiddleware(serviceModel),
     FiscalCodeMiddleware,
     RequiredIdParamMiddleware
   );
-  return wrapRequestHandler(middlewaresWrap(handler));
+  return wrapRequestHandler(
+    middlewaresWrap(
+      checkSourceIpForHandler(handler, (_, c, u, __, ___) => ipTuple(c, u))
+    )
+  );
 }
 
 /**
@@ -478,7 +512,7 @@ export function GetMessage(
 export function GetMessagesHandler(
   messageModel: MessageModel
 ): IGetMessagesHandler {
-  return async (_, fiscalCode) => {
+  return async (_, __, ___, fiscalCode) => {
     const retrievedMessagesIterator = await messageModel.findMessages(
       fiscalCode
     );
@@ -494,12 +528,19 @@ export function GetMessagesHandler(
  * Wraps a GetMessages handler inside an Express request handler.
  */
 export function GetMessages(
+  serviceModel: ServiceModel,
   messageModel: MessageModel
 ): express.RequestHandler {
   const handler = GetMessagesHandler(messageModel);
   const middlewaresWrap = withRequestMiddlewares(
     AzureApiAuthMiddleware(new Set([UserGroup.ApiMessageList])),
+    ClientIpMiddleware,
+    AzureUserAttributesMiddleware(serviceModel),
     FiscalCodeMiddleware
   );
-  return wrapRequestHandler(middlewaresWrap(handler));
+  return wrapRequestHandler(
+    middlewaresWrap(
+      checkSourceIpForHandler(handler, (_, c, u, __) => ipTuple(c, u))
+    )
+  );
 }

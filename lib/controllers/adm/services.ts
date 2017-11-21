@@ -1,12 +1,19 @@
 /*
  * Implements the API handlers for the Services resource.
  */
+
 import * as express from "express";
+
+import {
+  ClientIp,
+  ClientIpMiddleware
+} from "../../utils/middlewares/client_ip_middleware";
 
 import {
   IRetrievedService,
   IService,
   ServiceModel,
+  toAuthorizedCIDRs,
   toAuthorizedRecipients
 } from "../../models/service";
 
@@ -41,13 +48,27 @@ import { isLeft, isRight, left, right } from "fp-ts/lib/Either";
 import { isNone } from "fp-ts/lib/Option";
 import { isNonEmptyString, NonEmptyString } from "../../utils/strings";
 
+import {
+  AzureUserAttributesMiddleware,
+  IAzureUserAttributes
+} from "../../utils/middlewares/azure_user_attributes";
+
+import {
+  checkSourceIpForHandler,
+  clientIPAndCidrTuple as ipTuple
+} from "../../utils/source_ip_check";
+
 type ICreateServiceHandler = (
   auth: IAzureApiAuthorization,
+  clientIp: ClientIp,
+  userAttributes: IAzureUserAttributes,
   service: IService
 ) => Promise<IResponseSuccessJson<IRetrievedService> | IResponseErrorQuery>;
 
 type IGetServiceHandler = (
   auth: IAzureApiAuthorization,
+  clientIp: ClientIp,
+  userAttributes: IAzureUserAttributes,
   serviceId: NonEmptyString
 ) => Promise<
   | IResponseSuccessJson<IRetrievedService>
@@ -57,6 +78,8 @@ type IGetServiceHandler = (
 
 type IUpdateServiceHandler = (
   auth: IAzureApiAuthorization,
+  clientIp: ClientIp,
+  userAttributes: IAzureUserAttributes,
   serviceId: NonEmptyString,
   service: IService
 ) => Promise<
@@ -78,6 +101,7 @@ export const ServicePayloadMiddleware: IRequestMiddleware<
 > = request => {
   const body = request.body;
   const servicePayload: IService = {
+    authorizedCIDRs: toAuthorizedCIDRs([]),
     authorizedRecipients: toAuthorizedRecipients(body.authorized_recipients),
     departmentName: body.department_name,
     organizationName: body.organization_name,
@@ -119,7 +143,7 @@ export const ServicePayloadMiddleware: IRequestMiddleware<
 export function UpdateServiceHandler(
   serviceModel: ServiceModel
 ): IUpdateServiceHandler {
-  return async (_, serviceId, serviceModelPayload) => {
+  return async (_, __, ___, serviceId, serviceModelPayload) => {
     if (serviceModelPayload.serviceId !== serviceId) {
       return ResponseErrorValidation(
         "Error validating payload",
@@ -192,7 +216,7 @@ const requiredServiceIdMiddleware = RequiredParamMiddleware<
 export function CreateServiceHandler(
   serviceModel: ServiceModel
 ): ICreateServiceHandler {
-  return async (_, serviceModelPayload) => {
+  return async (_, __, ___, serviceModelPayload) => {
     const errorOrService = await serviceModel.create(
       serviceModelPayload,
       serviceModelPayload.serviceId
@@ -208,7 +232,7 @@ export function CreateServiceHandler(
 export function GetServiceHandler(
   serviceModel: ServiceModel
 ): IGetServiceHandler {
-  return async (_, serviceId) => {
+  return async (_, __, ___, serviceId) => {
     const errorOrMaybeService = await serviceModel.findOneByServiceId(
       serviceId
     );
@@ -236,11 +260,20 @@ export function GetServiceHandler(
  */
 export function GetService(serviceModel: ServiceModel): express.RequestHandler {
   const handler = GetServiceHandler(serviceModel);
+  const azureUserAttributesMiddleware = AzureUserAttributesMiddleware(
+    serviceModel
+  );
   const middlewaresWrap = withRequestMiddlewares(
     AzureApiAuthMiddleware(new Set([UserGroup.ApiServiceRead])),
+    ClientIpMiddleware,
+    azureUserAttributesMiddleware,
     requiredServiceIdMiddleware
   );
-  return wrapRequestHandler(middlewaresWrap(handler));
+  return wrapRequestHandler(
+    middlewaresWrap(
+      checkSourceIpForHandler(handler, (_, c, u, __) => ipTuple(c, u))
+    )
+  );
 }
 
 /**
@@ -250,11 +283,20 @@ export function CreateService(
   serviceModel: ServiceModel
 ): express.RequestHandler {
   const handler = CreateServiceHandler(serviceModel);
+  const azureUserAttributesMiddleware = AzureUserAttributesMiddleware(
+    serviceModel
+  );
   const middlewaresWrap = withRequestMiddlewares(
     AzureApiAuthMiddleware(new Set([UserGroup.ApiServiceWrite])),
+    ClientIpMiddleware,
+    azureUserAttributesMiddleware,
     ServicePayloadMiddleware
   );
-  return wrapRequestHandler(middlewaresWrap(handler));
+  return wrapRequestHandler(
+    middlewaresWrap(
+      checkSourceIpForHandler(handler, (_, c, u, __) => ipTuple(c, u))
+    )
+  );
 }
 
 /**
@@ -264,10 +306,19 @@ export function UpdateService(
   serviceModel: ServiceModel
 ): express.RequestHandler {
   const handler = UpdateServiceHandler(serviceModel);
+  const azureUserAttributesMiddleware = AzureUserAttributesMiddleware(
+    serviceModel
+  );
   const middlewaresWrap = withRequestMiddlewares(
     AzureApiAuthMiddleware(new Set([UserGroup.ApiServiceWrite])),
+    ClientIpMiddleware,
+    azureUserAttributesMiddleware,
     requiredServiceIdMiddleware,
     ServicePayloadMiddleware
   );
-  return wrapRequestHandler(middlewaresWrap(handler));
+  return wrapRequestHandler(
+    middlewaresWrap(
+      checkSourceIpForHandler(handler, (_, c, u, __, ___) => ipTuple(c, u))
+    )
+  );
 }

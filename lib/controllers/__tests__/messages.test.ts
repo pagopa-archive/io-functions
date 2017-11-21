@@ -1,4 +1,5 @@
 // tslint:disable:no-any
+import { toAuthorizedCIDRs } from "../../models/service";
 
 import * as winston from "winston";
 winston.configure({
@@ -65,6 +66,7 @@ const someUserAttributes: IAzureUserAttributes = {
   email: anEmail,
   kind: "IAzureUserAttributes",
   service: {
+    authorizedCIDRs: toAuthorizedCIDRs([]),
     authorizedRecipients: new Set([]),
     departmentName: _getO(toNonEmptyString("IT")),
     organizationName: _getO(toNonEmptyString("AgID")),
@@ -141,6 +143,7 @@ describe("CreateMessageHandler", () => {
         ...aUserAuthenticationDeveloper,
         groups: new Set([UserGroup.ApiLimitedMessageWrite])
       },
+      undefined as any, // not used
       { ...someUserAttributes },
       aFiscalCode,
       aMessagePayload
@@ -178,6 +181,7 @@ describe("CreateMessageHandler", () => {
         ...aUserAuthenticationDeveloper,
         groups: new Set([UserGroup.ApiMessageWrite])
       },
+      undefined as any, // not used
       someUserAttributes,
       aFiscalCode,
       aMessagePayload
@@ -264,6 +268,7 @@ describe("CreateMessageHandler", () => {
         ...aUserAuthenticationDeveloper,
         groups: new Set([UserGroup.ApiLimitedMessageWrite])
       },
+      undefined as any, // not used
       someAuthorizedUserAttributes,
       aFiscalCode,
       aMessagePayload
@@ -340,6 +345,7 @@ describe("CreateMessageHandler", () => {
         ...aUserAuthenticationDeveloper,
         groups: new Set([UserGroup.ApiMessageWrite])
       },
+      undefined as any, // not used
       someUserAttributes,
       aFiscalCode,
       {
@@ -433,6 +439,7 @@ describe("CreateMessageHandler", () => {
           UserGroup.ApiMessageWriteDefaultAddress
         ])
       },
+      undefined as any, // not used
       someUserAttributes,
       aFiscalCode,
       messagePayload
@@ -516,6 +523,7 @@ describe("CreateMessageHandler", () => {
     const result = await createMessageHandler(
       mockContext as any,
       aUserAuthenticationDeveloper,
+      undefined as any, // not used
       someUserAttributes,
       aFiscalCode,
       messagePayload
@@ -560,6 +568,7 @@ describe("CreateMessageHandler", () => {
         ...aUserAuthenticationDeveloper,
         groups: new Set()
       },
+      undefined as any, // not used
       someUserAttributes,
       aFiscalCode,
       aMessagePayload
@@ -598,6 +607,7 @@ describe("CreateMessageHandler", () => {
         ...aUserAuthenticationDeveloper,
         groups: new Set([UserGroup.ApiMessageWrite])
       },
+      undefined as any, // not used
       someUserAttributes,
       aFiscalCode,
       aMessagePayload
@@ -641,6 +651,7 @@ describe("GetMessageHandler", () => {
 
     const result = await getMessageHandler(
       aUserAuthenticationDeveloper,
+      undefined as any, // not used
       someUserAttributes,
       aFiscalCode,
       aRetrievedMessageWithoutContent.id
@@ -678,6 +689,7 @@ describe("GetMessageHandler", () => {
 
     const result = await getMessageHandler(
       aUserAuthenticationTrustedApplication,
+      undefined as any, // not used
       someUserAttributes,
       aFiscalCode,
       aRetrievedMessageWithoutContent.id
@@ -714,6 +726,7 @@ describe("GetMessageHandler", () => {
 
     const result = await getMessageHandler(
       aUserAuthenticationDeveloper,
+      undefined as any, // not used
       someUserAttributes,
       aFiscalCode,
       aRetrievedMessageWithoutContent.id
@@ -740,6 +753,7 @@ describe("GetMessageHandler", () => {
 
     const result = await getMessageHandler(
       aUserAuthenticationDeveloper,
+      undefined as any, // not used
       someUserAttributes,
       aFiscalCode,
       aRetrievedMessageWithoutContent.id
@@ -784,6 +798,7 @@ describe("GetMessageHandler", () => {
 
     const result = await getMessageHandler(
       aUserAuthenticationTrustedApplication,
+      undefined as any, // not used
       someUserAttributes,
       aFiscalCode,
       aRetrievedMessageWithoutContent.id
@@ -828,6 +843,8 @@ describe("GetMessagesHandler", () => {
 
     const result = await getMessagesHandler(
       aUserAuthenticationDeveloper,
+      undefined as any, // not used
+      undefined as any, // not used
       aFiscalCode
     );
 

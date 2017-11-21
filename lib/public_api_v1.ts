@@ -90,20 +90,26 @@ const debugHandler = GetDebug(serviceModel);
 app.get("/api/v1/debug", debugHandler);
 app.post("/api/v1/debug", debugHandler);
 
-app.get("/api/v1/profiles/:fiscalcode", GetProfile(profileModel));
-app.post("/api/v1/profiles/:fiscalcode", UpsertProfile(profileModel));
+app.get("/api/v1/profiles/:fiscalcode", GetProfile(serviceModel, profileModel));
+app.post(
+  "/api/v1/profiles/:fiscalcode",
+  UpsertProfile(serviceModel, profileModel)
+);
 
 app.get(
   "/api/v1/messages/:fiscalcode/:id",
   GetMessage(serviceModel, messageModel, notificationModel)
 );
-app.get("/api/v1/messages/:fiscalcode", GetMessages(messageModel));
+app.get(
+  "/api/v1/messages/:fiscalcode",
+  GetMessages(serviceModel, messageModel)
+);
 app.post(
   "/api/v1/messages/:fiscalcode",
   CreateMessage(appInsightsClient, serviceModel, messageModel)
 );
 
-app.get("/api/v1/info", GetInfo());
+app.get("/api/v1/info", GetInfo(serviceModel));
 
 const azureFunctionHandler = createAzureFunctionHandler(app);
 

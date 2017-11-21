@@ -62,7 +62,12 @@ describe("GetProfileHandler", () => {
 
     const getProfileHandler = GetProfileHandler(profileModelMock as any);
 
-    const response = await getProfileHandler(anAzureAuthorization, aFiscalCode);
+    const response = await getProfileHandler(
+      anAzureAuthorization,
+      undefined as any, // not used
+      undefined as any, // not used
+      aFiscalCode
+    );
 
     expect(profileModelMock.findOneProfileByFiscalCode).toHaveBeenCalledWith(
       aFiscalCode
@@ -87,7 +92,12 @@ describe("GetProfileHandler", () => {
       groups: new Set([UserGroup.ApiFullProfileRead])
     };
 
-    const response = await getProfileHandler(trustedAuth, aFiscalCode);
+    const response = await getProfileHandler(
+      trustedAuth,
+      undefined as any, // not used
+      undefined as any, // not used
+      aFiscalCode
+    );
     expect(profileModelMock.findOneProfileByFiscalCode).toHaveBeenCalledWith(
       aFiscalCode
     );
@@ -106,7 +116,12 @@ describe("GetProfileHandler", () => {
 
     const getProfileHandler = GetProfileHandler(profileModelMock as any);
 
-    const response = await getProfileHandler(anAzureAuthorization, aFiscalCode);
+    const response = await getProfileHandler(
+      anAzureAuthorization,
+      undefined as any, // not used
+      undefined as any, // not used
+      aFiscalCode
+    );
     expect(profileModelMock.findOneProfileByFiscalCode).toHaveBeenCalledWith(
       aFiscalCode
     );
@@ -122,7 +137,12 @@ describe("GetProfileHandler", () => {
 
     const getProfileHandler = GetProfileHandler(profileModelMock as any);
 
-    const promise = getProfileHandler(anAzureAuthorization, aFiscalCode);
+    const promise = getProfileHandler(
+      anAzureAuthorization,
+      undefined as any, // not used
+      undefined as any, // not used
+      aFiscalCode
+    );
 
     return expect(promise).rejects.toBe("error");
   });
@@ -143,6 +163,8 @@ describe("UpsertProfile", () => {
 
     const response = await upsertProfileHandler(
       anAzureAuthorization,
+      undefined as any, // not used
+      undefined as any, // not used
       aFiscalCode,
       aProfilePayloadMock as any
     );
@@ -186,6 +208,8 @@ it("should update an existing profile", async () => {
 
   const response = await upsertProfileHandler(
     anAzureAuthorization,
+    undefined as any, // not used
+    undefined as any, // not used
     aFiscalCode,
     profilePayloadMock
   );

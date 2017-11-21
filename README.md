@@ -343,6 +343,22 @@ the `profiles` resource).
 The currently supported scopes can be found in the
 [Azure API Authentication middleware](https://github.com/teamdigitale/digital-citizenship-functions/blob/master/lib/utils/middlewares/azure_api_auth.ts#L27).
 
+#### Authorization by client IP
+
+Authorization of API requests can be restricted by client IP.
+This access permission can be configured in the `Service` objects, through the
+`authorizedCidrs` attribute.
+This attribute must contain all the allowed CIDRs and IPs.
+See the documentation of [cidr-matcher](https://www.npmjs.com/package/cidr-matcher)
+for example values.
+
+If the `authorizedCidrs` attribute for a service is not set (default), the API
+will accept request from any IPs for that `Service`.
+
+If the `authorizedCidrs` attribute for a service is set, the API will respond
+with a `Not Authorized` response to requests originating from IPs that don't
+match at least one of the provided CIDRs or IPs.
+
 ## Monitoring and instrumentation
 
 ### Application events
