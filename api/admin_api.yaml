@@ -22,7 +22,7 @@ paths:
         '200':
           description: Service found.
           schema:
-            "$ref": "#/definitions/AdmService"
+            "$ref": "#/definitions/Service"
           examples:
             application/json:
               id: 2b3e728c1a5d1efa035c-0000000000000001
@@ -42,7 +42,7 @@ paths:
         '200':
           description: Service updated.
           schema:
-            "$ref": "#/definitions/AdmService"
+            "$ref": "#/definitions/Service"
           examples:
             application/json:
               id: 2b3e728c1a5d1efa035c-0000000000000001
@@ -64,7 +64,7 @@ paths:
       - in: body
         name: body
         schema:
-          "$ref": "#/definitions/AdmService"
+          "$ref": "#/definitions/Service"
         description: The Service payload.
         x-examples:
           application/json:
@@ -197,7 +197,7 @@ paths:
         '200':
           description: Service created.
           schema:
-            "$ref": "#/definitions/AdmService"
+            "$ref": "#/definitions/Service"
           examples:
             application/json:
               id: 2b3e728c1a5d1efa035c-0000000000000001
@@ -217,7 +217,7 @@ paths:
       - in: body
         name: body
         schema:
-          "$ref": "#/definitions/AdmService"
+          "$ref": "#/definitions/Service"
         description: The Service payload.
         x-examples:
           application/json:
@@ -229,58 +229,7 @@ paths:
             serviceName: service
             authorizedCIDRs: []
 definitions:
-  AdmService:
-    title: AdmService
-    description: A Service tied to an user's subscription.
-    type: object
-    properties:
-      serviceId:
-        type: string
-        description: The ID of the Service. Equals the subscriptionId of a registered
-          API user.
-      serviceName:
-        type: string
-        description: The name of the service. Will be added to the content of sent
-          messages.
-      organizationName:
-        type: string
-        description: The organizazione that runs the service. Will be added to the
-          content of sent messages to identify the sender.
-      departmentName:
-        type: string
-        description: The departmenet inside the organization that runs the service.
-          Will be added to the content of sent messages.
-      authorizedCIDRs:
-        type: array
-        items:
-          "$ref": "#/definitions/AdmCidr"
-      authorizedRecipients:
-        type: array
-        items:
-          "$ref": "#/definitions/AdmFiscalCode"
-      version:
-        type: integer
-      id:
-        type: string
-    required:
-    - serviceId
-    - serviceName
-    - organizationName
-    - departmentName
-    - authorizedCIDRs
-    - authorizedRecipients
-  AdmCidr:
-    type: string
-    title: AdmCidr
-    description: Describes a single IP or a range of IPs.
-    pattern: "([0-9]{1,3}\\.){3}[0-9]{1,3}(\\/([0-9]|[1-2][0-9]|3[0-2]))?"
-  AdmFiscalCode:
-    type: string
-    title: AdmFiscalCode
-    description: An authorized Fiscal Code.
-    minLength: 16
-    maxLength: 16
-    pattern: "[A-Z]{6}[0-9LMNPQRSTUV]{2}[ABCDEHLMPRST][0-9LMNPQRSTUV]{2}[A-Z][0-9LMNPQRSTUV]{3}[A-Z]"
+  $ref: definitions.yaml
 responses: {}
 parameters: {}
 consumes:

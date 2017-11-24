@@ -422,6 +422,57 @@ export const specs = {
       items: { $ref: "#/definitions/PreferredLanguage" },
       description:
         "Indicates the User's preferred written or spoken languages in order of preference. Generally used for selecting a localized User interface. Valid values are concatenation of the ISO 639-1 two letter language code, an underscore, and the ISO 3166-1 2 letter country code; e.g., 'en_US' specifies the language English and country US."
+    },
+    Service: {
+      title: "Service",
+      description: "A Service tied to an user's subscription.",
+      type: "object",
+      properties: {
+        serviceId: {
+          type: "string",
+          description:
+            "The ID of the Service. Equals the subscriptionId of a registered API user."
+        },
+        serviceName: {
+          type: "string",
+          description:
+            "The name of the service. Will be added to the content of sent messages."
+        },
+        organizationName: {
+          type: "string",
+          description:
+            "The organizazione that runs the service. Will be added to the content of sent messages to identify the sender."
+        },
+        departmentName: {
+          type: "string",
+          description:
+            "The departmenet inside the organization that runs the service. Will be added to the content of sent messages."
+        },
+        authorizedCIDRs: {
+          type: "array",
+          items: { $ref: "#/definitions/CIDR" }
+        },
+        authorizedRecipients: {
+          type: "array",
+          items: { $ref: "#/definitions/FiscalCode" }
+        },
+        version: { type: "integer" },
+        id: { type: "string" }
+      },
+      required: [
+        "serviceId",
+        "serviceName",
+        "organizationName",
+        "departmentName",
+        "authorizedCIDRs",
+        "authorizedRecipients"
+      ]
+    },
+    CIDR: {
+      type: "string",
+      title: "CIDR",
+      description: "Describes a single IP or a range of IPs.",
+      pattern: "([0-9]{1,3}\\.){3}[0-9]{1,3}(\\/([0-9]|[1-2][0-9]|3[0-2]))?"
     }
   },
   responses: {},

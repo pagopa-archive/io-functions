@@ -11,7 +11,9 @@ async function generateApi(
   specFileName: string,
   root: string
 ): Promise<void> {
-  const api: Spec = await SwaggerParser.parse(`api/${specFileName}.yaml`);
+  const api: Spec = await SwaggerParser.bundle(`api/${specFileName}.yaml`);
+
+  console.log(JSON.stringify(api));
 
   const specCode = `
     // tslint:disable:object-literal-sort-keys

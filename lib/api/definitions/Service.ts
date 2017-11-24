@@ -6,8 +6,8 @@
 // tslint:disable:interface-name
 // tslint:disable:no-any
 
-import { isAdmCidr, AdmCidr } from "./AdmCidr";
-import { isAdmFiscalCode, AdmFiscalCode } from "./AdmFiscalCode";
+import { isCIDR, CIDR } from "./CIDR";
+import { isFiscalCode, FiscalCode } from "./FiscalCode";
 
 /**
  * A Service tied to an user's subscription.
@@ -15,7 +15,7 @@ import { isAdmFiscalCode, AdmFiscalCode } from "./AdmFiscalCode";
 
 import { fromNullable, Option } from "fp-ts/lib/Option";
 
-export interface AdmService {
+export interface Service {
   readonly serviceId: string;
 
   readonly serviceName: string;
@@ -24,24 +24,24 @@ export interface AdmService {
 
   readonly departmentName: string;
 
-  readonly authorizedCIDRs: ReadonlyArray<AdmCidr>;
+  readonly authorizedCIDRs: ReadonlyArray<CIDR>;
 
-  readonly authorizedRecipients: ReadonlyArray<AdmFiscalCode>;
+  readonly authorizedRecipients: ReadonlyArray<FiscalCode>;
 
   readonly version?: number;
 
   readonly id?: string;
 }
 
-export function isAdmService(arg: any): arg is AdmService {
+export function isService(arg: any): arg is Service {
   return (
     arg &&
     typeof arg.serviceId === "string" &&
     typeof arg.serviceName === "string" &&
     typeof arg.organizationName === "string" &&
     typeof arg.departmentName === "string" &&
-    arg.authorizedCIDRs.every(isAdmCidr) &&
-    arg.authorizedRecipients.every(isAdmFiscalCode) &&
+    arg.authorizedCIDRs.every(isCIDR) &&
+    arg.authorizedRecipients.every(isFiscalCode) &&
     (arg.version === undefined ||
       arg.version === null ||
       typeof arg.version === "number") &&
@@ -50,6 +50,6 @@ export function isAdmService(arg: any): arg is AdmService {
   );
 }
 
-export function toAdmService(arg: any): Option<AdmService> {
-  return fromNullable(arg).filter(isAdmService);
+export function toService(arg: any): Option<Service> {
+  return fromNullable(arg).filter(isService);
 }

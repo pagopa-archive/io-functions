@@ -18,18 +18,18 @@ import {
   PatternString
 } from "../../utils/strings";
 
-export type AdmCidr = PatternString<
+export type CIDR = PatternString<
   "([0-9]{1,3}.){3}[0-9]{1,3}(/([0-9]|[1-2][0-9]|3[0-2]))?"
 >;
 
-export function isAdmCidr(arg: any): arg is AdmCidr {
+export function isCIDR(arg: any): arg is CIDR {
   return isPatternString(
     arg,
     "([0-9]{1,3}.){3}[0-9]{1,3}(/([0-9]|[1-2][0-9]|3[0-2]))?"
   );
 }
 
-export function toAdmCidr(arg: any): Option<AdmCidr> {
+export function toCIDR(arg: any): Option<CIDR> {
   return toPatternString(
     arg,
     "([0-9]{1,3}.){3}[0-9]{1,3}(/([0-9]|[1-2][0-9]|3[0-2]))?"
