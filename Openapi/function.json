@@ -10,7 +10,7 @@
    "methods": [
     "get"
    ],
-   "route": "api/v1/swagger.json"
+   "route": "specs/{*segments}"
   },
   {
    "type": "http",

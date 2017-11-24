@@ -15,6 +15,7 @@ import { createAzureFunctionHandler } from "azure-function-express";
 
 import { GetOpenapi } from "./controllers/openapi";
 
+import { specs as adminApiSpecs } from "./api/admin_api";
 import { specs as publicApiV1Specs } from "./api/public_api_v1";
 
 // Whether we're in a production environment
@@ -24,7 +25,8 @@ const isProduction = process.env.NODE_ENV === "production";
 
 const app = express();
 
-app.get("/api/v1/swagger.json", GetOpenapi(publicApiV1Specs));
+app.get("/specs/api/v1/swagger.json", GetOpenapi(publicApiV1Specs));
+app.get("/specs/adm/swagger.json", GetOpenapi(adminApiSpecs));
 
 const azureFunctionHandler = createAzureFunctionHandler(app);
 

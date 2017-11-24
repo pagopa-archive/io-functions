@@ -12,11 +12,6 @@ async function generateModelsFromApi(
   root: string
 ): Promise<void> {
   const api: Spec = await SwaggerParser.parse(`api/${specFileName}.yaml`);
-  const definitions = api.definitions;
-  if (!definitions) {
-    console.log("No definitions found");
-    return;
-  }
 
   const specCode = `
     // tslint:disable:object-literal-sort-keys
@@ -32,6 +27,12 @@ async function generateModelsFromApi(
       parser: "typescript"
     })
   );
+
+  const definitions = api.definitions;
+  if (!definitions) {
+    console.log("No definitions found");
+    return;
+  }
 
   for (const definitionName in definitions) {
     if (definitions.hasOwnProperty(definitionName)) {
@@ -65,6 +66,11 @@ env.addFilter("contains", <T>(a: ReadonlyArray<T>, item: T) => {
 });
 
 generateModelsFromApi(env, "public_api_v1", "lib/api").then(
+  () => console.log("done"),
+  err => console.log(`Error: ${err}`)
+);
+
+generateModelsFromApi(env, "admin_api", "lib/api").then(
   () => console.log("done"),
   err => console.log(`Error: ${err}`)
 );

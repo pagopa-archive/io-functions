@@ -6,10 +6,15 @@
 // tslint:disable:interface-name
 // tslint:disable:no-any
 
-{% for propName, prop in definition.properties %}{% if prop.$ref -%}
-{%- set realPropName = prop.$ref | replace("#/definitions/", "") -%}
-import { is{{ realPropName }}, {{ realPropName }} } from "./{{ realPropName }}";
-{% endif %}{% endfor %}
+{% for propName, prop in definition.properties -%}{% 
+  if prop.$ref -%}{%- 
+    set realPropName = prop.$ref | replace("#/definitions/", "") -%}
+    import { is{{ realPropName }}, {{ realPropName }} } from "./{{ realPropName }}";{% 
+  elif prop.items.$ref -%}{%- 
+    set realPropName = prop.items.$ref | replace("#/definitions/", "") -%}
+    import { is{{ realPropName }}, {{ realPropName }} } from "./{{ realPropName }}";{% 
+  endif %}{% 
+endfor %}
 
 /**
  * {{ definition.description | safe }}
@@ -18,9 +23,17 @@ import { is{{ realPropName }}, {{ realPropName }} } from "./{{ realPropName }}";
 import { fromNullable, Option } from "fp-ts/lib/Option";
 
 export interface {{ definitionName }} {
-{% for propName, prop in definition.properties %}
-  {%- if prop.$ref %}{% set realPropType = prop.$ref | replace("#/definitions/", "") %}{% else %}{% set realPropType = prop.type | replace("integer", "number") %}{% endif %}
-  readonly {{ propName }}{% if definition.required and (definition.required | contains(propName)) %}{% else %}?{% endif %}: {{ realPropType }};
+{% for propName, prop in definition.properties -%}
+  {%- 
+    if prop.$ref %}{% 
+      set realPropType = prop.$ref | replace("#/definitions/", "") %}{% 
+    elif prop.type == "array" and prop.items.$ref %}{%
+      set realPropType %}ReadonlyArray<{{ prop.items.$ref | replace("#/definitions/", "") }}>{% endset %}{%
+    else %}{%
+      set realPropType = prop.type | replace("integer", "number") %}{%
+    endif 
+  %}
+  readonly {{ propName }}{% if definition.required and (definition.required | contains(propName)) %}{% else %}?{% endif %}: {{ realPropType | safe }};
 {% endfor %}
 }
 
@@ -35,6 +48,8 @@ export function is{{ definitionName }}(arg: any): arg is {{ definitionName }} {
   {% if not isPropRequired %}(arg.{{propName}} === undefined || arg.{{propName}} === null ||{% endif %}
   {% if prop.$ref %}
     is{{ prop.$ref | replace("#/definitions/", "") }}(arg.{{propName}})
+  {% elif prop.items.$ref %}
+    (arg.{{propName}}).every(is{{ prop.items.$ref | replace("#/definitions/", "") }})
   {% else %}
     typeof arg.{{propName}} === "{{ prop.type | replace("integer", "number") }}"
   {% endif %}

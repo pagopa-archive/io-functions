@@ -10,7 +10,6 @@ export const specs = {
     title: "Digital Citizenship API",
     description: "Digital Citizenship API."
   },
-  host: "localhost",
   basePath: "/api/v1",
   schemes: ["https"],
   security: [{ SubscriptionKey: [] }],

@@ -3,7 +3,6 @@ info:
   version: 0.0.1
   title: Digital Citizenship API
   description: Digital Citizenship API.
-host: localhost
 basePath: "/api/v1"
 schemes:
 - https
