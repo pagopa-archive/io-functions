@@ -1,4 +1,4 @@
-import { isSome } from "fp-ts/lib/Option";
+import { isNone } from "fp-ts/lib/Option";
 import { IAzureUserAttributes } from "./middlewares/azure_user_attributes";
 /*
  * A request wrapper that checks whether the source IP is contained in the
@@ -12,7 +12,9 @@ import { Tuple2 } from "./tuples";
 
 import {
   IResponseErrorForbiddenNotAuthorized,
-  ResponseErrorForbiddenNotAuthorized
+  IResponseErrorInternal,
+  ResponseErrorForbiddenNotAuthorized,
+  ResponseErrorInternal
 } from "./response";
 
 /**
@@ -116,25 +118,36 @@ export function checkSourceIpForHandler<P1, P2, P3, P4, P5, P6, O>(
   p4: P4,
   p5: P5,
   p6: P6
-) => Promise<O | IResponseErrorForbiddenNotAuthorized> {
+) => Promise<
+  O | IResponseErrorForbiddenNotAuthorized | IResponseErrorInternal
+> {
   return (p1: P1, p2: P2, p3: P3, p4: P4, p5: P5, p6: P6) => {
-    // extract the x-forwarded-for header and the allowed cidrs from the params
-    const x = extractor(p1, p2, p3, p4, p5, p6);
-    const maybeClientIp = x.e1;
-    const cidrs = x.e2;
+    return new Promise(resolve => {
+      // extract the x-forwarded-for header and the allowed cidrs from the params
+      const x = extractor(p1, p2, p3, p4, p5, p6);
+      const maybeClientIp = x.e1;
+      const cidrs = x.e2;
 
-    if (
-      // we have a client IP and...
-      isSome(maybeClientIp) &&
-      // ...either no CIDRs setting or client IP is contained in allowed CIDRs
-      (cidrs.size === 0 || isContainedInCidrs(maybeClientIp.value, cidrs))
-    ) {
-      // forward request to handler
-      return handler(p1, p2, p3, p4, p5, p6);
-    } else {
-      // respond with Not Authorized
-      return Promise.resolve(ResponseErrorForbiddenNotAuthorized);
-    }
+      if (isNone(maybeClientIp)) {
+        return resolve(
+          ResponseErrorInternal(
+            "IP address cannot be extracted from the request, check x-forwarder-for HTTP header"
+          )
+        );
+      }
+
+      if (
+        // either allowed CIDRs is empty or client IP is contained in allowed CIDRs
+        cidrs.size === 0 ||
+        isContainedInCidrs(maybeClientIp.value, cidrs)
+      ) {
+        // forward request to handler
+        return resolve(handler(p1, p2, p3, p4, p5, p6));
+      } else {
+        // respond with Not Authorized
+        return resolve(ResponseErrorForbiddenNotAuthorized);
+      }
+    });
   };
 }
 
