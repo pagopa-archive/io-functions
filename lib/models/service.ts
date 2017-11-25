@@ -11,15 +11,12 @@ import { Option } from "fp-ts/lib/Option";
 
 import { Set } from "json-set-map";
 
+import { CIDR, isCIDR } from "../api/definitions/CIDR";
 import { FiscalCode, isFiscalCode } from "../api/definitions/FiscalCode";
 
 import { nonEmptyStringToModelId } from "../utils/conversions";
 import { NonNegativeNumber } from "../utils/numbers";
-import {
-  isNonEmptyString,
-  NonEmptyString,
-  toNonEmptyString
-} from "../utils/strings";
+import { NonEmptyString, toNonEmptyString } from "../utils/strings";
 
 /**
  * Base interface for Service objects
@@ -36,7 +33,7 @@ export interface IService {
   // list of authorized fiscal codes
   readonly authorizedRecipients: ReadonlySet<FiscalCode>;
   // authorized source CIDRs
-  readonly authorizedCIDRs: ReadonlySet<NonEmptyString>;
+  readonly authorizedCIDRs: ReadonlySet<CIDR>;
 }
 
 /**
@@ -85,9 +82,9 @@ export function toAuthorizedRecipients(
  * @param authorizedCIDRs   Array or Set of authorized CIDRs for this service.
  */
 export function toAuthorizedCIDRs(
-  authorizedCIDRs: ReadonlyArray<string> | undefined
-): ReadonlySet<NonEmptyString> {
-  return new Set(Array.from(authorizedCIDRs || []).filter(isNonEmptyString));
+  authorizedCIDRs: ReadonlyArray<string> | ReadonlySet<string> | undefined
+): ReadonlySet<CIDR> {
+  return new Set(Array.from(authorizedCIDRs || []).filter(isCIDR));
 }
 
 function toRetrieved(result: DocumentDb.RetrievedDocument): IRetrievedService {
