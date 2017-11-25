@@ -6,17 +6,12 @@ import * as prettier from "prettier";
 import * as SwaggerParser from "swagger-parser";
 import { Spec } from "swagger-schema-official";
 
-async function generateModelsFromApi(
+async function generateApi(
   e: nunjucks.Environment,
   specFileName: string,
   root: string
 ): Promise<void> {
-  const api: Spec = await SwaggerParser.parse(`api/${specFileName}.yaml`);
-  const definitions = api.definitions;
-  if (!definitions) {
-    console.log("No definitions found");
-    return;
-  }
+  const api: Spec = await SwaggerParser.bundle(`api/${specFileName}.yaml`);
 
   const specCode = `
     // tslint:disable:object-literal-sort-keys
@@ -32,6 +27,12 @@ async function generateModelsFromApi(
       parser: "typescript"
     })
   );
+
+  const definitions = api.definitions;
+  if (!definitions) {
+    console.log("No definitions found, skipping generation of model code.");
+    return;
+  }
 
   for (const definitionName in definitions) {
     if (definitions.hasOwnProperty(definitionName)) {
@@ -64,7 +65,12 @@ env.addFilter("contains", <T>(a: ReadonlyArray<T>, item: T) => {
   return a.indexOf(item) !== -1;
 });
 
-generateModelsFromApi(env, "public_api_v1", "lib/api").then(
+generateApi(env, "public_api_v1", "lib/api").then(
+  () => console.log("done"),
+  err => console.log(`Error: ${err}`)
+);
+
+generateApi(env, "admin_api", "lib/api").then(
   () => console.log("done"),
   err => console.log(`Error: ${err}`)
 );
