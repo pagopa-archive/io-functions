@@ -131,7 +131,7 @@ export function checkSourceIpForHandler<P1, P2, P3, P4, P5, P6, O>(
       if (isNone(maybeClientIp)) {
         return resolve(
           ResponseErrorInternal(
-            "IP address cannot be extracted from the request, check x-forwarder-for HTTP header"
+            "IP address cannot be extracted from the request"
           )
         );
       }
