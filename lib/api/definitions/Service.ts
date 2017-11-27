@@ -44,8 +44,10 @@ export function isService(arg: any): arg is Service {
     isServiceName(arg.service_name) &&
     isOrganizationName(arg.organization_name) &&
     isDepartmentName(arg.department_name) &&
-    arg.authorized_cidrs.every(isCIDR) &&
-    arg.authorized_recipients.every(isFiscalCode) &&
+    (Array.isArray(arg.authorized_cidrs) &&
+      arg.authorized_cidrs.every(isCIDR)) &&
+    (Array.isArray(arg.authorized_recipients) &&
+      arg.authorized_recipients.every(isFiscalCode)) &&
     (arg.version === undefined ||
       arg.version === null ||
       typeof arg.version === "number") &&

@@ -49,7 +49,7 @@ export function is{{ definitionName }}(arg: any): arg is {{ definitionName }} {
   {% if prop.$ref %}
     is{{ prop.$ref | replace("#/definitions/", "") }}(arg.{{propName}})
   {% elif prop.items.$ref %}
-    (arg.{{propName}}).every(is{{ prop.items.$ref | replace("#/definitions/", "") }})
+    (Array.isArray(arg.{{propName}}) && arg.{{propName}}.every(is{{ prop.items.$ref | replace("#/definitions/", "") }}))
   {% else %}
     typeof arg.{{propName}} === "{{ prop.type | replace("integer", "number") }}"
   {% endif %}
