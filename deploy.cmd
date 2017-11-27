@@ -103,8 +103,9 @@ echo Restoring npm packages in %1
 
 IF EXIST "%1\package.json" (
   pushd "%1"
-  call npm install
-  call npm run build
+  call npm install -g yarn
+  call yarn install
+  call yarn build
   IF !ERRORLEVEL! NEQ 0 goto error
   popd
 )
