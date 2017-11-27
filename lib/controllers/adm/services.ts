@@ -17,6 +17,10 @@ import {
   toAuthorizedRecipients
 } from "../../models/service";
 
+import { isCIDR } from "../../api/definitions/CIDR";
+import { isFiscalCode } from "../../api/definitions/FiscalCode";
+import { isService, Service } from "../../api/definitions/Service";
+
 import {
   AzureApiAuthMiddleware,
   IAzureApiAuthorization,
@@ -63,7 +67,7 @@ type ICreateServiceHandler = (
   clientIp: ClientIp,
   userAttributes: IAzureUserAttributes,
   service: IService
-) => Promise<IResponseSuccessJson<IRetrievedService> | IResponseErrorQuery>;
+) => Promise<IResponseSuccessJson<Service> | IResponseErrorQuery>;
 
 type IGetServiceHandler = (
   auth: IAzureApiAuthorization,
@@ -71,9 +75,7 @@ type IGetServiceHandler = (
   userAttributes: IAzureUserAttributes,
   serviceId: NonEmptyString
 ) => Promise<
-  | IResponseSuccessJson<IRetrievedService>
-  | IResponseErrorNotFound
-  | IResponseErrorQuery
+  IResponseSuccessJson<Service> | IResponseErrorNotFound | IResponseErrorQuery
 >;
 
 type IUpdateServiceHandler = (
@@ -83,7 +85,7 @@ type IUpdateServiceHandler = (
   serviceId: NonEmptyString,
   service: IService
 ) => Promise<
-  | IResponseSuccessJson<IRetrievedService>
+  | IResponseSuccessJson<Service>
   | IResponseErrorValidation
   | IResponseErrorQuery
   | IResponseErrorInternal
@@ -91,50 +93,53 @@ type IUpdateServiceHandler = (
 >;
 
 /**
+ * Converts a retrieved service to a service that can be shared via API
+ */
+function retrievedServiceToPublic(
+  retrievedService: IRetrievedService
+): Service {
+  return {
+    authorized_cidrs: Array.from(retrievedService.authorizedCIDRs).filter(
+      isCIDR
+    ),
+    authorized_recipients: Array.from(
+      retrievedService.authorizedRecipients
+    ).filter(isFiscalCode),
+    department_name: retrievedService.departmentName,
+    id: retrievedService.id,
+    organization_name: retrievedService.organizationName,
+    service_id: retrievedService.serviceId,
+    service_name: retrievedService.serviceName,
+    version: retrievedService.version
+  };
+}
+
+/**
  * A middleware that extracts a Service payload from a request.
- *
- * TODO: validate the payload against a schema.
  */
 export const ServicePayloadMiddleware: IRequestMiddleware<
   IResponseErrorValidation,
   IService
 > = request => {
   const body = request.body;
+  if (!isService(body)) {
+    return Promise.resolve(
+      left<IResponseErrorValidation, IService>(
+        ResponseErrorValidation(
+          "Invalid service payload",
+          "Request body does not conform to the required service format"
+        )
+      )
+    );
+  }
   const servicePayload: IService = {
-    authorizedCIDRs: toAuthorizedCIDRs([]),
+    authorizedCIDRs: toAuthorizedCIDRs(body.authorized_cidrs),
     authorizedRecipients: toAuthorizedRecipients(body.authorized_recipients),
     departmentName: body.department_name,
     organizationName: body.organization_name,
     serviceId: body.service_id,
     serviceName: body.service_name
   };
-
-  const nonEmptyFields: { readonly [k: string]: string } = {
-    department_name: servicePayload.departmentName,
-    organization_name: servicePayload.organizationName,
-    service_id: servicePayload.serviceId,
-    service_name: servicePayload.serviceName
-  };
-
-  const errors = Object.keys(nonEmptyFields)
-    .map(k => {
-      if (!nonEmptyFields[k] || !isNonEmptyString(nonEmptyFields[k])) {
-        return k + " must be a non empty string";
-      }
-      return undefined;
-    })
-    .filter(v => v !== undefined);
-
-  if (errors.length > 0) {
-    return Promise.resolve(
-      left<IResponseErrorValidation, IService>(
-        ResponseErrorValidation(
-          "Invalid field found in Service payload",
-          errors.join(" - ")
-        )
-      )
-    );
-  }
   return Promise.resolve(
     right<IResponseErrorValidation, IService>(servicePayload)
   );
@@ -195,7 +200,9 @@ export function UpdateServiceHandler(
       return ResponseErrorInternal("Error while updating the existing service");
     }
 
-    return ResponseSuccessJson(maybeUpdatedService.value);
+    return ResponseSuccessJson(
+      retrievedServiceToPublic(maybeUpdatedService.value)
+    );
   };
 }
 
@@ -222,7 +229,9 @@ export function CreateServiceHandler(
       serviceModelPayload.serviceId
     );
     if (isRight(errorOrService)) {
-      return ResponseSuccessJson(errorOrService.value);
+      return ResponseSuccessJson(
+        retrievedServiceToPublic(errorOrService.value)
+      );
     } else {
       return ResponseErrorQuery("Error", errorOrService.value);
     }
@@ -244,7 +253,9 @@ export function GetServiceHandler(
           "The service you requested was not found in the system."
         );
       } else {
-        return ResponseSuccessJson(maybeService.value);
+        return ResponseSuccessJson(
+          retrievedServiceToPublic(maybeService.value)
+        );
       }
     } else {
       return ResponseErrorQuery(

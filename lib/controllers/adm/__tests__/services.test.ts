@@ -22,6 +22,8 @@ import {
   toAuthorizedRecipients
 } from "../../../models/service";
 
+import { Service } from "../../../api/definitions/Service";
+
 import {
   CreateService,
   CreateServiceHandler,
@@ -67,6 +69,17 @@ const aRetrievedService: IRetrievedService = {
   version: _getO(toNonNegativeNumber(1))
 };
 
+const aSeralizedService: Service = {
+  authorized_cidrs: [],
+  authorized_recipients: [],
+  department_name: _getO(toNonEmptyString("MyDeptName")),
+  id: _getO(toNonEmptyString("123")),
+  organization_name: _getO(toNonEmptyString("MyOrgName")),
+  service_id: _getO(toNonEmptyString("MySubscriptionId")),
+  service_name: _getO(toNonEmptyString("MyServiceName")),
+  version: _getO(toNonNegativeNumber(1))
+};
+
 describe("GetServiceHandler", () => {
   it("should get an existing service", async () => {
     const serviceModelMock = {
@@ -87,7 +100,7 @@ describe("GetServiceHandler", () => {
     );
     expect(response.kind).toBe("IResponseSuccessJson");
     if (response.kind === "IResponseSuccessJson") {
-      expect(response.value).toEqual(aRetrievedService);
+      expect(response.value).toEqual(aSeralizedService);
     }
   });
   it("should fail on errors during get", async () => {
@@ -168,7 +181,7 @@ describe("CreateServiceHandler", () => {
     );
     expect(response.kind).toBe("IResponseSuccessJson");
     if (response.kind === "IResponseSuccessJson") {
-      expect(response.value).toEqual(aRetrievedService);
+      expect(response.value).toEqual(aSeralizedService);
     }
   });
   it("should fail on errors during create", async () => {
@@ -236,8 +249,8 @@ describe("UpdateServiceHandler", () => {
     expect(response.kind).toBe("IResponseSuccessJson");
     if (response.kind === "IResponseSuccessJson") {
       expect(response.value).toEqual({
-        ...aRetrievedService,
-        departmentName: _getO(toNonEmptyString(aDepartmentName))
+        ...aSeralizedService,
+        department_name: _getO(toNonEmptyString(aDepartmentName))
       });
     }
   });
@@ -364,6 +377,7 @@ describe("UpdateService", () => {
 describe("ServicePayloadMiddleware", () => {
   it("should extract the service payload from request", async () => {
     const aRequestBody = {
+      authorized_cidrs: Array.from(aServicePayload.authorizedCIDRs),
       authorized_recipients: Array.from(aServicePayload.authorizedRecipients),
       department_name: aServicePayload.departmentName,
       organization_name: aServicePayload.organizationName,
