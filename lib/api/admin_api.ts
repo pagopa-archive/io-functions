@@ -225,6 +225,7 @@ export const specs = {
           }
         },
         description: "An endpoint to debug POST requests to the API backend.",
+        operationId: "postDebug",
         summary: "Debug POST"
       }
     },
@@ -531,6 +532,5 @@ export const specs = {
       description: "The API key obtained through the developer portal."
     }
   },
-  host: "localhost",
   security: [{ SubscriptionKey: [] }]
 };

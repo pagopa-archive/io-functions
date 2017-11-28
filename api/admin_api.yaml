@@ -190,6 +190,7 @@ paths:
                   authorized_cidrs: []
                   kind: IRetrievedService
       description: An endpoint to debug POST requests to the API backend.
+      operationId: postDebug
       summary: Debug POST
   "/service":
     post:
@@ -242,6 +243,5 @@ securityDefinitions:
     name: Ocp-Apim-Subscription-Key
     in: header
     description: The API key obtained through the developer portal.
-host: localhost
 security:
 - SubscriptionKey: []
