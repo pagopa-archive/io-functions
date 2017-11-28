@@ -190,6 +190,7 @@ paths:
                   authorized_cidrs: []
                   kind: IRetrievedService
       description: An endpoint to debug POST requests to the API backend.
+      operationId: postDebug
       summary: Debug POST
   "/service":
     post:
