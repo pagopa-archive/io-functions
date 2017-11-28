@@ -242,6 +242,5 @@ securityDefinitions:
     name: Ocp-Apim-Subscription-Key
     in: header
     description: The API key obtained through the developer portal.
-host: localhost
 security:
 - SubscriptionKey: []

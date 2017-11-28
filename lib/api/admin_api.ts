@@ -531,6 +531,5 @@ export const specs = {
       description: "The API key obtained through the developer portal."
     }
   },
-  host: "localhost",
   security: [{ SubscriptionKey: [] }]
 };
