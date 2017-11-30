@@ -13,7 +13,7 @@ export const specs = {
   basePath: "/adm",
   schemes: ["https"],
   paths: {
-    "/service/{service_id}": {
+    "/services/{service_id}": {
       parameters: [
         {
           name: "service_id",
@@ -229,7 +229,7 @@ export const specs = {
         summary: "Debug POST"
       }
     },
-    "/service": {
+    "/services": {
       post: {
         responses: {
           "200": {

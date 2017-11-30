@@ -7,7 +7,7 @@ basePath: "/adm"
 schemes:
 - https
 paths:
-  "/service/{service_id}":
+  "/services/{service_id}":
     parameters:
     - name: service_id
       in: path
@@ -192,7 +192,7 @@ paths:
       description: An endpoint to debug POST requests to the API backend.
       operationId: postDebug
       summary: Debug POST
-  "/service":
+  "/services":
     post:
       responses:
         '200':
