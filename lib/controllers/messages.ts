@@ -20,7 +20,7 @@ import { isLeft, left, right } from "fp-ts/lib/Either";
 import { CreatedMessage } from "../api/definitions/CreatedMessage";
 import { FiscalCode } from "../api/definitions/FiscalCode";
 import { MessageResponse } from "../api/definitions/MessageResponse";
-import { isNewMessage, NewMessage } from "../api/definitions/NewMessage";
+import { NewMessage } from "../api/definitions/NewMessage";
 
 import {
   AzureApiAuthMiddleware,
@@ -101,7 +101,7 @@ export const MessagePayloadMiddleware: IRequestMiddleware<
 > = request => {
   const requestBody = request.body;
 
-  if (isNewMessage(requestBody)) {
+  if (NewMessage.is(requestBody)) {
     return Promise.resolve(
       right<IResponseErrorValidation, NewMessage>(requestBody)
     );

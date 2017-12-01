@@ -1,3 +1,5 @@
+import * as t from "io-ts";
+
 import * as DocumentDb from "documentdb";
 import * as DocumentDbUtils from "../utils/documentdb";
 import {
@@ -11,12 +13,12 @@ import { Option } from "fp-ts/lib/Option";
 
 import { Set } from "json-set-map";
 
-import { CIDR, isCIDR } from "../api/definitions/CIDR";
-import { FiscalCode, isFiscalCode } from "../api/definitions/FiscalCode";
+import { CIDR } from "../api/definitions/CIDR";
+import { FiscalCode } from "../api/definitions/FiscalCode";
 
 import { nonEmptyStringToModelId } from "../utils/conversions";
 import { NonNegativeNumber } from "../utils/numbers";
-import { NonEmptyString, toNonEmptyString } from "../utils/strings";
+import { NonEmptyString } from "../utils/strings";
 
 /**
  * Base interface for Service objects
@@ -74,7 +76,7 @@ export interface IRetrievedService
 export function toAuthorizedRecipients(
   authorizedRecipients: ReadonlyArray<string> | ReadonlySet<string> | undefined
 ): ReadonlySet<FiscalCode> {
-  return new Set(Array.from(authorizedRecipients || []).filter(isFiscalCode));
+  return new Set(Array.from(authorizedRecipients || []).filter(FiscalCode.is));
 }
 
 /**
@@ -84,7 +86,7 @@ export function toAuthorizedRecipients(
 export function toAuthorizedCIDRs(
   authorizedCIDRs: ReadonlyArray<string> | ReadonlySet<string> | undefined
 ): ReadonlySet<CIDR> {
-  return new Set(Array.from(authorizedCIDRs || []).filter(isCIDR));
+  return new Set(Array.from(authorizedCIDRs || []).filter(CIDR.is));
 }
 
 function toRetrieved(result: DocumentDb.RetrievedDocument): IRetrievedService {
@@ -93,7 +95,10 @@ function toRetrieved(result: DocumentDb.RetrievedDocument): IRetrievedService {
     authorizedCIDRs: toAuthorizedCIDRs(result.authorizedCIDRs),
     authorizedRecipients: toAuthorizedRecipients(result.authorizedRecipients),
     departmentName: result.departmentName,
-    id: toNonEmptyString(result.id).toUndefined(),
+    id: t
+      .validate(result.id, NonEmptyString)
+      .toOption()
+      .toUndefined(),
     kind: "IRetrievedService",
     organizationName: result.organizationName,
     serviceId: result.serviceId,

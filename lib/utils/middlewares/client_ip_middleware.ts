@@ -1,7 +1,9 @@
+import * as t from "io-ts";
+
 import { right } from "fp-ts/lib/Either";
 import { Option } from "fp-ts/lib/Option";
 import * as requestIp from "request-ip";
-import { IPString, toIPString } from "../strings";
+import { IPString } from "../strings";
 
 import { IRequestMiddleware } from "../request_middleware";
 
@@ -24,5 +26,7 @@ export const ClientIpMiddleware: IRequestMiddleware<
 > = request => {
   const clientIp = requestIp.getClientIp(request);
   winston.debug(`Handling request for client IP|${clientIp}`);
-  return Promise.resolve(right<never, ClientIp>(toIPString(clientIp)));
+  return Promise.resolve(
+    right<never, ClientIp>(t.validate(clientIp, IPString).toOption())
+  );
 };

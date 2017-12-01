@@ -6,18 +6,12 @@ import { DocumentDbModel } from "../utils/documentdb_model";
 
 import { Either, isLeft, left, right } from "fp-ts/lib/Either";
 import { Option } from "fp-ts/lib/Option";
-import { isNonEmptyString, NonEmptyString } from "../utils/strings";
+import { NonEmptyString } from "../utils/strings";
 
-import {
-  isMessageBodyMarkdown,
-  MessageBodyMarkdown
-} from "../api/definitions/MessageBodyMarkdown";
-import {
-  isMessageSubject,
-  MessageSubject
-} from "../api/definitions/MessageSubject";
+import { MessageBodyMarkdown } from "../api/definitions/MessageBodyMarkdown";
+import { MessageSubject } from "../api/definitions/MessageSubject";
 
-import { FiscalCode, isFiscalCode } from "../api/definitions/FiscalCode";
+import { FiscalCode } from "../api/definitions/FiscalCode";
 
 import { BlobService } from "azure-storage";
 import { upsertBlobFromObject } from "../utils/azure_storage";
@@ -38,10 +32,10 @@ export interface IMessageContent {
 export const isIMessageContent = is<IMessageContent>(
   arg =>
     arg &&
-    isMessageBodyMarkdown(arg.bodyMarkdown) &&
+    MessageBodyMarkdown.is(arg.bodyMarkdown) &&
     (arg.subject === undefined ||
       arg.subject === null ||
-      isMessageSubject(arg.subject))
+      MessageSubject.is(arg.subject))
 );
 
 /**
@@ -87,9 +81,9 @@ export type IMessage = IMessageWithoutContent | IMessageWithContent;
 const isIMessageBase = is<IMessageBase>(
   arg =>
     arg &&
-    isFiscalCode(arg.fiscalCode) &&
-    isNonEmptyString(arg.senderServiceId) &&
-    isNonEmptyString(arg.senderUserId)
+    FiscalCode.is(arg.fiscalCode) &&
+    NonEmptyString.is(arg.senderServiceId) &&
+    NonEmptyString.is(arg.senderUserId)
 );
 
 /**
@@ -145,14 +139,14 @@ export type INewMessage = INewMessageWithContent | INewMessageWithoutContent;
  * Type guard for INewMessageWithContent
  */
 export const isINewMessageWithContent = is<INewMessageWithContent>(
-  arg => isNonEmptyString(arg.id) && isIMessageWithContent(arg)
+  arg => NonEmptyString.is(arg.id) && isIMessageWithContent(arg)
 );
 
 /**
  * Type guard for INewMessageWithoutContent
  */
 export const isINewMessageWithoutContent = is<INewMessageWithoutContent>(
-  arg => isNonEmptyString(arg.id) && isIMessageWithoutContent(arg)
+  arg => NonEmptyString.is(arg.id) && isIMessageWithoutContent(arg)
 );
 
 /**
@@ -194,7 +188,7 @@ export type IRetrievedMessage =
  */
 export const isIRetrievedMessageWithContent = is<IRetrievedMessageWithContent>(
   arg =>
-    isNonEmptyString(arg.id) &&
+    NonEmptyString.is(arg.id) &&
     typeof arg._self === "string" &&
     (typeof arg._ts === "string" || typeof arg._ts === "number") &&
     isIMessageWithContent(arg)
@@ -207,7 +201,7 @@ export const isIRetrievedMessageWithoutContent = is<
   IRetrievedMessageWithoutContent
 >(
   arg =>
-    isNonEmptyString(arg.id) &&
+    NonEmptyString.is(arg.id) &&
     typeof arg._self === "string" &&
     (typeof arg._ts === "string" || typeof arg._ts === "number") &&
     isIMessageWithoutContent(arg)

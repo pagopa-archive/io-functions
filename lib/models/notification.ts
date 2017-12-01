@@ -12,15 +12,12 @@ import { DocumentDbModel } from "../utils/documentdb_model";
 
 import { Option } from "fp-ts/lib/Option";
 
-import { EmailAddress, isEmailAddress } from "../api/definitions/EmailAddress";
-import { FiscalCode, isFiscalCode } from "../api/definitions/FiscalCode";
-import {
-  isNotificationChannelStatus,
-  NotificationChannelStatus
-} from "../api/definitions/NotificationChannelStatus";
+import { EmailAddress } from "../api/definitions/EmailAddress";
+import { FiscalCode } from "../api/definitions/FiscalCode";
+import { NotificationChannelStatus } from "../api/definitions/NotificationChannelStatus";
 
 import { Either } from "fp-ts/lib/Either";
-import { isNonEmptyString, NonEmptyString } from "../utils/strings";
+import { NonEmptyString } from "../utils/strings";
 
 /**
  * All possible sources that can provide the address of the recipient.
@@ -54,10 +51,10 @@ export interface INotificationChannelEmail {
  */
 export const isINotificationChannelEmail = is<INotificationChannelEmail>(
   arg =>
-    isEmailAddress(arg.toAddress) &&
-    isNotificationChannelStatus(arg.status) &&
+    EmailAddress.is(arg.toAddress) &&
+    NotificationChannelStatus.is(arg.status) &&
     isNotificationAddressSource(arg.addressSource) &&
-    (!arg.fromAddress || isEmailAddress(arg.fromAddress))
+    (!arg.fromAddress || EmailAddress.is(arg.fromAddress))
 );
 
 /**
@@ -74,8 +71,8 @@ export interface INotification {
  */
 export const isINotification = is<INotification>(
   arg =>
-    isFiscalCode(arg.fiscalCode) &&
-    isNonEmptyString(arg.messageId) &&
+    FiscalCode.is(arg.fiscalCode) &&
+    NonEmptyString.is(arg.messageId) &&
     (!arg.emailNotification ||
       isINotificationChannelEmail(arg.emailNotification))
 );

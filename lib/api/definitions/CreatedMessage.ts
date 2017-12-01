@@ -5,45 +5,37 @@
 // tslint:disable:jsdoc-format
 // tslint:disable:interface-name
 // tslint:disable:no-any
+// tslint:disable:object-literal-sort-keys
 
-import { isFiscalCode, FiscalCode } from "./FiscalCode";
-import { isTimeToLive, TimeToLive } from "./TimeToLive";
-import { isMessageContent, MessageContent } from "./MessageContent";
+import { FiscalCode } from "./FiscalCode";
+import { TimeToLive } from "./TimeToLive";
+import { MessageContent } from "./MessageContent";
 
 /**
  * 
  */
 
-import { fromNullable, Option } from "fp-ts/lib/Option";
+import * as t from "io-ts";
 
-export interface CreatedMessage {
-  readonly id?: string;
+// required attributes
+const CreatedMessageR = t.interface({
+  fiscal_code: FiscalCode,
 
-  readonly fiscal_code: FiscalCode;
+  sender_service_id: t.string
+});
 
-  readonly time_to_live?: TimeToLive;
+// optional attributes
+const CreatedMessageO = t.partial({
+  id: t.string,
 
-  readonly content?: MessageContent;
+  time_to_live: TimeToLive,
 
-  readonly sender_service_id: string;
-}
+  content: MessageContent
+});
 
-export function isCreatedMessage(arg: any): arg is CreatedMessage {
-  return (
-    arg &&
-    (arg.id === undefined || arg.id === null || typeof arg.id === "string") &&
-    isFiscalCode(arg.fiscal_code) &&
-    (arg.time_to_live === undefined ||
-      arg.time_to_live === null ||
-      isTimeToLive(arg.time_to_live)) &&
-    (arg.content === undefined ||
-      arg.content === null ||
-      isMessageContent(arg.content)) &&
-    typeof arg.sender_service_id === "string" &&
-    true
-  );
-}
+export const CreatedMessage = t.intersection([
+  CreatedMessageR,
+  CreatedMessageO
+]);
 
-export function toCreatedMessage(arg: any): Option<CreatedMessage> {
-  return fromNullable(arg).filter(isCreatedMessage);
-}
+export type CreatedMessage = t.TypeOf<typeof CreatedMessage>;

@@ -26,7 +26,7 @@ import {
   UserGroup
 } from "../utils/middlewares/azure_api_auth";
 import { FiscalCodeMiddleware } from "../utils/middlewares/fiscalcode";
-import { isNonEmptyString } from "../utils/strings";
+import { NonEmptyString } from "../utils/strings";
 
 import {
   IRequestMiddleware,
@@ -189,7 +189,7 @@ export const ProfilePayloadMiddleware: IRequestMiddleware<
   return new Promise(resolve => {
     fromNullable(request.body)
       .map(body => body.email)
-      .filter(isNonEmptyString)
+      .filter(NonEmptyString.is)
       .map(email =>
         resolve(
           right<IResponseErrorValidation, IProfilePayload>({

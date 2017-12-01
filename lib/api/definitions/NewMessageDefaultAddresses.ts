@@ -5,33 +5,29 @@
 // tslint:disable:jsdoc-format
 // tslint:disable:interface-name
 // tslint:disable:no-any
+// tslint:disable:object-literal-sort-keys
 
-import { isEmailAddress, EmailAddress } from "./EmailAddress";
+import { EmailAddress } from "./EmailAddress";
 
 /**
  * Default addresses for notifying the recipient of the message in case no address for the related channel is set in his profile.
  */
 
-import { fromNullable, Option } from "fp-ts/lib/Option";
+import * as t from "io-ts";
 
-export interface NewMessageDefaultAddresses {
-  readonly email?: EmailAddress;
-}
+// required attributes
+const NewMessageDefaultAddressesR = t.interface({});
 
-export function isNewMessageDefaultAddresses(
-  arg: any
-): arg is NewMessageDefaultAddresses {
-  return (
-    arg &&
-    (arg.email === undefined ||
-      arg.email === null ||
-      isEmailAddress(arg.email)) &&
-    true
-  );
-}
+// optional attributes
+const NewMessageDefaultAddressesO = t.partial({
+  email: EmailAddress
+});
 
-export function toNewMessageDefaultAddresses(
-  arg: any
-): Option<NewMessageDefaultAddresses> {
-  return fromNullable(arg).filter(isNewMessageDefaultAddresses);
-}
+export const NewMessageDefaultAddresses = t.intersection([
+  NewMessageDefaultAddressesR,
+  NewMessageDefaultAddressesO
+]);
+
+export type NewMessageDefaultAddresses = t.TypeOf<
+  typeof NewMessageDefaultAddresses
+>;

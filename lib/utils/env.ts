@@ -1,5 +1,7 @@
+import * as t from "io-ts";
+
 import { isNone } from "fp-ts/lib/Option";
-import { NonEmptyString, toNonEmptyString } from "./strings";
+import { NonEmptyString } from "./strings";
 
 /**
  * Helper function that validates an environment variable and return its value
@@ -7,7 +9,7 @@ import { NonEmptyString, toNonEmptyString } from "./strings";
  * Throws an Error otherwise.
  */
 export function getRequiredStringEnv(k: string): NonEmptyString {
-  const maybeValue = toNonEmptyString(process.env[k]);
+  const maybeValue = t.validate(process.env[k], NonEmptyString).toOption();
 
   if (isNone(maybeValue)) {
     throw new Error(`${k} must be defined and non-empty`);

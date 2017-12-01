@@ -5,32 +5,27 @@
 // tslint:disable:jsdoc-format
 // tslint:disable:interface-name
 // tslint:disable:no-any
+// tslint:disable:object-literal-sort-keys
 
-import {
-  isNotificationChannelStatus,
-  NotificationChannelStatus
-} from "./NotificationChannelStatus";
+import { NotificationChannelStatus } from "./NotificationChannelStatus";
 
 /**
  * 
  */
 
-import { fromNullable, Option } from "fp-ts/lib/Option";
+import * as t from "io-ts";
 
-export interface NotificationStatus {
-  readonly email?: NotificationChannelStatus;
-}
+// required attributes
+const NotificationStatusR = t.interface({});
 
-export function isNotificationStatus(arg: any): arg is NotificationStatus {
-  return (
-    arg &&
-    (arg.email === undefined ||
-      arg.email === null ||
-      isNotificationChannelStatus(arg.email)) &&
-    true
-  );
-}
+// optional attributes
+const NotificationStatusO = t.partial({
+  email: NotificationChannelStatus
+});
 
-export function toNotificationStatus(arg: any): Option<NotificationStatus> {
-  return fromNullable(arg).filter(isNotificationStatus);
-}
+export const NotificationStatus = t.intersection([
+  NotificationStatusR,
+  NotificationStatusO
+]);
+
+export type NotificationStatus = t.TypeOf<typeof NotificationStatus>;
