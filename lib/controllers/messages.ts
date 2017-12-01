@@ -212,7 +212,16 @@ export function CreateMessageHandler(
     messagePayload
   ) => {
     // extract the user service
-    const userService = userAttributes.service;
+    const maybeUserService = userAttributes.service;
+
+    if (isNone(maybeUserService)) {
+      return ResponseErrorValidation(
+        "No service found",
+        "Contact the system administrator to activate a service for your subscription."
+      );
+    }
+
+    const userService = maybeUserService.value;
 
     // base appinsights event attributes for convenience (used later)
     const appInsightsEventName = "api.messages.create";
@@ -235,7 +244,7 @@ export function CreateMessageHandler(
     if (auth.groups.has(UserGroup.ApiLimitedMessageWrite)) {
       // user is in limited message creation mode, check whether he's sending
       // the message to an authorized recipient
-      if (!userAttributes.service.authorizedRecipients.has(fiscalCode)) {
+      if (!userService.authorizedRecipients.has(fiscalCode)) {
         return ResponseErrorForbiddenNotAuthorizedForRecipient;
       }
     } else if (!auth.groups.has(UserGroup.ApiMessageWrite)) {
@@ -320,9 +329,9 @@ export function CreateMessageHandler(
       message: newMessageWithoutContent,
       messageContent,
       senderMetadata: {
-        departmentName: userAttributes.service.departmentName,
-        organizationName: userAttributes.service.organizationName,
-        serviceName: userAttributes.service.serviceName
+        departmentName: userService.departmentName,
+        organizationName: userService.organizationName,
+        serviceName: userService.serviceName
       }
     };
 
@@ -403,16 +412,14 @@ export function GetMessageHandler(
   notificationModel: NotificationModel
 ): IGetMessageHandler {
   return async (userAuth, _, userAttributes, fiscalCode, messageId) => {
-    // whether the user is a trusted application (i.e. can access all messages for a user)
-    const canListMessages = userAuth.groups.has(UserGroup.ApiMessageList);
-    if (!canListMessages) {
-      // since this is not a trusted application we must allow only accessing messages
-      // that have been sent by the service he belongs to
-      if (!userAttributes.service) {
-        // the user doesn't have any service associated, so we can't continue
-        return ResponseErrorForbiddenNotAuthorized;
-      }
+    if (isNone(userAttributes.service)) {
+      // the user doesn't have any service associated, so we can't continue
+      return ResponseErrorForbiddenNotAuthorized;
     }
+    // whether the user is a trusted application (i.e. can access all messages for a user)
+    // since this is not a trusted application we must allow only accessing messages
+    // that have been sent by the service he belongs to
+    const canListAllMessages = userAuth.groups.has(UserGroup.ApiMessageList);
 
     const errorOrMaybeDocument = await messageModel.findMessageForRecipient(
       fiscalCode,
@@ -441,9 +448,10 @@ export function GetMessageHandler(
     // the user is allowed to see the message when he is either
     // a trusted application or he is the sender of the message
     const isUserAllowed =
-      canListMessages ||
+      canListAllMessages ||
       (userAttributes.service &&
-        retrievedMessage.senderServiceId === userAttributes.service.serviceId);
+        retrievedMessage.senderServiceId ===
+          userAttributes.service.value.serviceId);
 
     if (!isUserAllowed) {
       // the user is not allowed to see the message
