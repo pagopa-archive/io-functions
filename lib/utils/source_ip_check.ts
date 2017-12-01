@@ -162,5 +162,10 @@ export function clientIPAndCidrTuple(
   clientIp: ClientIp,
   userAttributes: IAzureUserAttributes
 ): Tuple2<ClientIp, ReadonlySet<string>> {
-  return Tuple2(clientIp, userAttributes.service.authorizedCIDRs);
+  // if no service is found for this user's subscription
+  // return an empty set (no IP restrictions)
+  if (isNone(userAttributes.service)) {
+    return Tuple2(clientIp, new Set());
+  }
+  return Tuple2(clientIp, userAttributes.service.value.authorizedCIDRs);
 }

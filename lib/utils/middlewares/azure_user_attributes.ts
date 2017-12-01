@@ -6,6 +6,7 @@ import { isNone } from "fp-ts/lib/Option";
 import * as winston from "winston";
 
 import { isLeft, left, right } from "fp-ts/lib/Either";
+import { Option } from "fp-ts/lib/Option";
 
 import { EmailString, toEmailString, toNonEmptyString } from "../strings";
 
@@ -15,7 +16,6 @@ import {
   IResponseErrorForbiddenNotAuthorized,
   IResponseErrorInternal,
   IResponseErrorQuery,
-  ResponseErrorForbiddenNotAuthorized,
   ResponseErrorInternal,
   ResponseErrorQuery
 } from "../response";
@@ -33,7 +33,7 @@ export interface IAzureUserAttributes {
   // the email of the registered user
   readonly email: EmailString;
   // the service associated to the user
-  readonly service: IService;
+  readonly service: Option<IService>;
 }
 
 /**
@@ -89,7 +89,7 @@ export function AzureUserAttributesMiddleware(
 
     if (isLeft(errorOrMaybeService)) {
       winston.error(
-        `No service found for subscription|${subscriptionId}|${JSON.stringify(
+        `Error while retrieving the service tied to subscription id|${subscriptionId}|${JSON.stringify(
           errorOrMaybeService.value
         )}`
       );
@@ -103,17 +103,10 @@ export function AzureUserAttributesMiddleware(
 
     const maybeService = errorOrMaybeService.value;
 
-    if (isNone(maybeService)) {
-      winston.error(
-        `AzureUserAttributesMiddleware|Service not found|${subscriptionId}`
-      );
-      return left(ResponseErrorForbiddenNotAuthorized);
-    }
-
     const authInfo: IAzureUserAttributes = {
       email: userEmail,
       kind: "IAzureUserAttributes",
-      service: maybeService.value
+      service: maybeService
     };
 
     return right(authInfo);

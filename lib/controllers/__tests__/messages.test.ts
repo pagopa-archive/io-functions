@@ -65,14 +65,14 @@ const aMessageBodyMarkdown = _getO(toMessageBodyMarkdown("test".repeat(80)));
 const someUserAttributes: IAzureUserAttributes = {
   email: anEmail,
   kind: "IAzureUserAttributes",
-  service: {
+  service: some({
     authorizedCIDRs: toAuthorizedCIDRs([]),
     authorizedRecipients: new Set([]),
     departmentName: _getO(toNonEmptyString("IT")),
     organizationName: _getO(toNonEmptyString("AgID")),
     serviceId: _getO(toNonEmptyString("test")),
     serviceName: _getO(toNonEmptyString("Test"))
-  }
+  })
 };
 
 const aUserAuthenticationDeveloper: IAzureApiAuthorization = {
@@ -252,10 +252,10 @@ describe("CreateMessageHandler", () => {
       log: jest.fn()
     };
 
-    const anAuthorizedService = {
-      ...someUserAttributes.service,
+    const anAuthorizedService = someUserAttributes.service.map(service => ({
+      ...service,
       authorizedRecipients: new Set([aFiscalCode])
-    };
+    }));
 
     const someAuthorizedUserAttributes = {
       ...someUserAttributes,

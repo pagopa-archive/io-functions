@@ -102,7 +102,7 @@ describe("AzureUserAttributesMiddleware", () => {
     }
   });
 
-  it("should fail if the user service does not exist", async () => {
+  it("should proceed if the user service does not exist", async () => {
     const serviceModel = {
       findOneByServiceId: jest.fn(() => Promise.resolve(right(none)))
     };
@@ -125,9 +125,9 @@ describe("AzureUserAttributesMiddleware", () => {
     expect(serviceModel.findOneByServiceId).toHaveBeenCalledWith(
       headers["x-subscription-id"]
     );
-    expect(isLeft(result)).toBeTruthy();
-    if (isLeft(result)) {
-      expect(result.value.kind).toEqual("IResponseErrorForbiddenNotAuthorized");
+    expect(isRight(result)).toBeTruthy();
+    if (isRight(result)) {
+      expect(result.value.kind).toEqual("IAzureUserAttributes");
     }
   });
 
@@ -156,10 +156,12 @@ describe("AzureUserAttributesMiddleware", () => {
     expect(isRight(result));
     if (isRight(result)) {
       const attributes = result.value;
-      expect(attributes.service).toEqual({
-        ...aService,
-        authorizedRecipients: new Set()
-      });
+      expect(attributes.service).toEqual(
+        some({
+          ...aService,
+          authorizedRecipients: new Set()
+        })
+      );
     }
   });
 
