@@ -1,3 +1,6 @@
+import * as t from "io-ts";
+import { PathReporter } from "io-ts/lib/PathReporter";
+
 import * as DocumentDb from "documentdb";
 import * as express from "express";
 
@@ -179,8 +182,6 @@ export interface IResponseErrorValidation extends IResponse {
 
 /**
  * Returns a response describing a validation error.
- *
- * @param message The error message
  */
 export function ResponseErrorValidation(
   title: string,
@@ -190,6 +191,17 @@ export function ResponseErrorValidation(
     ...ResponseErrorGeneric(HTTP_STATUS_400, title, detail),
     kind: "IResponseErrorValidation"
   };
+}
+
+/**
+ * Returns a response describing a validation error.
+ */
+export function ResponseErrorValidationFromValidation<T>(
+  title: string,
+  validation: t.Validation<T>
+): IResponseErrorValidation {
+  const detail = PathReporter.report(validation).join("\n");
+  return ResponseErrorValidation(title, detail);
 }
 
 /**

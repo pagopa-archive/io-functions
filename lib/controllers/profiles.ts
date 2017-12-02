@@ -2,10 +2,12 @@
  * Implements the API handlers for the Profile resource.
  */
 
+import * as t from "io-ts";
+
 import * as express from "express";
 
-import { isLeft, isRight, left, right } from "fp-ts/lib/Either";
-import { fromNullable, isNone, isSome } from "fp-ts/lib/Option";
+import { isLeft, isRight } from "fp-ts/lib/Either";
+import { isNone, isSome } from "fp-ts/lib/Option";
 import { ExtendedProfile } from "../api/definitions/ExtendedProfile";
 import { FiscalCode } from "../api/definitions/FiscalCode";
 import { LimitedProfile } from "../api/definitions/LimitedProfile";
@@ -26,7 +28,6 @@ import {
   UserGroup
 } from "../utils/middlewares/azure_api_auth";
 import { FiscalCodeMiddleware } from "../utils/middlewares/fiscalcode";
-import { NonEmptyString } from "../utils/strings";
 
 import {
   IRequestMiddleware,
@@ -43,7 +44,7 @@ import {
   ResponseErrorInternal,
   ResponseErrorNotFound,
   ResponseErrorQuery,
-  ResponseErrorValidation,
+  ResponseErrorValidationFromValidation,
   ResponseSuccessJson
 } from "../utils/response";
 
@@ -51,8 +52,6 @@ import {
   checkSourceIpForHandler,
   clientIPAndCidrTuple as ipTuple
 } from "../utils/source_ip_check";
-
-import { EmailAddress } from "../api/definitions/EmailAddress";
 
 import { IProfile, IRetrievedProfile, ProfileModel } from "../models/profile";
 import { ServiceModel } from "../models/service";
@@ -97,7 +96,7 @@ type IUpsertProfileHandler = (
   clientIp: ClientIp,
   attrs: IAzureUserAttributes,
   fiscalCode: FiscalCode,
-  profileModelPayload: IProfilePayload
+  profileModelPayload: ExtendedProfile
 ) => Promise<
   | IResponseSuccessJson<ExtendedProfile>
   | IResponseErrorValidation
@@ -169,51 +168,24 @@ export function GetProfile(
 }
 
 /**
- * A new profile payload.
- *
- * TODO: generate from a schema.
- */
-interface IProfilePayload {
-  readonly email?: EmailAddress;
-}
-
-/**
  * A middleware that extracts a Profile payload from a request.
- *
- * TODO: validate the payload against a schema.
  */
 export const ProfilePayloadMiddleware: IRequestMiddleware<
   IResponseErrorValidation,
-  IProfilePayload
-> = request => {
-  return new Promise(resolve => {
-    fromNullable(request.body)
-      .map(body => body.email)
-      .filter(NonEmptyString.is)
-      .map(email =>
-        resolve(
-          right<IResponseErrorValidation, IProfilePayload>({
-            email
-          })
-        )
-      )
-      .getOrElse(() => {
-        resolve(
-          left<IResponseErrorValidation, IProfilePayload>(
-            ResponseErrorValidation(
-              "Invalid email",
-              "email must be a non-empty string"
-            )
-          )
-        );
-      });
+  ExtendedProfile
+> = request =>
+  new Promise(resolve => {
+    const validation = t.validate(request.body, ExtendedProfile);
+    const result = validation.mapLeft(_ =>
+      ResponseErrorValidationFromValidation("Request not valid", validation)
+    );
+    resolve(result);
   });
-};
 
 async function createNewProfileFromPayload(
   profileModel: ProfileModel,
   fiscalCode: FiscalCode,
-  profileModelPayload: IProfilePayload
+  profileModelPayload: ExtendedProfile
 ): Promise<IResponseSuccessJson<ExtendedProfile> | IResponseErrorQuery> {
   // create a new profile
   const profile: IProfile = {
@@ -237,7 +209,7 @@ async function createNewProfileFromPayload(
 async function updateExistingProfileFromPayload(
   profileModel: ProfileModel,
   existingProfile: IRetrievedProfile,
-  profileModelPayload: IProfilePayload
+  profileModelPayload: ExtendedProfile
 ): Promise<
   | IResponseSuccessJson<ExtendedProfile>
   | IResponseErrorQuery
