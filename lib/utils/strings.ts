@@ -1,5 +1,5 @@
 import is from "ts-is";
-import * as ulid from "ulid";
+import { ulid } from "ulid";
 import * as validator from "validator";
 
 import { fromNullable, Option } from "fp-ts/lib/Option";

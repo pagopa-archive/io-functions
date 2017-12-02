@@ -5,7 +5,7 @@
  * to each configured channel.
  */
 
-import * as ulid from "ulid";
+import { ulid } from "ulid";
 import * as winston from "winston";
 
 import { IContext } from "azure-functions-types";
