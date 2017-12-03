@@ -88,25 +88,23 @@ gulp.task("generate:templates", () => {
  * Run the build task
  */
 gulp.task("yarn:build", () => {
-  return gulp
-    .src(TYPESCRIPT_SOURCE_DIR)
-    .pipe(run(`yarn build`));
+  return gulp.src(TYPESCRIPT_SOURCE_DIR).pipe(run(`yarn build`));
 });
 
 /**
  * Run the lint task
  */
 gulp.task("yarn:lint", () => {
-  return gulp
-    .src(TYPESCRIPT_SOURCE_DIR)
-    .pipe(run(`yarn run lint`));
+  return gulp.src(TYPESCRIPT_SOURCE_DIR).pipe(run(`yarn run lint`));
 });
 
 /**
  * Run unit tests
  */
 gulp.task("unit:test", () => {
-  return gulp.src(TYPESCRIPT_SOURCE_DIR).pipe(run("jest --coverage"));
+  return gulp
+    .src(TYPESCRIPT_SOURCE_DIR)
+    .pipe(run("jest --coverage --runInBand"));
 });
 
 /**
@@ -118,9 +116,7 @@ gulp.task("test", cb => runSequence("yarn:lint", "unit:test", cb));
  * Package Azure Functions code and dependencines in a single file
  */
 gulp.task("yarn:funcpack", () => {
-  return gulp
-    .src(TYPESCRIPT_SOURCE_DIR)
-    .pipe(run("yarn run funcpack pack ./"));
+  return gulp.src(TYPESCRIPT_SOURCE_DIR).pipe(run("yarn run funcpack pack ./"));
 });
 
 /**
