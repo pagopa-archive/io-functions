@@ -4,7 +4,14 @@ import { DocumentDbModel } from "./documentdb_model";
 
 import * as t from "io-ts";
 
-import { fromNullable, isNone, Option, some, Some } from "fp-ts/lib/Option";
+import {
+  fromNullable,
+  isNone,
+  none,
+  Option,
+  some,
+  Some
+} from "fp-ts/lib/Option";
 
 import { NonNegativeNumber } from "./numbers";
 
@@ -158,6 +165,15 @@ export abstract class DocumentDbModelVersioned<
         query: `SELECT * FROM ${collectionName} m WHERE (m.${modelIdField} = @modelId) ORDER BY m.version DESC`
       }
     );
+
+    if (
+      isLeft(errorOrMaybeDocument) &&
+      errorOrMaybeDocument.value.code === 404
+    ) {
+      // if the error is 404 (Not Found), we return an empty value
+      return right(none);
+    }
+
     return errorOrMaybeDocument.map(maybeDocument =>
       maybeDocument.map(this.toRetrieved)
     );
