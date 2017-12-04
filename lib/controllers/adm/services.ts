@@ -2,6 +2,8 @@
  * Implements the API handlers for the Services resource.
  */
 
+import * as t from "io-ts";
+
 import * as express from "express";
 
 import {
@@ -41,6 +43,7 @@ import {
   IResponseErrorQuery,
   IResponseErrorValidation,
   IResponseSuccessJson,
+  ResponseErrorFromValidationErrors,
   ResponseErrorInternal,
   ResponseErrorNotFound,
   ResponseErrorQuery,
@@ -114,36 +117,31 @@ function retrievedServiceToPublic(
   };
 }
 
+function servicePayloadToIService(service: Service): IService {
+  return {
+    authorizedCIDRs: toAuthorizedCIDRs(service.authorized_cidrs),
+    authorizedRecipients: toAuthorizedRecipients(service.authorized_recipients),
+    departmentName: service.department_name,
+    organizationName: service.organization_name,
+    serviceId: service.service_id,
+    serviceName: service.service_name
+  };
+}
+
 /**
  * A middleware that extracts a Service payload from a request.
  */
 export const ServicePayloadMiddleware: IRequestMiddleware<
   IResponseErrorValidation,
   IService
-> = request => {
-  const body = request.body;
-  if (!Service.is(body)) {
-    return Promise.resolve(
-      left<IResponseErrorValidation, IService>(
-        ResponseErrorValidation(
-          "Invalid service payload",
-          "Request body does not conform to the required service format"
-        )
-      )
-    );
-  }
-  const servicePayload: IService = {
-    authorizedCIDRs: toAuthorizedCIDRs(body.authorized_cidrs),
-    authorizedRecipients: toAuthorizedRecipients(body.authorized_recipients),
-    departmentName: body.department_name,
-    organizationName: body.organization_name,
-    serviceId: body.service_id,
-    serviceName: body.service_name
-  };
-  return Promise.resolve(
-    right<IResponseErrorValidation, IService>(servicePayload)
-  );
-};
+> = request =>
+  new Promise(resolve => {
+    const validation = t.validate(request.body, Service);
+    const result = validation
+      .mapLeft(ResponseErrorFromValidationErrors(Service))
+      .map(servicePayloadToIService);
+    resolve(result);
+  });
 
 export function UpdateServiceHandler(
   serviceModel: ServiceModel

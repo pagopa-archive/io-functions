@@ -1,9 +1,12 @@
+import * as t from "io-ts";
+
 import { FiscalCode } from "../../api/definitions/FiscalCode";
 
-import { left, right } from "fp-ts/lib/Either";
-
 import { IRequestMiddleware } from "../request_middleware";
-import { IResponseErrorValidation, ResponseErrorValidation } from "../response";
+import {
+  IResponseErrorValidation,
+  ResponseErrorFromValidationErrors
+} from "../response";
 
 /**
  * A request middleware that validates the presence of a valid `fiscalcode` parameter
@@ -13,19 +16,11 @@ import { IResponseErrorValidation, ResponseErrorValidation } from "../response";
 export const FiscalCodeMiddleware: IRequestMiddleware<
   IResponseErrorValidation,
   FiscalCode
-> = request => {
-  const fiscalCode: string = request.params.fiscalcode;
-  if (FiscalCode.is(fiscalCode)) {
-    return Promise.resolve(
-      right<IResponseErrorValidation, FiscalCode>(fiscalCode)
+> = request =>
+  new Promise(resolve => {
+    const validation = t.validate(request.params.fiscalcode, FiscalCode);
+    const result = validation.mapLeft(
+      ResponseErrorFromValidationErrors(FiscalCode)
     );
-  } else {
-    const validationErrorResponse = ResponseErrorValidation(
-      "Bad request",
-      `The fiscal code [${fiscalCode}] is not valid.`
-    );
-    return Promise.resolve(
-      left<IResponseErrorValidation, FiscalCode>(validationErrorResponse)
-    );
-  }
-};
+    resolve(result);
+  });
