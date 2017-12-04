@@ -51,7 +51,7 @@ import {
   ResponseSuccessJson
 } from "../../utils/response";
 
-import { isLeft, isRight, left, right } from "fp-ts/lib/Either";
+import { isLeft, isRight } from "fp-ts/lib/Either";
 import { isNone } from "fp-ts/lib/Option";
 import { NonEmptyString } from "../../utils/strings";
 
@@ -207,16 +207,10 @@ export function UpdateServiceHandler(
 /**
  * Extracts the serviceId value from the URL path parameter.
  */
-const requiredServiceIdMiddleware = RequiredParamMiddleware<
+const requiredServiceIdMiddleware = RequiredParamMiddleware(
+  "serviceid",
   NonEmptyString
->(params => {
-  const serviceId = params.serviceid;
-  if (NonEmptyString.is(serviceId)) {
-    return right(serviceId);
-  } else {
-    return left("Value of `serviceid` parameter must be a non empty string");
-  }
-});
+);
 
 export function CreateServiceHandler(
   serviceModel: ServiceModel

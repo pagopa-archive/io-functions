@@ -1,3 +1,4 @@
+import { RequiredParamMiddleware } from "../utils/middlewares/required_param";
 /*
  * Implements the API handlers for the Message resource.
  */
@@ -35,7 +36,6 @@ import {
 } from "../utils/middlewares/azure_user_attributes";
 import { ContextMiddleware } from "../utils/middlewares/context_middleware";
 import { FiscalCodeMiddleware } from "../utils/middlewares/fiscalcode";
-import { RequiredIdParamMiddleware } from "../utils/middlewares/required_id_param";
 import {
   IRequestMiddleware,
   withRequestMiddlewares,
@@ -63,7 +63,11 @@ import {
   ResponseSuccessJsonIterator,
   ResponseSuccessRedirectToResource
 } from "../utils/response";
-import { ObjectIdGenerator, ulidGenerator } from "../utils/strings";
+import {
+  NonEmptyString,
+  ObjectIdGenerator,
+  ulidGenerator
+} from "../utils/strings";
 
 import {
   checkSourceIpForHandler,
@@ -489,7 +493,7 @@ export function GetMessage(
     ClientIpMiddleware,
     AzureUserAttributesMiddleware(serviceModel),
     FiscalCodeMiddleware,
-    RequiredIdParamMiddleware
+    RequiredParamMiddleware("id", NonEmptyString)
   );
   return wrapRequestHandler(
     middlewaresWrap(
