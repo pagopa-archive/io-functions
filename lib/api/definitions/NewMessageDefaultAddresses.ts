@@ -23,10 +23,10 @@ const NewMessageDefaultAddressesO = t.partial({
   email: EmailAddress
 });
 
-export const NewMessageDefaultAddresses = t.intersection([
-  NewMessageDefaultAddressesR,
-  NewMessageDefaultAddressesO
-]);
+export const NewMessageDefaultAddresses = t.intersection(
+  [NewMessageDefaultAddressesR, NewMessageDefaultAddressesO],
+  "NewMessageDefaultAddresses"
+);
 
 export type NewMessageDefaultAddresses = t.TypeOf<
   typeof NewMessageDefaultAddresses

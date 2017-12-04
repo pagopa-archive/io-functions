@@ -26,9 +26,9 @@ const MessageContentO = t.partial({
   subject: MessageSubject
 });
 
-export const MessageContent = t.intersection([
-  MessageContentR,
-  MessageContentO
-]);
+export const MessageContent = t.intersection(
+  [MessageContentR, MessageContentO],
+  "MessageContent"
+);
 
 export type MessageContent = t.TypeOf<typeof MessageContent>;

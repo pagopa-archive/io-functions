@@ -29,6 +29,9 @@ const NewMessageO = t.partial({
   default_addresses: NewMessageDefaultAddresses
 });
 
-export const NewMessage = t.intersection([NewMessageR, NewMessageO]);
+export const NewMessage = t.intersection(
+  [NewMessageR, NewMessageO],
+  "NewMessage"
+);
 
 export type NewMessage = t.TypeOf<typeof NewMessage>;

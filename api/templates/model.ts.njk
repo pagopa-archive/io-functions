@@ -60,7 +60,7 @@ const {{ definitionName }}O = t.partial({
 {% endfor %}
 })
 
-export const {{ definitionName }} = t.intersection([{{ definitionName }}R, {{ definitionName }}O]);
+export const {{ definitionName }} = t.intersection([{{ definitionName }}R, {{ definitionName }}O], "{{ definitionName }}");
 
 export type {{ definitionName }} = t.TypeOf<typeof {{ definitionName }}>;
 
@@ -142,11 +142,11 @@ import * as t from "io-ts";
 
 import { {{ realPropName }} } from "./{{ realPropName }}";
 
-export const {{ definitionName }} = t.readonlyArray({{ realPropName }});
+export const {{ definitionName }} = t.readonlyArray({{ realPropName }}, "array of {{ realPropName }}");
 
   {% else %}
 
-export const {{ definitionName }} = t.readonlyArray(t.{{ definition.items.type | replace("integer", "number") }});
+export const {{ definitionName }} = t.readonlyArray(t.{{ definition.items.type | replace("integer", "number") }}, "array of {{ definition.items.type | replace("integer", "number") }}");
 
   {% endif %}
 

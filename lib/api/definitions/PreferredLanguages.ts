@@ -15,6 +15,9 @@ import * as t from "io-ts";
 
 import { PreferredLanguage } from "./PreferredLanguage";
 
-export const PreferredLanguages = t.readonlyArray(PreferredLanguage);
+export const PreferredLanguages = t.readonlyArray(
+  PreferredLanguage,
+  "array of PreferredLanguage"
+);
 
 export type PreferredLanguages = t.TypeOf<typeof PreferredLanguage>;
