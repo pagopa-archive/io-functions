@@ -1,5 +1,4 @@
 import * as t from "io-ts";
-import { PathReporter } from "io-ts/lib/PathReporter";
 
 import * as DocumentDb from "documentdb";
 import * as express from "express";
@@ -8,6 +7,8 @@ import { IResultIterator, iteratorToArray } from "./documentdb";
 
 import { HttpStatusCode } from "../api/definitions/HttpStatusCode";
 import { ProblemJson } from "../api/definitions/ProblemJson";
+
+import { errorsToReadableMessages } from "./validation_reporters";
 
 const HTTP_STATUS_400 = 400 as HttpStatusCode;
 const HTTP_STATUS_403 = 403 as HttpStatusCode;
@@ -196,12 +197,13 @@ export function ResponseErrorValidation(
 /**
  * Returns a response describing a validation error.
  */
-export function ResponseErrorValidationFromValidation<T>(
-  title: string,
-  validation: t.Validation<T>
-): IResponseErrorValidation {
-  const detail = PathReporter.report(validation).join("\n");
-  return ResponseErrorValidation(title, detail);
+export function ResponseErrorFromValidationErrors<S, A>(
+  type: t.Type<S, A>
+): (errors: ReadonlyArray<t.ValidationError>) => IResponseErrorValidation {
+  return errors => {
+    const detail = errorsToReadableMessages(errors).join("\n");
+    return ResponseErrorValidation(`Invalid ${type.name}`, detail);
+  };
 }
 
 /**

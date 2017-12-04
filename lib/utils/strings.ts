@@ -18,7 +18,7 @@ interface INonEmptyStringTag {
 }
 
 export const NonEmptyString = tag<INonEmptyStringTag>()(
-  t.refinement(t.string, s => s.length > 0, "NonEmptyString")
+  t.refinement(t.string, s => s.length > 0, "non empty string")
 );
 
 export type NonEmptyString = t.TypeOf<typeof NonEmptyString>;
@@ -46,7 +46,7 @@ export const WithinRangeString = <
     t.refinement(
       t.string,
       s => s.length >= l && s.length < h,
-      `WithinRangeString(${l}, ${h})`
+      `string of length >= ${l} and < ${h}`
     )
   );
 
@@ -67,7 +67,11 @@ export const PatternString = <P extends string, T extends IPatternStringTag<P>>(
   // tslint:disable-next-line:no-any
 ): Tagged<T, any, string> =>
   tag<T>()(
-    t.refinement(t.string, s => s.match(p) !== null, `IPatternString(${p})`)
+    t.refinement(
+      t.string,
+      s => s.match(p) !== null,
+      `string that matches the pattern "${p}"`
+    )
   );
 
 export type PatternString<P extends string> = string & IPatternStringTag<P>;
@@ -89,7 +93,7 @@ export const EmailString = tag<IEmailStringTag>()(
         allow_utf8_local_part: false,
         require_tld: true
       }),
-    "EmailString"
+    "string that represents an email address"
   )
 );
 
@@ -104,7 +108,7 @@ interface IIPStringTag {
 }
 
 export const IPString = tag<IIPStringTag>()(
-  t.refinement(t.string, validator.isIP)
+  t.refinement(t.string, validator.isIP, "string that represents an IP address")
 );
 
 export type IPString = t.TypeOf<typeof IPString>;

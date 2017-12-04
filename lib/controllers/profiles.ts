@@ -41,10 +41,10 @@ import {
   IResponseErrorQuery,
   IResponseErrorValidation,
   IResponseSuccessJson,
+  ResponseErrorFromValidationErrors,
   ResponseErrorInternal,
   ResponseErrorNotFound,
   ResponseErrorQuery,
-  ResponseErrorValidationFromValidation,
   ResponseSuccessJson
 } from "../utils/response";
 
@@ -176,8 +176,8 @@ export const ProfilePayloadMiddleware: IRequestMiddleware<
 > = request =>
   new Promise(resolve => {
     const validation = t.validate(request.body, ExtendedProfile);
-    const result = validation.mapLeft(_ =>
-      ResponseErrorValidationFromValidation("Request not valid", validation)
+    const result = validation.mapLeft(
+      ResponseErrorFromValidationErrors(ExtendedProfile)
     );
     resolve(result);
   });

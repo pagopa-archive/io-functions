@@ -56,9 +56,9 @@ import {
   ResponseErrorForbiddenNotAuthorizedForDefaultAddresses,
   ResponseErrorForbiddenNotAuthorizedForProduction,
   ResponseErrorForbiddenNotAuthorizedForRecipient,
+  ResponseErrorFromValidationErrors,
   ResponseErrorNotFound,
   ResponseErrorQuery,
-  ResponseErrorValidationFromValidation,
   ResponseSuccessJson,
   ResponseSuccessJsonIterator,
   ResponseSuccessRedirectToResource
@@ -103,8 +103,8 @@ export const MessagePayloadMiddleware: IRequestMiddleware<
 > = request =>
   new Promise(resolve => {
     const validation = t.validate(request.body, NewMessage);
-    const result = validation.mapLeft(_ =>
-      ResponseErrorValidationFromValidation("Request not valid", validation)
+    const result = validation.mapLeft(
+      ResponseErrorFromValidationErrors(NewMessage)
     );
     resolve(result);
   });
