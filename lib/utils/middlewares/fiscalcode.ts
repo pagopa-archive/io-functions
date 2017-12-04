@@ -1,4 +1,4 @@
-import { FiscalCode, isFiscalCode } from "../../api/definitions/FiscalCode";
+import { FiscalCode } from "../../api/definitions/FiscalCode";
 
 import { left, right } from "fp-ts/lib/Either";
 
@@ -15,7 +15,7 @@ export const FiscalCodeMiddleware: IRequestMiddleware<
   FiscalCode
 > = request => {
   const fiscalCode: string = request.params.fiscalcode;
-  if (isFiscalCode(fiscalCode)) {
+  if (FiscalCode.is(fiscalCode)) {
     return Promise.resolve(
       right<IResponseErrorValidation, FiscalCode>(fiscalCode)
     );

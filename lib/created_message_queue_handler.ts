@@ -21,7 +21,7 @@ import { fromNullable, isNone, Option } from "fp-ts/lib/Option";
 import { BlobService, createBlobService } from "azure-storage";
 
 import { NewMessageDefaultAddresses } from "./api/definitions/NewMessageDefaultAddresses";
-import { NotificationChannelStatus } from "./api/definitions/NotificationChannelStatus";
+import { NotificationChannelStatusEnum } from "./api/definitions/NotificationChannelStatus";
 
 import { getRequiredStringEnv } from "./utils/env";
 
@@ -169,7 +169,7 @@ export async function handleMessage(
   > = maybeEmail.map(({ e1: toAddress, e2: addressSource }) => {
     return {
       addressSource,
-      status: NotificationChannelStatus.QUEUED,
+      status: NotificationChannelStatusEnum.QUEUED,
       toAddress
     };
   });

@@ -1,7 +1,9 @@
+import * as t from "io-ts";
+
 import { toAuthorizedCIDRs } from "../../models/service";
 import { ClientIp } from "../middlewares/client_ip_middleware";
 import { ResponseSuccessJson } from "../response";
-import { toIPString } from "../strings";
+import { IPString } from "../strings";
 import { Tuple2 } from "../tuples";
 
 import { checkSourceIpForHandler } from "../source_ip_check";
@@ -26,7 +28,7 @@ describe("checkSourceIpForHandler", () => {
 
   it("should let the request pass if no CIDRs have been set", async () => {
     const result = await checkedHandler(
-      toIPString("127.0.0.1"),
+      t.validate("127.0.0.1", IPString).toOption(),
       toAuthorizedCIDRs([])
     );
     expect(result.kind).toEqual("IResponseSuccessJson");
@@ -34,7 +36,7 @@ describe("checkSourceIpForHandler", () => {
 
   it("should let the request pass if IP matches CIDRs", async () => {
     const result = await checkedHandler(
-      toIPString("192.168.1.1"),
+      t.validate("192.168.1.1", IPString).toOption(),
       toAuthorizedCIDRs(["192.168.1.0/24"])
     );
     expect(result.kind).toEqual("IResponseSuccessJson");
@@ -42,7 +44,7 @@ describe("checkSourceIpForHandler", () => {
 
   it("should let the request pass if IP matches IPs", async () => {
     const result = await checkedHandler(
-      toIPString("192.168.10.10"),
+      t.validate("192.168.10.10", IPString).toOption(),
       toAuthorizedCIDRs(["192.168.10.10"])
     );
     expect(result.kind).toEqual("IResponseSuccessJson");
@@ -50,7 +52,7 @@ describe("checkSourceIpForHandler", () => {
 
   it("should reject the request if IP does not match CIDRs", async () => {
     const result = await checkedHandler(
-      toIPString("10.0.1.1"),
+      t.validate("10.0.1.1", IPString).toOption(),
       toAuthorizedCIDRs(["192.168.1.0/24"])
     );
     expect(result.kind).toEqual("IResponseErrorForbiddenNotAuthorized");

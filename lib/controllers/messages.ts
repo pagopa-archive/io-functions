@@ -1,7 +1,9 @@
-import { isNone } from "fp-ts/lib/Option";
 /*
  * Implements the API handlers for the Message resource.
  */
+
+import { isNone } from "fp-ts/lib/Option";
+import * as t from "io-ts";
 
 import * as express from "express";
 import * as winston from "winston";
@@ -15,12 +17,12 @@ import {
 
 import { IContext } from "azure-function-express";
 
-import { isLeft, left, right } from "fp-ts/lib/Either";
+import { isLeft } from "fp-ts/lib/Either";
 
 import { CreatedMessage } from "../api/definitions/CreatedMessage";
 import { FiscalCode } from "../api/definitions/FiscalCode";
 import { MessageResponse } from "../api/definitions/MessageResponse";
-import { isNewMessage, NewMessage } from "../api/definitions/NewMessage";
+import { NewMessage } from "../api/definitions/NewMessage";
 
 import {
   AzureApiAuthMiddleware,
@@ -54,9 +56,9 @@ import {
   ResponseErrorForbiddenNotAuthorizedForDefaultAddresses,
   ResponseErrorForbiddenNotAuthorizedForProduction,
   ResponseErrorForbiddenNotAuthorizedForRecipient,
+  ResponseErrorFromValidationErrors,
   ResponseErrorNotFound,
   ResponseErrorQuery,
-  ResponseErrorValidation,
   ResponseSuccessJson,
   ResponseSuccessJsonIterator,
   ResponseSuccessRedirectToResource
@@ -98,24 +100,14 @@ interface IBindings {
 export const MessagePayloadMiddleware: IRequestMiddleware<
   IResponseErrorValidation,
   NewMessage
-> = request => {
-  const requestBody = request.body;
-
-  if (isNewMessage(requestBody)) {
-    return Promise.resolve(
-      right<IResponseErrorValidation, NewMessage>(requestBody)
+> = request =>
+  new Promise(resolve => {
+    const validation = t.validate(request.body, NewMessage);
+    const result = validation.mapLeft(
+      ResponseErrorFromValidationErrors(NewMessage)
     );
-  } else {
-    return Promise.resolve(
-      left<IResponseErrorValidation, NewMessage>(
-        ResponseErrorValidation(
-          "Request not valid",
-          "The request payload does not represent a valid NewMessage"
-        )
-      )
-    );
-  }
-};
+    resolve(result);
+  });
 
 /**
  * Converts a retrieved message to a message that can be shared via API

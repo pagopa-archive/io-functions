@@ -1,8 +1,10 @@
 // tslint:disable:no-any
 
+import * as t from "io-ts";
+
 import { right } from "fp-ts/lib/Either";
 import { none, Option, some, Some } from "fp-ts/lib/Option";
-import { toEmailString, toNonEmptyString } from "../../utils/strings";
+import { EmailString, NonEmptyString } from "../../utils/strings";
 
 import { IRetrievedProfile } from "../../models/profile";
 import {
@@ -12,10 +14,10 @@ import {
 import { GetProfileHandler, UpsertProfileHandler } from "../profiles";
 
 import { ExtendedProfile } from "../../api/definitions/ExtendedProfile";
-import { toFiscalCode } from "../../api/definitions/FiscalCode";
+import { FiscalCode } from "../../api/definitions/FiscalCode";
 import { LimitedProfile } from "../../api/definitions/LimitedProfile";
 
-import { toNonNegativeNumber } from "../../utils/numbers";
+import { NonNegativeNumber } from "../../utils/numbers";
 
 // DANGEROUS, only use in tests
 function _getO<T>(o: Option<T>): T {
@@ -25,11 +27,13 @@ function _getO<T>(o: Option<T>): T {
 const anAzureAuthorization: IAzureApiAuthorization = {
   groups: new Set([UserGroup.ApiLimitedProfileRead]),
   kind: "IAzureApiAuthorization",
-  subscriptionId: _getO(toNonEmptyString("s123")),
-  userId: _getO(toNonEmptyString("u123"))
+  subscriptionId: _getO(t.validate("s123", NonEmptyString).toOption()),
+  userId: _getO(t.validate("u123", NonEmptyString).toOption())
 };
 
-const aFiscalCode = _getO(toFiscalCode("FRLFRC74E04B157I"));
+const aFiscalCode = _getO(
+  t.validate("FRLFRC74E04B157I", FiscalCode).toOption()
+);
 
 const aProfilePayloadMock = {
   email: "x@example.com"
@@ -38,11 +42,11 @@ const aProfilePayloadMock = {
 const aRetrievedProfile: IRetrievedProfile = {
   _self: "123",
   _ts: "123",
-  email: _getO(toEmailString("x@example.com")),
+  email: _getO(t.validate("x@example.com", EmailString).toOption()),
   fiscalCode: aFiscalCode,
-  id: _getO(toNonEmptyString("123")),
+  id: _getO(t.validate("123", NonEmptyString).toOption()),
   kind: "IRetrievedProfile",
-  version: _getO(toNonNegativeNumber(1))
+  version: _getO(t.validate(1, NonNegativeNumber).toOption())
 };
 
 const aPublicExtendedProfile: ExtendedProfile = {
@@ -203,7 +207,7 @@ it("should update an existing profile", async () => {
   const upsertProfileHandler = UpsertProfileHandler(profileModelMock as any);
 
   const profilePayloadMock = {
-    email: _getO(toEmailString("y@example.com"))
+    email: _getO(t.validate("y@example.com", EmailString).toOption())
   };
 
   const response = await upsertProfileHandler(

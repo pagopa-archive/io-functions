@@ -1,4 +1,7 @@
 // tslint:disable:no-any
+
+import * as t from "io-ts";
+
 import { toAuthorizedCIDRs } from "../../models/service";
 
 import * as winston from "winston";
@@ -14,19 +17,19 @@ import { none, Option, some, Some } from "fp-ts/lib/Option";
 import { ModelId } from "../../utils/documentdb_model_versioned";
 
 import { CreatedMessage } from "../../api/definitions/CreatedMessage";
-import { toEmailAddress } from "../../api/definitions/EmailAddress";
-import { toFiscalCode } from "../../api/definitions/FiscalCode";
-import { toMessageBodyMarkdown } from "../../api/definitions/MessageBodyMarkdown";
-import { toMessageSubject } from "../../api/definitions/MessageSubject";
+import { EmailAddress } from "../../api/definitions/EmailAddress";
+import { FiscalCode } from "../../api/definitions/FiscalCode";
+import { MessageBodyMarkdown } from "../../api/definitions/MessageBodyMarkdown";
+import { MessageSubject } from "../../api/definitions/MessageSubject";
 import { NewMessage } from "../../api/definitions/NewMessage";
-import { NotificationChannelStatus } from "../../api/definitions/NotificationChannelStatus";
+import { NotificationChannelStatusEnum } from "../../api/definitions/NotificationChannelStatus";
 
 import {
   IAzureApiAuthorization,
   UserGroup
 } from "../../utils/middlewares/azure_api_auth";
 import { IAzureUserAttributes } from "../../utils/middlewares/azure_user_attributes";
-import { toEmailString, toNonEmptyString } from "../../utils/strings";
+import { EmailString, NonEmptyString } from "../../utils/strings";
 
 import {
   INewMessage,
@@ -58,9 +61,13 @@ function lookup(h: IHeaders): (k: string) => string | undefined {
   return (k: string) => h[k];
 }
 
-const aFiscalCode = _getO(toFiscalCode("FRLFRC74E04B157I"));
-const anEmail = _getO(toEmailString("test@example.com"));
-const aMessageBodyMarkdown = _getO(toMessageBodyMarkdown("test".repeat(80)));
+const aFiscalCode = _getO(
+  t.validate("FRLFRC74E04B157I", FiscalCode).toOption()
+);
+const anEmail = _getO(t.validate("test@example.com", EmailString).toOption());
+const aMessageBodyMarkdown = _getO(
+  t.validate("test".repeat(80), MessageBodyMarkdown).toOption()
+);
 
 const someUserAttributes: IAzureUserAttributes = {
   email: anEmail,
@@ -68,25 +75,25 @@ const someUserAttributes: IAzureUserAttributes = {
   service: {
     authorizedCIDRs: toAuthorizedCIDRs([]),
     authorizedRecipients: new Set([]),
-    departmentName: _getO(toNonEmptyString("IT")),
-    organizationName: _getO(toNonEmptyString("AgID")),
-    serviceId: _getO(toNonEmptyString("test")),
-    serviceName: _getO(toNonEmptyString("Test"))
+    departmentName: _getO(t.validate("IT", NonEmptyString).toOption()),
+    organizationName: _getO(t.validate("AgID", NonEmptyString).toOption()),
+    serviceId: _getO(t.validate("test", NonEmptyString).toOption()),
+    serviceName: _getO(t.validate("Test", NonEmptyString).toOption())
   }
 };
 
 const aUserAuthenticationDeveloper: IAzureApiAuthorization = {
   groups: new Set([UserGroup.ApiMessageRead, UserGroup.ApiMessageWrite]),
   kind: "IAzureApiAuthorization",
-  subscriptionId: _getO(toNonEmptyString("s123")),
-  userId: _getO(toNonEmptyString("u123"))
+  subscriptionId: _getO(t.validate("s123", NonEmptyString).toOption()),
+  userId: _getO(t.validate("u123", NonEmptyString).toOption())
 };
 
 const aUserAuthenticationTrustedApplication: IAzureApiAuthorization = {
   groups: new Set([UserGroup.ApiMessageRead, UserGroup.ApiMessageList]),
   kind: "IAzureApiAuthorization",
-  subscriptionId: _getO(toNonEmptyString("s123")),
-  userId: _getO(toNonEmptyString("u123"))
+  subscriptionId: _getO(t.validate("s123", NonEmptyString).toOption()),
+  userId: _getO(t.validate("u123", NonEmptyString).toOption())
 };
 
 const aMessagePayload: NewMessage = {
@@ -95,16 +102,18 @@ const aMessagePayload: NewMessage = {
   }
 };
 
-const aCustomSubject = _getO(toMessageSubject("A custom subject"));
+const aCustomSubject = _getO(
+  t.validate("A custom subject", MessageSubject).toOption()
+);
 
-const aMessageId = _getO(toNonEmptyString("A_MESSAGE_ID"));
+const aMessageId = _getO(t.validate("A_MESSAGE_ID", NonEmptyString).toOption());
 
 const aNewMessageWithoutContent: INewMessageWithoutContent = {
   fiscalCode: aFiscalCode,
-  id: _getO(toNonEmptyString("A_MESSAGE_ID")),
+  id: _getO(t.validate("A_MESSAGE_ID", NonEmptyString).toOption()),
   kind: "INewMessageWithoutContent",
   senderServiceId: "test" as ModelId,
-  senderUserId: _getO(toNonEmptyString("u123"))
+  senderUserId: _getO(t.validate("u123", NonEmptyString).toOption())
 };
 
 const aRetrievedMessageWithoutContent: IRetrievedMessageWithoutContent = {
@@ -426,7 +435,7 @@ describe("CreateMessageHandler", () => {
     const messagePayload: NewMessage = {
       ...aMessagePayload,
       default_addresses: {
-        email: _getO(toEmailAddress("test@example.com"))
+        email: _getO(t.validate("test@example.com", EmailAddress).toOption())
       }
     };
 
@@ -456,7 +465,7 @@ describe("CreateMessageHandler", () => {
     expect(mockContext.bindings).toEqual({
       createdMessage: {
         defaultAddresses: {
-          email: _getO(toEmailAddress("test@example.com"))
+          email: _getO(t.validate("test@example.com", EmailAddress).toOption())
         },
         message: aNewMessageWithoutContent,
         messageContent: {
@@ -516,7 +525,7 @@ describe("CreateMessageHandler", () => {
     const messagePayload: NewMessage = {
       ...aMessagePayload,
       default_addresses: {
-        email: _getO(toEmailAddress("test@example.com"))
+        email: _getO(t.validate("test@example.com", EmailAddress).toOption())
       }
     };
 
@@ -770,13 +779,13 @@ describe("GetMessageHandler", () => {
       _ts: "xyz",
       emailNotification: {
         addressSource: NotificationAddressSource.PROFILE_ADDRESS,
-        status: NotificationChannelStatus.SENT_TO_CHANNEL,
-        toAddress: _getO(toEmailString("x@example.com"))
+        status: NotificationChannelStatusEnum.SENT_TO_CHANNEL,
+        toAddress: _getO(t.validate("x@example.com", EmailString).toOption())
       },
       fiscalCode: aFiscalCode,
-      id: _getO(toNonEmptyString("A_NOTIFICATION_ID")),
+      id: _getO(t.validate("A_NOTIFICATION_ID", NonEmptyString).toOption()),
       kind: "IRetrievedNotification",
-      messageId: _getO(toNonEmptyString("A_MESSAGE_ID"))
+      messageId: _getO(t.validate("A_MESSAGE_ID", NonEmptyString).toOption())
     };
 
     const mockMessageModel = {

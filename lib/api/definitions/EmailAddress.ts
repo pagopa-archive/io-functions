@@ -5,15 +5,14 @@
 // tslint:disable:jsdoc-format
 // tslint:disable:interface-name
 // tslint:disable:no-any
+// tslint:disable:object-literal-sort-keys
 
 /**
  * 
  */
 
-import { isEmailString, toEmailString, EmailString } from "../../utils/strings";
+import { EmailString } from "../../utils/strings";
 
 export type EmailAddress = EmailString;
 
-export const isEmailAddress = isEmailString;
-
-export const toEmailAddress = toEmailString;
+export const EmailAddress = EmailString;

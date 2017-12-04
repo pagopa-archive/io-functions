@@ -1,10 +1,13 @@
 // tslint:disable:no-null-keyword
 // tslint:disable:no-any
+
+import * as t from "io-ts";
+
 import { Option, Some } from "fp-ts/lib/Option";
 
-import { toNonEmptyString } from "../../utils/strings";
+import { NonEmptyString } from "../../utils/strings";
 
-import { toMessageBodyMarkdown } from "../../api/definitions/MessageBodyMarkdown";
+import { MessageBodyMarkdown } from "../../api/definitions/MessageBodyMarkdown";
 
 import { isNotificationEvent } from "../notification_event";
 
@@ -17,19 +20,23 @@ function _getO<T>(o: Option<T>): T {
   return (o as Some<T>).value;
 }
 
-const aMessageId = _getO(toNonEmptyString("A_MESSAGE_ID"));
-const aNotificationId = _getO(toNonEmptyString("A_NOTIFICATION_ID"));
+const aMessageId = _getO(t.validate("A_MESSAGE_ID", NonEmptyString).toOption());
+const aNotificationId = _getO(
+  t.validate("A_NOTIFICATION_ID", NonEmptyString).toOption()
+);
 
-const aMessageBodyMarkdown = _getO(toMessageBodyMarkdown("test".repeat(80)));
+const aMessageBodyMarkdown = _getO(
+  t.validate("test".repeat(80), MessageBodyMarkdown).toOption()
+);
 
 const aMessageContent: IMessageContent = {
   bodyMarkdown: aMessageBodyMarkdown
 };
 
 const aSenderMetadata: ICreatedMessageEventSenderMetadata = {
-  departmentName: _getO(toNonEmptyString("IT")),
-  organizationName: _getO(toNonEmptyString("AgID")),
-  serviceName: _getO(toNonEmptyString("Test"))
+  departmentName: _getO(t.validate("IT", NonEmptyString).toOption()),
+  organizationName: _getO(t.validate("AgID", NonEmptyString).toOption()),
+  serviceName: _getO(t.validate("Test", NonEmptyString).toOption())
 };
 
 describe("isNotificationEvent", () => {

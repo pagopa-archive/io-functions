@@ -5,33 +5,30 @@
 // tslint:disable:jsdoc-format
 // tslint:disable:interface-name
 // tslint:disable:no-any
+// tslint:disable:object-literal-sort-keys
 
-import { isCreatedMessage, CreatedMessage } from "./CreatedMessage";
-import { isNotificationStatus, NotificationStatus } from "./NotificationStatus";
+import { CreatedMessage } from "./CreatedMessage";
+import { NotificationStatus } from "./NotificationStatus";
 
 /**
  * 
  */
 
-import { fromNullable, Option } from "fp-ts/lib/Option";
+import * as t from "io-ts";
 
-export interface MessageResponse {
-  readonly message: CreatedMessage;
+// required attributes
+const MessageResponseR = t.interface({
+  message: CreatedMessage
+});
 
-  readonly notification?: NotificationStatus;
-}
+// optional attributes
+const MessageResponseO = t.partial({
+  notification: NotificationStatus
+});
 
-export function isMessageResponse(arg: any): arg is MessageResponse {
-  return (
-    arg &&
-    isCreatedMessage(arg.message) &&
-    (arg.notification === undefined ||
-      arg.notification === null ||
-      isNotificationStatus(arg.notification)) &&
-    true
-  );
-}
+export const MessageResponse = t.intersection([
+  MessageResponseR,
+  MessageResponseO
+]);
 
-export function toMessageResponse(arg: any): Option<MessageResponse> {
-  return fromNullable(arg).filter(isMessageResponse);
-}
+export type MessageResponse = t.TypeOf<typeof MessageResponse>;

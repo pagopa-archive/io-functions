@@ -5,6 +5,8 @@
  * to each configured channel.
  */
 
+import * as t from "io-ts";
+
 import * as winston from "winston";
 
 import * as ApplicationInsights from "applicationinsights";
@@ -27,7 +29,7 @@ import * as sendGridTransport from "nodemailer-sendgrid-transport";
 import * as HtmlToText from "html-to-text";
 
 import { MessageBodyMarkdown } from "./api/definitions/MessageBodyMarkdown";
-import { NotificationChannelStatus } from "./api/definitions/NotificationChannelStatus";
+import { NotificationChannelStatusEnum } from "./api/definitions/NotificationChannelStatus";
 
 import { ICreatedMessageEventSenderMetadata } from "./models/created_message_sender_metadata";
 import { IMessageContent } from "./models/message";
@@ -38,10 +40,7 @@ import {
 } from "./models/notification_event";
 import { markdownToHtml } from "./utils/markdown";
 
-import {
-  MessageSubject,
-  toMessageSubject
-} from "./api/definitions/MessageSubject";
+import { MessageSubject } from "./api/definitions/MessageSubject";
 import defaultEmailTemplate from "./templates/html/default";
 
 // Whether we're in a production environment
@@ -167,7 +166,7 @@ function setEmailNotificationToSent(
     ...notification,
     emailNotification: {
       ...emailNotification,
-      status: NotificationChannelStatus.SENT_TO_CHANNEL
+      status: NotificationChannelStatusEnum.SENT_TO_CHANNEL
     }
   };
 }
@@ -229,8 +228,9 @@ export async function handleNotification(
   // TODO: generate the default subject from the service/client metadata
   const subject = messageContent.subject
     ? messageContent.subject
-    : (toMessageSubject("A new notification for you.") as Some<MessageSubject>)
-        .value;
+    : (t
+        .validate("A new notification for you.", MessageSubject)
+        .toOption() as Some<MessageSubject>).value;
 
   const documentHtml = await generateDocumentHtml(
     subject,

@@ -1,9 +1,6 @@
 import is from "ts-is";
 
-import {
-  isNewMessageDefaultAddresses,
-  NewMessageDefaultAddresses
-} from "../api/definitions/NewMessageDefaultAddresses";
+import { NewMessageDefaultAddresses } from "../api/definitions/NewMessageDefaultAddresses";
 
 import {
   IMessageContent,
@@ -43,5 +40,5 @@ export const isICreatedMessageEvent = is<ICreatedMessageEvent>(
     arg.senderMetadata &&
     isICreatedMessageEventSenderMetadata(arg.senderMetadata) &&
     (!arg.defaultAddresses ||
-      isNewMessageDefaultAddresses(arg.defaultAddresses))
+      NewMessageDefaultAddresses.is(arg.defaultAddresses))
 );

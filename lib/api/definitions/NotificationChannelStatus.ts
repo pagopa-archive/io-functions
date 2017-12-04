@@ -5,27 +5,26 @@
 // tslint:disable:jsdoc-format
 // tslint:disable:interface-name
 // tslint:disable:no-any
+// tslint:disable:object-literal-sort-keys
 
 /**
  * 
  */
 
-import { fromNullable, Option } from "fp-ts/lib/Option";
+import * as t from "io-ts";
 
-export enum NotificationChannelStatus {
+import { createEnumType } from "../../utils/types";
+
+export enum NotificationChannelStatusEnum {
   "QUEUED" = "QUEUED",
 
   "SENT_TO_CHANNEL" = "SENT_TO_CHANNEL"
 }
 
-export function isNotificationChannelStatus(
-  arg: any
-): arg is NotificationChannelStatus {
-  return NotificationChannelStatus[arg] !== undefined;
-}
+export const NotificationChannelStatus = createEnumType<
+  NotificationChannelStatusEnum
+>(NotificationChannelStatusEnum, "NotificationChannelStatus");
 
-export function toNotificationChannelStatus(
-  arg: any
-): Option<NotificationChannelStatus> {
-  return fromNullable(arg).filter(isNotificationChannelStatus);
-}
+export type NotificationChannelStatus = t.TypeOf<
+  typeof NotificationChannelStatus
+>;

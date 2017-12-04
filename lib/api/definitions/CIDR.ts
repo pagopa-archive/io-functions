@@ -5,33 +5,18 @@
 // tslint:disable:jsdoc-format
 // tslint:disable:interface-name
 // tslint:disable:no-any
+// tslint:disable:object-literal-sort-keys
 
 /**
  * Describes a single IP or a range of IPs.
  */
 
-import { Option } from "fp-ts/lib/Option";
-
-import {
-  isPatternString,
-  toPatternString,
-  PatternString
-} from "../../utils/strings";
+import { PatternString } from "../../utils/strings";
 
 export type CIDR = PatternString<
   "([0-9]{1,3}.){3}[0-9]{1,3}(/([0-9]|[1-2][0-9]|3[0-2]))?"
 >;
 
-export function isCIDR(arg: any): arg is CIDR {
-  return isPatternString(
-    arg,
-    "([0-9]{1,3}.){3}[0-9]{1,3}(/([0-9]|[1-2][0-9]|3[0-2]))?"
-  );
-}
-
-export function toCIDR(arg: any): Option<CIDR> {
-  return toPatternString(
-    arg,
-    "([0-9]{1,3}.){3}[0-9]{1,3}(/([0-9]|[1-2][0-9]|3[0-2]))?"
-  );
-}
+export const CIDR = PatternString(
+  "([0-9]{1,3}.){3}[0-9]{1,3}(/([0-9]|[1-2][0-9]|3[0-2]))?"
+);

@@ -1,6 +1,6 @@
 import is from "ts-is";
 
-import { isNonEmptyString, NonEmptyString } from "../utils/strings";
+import { NonEmptyString } from "../utils/strings";
 
 /**
  * Sender metadata associated to a message
@@ -16,7 +16,7 @@ export const isICreatedMessageEventSenderMetadata = is<
 >(
   arg =>
     arg.departmentName &&
-    isNonEmptyString(arg.departmentName) &&
+    NonEmptyString.is(arg.departmentName) &&
     arg.serviceName &&
-    isNonEmptyString(arg.serviceName)
+    NonEmptyString.is(arg.serviceName)
 );

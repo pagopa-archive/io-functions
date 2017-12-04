@@ -1,6 +1,6 @@
 import is from "ts-is";
 
-import { isNonEmptyString, NonEmptyString } from "../utils/strings";
+import { NonEmptyString } from "../utils/strings";
 
 import { IMessageContent, isIMessageContent } from "./message";
 
@@ -29,9 +29,9 @@ export const isNotificationEvent = is<INotificationEvent>(
   arg =>
     arg &&
     arg.notificationId &&
-    isNonEmptyString(arg.notificationId) &&
+    NonEmptyString.is(arg.notificationId) &&
     arg.messageId &&
-    isNonEmptyString(arg.messageId) &&
+    NonEmptyString.is(arg.messageId) &&
     arg.messageContent &&
     isIMessageContent(arg.messageContent) &&
     arg.senderMetadata &&

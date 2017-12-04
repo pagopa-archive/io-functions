@@ -5,40 +5,32 @@
 // tslint:disable:jsdoc-format
 // tslint:disable:interface-name
 // tslint:disable:no-any
+// tslint:disable:object-literal-sort-keys
 
-import { isEmailAddress, EmailAddress } from "./EmailAddress";
-import { isPreferredLanguages, PreferredLanguages } from "./PreferredLanguages";
+import { EmailAddress } from "./EmailAddress";
+import { PreferredLanguages } from "./PreferredLanguages";
 
 /**
  * Describes the citizen's profile, mostly interesting for preferences attributes.
  */
 
-import { fromNullable, Option } from "fp-ts/lib/Option";
+import * as t from "io-ts";
 
-export interface ExtendedProfile {
-  readonly email?: EmailAddress;
+// required attributes
+const ExtendedProfileR = t.interface({});
 
-  readonly preferred_languages?: PreferredLanguages;
+// optional attributes
+const ExtendedProfileO = t.partial({
+  email: EmailAddress,
 
-  readonly version?: number;
-}
+  preferred_languages: PreferredLanguages,
 
-export function isExtendedProfile(arg: any): arg is ExtendedProfile {
-  return (
-    arg &&
-    (arg.email === undefined ||
-      arg.email === null ||
-      isEmailAddress(arg.email)) &&
-    (arg.preferred_languages === undefined ||
-      arg.preferred_languages === null ||
-      isPreferredLanguages(arg.preferred_languages)) &&
-    (arg.version === undefined ||
-      arg.version === null ||
-      typeof arg.version === "number") &&
-    true
-  );
-}
+  version: t.number
+});
 
-export function toExtendedProfile(arg: any): Option<ExtendedProfile> {
-  return fromNullable(arg).filter(isExtendedProfile);
-}
+export const ExtendedProfile = t.intersection([
+  ExtendedProfileR,
+  ExtendedProfileO
+]);
+
+export type ExtendedProfile = t.TypeOf<typeof ExtendedProfile>;

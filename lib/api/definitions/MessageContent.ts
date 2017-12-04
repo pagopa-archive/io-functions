@@ -5,36 +5,30 @@
 // tslint:disable:jsdoc-format
 // tslint:disable:interface-name
 // tslint:disable:no-any
+// tslint:disable:object-literal-sort-keys
 
-import { isMessageSubject, MessageSubject } from "./MessageSubject";
-import {
-  isMessageBodyMarkdown,
-  MessageBodyMarkdown
-} from "./MessageBodyMarkdown";
+import { MessageSubject } from "./MessageSubject";
+import { MessageBodyMarkdown } from "./MessageBodyMarkdown";
 
 /**
  * 
  */
 
-import { fromNullable, Option } from "fp-ts/lib/Option";
+import * as t from "io-ts";
 
-export interface MessageContent {
-  readonly subject?: MessageSubject;
+// required attributes
+const MessageContentR = t.interface({
+  markdown: MessageBodyMarkdown
+});
 
-  readonly markdown: MessageBodyMarkdown;
-}
+// optional attributes
+const MessageContentO = t.partial({
+  subject: MessageSubject
+});
 
-export function isMessageContent(arg: any): arg is MessageContent {
-  return (
-    arg &&
-    (arg.subject === undefined ||
-      arg.subject === null ||
-      isMessageSubject(arg.subject)) &&
-    isMessageBodyMarkdown(arg.markdown) &&
-    true
-  );
-}
+export const MessageContent = t.intersection([
+  MessageContentR,
+  MessageContentO
+]);
 
-export function toMessageContent(arg: any): Option<MessageContent> {
-  return fromNullable(arg).filter(isMessageContent);
-}
+export type MessageContent = t.TypeOf<typeof MessageContent>;

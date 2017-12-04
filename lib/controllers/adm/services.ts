@@ -17,9 +17,9 @@ import {
   toAuthorizedRecipients
 } from "../../models/service";
 
-import { isCIDR } from "../../api/definitions/CIDR";
-import { isFiscalCode } from "../../api/definitions/FiscalCode";
-import { isService, Service } from "../../api/definitions/Service";
+import { CIDR } from "../../api/definitions/CIDR";
+import { FiscalCode } from "../../api/definitions/FiscalCode";
+import { Service } from "../../api/definitions/Service";
 
 import {
   AzureApiAuthMiddleware,
@@ -50,7 +50,7 @@ import {
 
 import { isLeft, isRight, left, right } from "fp-ts/lib/Either";
 import { isNone } from "fp-ts/lib/Option";
-import { isNonEmptyString, NonEmptyString } from "../../utils/strings";
+import { NonEmptyString } from "../../utils/strings";
 
 import {
   AzureUserAttributesMiddleware,
@@ -100,11 +100,11 @@ function retrievedServiceToPublic(
 ): Service {
   return {
     authorized_cidrs: Array.from(retrievedService.authorizedCIDRs).filter(
-      isCIDR
+      CIDR.is
     ),
     authorized_recipients: Array.from(
       retrievedService.authorizedRecipients
-    ).filter(isFiscalCode),
+    ).filter(FiscalCode.is),
     department_name: retrievedService.departmentName,
     id: retrievedService.id,
     organization_name: retrievedService.organizationName,
@@ -122,7 +122,7 @@ export const ServicePayloadMiddleware: IRequestMiddleware<
   IService
 > = request => {
   const body = request.body;
-  if (!isService(body)) {
+  if (!Service.is(body)) {
     return Promise.resolve(
       left<IResponseErrorValidation, IService>(
         ResponseErrorValidation(
@@ -213,7 +213,7 @@ const requiredServiceIdMiddleware = RequiredParamMiddleware<
   NonEmptyString
 >(params => {
   const serviceId = params.serviceid;
-  if (isNonEmptyString(serviceId)) {
+  if (NonEmptyString.is(serviceId)) {
     return right(serviceId);
   } else {
     return left("Value of `serviceid` parameter must be a non empty string");

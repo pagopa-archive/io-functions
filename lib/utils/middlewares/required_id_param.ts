@@ -1,6 +1,6 @@
 import { left, right } from "fp-ts/lib/Either";
 
-import { isNonEmptyString, NonEmptyString } from "../strings";
+import { NonEmptyString } from "../strings";
 
 import { RequiredParamMiddleware } from "./required_param";
 
@@ -12,7 +12,7 @@ export const RequiredIdParamMiddleware = RequiredParamMiddleware<
   NonEmptyString
 >(params => {
   const idParam = params.id;
-  if (isNonEmptyString(idParam)) {
+  if (NonEmptyString.is(idParam)) {
     return right(idParam);
   } else {
     return left("The 'id' parameter is required and must be non-empty.");

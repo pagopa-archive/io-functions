@@ -5,57 +5,43 @@
 // tslint:disable:jsdoc-format
 // tslint:disable:interface-name
 // tslint:disable:no-any
+// tslint:disable:object-literal-sort-keys
 
-import { isServiceId, ServiceId } from "./ServiceId";
-import { isServiceName, ServiceName } from "./ServiceName";
-import { isOrganizationName, OrganizationName } from "./OrganizationName";
-import { isDepartmentName, DepartmentName } from "./DepartmentName";
-import { isCIDR, CIDR } from "./CIDR";
-import { isFiscalCode, FiscalCode } from "./FiscalCode";
+import { ServiceId } from "./ServiceId";
+import { ServiceName } from "./ServiceName";
+import { OrganizationName } from "./OrganizationName";
+import { DepartmentName } from "./DepartmentName";
+import { CIDR } from "./CIDR";
+import { FiscalCode } from "./FiscalCode";
 
 /**
  * A Service tied to an user's subscription.
  */
 
-import { fromNullable, Option } from "fp-ts/lib/Option";
+import * as t from "io-ts";
 
-export interface Service {
-  readonly service_id: ServiceId;
+// required attributes
+const ServiceR = t.interface({
+  service_id: ServiceId,
 
-  readonly service_name: ServiceName;
+  service_name: ServiceName,
 
-  readonly organization_name: OrganizationName;
+  organization_name: OrganizationName,
 
-  readonly department_name: DepartmentName;
+  department_name: DepartmentName,
 
-  readonly authorized_cidrs: ReadonlyArray<CIDR>;
+  authorized_cidrs: t.readonlyArray(CIDR),
 
-  readonly authorized_recipients: ReadonlyArray<FiscalCode>;
+  authorized_recipients: t.readonlyArray(FiscalCode)
+});
 
-  readonly version?: number;
+// optional attributes
+const ServiceO = t.partial({
+  version: t.number,
 
-  readonly id?: string;
-}
+  id: t.string
+});
 
-export function isService(arg: any): arg is Service {
-  return (
-    arg &&
-    isServiceId(arg.service_id) &&
-    isServiceName(arg.service_name) &&
-    isOrganizationName(arg.organization_name) &&
-    isDepartmentName(arg.department_name) &&
-    (Array.isArray(arg.authorized_cidrs) &&
-      arg.authorized_cidrs.every(isCIDR)) &&
-    (Array.isArray(arg.authorized_recipients) &&
-      arg.authorized_recipients.every(isFiscalCode)) &&
-    (arg.version === undefined ||
-      arg.version === null ||
-      typeof arg.version === "number") &&
-    (arg.id === undefined || arg.id === null || typeof arg.id === "string") &&
-    true
-  );
-}
+export const Service = t.intersection([ServiceR, ServiceO]);
 
-export function toService(arg: any): Option<Service> {
-  return fromNullable(arg).filter(isService);
-}
+export type Service = t.TypeOf<typeof Service>;
