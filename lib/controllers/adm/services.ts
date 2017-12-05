@@ -21,6 +21,8 @@ import { CIDR } from "../../api/definitions/CIDR";
 import { FiscalCode } from "../../api/definitions/FiscalCode";
 import { Service } from "../../api/definitions/Service";
 
+import * as t from "io-ts";
+
 import {
   AzureApiAuthMiddleware,
   IAzureApiAuthorization,
@@ -41,6 +43,7 @@ import {
   IResponseErrorQuery,
   IResponseErrorValidation,
   IResponseSuccessJson,
+  ResponseErrorFromValidationErrors,
   ResponseErrorInternal,
   ResponseErrorNotFound,
   ResponseErrorQuery,
@@ -66,7 +69,7 @@ type ICreateServiceHandler = (
   auth: IAzureApiAuthorization,
   clientIp: ClientIp,
   userAttributes: IAzureUserAttributes,
-  service: IService
+  service: Service
 ) => Promise<IResponseSuccessJson<Service> | IResponseErrorQuery>;
 
 type IGetServiceHandler = (
@@ -83,7 +86,7 @@ type IUpdateServiceHandler = (
   clientIp: ClientIp,
   userAttributes: IAzureUserAttributes,
   serviceId: NonEmptyString,
-  service: IService
+  service: Service
 ) => Promise<
   | IResponseSuccessJson<Service>
   | IResponseErrorValidation
@@ -95,9 +98,7 @@ type IUpdateServiceHandler = (
 /**
  * Converts a retrieved service to a service that can be shared via API
  */
-function retrievedServiceToPublic(
-  retrievedService: IRetrievedService
-): Service {
+function serviceToPayload(retrievedService: IRetrievedService): Service {
   return {
     authorized_cidrs: Array.from(retrievedService.authorizedCIDRs).filter(
       CIDR.is
@@ -115,47 +116,49 @@ function retrievedServiceToPublic(
 }
 
 /**
+ * Converts payload received from the API to a service that can be saved on database
+ */
+function payloadToService(service: Service): IService {
+  return {
+    authorizedCIDRs: toAuthorizedCIDRs(service.authorized_cidrs),
+    authorizedRecipients: toAuthorizedRecipients(service.authorized_recipients),
+    departmentName: service.department_name,
+    organizationName: service.organization_name,
+    serviceId: service.service_id,
+    serviceName: service.service_name
+  };
+}
+
+/**
  * A middleware that extracts a Service payload from a request.
  */
 export const ServicePayloadMiddleware: IRequestMiddleware<
   IResponseErrorValidation,
-  IService
+  Service
 > = request => {
-  const body = request.body;
-  if (!Service.is(body)) {
-    return Promise.resolve(
-      left<IResponseErrorValidation, IService>(
-        ResponseErrorValidation(
-          "Invalid service payload",
-          "Request body does not conform to the required service format"
-        )
-      )
+  return new Promise(resolve => {
+    const validation = t.validate(request.body, Service);
+    const result = validation.mapLeft(
+      ResponseErrorFromValidationErrors(Service)
     );
-  }
-  const servicePayload: IService = {
-    authorizedCIDRs: toAuthorizedCIDRs(body.authorized_cidrs),
-    authorizedRecipients: toAuthorizedRecipients(body.authorized_recipients),
-    departmentName: body.department_name,
-    organizationName: body.organization_name,
-    serviceId: body.service_id,
-    serviceName: body.service_name
-  };
-  return Promise.resolve(
-    right<IResponseErrorValidation, IService>(servicePayload)
-  );
+    resolve(result);
+  });
 };
 
 export function UpdateServiceHandler(
   serviceModel: ServiceModel
 ): IUpdateServiceHandler {
   return async (_, __, ___, serviceId, serviceModelPayload) => {
-    if (serviceModelPayload.serviceId !== serviceId) {
+    if (serviceModelPayload.service_id !== serviceId) {
       return ResponseErrorValidation(
         "Error validating payload",
         "Value of `service_id` in the request body must match " +
           "the value of `service_id` path parameter"
       );
     }
+
+    const updateService = payloadToService(serviceModelPayload);
+
     const errorOrMaybeService = await serviceModel.findOneByServiceId(
       serviceId
     );
@@ -182,7 +185,7 @@ export function UpdateServiceHandler(
       currentService => {
         const updatedService = {
           ...currentService,
-          ...serviceModelPayload,
+          ...updateService,
           serviceId
         };
         return updatedService;
@@ -200,9 +203,7 @@ export function UpdateServiceHandler(
       return ResponseErrorInternal("Error while updating the existing service");
     }
 
-    return ResponseSuccessJson(
-      retrievedServiceToPublic(maybeUpdatedService.value)
-    );
+    return ResponseSuccessJson(serviceToPayload(maybeUpdatedService.value));
   };
 }
 
@@ -224,14 +225,13 @@ export function CreateServiceHandler(
   serviceModel: ServiceModel
 ): ICreateServiceHandler {
   return async (_, __, ___, serviceModelPayload) => {
+    const createService = payloadToService(serviceModelPayload);
     const errorOrService = await serviceModel.create(
-      serviceModelPayload,
-      serviceModelPayload.serviceId
+      createService,
+      createService.serviceId
     );
     if (isRight(errorOrService)) {
-      return ResponseSuccessJson(
-        retrievedServiceToPublic(errorOrService.value)
-      );
+      return ResponseSuccessJson(serviceToPayload(errorOrService.value));
     } else {
       return ResponseErrorQuery("Error", errorOrService.value);
     }
@@ -253,9 +253,7 @@ export function GetServiceHandler(
           "The service you requested was not found in the system."
         );
       } else {
-        return ResponseSuccessJson(
-          retrievedServiceToPublic(maybeService.value)
-        );
+        return ResponseSuccessJson(serviceToPayload(maybeService.value));
       }
     } else {
       return ResponseErrorQuery(
