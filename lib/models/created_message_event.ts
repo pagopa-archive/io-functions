@@ -1,44 +1,32 @@
-import is from "ts-is";
-
-import { NewMessageDefaultAddresses } from "../api/definitions/NewMessageDefaultAddresses";
-
-import {
-  IMessageContent,
-  INewMessageWithoutContent,
-  isIMessageContent,
-  isINewMessageWithoutContent
-} from "./message";
-
-import {
-  ICreatedMessageEventSenderMetadata,
-  isICreatedMessageEventSenderMetadata
-} from "./created_message_sender_metadata";
-
 /**
  * Payload of a created message event.
  *
  * This event gets triggered on new message creation by the
  * Messages API.
  */
-export interface ICreatedMessageEvent {
-  // the optional message, it will be defined only if the message was saved
-  readonly message: INewMessageWithoutContent;
-  readonly messageContent: IMessageContent;
-  readonly defaultAddresses?: NewMessageDefaultAddresses;
-  readonly senderMetadata: ICreatedMessageEventSenderMetadata;
-}
 
-/**
- * Type guard for ICreatedMessageEvent objects
- */
-export const isICreatedMessageEvent = is<ICreatedMessageEvent>(
-  arg =>
-    arg.message &&
-    isINewMessageWithoutContent(arg.message) &&
-    arg.messageContent &&
-    isIMessageContent(arg.messageContent) &&
-    arg.senderMetadata &&
-    isICreatedMessageEventSenderMetadata(arg.senderMetadata) &&
-    (!arg.defaultAddresses ||
-      NewMessageDefaultAddresses.is(arg.defaultAddresses))
+import * as t from "io-ts";
+
+import { MessageContent } from "../api/definitions/MessageContent";
+import { NewMessageDefaultAddresses } from "../api/definitions/NewMessageDefaultAddresses";
+
+import { NewMessageWithoutContent } from "./message";
+
+import { CreatedMessageEventSenderMetadata } from "./created_message_sender_metadata";
+
+const CreatedMessageEventR = t.interface({
+  message: NewMessageWithoutContent,
+  messageContent: MessageContent,
+  senderMetadata: CreatedMessageEventSenderMetadata
+});
+
+const CreatedMessageEventO = t.partial({
+  defaultAddresses: NewMessageDefaultAddresses
+});
+
+export const CreatedMessageEvent = t.intersection(
+  [CreatedMessageEventR, CreatedMessageEventO],
+  "CreatedMessageEvent"
 );
+
+export type CreatedMessageEvent = t.TypeOf<typeof CreatedMessageEvent>;

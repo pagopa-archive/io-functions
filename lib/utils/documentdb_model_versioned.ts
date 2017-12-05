@@ -4,16 +4,12 @@ import { DocumentDbModel } from "./documentdb_model";
 
 import * as t from "io-ts";
 
-import {
-  fromNullable,
-  isNone,
-  none,
-  Option,
-  some,
-  Some
-} from "fp-ts/lib/Option";
+import { isNone, none, Option, some, Some } from "fp-ts/lib/Option";
+
+import { tag } from "./types";
 
 import { NonNegativeNumber } from "./numbers";
+import { NonEmptyString } from "./strings";
 
 import { Either, isLeft, right } from "fp-ts/lib/Either";
 
@@ -21,26 +17,18 @@ interface IModelIdTag {
   readonly kind: "IModelIdTag";
 }
 
-export type ModelId = string & IModelIdTag;
+export const ModelId = tag<IModelIdTag>()(t.string);
 
-/**
- * Type guard for numbers that are non-negative.
- */
-export function isModelId(s: string): s is ModelId {
-  return typeof s === "string" && s.length > 0;
-}
-
-// tslint:disable-next-line:no-any
-export function toModelId(s: any): Option<ModelId> {
-  return fromNullable(s).filter(isModelId);
-}
+export type ModelId = t.TypeOf<typeof ModelId>;
 
 /**
  * A VersionedModel should track the version of the model
  */
-export interface IVersionedModel {
-  readonly version: NonNegativeNumber;
-}
+export const VersionedModel = t.interface({
+  version: NonNegativeNumber
+});
+
+export type VersionedModel = t.TypeOf<typeof VersionedModel>;
 
 /**
  * Returns a string with a composite id that has the format:
@@ -55,24 +43,24 @@ export interface IVersionedModel {
 export function generateVersionedModelId(
   modelId: ModelId,
   version: NonNegativeNumber
-): string {
+): NonEmptyString {
   const paddingLength = 16; // length of Number.MAX_SAFE_INTEGER == 9007199254740991
   const paddedVersion = ("0".repeat(paddingLength) + version).slice(
     -paddingLength
   );
-  return `${modelId}-${paddedVersion}`;
+  return `${modelId}-${paddedVersion}` as NonEmptyString;
 }
 
 export abstract class DocumentDbModelVersioned<
   T,
-  TN extends T & DocumentDb.NewDocument & IVersionedModel,
-  TR extends T & DocumentDb.RetrievedDocument & IVersionedModel
+  TN extends T & DocumentDb.NewDocument & VersionedModel,
+  TR extends T & DocumentDb.RetrievedDocument & VersionedModel
 > extends DocumentDbModel<T, TN, TR> {
   protected getModelId: (o: T) => ModelId;
 
   protected versionateModel: (
     o: T,
-    id: string,
+    id: NonEmptyString,
     version: NonNegativeNumber
   ) => TN;
 

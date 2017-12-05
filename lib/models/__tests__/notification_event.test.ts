@@ -9,11 +9,11 @@ import { NonEmptyString } from "../../utils/strings";
 
 import { MessageBodyMarkdown } from "../../api/definitions/MessageBodyMarkdown";
 
-import { isNotificationEvent } from "../notification_event";
+import { NotificationEvent } from "../notification_event";
 
-import { IMessageContent } from "../message";
+import { MessageContent } from "../../api/definitions/MessageContent";
 
-import { ICreatedMessageEventSenderMetadata } from "../created_message_sender_metadata";
+import { CreatedMessageEventSenderMetadata } from "../created_message_sender_metadata";
 
 // DANGEROUS, only use in tests
 function _getO<T>(o: Option<T>): T {
@@ -29,11 +29,11 @@ const aMessageBodyMarkdown = _getO(
   t.validate("test".repeat(80), MessageBodyMarkdown).toOption()
 );
 
-const aMessageContent: IMessageContent = {
-  bodyMarkdown: aMessageBodyMarkdown
+const aMessageContent: MessageContent = {
+  markdown: aMessageBodyMarkdown
 };
 
-const aSenderMetadata: ICreatedMessageEventSenderMetadata = {
+const aSenderMetadata: CreatedMessageEventSenderMetadata = {
   departmentName: _getO(t.validate("IT", NonEmptyString).toOption()),
   organizationName: _getO(t.validate("AgID", NonEmptyString).toOption()),
   serviceName: _getO(t.validate("Test", NonEmptyString).toOption())
@@ -50,7 +50,7 @@ describe("isNotificationEvent", () => {
       }
     ];
 
-    fixtures.forEach(f => expect(isNotificationEvent(f)).toBeTruthy());
+    fixtures.forEach(f => expect(NotificationEvent.is(f)).toBeTruthy());
   });
 
   it("should return false for invalid payloads", () => {
@@ -80,6 +80,6 @@ describe("isNotificationEvent", () => {
       }
     ];
 
-    fixtures.forEach(f => expect(isNotificationEvent(f)).toBeFalsy());
+    fixtures.forEach(f => expect(NotificationEvent.is(f)).toBeFalsy());
   });
 });

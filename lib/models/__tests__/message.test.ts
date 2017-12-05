@@ -11,16 +11,16 @@ import * as DocumentDbUtils from "../../utils/documentdb";
 
 import { FiscalCode } from "../../api/definitions/FiscalCode";
 import { MessageBodyMarkdown } from "../../api/definitions/MessageBodyMarkdown";
+import { MessageContent } from "../../api/definitions/MessageContent";
 
 import { NonEmptyString } from "../../utils/strings";
 
 import { fromNullable, Option, Some } from "fp-ts/lib/Option";
 
 import {
-  IMessageContent,
-  INewMessageWithContent,
-  IRetrievedMessageWithContent,
-  MessageModel
+  MessageModel,
+  NewMessageWithContent,
+  RetrievedMessageWithContent
 } from "../message";
 
 import { ModelId } from "../../utils/documentdb_model_versioned";
@@ -45,15 +45,15 @@ const aMessageBodyMarkdown = _getO(
   t.validate("test".repeat(80), MessageBodyMarkdown).toOption()
 );
 
-const aMessageContent: IMessageContent = {
-  bodyMarkdown: aMessageBodyMarkdown
+const aMessageContent: MessageContent = {
+  markdown: aMessageBodyMarkdown
 };
 
 const aFiscalCode = _getO(
   t.validate("FRLFRC74E04B157I", FiscalCode).toOption()
 );
 
-const aNewMessageWithContent: INewMessageWithContent = {
+const aNewMessageWithContent: NewMessageWithContent = {
   content: aMessageContent,
   fiscalCode: aFiscalCode,
   id: _getO(t.validate("A_MESSAGE_ID", NonEmptyString).toOption()),
@@ -62,7 +62,7 @@ const aNewMessageWithContent: INewMessageWithContent = {
   senderUserId: _getO(t.validate("u123", NonEmptyString).toOption())
 };
 
-const aRetrievedMessageWithContent: IRetrievedMessageWithContent = {
+const aRetrievedMessageWithContent: RetrievedMessageWithContent = {
   ...aNewMessageWithContent,
   _self: "xyz",
   _ts: "xyz",

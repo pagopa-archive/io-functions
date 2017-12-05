@@ -37,12 +37,12 @@ import {
 import * as winston from "winston";
 import { MessageBodyMarkdown } from "../api/definitions/MessageBodyMarkdown";
 import { MessageSubject } from "../api/definitions/MessageSubject";
-import { ICreatedMessageEventSenderMetadata } from "../models/created_message_sender_metadata";
+import { CreatedMessageEventSenderMetadata } from "../models/created_message_sender_metadata";
 import {
-  INotification,
-  NotificationAddressSource
+  Notification,
+  NotificationAddressSourceEnum
 } from "../models/notification";
-import { INotificationEvent } from "../models/notification_event";
+import { NotificationEvent } from "../models/notification_event";
 
 // DANGEROUS, only use in tests
 function _getO<T>(o: Option<T>): T {
@@ -53,9 +53,9 @@ const aFiscalCode = _getO(
   t.validate("FRLFRC74E04B157I", FiscalCode).toOption()
 );
 
-const aNotification: INotification = {
+const aNotification: Notification = {
   emailNotification: {
-    addressSource: NotificationAddressSource.DEFAULT_ADDRESS,
+    addressSource: NotificationAddressSourceEnum.DEFAULT_ADDRESS,
     status: NotificationChannelStatusEnum.QUEUED,
     toAddress: _getO(t.validate("pinco@pallino.com", EmailString).toOption())
   },
@@ -63,7 +63,7 @@ const aNotification: INotification = {
   messageId: _getO(t.validate("A_MESSAGE_ID", NonEmptyString).toOption())
 };
 
-const aSenderMetadata: ICreatedMessageEventSenderMetadata = {
+const aSenderMetadata: CreatedMessageEventSenderMetadata = {
   departmentName: _getO(t.validate("IT", NonEmptyString).toOption()),
   organizationName: _getO(t.validate("agid", NonEmptyString).toOption()),
   serviceName: _getO(t.validate("Test", NonEmptyString).toOption())
@@ -175,7 +175,7 @@ describe("handleNotification", () => {
     const mockTransporter = NodeMailer.createTransport(mockTransport);
 
     const aMessageContent = {
-      bodyMarkdown: "# Hello world!"
+      markdown: "# Hello world!"
     };
 
     const notificationModelMock = {
@@ -218,7 +218,7 @@ describe("handleNotification", () => {
     expect(mockAppinsights.trackEvent).toHaveBeenCalledWith({
       name: "notification.email.delivery",
       properties: {
-        addressSource: NotificationAddressSource.DEFAULT_ADDRESS,
+        addressSource: NotificationAddressSourceEnum.DEFAULT_ADDRESS,
         messageId: "A_MESSAGE_ID",
         notificationId: "A_NOTIFICATION_ID",
         success: "true",
@@ -253,7 +253,7 @@ describe("handleNotification", () => {
     const mockTransporter = NodeMailer.createTransport(mockTransport);
 
     const aMessageContent = {
-      bodyMarkdown: `
+      markdown: `
 # Hello world!
 
 This is a *message* from the future!
@@ -301,7 +301,7 @@ This is a message from the future!`.replace(/[ \n]+/g, "|")
     const mockTransporter = NodeMailer.createTransport(mockTransport);
 
     const aMessageContent = {
-      bodyMarkdown: "# Hello world!"
+      markdown: "# Hello world!"
     };
 
     const notificationModelMock = {
@@ -336,7 +336,7 @@ This is a message from the future!`.replace(/[ \n]+/g, "|")
     const mockTransporter = NodeMailer.createTransport(mockTransport);
 
     const aMessageContent = {
-      bodyMarkdown: "# Hello world!",
+      markdown: "# Hello world!",
       subject: "A custom subject"
     };
 
@@ -372,7 +372,7 @@ This is a message from the future!`.replace(/[ \n]+/g, "|")
     const mockTransporter = NodeMailer.createTransport(mockTransport as any);
 
     const aMessageContent = {
-      bodyMarkdown: "# Hello world!"
+      markdown: "# Hello world!"
     };
 
     const notificationModelMock = {
@@ -393,7 +393,7 @@ This is a message from the future!`.replace(/[ \n]+/g, "|")
     expect(mockAppinsights.trackEvent).toHaveBeenCalledWith({
       name: "notification.email.delivery",
       properties: {
-        addressSource: NotificationAddressSource.DEFAULT_ADDRESS,
+        addressSource: NotificationAddressSourceEnum.DEFAULT_ADDRESS,
         messageId: "A_MESSAGE_ID",
         notificationId: "A_NOTIFICATION_ID",
         success: "false",
@@ -416,7 +416,7 @@ This is a message from the future!`.replace(/[ \n]+/g, "|")
     const mockTransporter = NodeMailer.createTransport(mockTransport);
 
     const aMessageContent = {
-      bodyMarkdown: "# Hello world!"
+      markdown: "# Hello world!"
     };
 
     const notificationModelMock = {
@@ -506,9 +506,9 @@ describe("test processReject function", () => {
       done: jest.fn()
     };
 
-    const emailNotificationMock: INotificationEvent = {
+    const emailNotificationMock: NotificationEvent = {
       messageContent: {
-        bodyMarkdown: _getO(
+        markdown: _getO(
           t.validate("test".repeat(80), MessageBodyMarkdown).toOption()
         )
       },
@@ -557,7 +557,7 @@ Lorem ipsum
 3.  Parish
 `;
     const body = _getO(t.validate(markdown, MessageBodyMarkdown).toOption());
-    const metadata: ICreatedMessageEventSenderMetadata = {
+    const metadata: CreatedMessageEventSenderMetadata = {
       departmentName: _getO(
         t.validate("departmentXXX", NonEmptyString).toOption()
       ),

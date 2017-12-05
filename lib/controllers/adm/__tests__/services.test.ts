@@ -18,13 +18,14 @@ import {
 } from "../../../utils/middlewares/azure_api_auth";
 
 import {
-  IRetrievedService,
-  IService,
+  NewService,
+  RetrievedService,
+  Service,
   toAuthorizedCIDRs,
   toAuthorizedRecipients
 } from "../../../models/service";
 
-import { Service } from "../../../api/definitions/Service";
+import { Service as ApiService } from "../../../api/definitions/Service";
 
 import {
   CreateService,
@@ -48,7 +49,16 @@ const anAzureAuthorization: IAzureApiAuthorization = {
   userId: _getO(t.validate("u123", NonEmptyString).toOption())
 };
 
-const aServicePayload: IService = {
+const aServicePayload: ApiService = {
+  authorized_cidrs: [],
+  authorized_recipients: [],
+  department_name: _getO(t.validate("MyDeptName", NonEmptyString).toOption()),
+  organization_name: _getO(t.validate("MyOrgName", NonEmptyString).toOption()),
+  service_id: _getO(t.validate("MySubscriptionId", NonEmptyString).toOption()),
+  service_name: _getO(t.validate("MyServiceName", NonEmptyString).toOption())
+};
+
+const aService: Service = {
   authorizedCIDRs: toAuthorizedCIDRs([]),
   authorizedRecipients: toAuthorizedRecipients([]),
   departmentName: _getO(t.validate("MyDeptName", NonEmptyString).toOption()),
@@ -57,28 +67,23 @@ const aServicePayload: IService = {
   serviceName: _getO(t.validate("MyServiceName", NonEmptyString).toOption())
 };
 
-const aRetrievedService: IRetrievedService = {
-  _self: "123",
-  _ts: "123",
-  authorizedCIDRs: toAuthorizedCIDRs([]),
-  authorizedRecipients: toAuthorizedRecipients([]),
-  departmentName: _getO(t.validate("MyDeptName", NonEmptyString).toOption()),
+const aNewService: NewService = {
+  ...aService,
   id: _getO(t.validate("123", NonEmptyString).toOption()),
-  kind: "IRetrievedService",
-  organizationName: _getO(t.validate("MyOrgName", NonEmptyString).toOption()),
-  serviceId: _getO(t.validate("MySubscriptionId", NonEmptyString).toOption()),
-  serviceName: _getO(t.validate("MyServiceName", NonEmptyString).toOption()),
+  kind: "INewService",
   version: _getO(t.validate(1, NonNegativeNumber).toOption())
 };
 
-const aSeralizedService: Service = {
-  authorized_cidrs: [],
-  authorized_recipients: [],
-  department_name: _getO(t.validate("MyDeptName", NonEmptyString).toOption()),
+const aRetrievedService: RetrievedService = {
+  ...aNewService,
+  _self: "123",
+  _ts: "123",
+  kind: "IRetrievedService"
+};
+
+const aSeralizedService: ApiService = {
+  ...aServicePayload,
   id: _getO(t.validate("123", NonEmptyString).toOption()),
-  organization_name: _getO(t.validate("MyOrgName", NonEmptyString).toOption()),
-  service_id: _getO(t.validate("MySubscriptionId", NonEmptyString).toOption()),
-  service_name: _getO(t.validate("MyServiceName", NonEmptyString).toOption()),
   version: _getO(t.validate(1, NonNegativeNumber).toOption())
 };
 
@@ -178,8 +183,8 @@ describe("CreateServiceHandler", () => {
     );
 
     expect(serviceModelMock.create).toHaveBeenCalledWith(
-      aServicePayload,
-      aServicePayload.serviceId
+      aService,
+      aServicePayload.service_id
     );
     expect(response.kind).toBe("IResponseSuccessJson");
     if (response.kind === "IResponseSuccessJson") {
@@ -200,8 +205,8 @@ describe("CreateServiceHandler", () => {
       aServicePayload
     );
     expect(serviceModelMock.create).toHaveBeenCalledWith(
-      aServicePayload,
-      aServicePayload.serviceId
+      aService,
+      aServicePayload.service_id
     );
     expect(response.kind).toBe("IResponseErrorQuery");
   });
@@ -238,10 +243,10 @@ describe("UpdateServiceHandler", () => {
       anAzureAuthorization,
       undefined as any, // not used
       undefined as any, // not used
-      aServicePayload.serviceId,
+      aServicePayload.service_id,
       {
         ...aServicePayload,
-        departmentName: _getO(
+        department_name: _getO(
           t.validate(aDepartmentName, NonEmptyString).toOption()
         )
       }
@@ -266,11 +271,13 @@ describe("UpdateServiceHandler", () => {
       anAzureAuthorization,
       undefined as any, // not used
       undefined as any, // not used
-      aServicePayload.serviceId,
+      aServicePayload.service_id,
       {
         ...aServicePayload,
-        serviceId: _getO(
-          t.validate(aServicePayload.serviceId + "x", NonEmptyString).toOption()
+        service_id: _getO(
+          t
+            .validate(aServicePayload.service_id + "x", NonEmptyString)
+            .toOption()
         )
       }
     );
@@ -287,7 +294,7 @@ describe("UpdateServiceHandler", () => {
       anAzureAuthorization,
       undefined as any, // not used
       undefined as any, // not used
-      aServicePayload.serviceId,
+      aServicePayload.service_id,
       aServicePayload
     );
     expect(serviceModelMock.findOneByServiceId).toHaveBeenCalledWith(
@@ -306,7 +313,7 @@ describe("UpdateServiceHandler", () => {
       anAzureAuthorization,
       undefined as any, // not used
       undefined as any, // not used
-      aServicePayload.serviceId,
+      aServicePayload.service_id,
       aServicePayload
     );
     expect(serviceModelMock.findOneByServiceId).toHaveBeenCalledWith(
@@ -328,7 +335,7 @@ describe("UpdateServiceHandler", () => {
       anAzureAuthorization,
       undefined as any, // not used
       undefined as any, // not used
-      aServicePayload.serviceId,
+      aServicePayload.service_id,
       aServicePayload
     );
     expect(serviceModelMock.findOneByServiceId).toHaveBeenCalledWith(
@@ -355,7 +362,7 @@ describe("UpdateServiceHandler", () => {
       anAzureAuthorization,
       undefined as any, // not used
       undefined as any, // not used
-      aServicePayload.serviceId,
+      aServicePayload.service_id,
       aServicePayload
     );
     expect(serviceModelMock.findOneByServiceId).toHaveBeenCalledWith(
@@ -384,16 +391,8 @@ describe("UpdateService", () => {
 
 describe("ServicePayloadMiddleware", () => {
   it("should extract the service payload from request", async () => {
-    const aRequestBody = {
-      authorized_cidrs: Array.from(aServicePayload.authorizedCIDRs),
-      authorized_recipients: Array.from(aServicePayload.authorizedRecipients),
-      department_name: aServicePayload.departmentName,
-      organization_name: aServicePayload.organizationName,
-      service_id: aServicePayload.serviceId,
-      service_name: aServicePayload.serviceName
-    };
     const errorOrServicePayload = await ServicePayloadMiddleware({
-      body: aRequestBody
+      body: aServicePayload
     } as any);
     expect(isRight(errorOrServicePayload)).toBeTruthy();
     expect(errorOrServicePayload.value).toEqual(aServicePayload);

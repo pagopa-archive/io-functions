@@ -6,7 +6,7 @@ import { right } from "fp-ts/lib/Either";
 import { none, Option, some, Some } from "fp-ts/lib/Option";
 import { EmailString, NonEmptyString } from "../../utils/strings";
 
-import { IRetrievedProfile } from "../../models/profile";
+import { RetrievedProfile } from "../../models/profile";
 import {
   IAzureApiAuthorization,
   UserGroup
@@ -39,7 +39,7 @@ const aProfilePayloadMock = {
   email: "x@example.com"
 };
 
-const aRetrievedProfile: IRetrievedProfile = {
+const aRetrievedProfile: RetrievedProfile = {
   _self: "123",
   _ts: "123",
   email: _getO(t.validate("x@example.com", EmailString).toOption()),

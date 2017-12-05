@@ -12,8 +12,8 @@ import { NonNegativeNumber } from "../../utils/numbers";
 import { NonEmptyString } from "../../utils/strings";
 
 import {
-  IRetrievedService,
-  IService,
+  RetrievedService,
+  Service,
   ServiceModel,
   toAuthorizedCIDRs,
   toAuthorizedRecipients
@@ -32,7 +32,7 @@ const servicesCollectionUrl = DocumentDbUtils.getCollectionUri(
 
 const aServiceId = "xyz";
 
-const aRetrievedService: IRetrievedService = {
+const aRetrievedService: RetrievedService = {
   _self: "xyz",
   _ts: "xyz",
   authorizedCIDRs: toAuthorizedCIDRs([]),
@@ -107,14 +107,16 @@ describe("createService", () => {
     const clientMock: any = {
       createDocument: jest.fn((_, newDocument, __, cb) => {
         cb(undefined, {
-          ...newDocument
+          ...newDocument,
+          _self: "self",
+          _ts: "123"
         });
       })
     };
 
     const model = new ServiceModel(clientMock, servicesCollectionUrl);
 
-    const newService: IService = {
+    const newService: Service = {
       authorizedCIDRs: toAuthorizedCIDRs([]),
       authorizedRecipients: toAuthorizedRecipients([]),
       departmentName: _getO(t.validate("MyService", NonEmptyString).toOption()),
@@ -150,7 +152,7 @@ describe("createService", () => {
 
     const model = new ServiceModel(clientMock, servicesCollectionUrl);
 
-    const newService: IService = {
+    const newService: Service = {
       authorizedCIDRs: toAuthorizedCIDRs([]),
       authorizedRecipients: toAuthorizedRecipients([]),
       departmentName: _getO(t.validate("MyService", NonEmptyString).toOption()),
@@ -177,7 +179,9 @@ describe("update", () => {
     const clientMock: any = {
       createDocument: jest.fn((_, newDocument, __, cb) => {
         cb(undefined, {
-          ...newDocument
+          ...newDocument,
+          _self: "self",
+          _ts: "123"
         });
       }),
       readDocument: jest.fn((_, __, cb) => cb(undefined, aRetrievedService))

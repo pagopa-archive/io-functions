@@ -15,11 +15,11 @@ import { NotificationChannelStatusEnum } from "../../api/definitions/Notificatio
 import { EmailString, NonEmptyString } from "../../utils/strings";
 
 import {
-  INewNotification,
-  INotificationChannelEmail,
-  IRetrievedNotification,
-  NotificationAddressSource,
-  NotificationModel
+  NewNotification,
+  NotificationAddressSourceEnum,
+  NotificationChannelEmail,
+  NotificationModel,
+  RetrievedNotification
 } from "../notification";
 
 // DANGEROUS, only use in tests
@@ -37,14 +37,14 @@ const aFiscalCode = _getO(
   t.validate("FRLFRC74E04B157I", FiscalCode).toOption()
 );
 
-const aNewNotification: INewNotification = {
+const aNewNotification: NewNotification = {
   fiscalCode: aFiscalCode,
   id: _getO(t.validate("A_NOTIFICATION_ID", NonEmptyString).toOption()),
   kind: "INewNotification",
   messageId: _getO(t.validate("A_MESSAGE_ID", NonEmptyString).toOption())
 };
 
-const aRetrievedNotification: IRetrievedNotification = {
+const aRetrievedNotification: RetrievedNotification = {
   ...aNewNotification,
   _self: "xyz",
   _ts: "xyz",
@@ -164,8 +164,8 @@ describe("find", () => {
 });
 
 describe("update", () => {
-  const anEmailNotification: INotificationChannelEmail = {
-    addressSource: NotificationAddressSource.DEFAULT_ADDRESS,
+  const anEmailNotification: NotificationChannelEmail = {
+    addressSource: NotificationAddressSourceEnum.DEFAULT_ADDRESS,
     status: NotificationChannelStatusEnum.SENT_TO_CHANNEL,
     toAddress: _getO(t.validate("to@example.com", EmailString).toOption())
   };

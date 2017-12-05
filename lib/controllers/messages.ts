@@ -1,7 +1,6 @@
-import { RequiredParamMiddleware } from "../utils/middlewares/required_param";
 /*
- * Implements the API handlers for the Message resource.
- */
+* Implements the API handlers for the Message resource.
+*/
 
 import { isNone } from "fp-ts/lib/Option";
 import * as t from "io-ts";
@@ -22,8 +21,11 @@ import { isLeft } from "fp-ts/lib/Either";
 
 import { CreatedMessage } from "../api/definitions/CreatedMessage";
 import { FiscalCode } from "../api/definitions/FiscalCode";
+import { MessageContent } from "../api/definitions/MessageContent";
 import { MessageResponse } from "../api/definitions/MessageResponse";
-import { NewMessage } from "../api/definitions/NewMessage";
+import { NewMessage as ApiNewMessage } from "../api/definitions/NewMessage";
+
+import { RequiredParamMiddleware } from "../utils/middlewares/required_param";
 
 import {
   AzureApiAuthMiddleware,
@@ -76,17 +78,16 @@ import {
 
 import { mapResultIterator } from "../utils/documentdb";
 
-import { ICreatedMessageEvent } from "../models/created_message_event";
+import { CreatedMessageEvent } from "../models/created_message_event";
 
 import { NotificationModel } from "../models/notification";
 import { ServiceModel } from "../models/service";
 
 import {
-  IMessage,
-  IMessageContent,
-  INewMessageWithoutContent,
-  IRetrievedMessage,
-  MessageModel
+  Message,
+  MessageModel,
+  NewMessageWithoutContent,
+  RetrievedMessage
 } from "../models/message";
 
 /**
@@ -95,7 +96,7 @@ import {
  */
 interface IBindings {
   // tslint:disable-next-line:readonly-keyword
-  createdMessage?: ICreatedMessageEvent;
+  createdMessage?: CreatedMessageEvent;
 }
 
 /**
@@ -103,12 +104,12 @@ interface IBindings {
  */
 export const MessagePayloadMiddleware: IRequestMiddleware<
   IResponseErrorValidation,
-  NewMessage
+  ApiNewMessage
 > = request =>
   new Promise(resolve => {
-    const validation = t.validate(request.body, NewMessage);
+    const validation = t.validate(request.body, ApiNewMessage);
     const result = validation.mapLeft(
-      ResponseErrorFromValidationErrors(NewMessage)
+      ResponseErrorFromValidationErrors(ApiNewMessage)
     );
     resolve(result);
   });
@@ -117,7 +118,7 @@ export const MessagePayloadMiddleware: IRequestMiddleware<
  * Converts a retrieved message to a message that can be shared via API
  */
 function retrievedMessageToPublic(
-  retrievedMessage: IRetrievedMessage
+  retrievedMessage: RetrievedMessage
 ): CreatedMessage {
   return {
     fiscal_code: retrievedMessage.fiscalCode,
@@ -140,9 +141,9 @@ type ICreateMessageHandler = (
   clientIp: ClientIp,
   attrs: IAzureUserAttributes,
   fiscalCode: FiscalCode,
-  messagePayload: NewMessage
+  messagePayload: ApiNewMessage
 ) => Promise<
-  | IResponseSuccessRedirectToResource<IMessage, {}>
+  | IResponseSuccessRedirectToResource<Message, {}>
   | IResponseErrorQuery
   | IResponseErrorValidation
   | IResponseErrorForbiddenNotAuthorized
@@ -252,7 +253,7 @@ export function CreateMessageHandler(
     // create a new message from the payload
     // this object contains only the message metadata, the content of the
     // message is handled separately (see below)
-    const newMessageWithoutContent: INewMessageWithoutContent = {
+    const newMessageWithoutContent: NewMessageWithoutContent = {
       fiscalCode,
       id: generateObjectId(),
       kind: "INewMessageWithoutContent",
@@ -305,13 +306,13 @@ export function CreateMessageHandler(
     // emit created message event to the output queue
     //
 
-    const messageContent: IMessageContent = {
-      bodyMarkdown: messagePayload.content.markdown,
+    const messageContent: MessageContent = {
+      markdown: messagePayload.content.markdown,
       subject: messagePayload.content.subject
     };
 
     // prepare the created message event
-    const createdMessageEvent: ICreatedMessageEvent = {
+    const createdMessageEvent: CreatedMessageEvent = {
       defaultAddresses: messagePayload.default_addresses,
       message: newMessageWithoutContent,
       messageContent,

@@ -12,8 +12,8 @@ import {
 } from "../../utils/middlewares/client_ip_middleware";
 
 import {
-  IRetrievedService,
-  IService,
+  RetrievedService,
+  Service,
   ServiceModel,
   toAuthorizedCIDRs,
   toAuthorizedRecipients
@@ -21,7 +21,7 @@ import {
 
 import { CIDR } from "../../api/definitions/CIDR";
 import { FiscalCode } from "../../api/definitions/FiscalCode";
-import { Service } from "../../api/definitions/Service";
+import { Service as ApiService } from "../../api/definitions/Service";
 
 import {
   AzureApiAuthMiddleware,
@@ -69,8 +69,8 @@ type ICreateServiceHandler = (
   auth: IAzureApiAuthorization,
   clientIp: ClientIp,
   userAttributes: IAzureUserAttributes,
-  service: IService
-) => Promise<IResponseSuccessJson<Service> | IResponseErrorQuery>;
+  service: ApiService
+) => Promise<IResponseSuccessJson<ApiService> | IResponseErrorQuery>;
 
 type IGetServiceHandler = (
   auth: IAzureApiAuthorization,
@@ -78,7 +78,9 @@ type IGetServiceHandler = (
   userAttributes: IAzureUserAttributes,
   serviceId: NonEmptyString
 ) => Promise<
-  IResponseSuccessJson<Service> | IResponseErrorNotFound | IResponseErrorQuery
+  | IResponseSuccessJson<ApiService>
+  | IResponseErrorNotFound
+  | IResponseErrorQuery
 >;
 
 type IUpdateServiceHandler = (
@@ -86,9 +88,9 @@ type IUpdateServiceHandler = (
   clientIp: ClientIp,
   userAttributes: IAzureUserAttributes,
   serviceId: NonEmptyString,
-  service: IService
+  service: ApiService
 ) => Promise<
-  | IResponseSuccessJson<Service>
+  | IResponseSuccessJson<ApiService>
   | IResponseErrorValidation
   | IResponseErrorQuery
   | IResponseErrorInternal
@@ -99,8 +101,8 @@ type IUpdateServiceHandler = (
  * Converts a retrieved service to a service that can be shared via API
  */
 function retrievedServiceToPublic(
-  retrievedService: IRetrievedService
-): Service {
+  retrievedService: RetrievedService
+): ApiService {
   return {
     authorized_cidrs: Array.from(retrievedService.authorizedCIDRs).filter(
       CIDR.is
@@ -117,7 +119,10 @@ function retrievedServiceToPublic(
   };
 }
 
-function servicePayloadToIService(service: Service): IService {
+/**
+ * Converts an API Service to an internal Service model
+ */
+function servicePayloadToService(service: ApiService): Service {
   return {
     authorizedCIDRs: toAuthorizedCIDRs(service.authorized_cidrs),
     authorizedRecipients: toAuthorizedRecipients(service.authorized_recipients),
@@ -133,13 +138,13 @@ function servicePayloadToIService(service: Service): IService {
  */
 export const ServicePayloadMiddleware: IRequestMiddleware<
   IResponseErrorValidation,
-  IService
+  ApiService
 > = request =>
   new Promise(resolve => {
-    const validation = t.validate(request.body, Service);
-    const result = validation
-      .mapLeft(ResponseErrorFromValidationErrors(Service))
-      .map(servicePayloadToIService);
+    const validation = t.validate(request.body, ApiService);
+    const result = validation.mapLeft(
+      ResponseErrorFromValidationErrors(ApiService)
+    );
     resolve(result);
   });
 
@@ -147,7 +152,7 @@ export function UpdateServiceHandler(
   serviceModel: ServiceModel
 ): IUpdateServiceHandler {
   return async (_, __, ___, serviceId, serviceModelPayload) => {
-    if (serviceModelPayload.serviceId !== serviceId) {
+    if (serviceModelPayload.service_id !== serviceId) {
       return ResponseErrorValidation(
         "Error validating payload",
         "Value of `service_id` in the request body must match " +
@@ -180,7 +185,7 @@ export function UpdateServiceHandler(
       currentService => {
         const updatedService = {
           ...currentService,
-          ...serviceModelPayload,
+          ...servicePayloadToService(serviceModelPayload),
           serviceId
         };
         return updatedService;
@@ -216,9 +221,10 @@ export function CreateServiceHandler(
   serviceModel: ServiceModel
 ): ICreateServiceHandler {
   return async (_, __, ___, serviceModelPayload) => {
+    const service = servicePayloadToService(serviceModelPayload);
     const errorOrService = await serviceModel.create(
-      serviceModelPayload,
-      serviceModelPayload.serviceId
+      service,
+      service.serviceId
     );
     if (isRight(errorOrService)) {
       return ResponseSuccessJson(

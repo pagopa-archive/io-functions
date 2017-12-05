@@ -1,9 +1,13 @@
+import * as t from "io-ts";
+
+import { tag } from "../utils/types";
+
 import * as DocumentDb from "documentdb";
 import * as DocumentDbUtils from "../utils/documentdb";
 import {
   DocumentDbModelVersioned,
-  IVersionedModel,
-  ModelId
+  ModelId,
+  VersionedModel
 } from "../utils/documentdb_model_versioned";
 
 import { Either } from "fp-ts/lib/Either";
@@ -18,59 +22,69 @@ import { NonEmptyString } from "../utils/strings";
 /**
  * Base interface for Profile objects
  */
-export interface IProfile {
-  // the fiscal code of the citized associated to this profile
-  readonly fiscalCode: FiscalCode;
+export const Profile = t.intersection([
+  t.interface({
+    // the fiscal code of the citized associated to this profile
+    fiscalCode: FiscalCode
+  }),
+  t.partial({
+    // the preferred email for receiving email notifications
+    // if defined, will override the default email provided by the API client
+    // if defined, will enable email notifications for the citizen
+    email: EmailAddress,
 
-  // the preferred email for receiving email notifications
-  // if defined, will override the default email provided by the API client
-  // if defined, will enable email notifications for the citizen
-  readonly email?: EmailAddress;
+    // whether to store the content of messages sent to this citizen
+    isStorageOfMessageContentEnabled: t.boolean
+  })
+]);
 
-  // whether to store the content of messages sent to this citizen
-  readonly isStorageOfMessageContentEnabled?: boolean;
-}
+export type Profile = t.TypeOf<typeof Profile>;
 
 /**
  * Interface for new Profile objects
  */
-export interface INewProfile
-  extends IProfile,
-    DocumentDb.NewDocument,
-    IVersionedModel {
+
+interface INewProfileTag {
   readonly kind: "INewProfile";
 }
+
+export const NewProfile = tag<INewProfileTag>()(
+  t.intersection([Profile, DocumentDbUtils.NewDocument, VersionedModel])
+);
+
+export type NewProfile = t.TypeOf<typeof NewProfile>;
 
 /**
  * Interface for retrieved Profile objects
  *
  * Existing profile records have a version number.
  */
-export interface IRetrievedProfile
-  extends IProfile,
-    DocumentDb.RetrievedDocument,
-    IVersionedModel {
-  readonly id: NonEmptyString;
+interface IRetrievedProfileTag {
   readonly kind: "IRetrievedProfile";
 }
 
-function toRetrieved(result: DocumentDb.RetrievedDocument): IRetrievedProfile {
-  return {
-    ...result,
-    kind: "IRetrievedProfile"
-  } as IRetrievedProfile;
+export const RetrievedProfile = tag<IRetrievedProfileTag>()(
+  t.intersection([Profile, DocumentDbUtils.RetrievedDocument, VersionedModel])
+);
+
+export type RetrievedProfile = t.TypeOf<typeof RetrievedProfile>;
+
+function toRetrieved(result: DocumentDb.RetrievedDocument): RetrievedProfile {
+  return t.validate(result, RetrievedProfile).fold(_ => {
+    throw new Error("Fatal, result is not a valid RetrievedProfile");
+  }, t.identity);
 }
 
-function getModelId(o: IProfile): ModelId {
+function getModelId(o: Profile): ModelId {
   return fiscalCodeToModelId(o.fiscalCode);
 }
 
 function updateModelId(
-  o: IProfile,
-  id: string,
+  o: Profile,
+  id: NonEmptyString,
   version: NonNegativeNumber
-): INewProfile {
-  const newProfile: INewProfile = {
+): NewProfile {
+  const newProfile: NewProfile = {
     ...o,
     id,
     kind: "INewProfile",
@@ -80,7 +94,7 @@ function updateModelId(
   return newProfile;
 }
 
-function toBaseType(o: IRetrievedProfile): IProfile {
+function toBaseType(o: RetrievedProfile): Profile {
   return {
     email: o.email,
     fiscalCode: o.fiscalCode
@@ -91,9 +105,9 @@ function toBaseType(o: IRetrievedProfile): IProfile {
  * A model for handling Profiles
  */
 export class ProfileModel extends DocumentDbModelVersioned<
-  IProfile,
-  INewProfile,
-  IRetrievedProfile
+  Profile,
+  NewProfile,
+  RetrievedProfile
 > {
   protected dbClient: DocumentDb.DocumentClient;
   protected collectionUri: DocumentDbUtils.IDocumentDbCollectionUri;
@@ -130,7 +144,7 @@ export class ProfileModel extends DocumentDbModelVersioned<
    */
   public findOneProfileByFiscalCode(
     fiscalCode: FiscalCode
-  ): Promise<Either<DocumentDb.QueryError, Option<IRetrievedProfile>>> {
+  ): Promise<Either<DocumentDb.QueryError, Option<RetrievedProfile>>> {
     return super.findLastVersionByModelId("profiles", "fiscalCode", fiscalCode);
   }
 }

@@ -114,7 +114,7 @@ export const {{ definitionName }} = EmailString;
 
 import * as t from "io-ts";
 
-import { createEnumType } from "../../utils/types";
+import { enumType } from "../../utils/types";
 
 export enum {{ definitionName }}Enum {
     {% for enum in definition["x-extensible-enum"] %}
@@ -122,7 +122,7 @@ export enum {{ definitionName }}Enum {
     {% endfor %}
 }
 
-export const {{ definitionName }} = createEnumType<{{ definitionName }}Enum>(
+export const {{ definitionName }} = enumType<{{ definitionName }}Enum>(
   {{ definitionName }}Enum,
   "{{ definitionName }}"
 );
