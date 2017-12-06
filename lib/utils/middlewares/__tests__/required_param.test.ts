@@ -1,13 +1,15 @@
 // tslint:disable:no-any
 
-import { isLeft, isRight, left, right } from "fp-ts/lib/Either";
+import * as t from "io-ts";
+
+import { isLeft, isRight } from "fp-ts/lib/Either";
 
 import { RequiredParamMiddleware } from "../required_param";
 
 describe("RequiredParamMiddleware", () => {
-  it("should extract the required parameter from the request", async () => {
-    const middleware = RequiredParamMiddleware(params => right(params.param));
+  const middleware = RequiredParamMiddleware("param", t.string);
 
+  it("should extract the required parameter from the request", async () => {
     const result = await middleware({
       params: {
         param: "hello"
@@ -21,8 +23,6 @@ describe("RequiredParamMiddleware", () => {
   });
 
   it("should respond with a validation error if the required parameter is missing", async () => {
-    const middleware = RequiredParamMiddleware(_ => left("param not found"));
-
     const result = await middleware({
       params: {}
     } as any);

@@ -13,7 +13,7 @@
 
 import * as t from "io-ts";
 
-import { createEnumType } from "../../utils/types";
+import { enumType } from "../../utils/types";
 
 export enum NotificationChannelStatusEnum {
   "QUEUED" = "QUEUED",
@@ -21,7 +21,7 @@ export enum NotificationChannelStatusEnum {
   "SENT_TO_CHANNEL" = "SENT_TO_CHANNEL"
 }
 
-export const NotificationChannelStatus = createEnumType<
+export const NotificationChannelStatus = enumType<
   NotificationChannelStatusEnum
 >(NotificationChannelStatusEnum, "NotificationChannelStatus");
 

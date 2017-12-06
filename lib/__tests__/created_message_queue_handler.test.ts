@@ -1,4 +1,5 @@
 // tslint:disable:no-any
+import { MessageContent } from "../api/definitions/MessageContent";
 
 // set a dummy value for the env vars needed by the handler
 // tslint:disable-next-line:no-object-mutation
@@ -21,8 +22,8 @@ import {
   processReject,
   processResolve
 } from "../created_message_queue_handler";
-import { ICreatedMessageEvent } from "../models/created_message_event";
-import { IMessageContent, INewMessageWithoutContent } from "../models/message";
+import { CreatedMessageEvent } from "../models/created_message_event";
+import { NewMessageWithoutContent } from "../models/message";
 
 import { none, Option, some, Some } from "fp-ts/lib/Option";
 import { FiscalCode } from "../api/definitions/FiscalCode";
@@ -30,11 +31,11 @@ import { MessageBodyMarkdown } from "../api/definitions/MessageBodyMarkdown";
 import { NotificationChannelStatusEnum } from "../api/definitions/NotificationChannelStatus";
 
 import {
-  INewNotification,
-  INotificationChannelEmail,
-  NotificationAddressSource
+  NewNotification,
+  NotificationAddressSourceEnum,
+  NotificationChannelEmail
 } from "../models/notification";
-import { IRetrievedProfile } from "../models/profile";
+import { RetrievedProfile } from "../models/profile";
 
 import { isLeft, isRight, left, right } from "fp-ts/lib/Either";
 import * as winston from "winston";
@@ -51,8 +52,8 @@ const aCorrectFiscalCode = _getO(
 );
 const aWrongFiscalCode = "FRLFRC74E04B157" as FiscalCode;
 const anEmail = _getO(t.validate("x@example.com", EmailString).toOption());
-const anEmailNotification: INotificationChannelEmail = {
-  addressSource: NotificationAddressSource.PROFILE_ADDRESS,
+const anEmailNotification: NotificationChannelEmail = {
+  addressSource: NotificationAddressSourceEnum.PROFILE_ADDRESS,
   status: NotificationChannelStatusEnum.QUEUED,
   toAddress: anEmail
 };
@@ -61,7 +62,7 @@ const aMessageBodyMarkdown = _getO(
   t.validate("test".repeat(80), MessageBodyMarkdown).toOption()
 );
 
-const aRetrievedProfileWithEmail: IRetrievedProfile = {
+const aRetrievedProfileWithEmail: RetrievedProfile = {
   _self: "123",
   _ts: "123",
   email: anEmail,
@@ -71,7 +72,7 @@ const aRetrievedProfileWithEmail: IRetrievedProfile = {
   version: _getO(t.validate(1, NonNegativeNumber).toOption())
 };
 
-const aRetrievedProfileWithoutEmail: IRetrievedProfile = {
+const aRetrievedProfileWithoutEmail: RetrievedProfile = {
   _self: "123",
   _ts: "123",
   fiscalCode: aCorrectFiscalCode,
@@ -80,7 +81,7 @@ const aRetrievedProfileWithoutEmail: IRetrievedProfile = {
   version: _getO(t.validate(1, NonNegativeNumber).toOption())
 };
 
-const aCreatedNotificationWithEmail: INewNotification = {
+const aCreatedNotificationWithEmail: NewNotification = {
   emailNotification: anEmailNotification,
   fiscalCode: aCorrectFiscalCode,
   id: _getO(t.validate("123", NonEmptyString).toOption()),
@@ -88,7 +89,7 @@ const aCreatedNotificationWithEmail: INewNotification = {
   messageId: _getO(t.validate("123", NonEmptyString).toOption())
 };
 
-const aCreatedNotificationWithoutEmail: INewNotification = {
+const aCreatedNotificationWithoutEmail: NewNotification = {
   emailNotification: undefined,
   fiscalCode: aCorrectFiscalCode,
   id: _getO(t.validate("123", NonEmptyString).toOption()),
@@ -136,7 +137,7 @@ describe("test index function", () => {
   });
 
   it("should return failure if createdMessage is invalid (wrong fiscal code)", async () => {
-    const aMessage: INewMessageWithoutContent = {
+    const aMessage: NewMessageWithoutContent = {
       fiscalCode: aWrongFiscalCode,
       id: _getO(t.validate("xyz", NonEmptyString).toOption()),
       kind: "INewMessageWithoutContent",
@@ -144,10 +145,10 @@ describe("test index function", () => {
       senderUserId: _getO(t.validate("u123", NonEmptyString).toOption())
     };
 
-    const aMessageEvent: ICreatedMessageEvent = {
+    const aMessageEvent: CreatedMessageEvent = {
       message: aMessage,
       messageContent: {
-        bodyMarkdown: aMessageBodyMarkdown
+        markdown: aMessageBodyMarkdown
       },
       senderMetadata: {
         departmentName: _getO(t.validate("IT", NonEmptyString).toOption()),
@@ -184,17 +185,17 @@ describe("test index function", () => {
 
   /*
   it("should proceed to handleMessage if createdMessage is correct", async () => {
-    const aMessage: IRetrievedMessage = {
+    const aMessage: RetrievedMessage = {
       _self: "",
       _ts: "",
       bodyShort: _getO(toBodyShort("xyz")),
       fiscalCode: aCorrectFiscalCode,
       id: _getO(t.validate("xyz", NonEmptyString).toOption()),
-      kind: "IRetrievedMessage",
+      kind: "RetrievedMessage",
       senderServiceId: "",
     };
 
-    const aMessageEvent: ICreatedMessageEvent = {
+    const aMessageEvent: CreatedMessageEvent = {
       message: aMessage,
     };
 
@@ -365,7 +366,7 @@ describe("test handleMessage function", () => {
         if (response.value.emailNotification !== undefined) {
           expect(response.value.emailNotification.toAddress).toBe(anEmail);
           expect(response.value.emailNotification.addressSource).toBe(
-            NotificationAddressSource.PROFILE_ADDRESS
+            NotificationAddressSourceEnum.PROFILE_ADDRESS
           );
         }
       }
@@ -420,7 +421,7 @@ describe("test handleMessage function", () => {
         if (response.value.emailNotification !== undefined) {
           expect(response.value.emailNotification.toAddress).toBe(anEmail);
           expect(response.value.emailNotification.addressSource).toBe(
-            NotificationAddressSource.DEFAULT_ADDRESS
+            NotificationAddressSourceEnum.DEFAULT_ADDRESS
           );
         }
       }
@@ -468,7 +469,7 @@ describe("test handleMessage function", () => {
         if (response.value.emailNotification !== undefined) {
           expect(response.value.emailNotification.toAddress).toBe(anEmail);
           expect(response.value.emailNotification.addressSource).toBe(
-            NotificationAddressSource.DEFAULT_ADDRESS
+            NotificationAddressSourceEnum.DEFAULT_ADDRESS
           );
         }
       }
@@ -506,8 +507,8 @@ describe("test handleMessage function", () => {
       })
     };
 
-    const messageContent: IMessageContent = {
-      bodyMarkdown: aMessageBodyMarkdown
+    const messageContent: MessageContent = {
+      markdown: aMessageBodyMarkdown
     };
 
     const response = await handleMessage(
@@ -542,7 +543,7 @@ describe("test handleMessage function", () => {
       if (response.value.emailNotification !== undefined) {
         expect(response.value.emailNotification.toAddress).toBe(anEmail);
         expect(response.value.emailNotification.addressSource).toBe(
-          NotificationAddressSource.PROFILE_ADDRESS
+          NotificationAddressSourceEnum.PROFILE_ADDRESS
         );
       }
     }
@@ -579,8 +580,8 @@ describe("test handleMessage function", () => {
       })
     };
 
-    const messageContent: IMessageContent = {
-      bodyMarkdown: aMessageBodyMarkdown
+    const messageContent: MessageContent = {
+      markdown: aMessageBodyMarkdown
     };
 
     const response = await handleMessage(

@@ -28,9 +28,9 @@ const ExtendedProfileO = t.partial({
   version: t.number
 });
 
-export const ExtendedProfile = t.intersection([
-  ExtendedProfileR,
-  ExtendedProfileO
-]);
+export const ExtendedProfile = t.intersection(
+  [ExtendedProfileR, ExtendedProfileO],
+  "ExtendedProfile"
+);
 
 export type ExtendedProfile = t.TypeOf<typeof ExtendedProfile>;

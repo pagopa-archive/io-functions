@@ -12,7 +12,7 @@ import { isNone } from "fp-ts/lib/Option";
 
 import { EmailString, NonEmptyString } from "../strings";
 
-import { IService, ServiceModel } from "../../models/service";
+import { Service, ServiceModel } from "../../models/service";
 import { IRequestMiddleware } from "../request_middleware";
 import {
   IResponseErrorForbiddenNotAuthorized,
@@ -36,7 +36,7 @@ export interface IAzureUserAttributes {
   // the email of the registered user
   readonly email: EmailString;
   // the service associated to the user
-  readonly service: IService;
+  readonly service: Service;
 }
 
 /**

@@ -29,15 +29,13 @@ import * as sendGridTransport from "nodemailer-sendgrid-transport";
 import * as HtmlToText from "html-to-text";
 
 import { MessageBodyMarkdown } from "./api/definitions/MessageBodyMarkdown";
+import { MessageContent } from "./api/definitions/MessageContent";
 import { NotificationChannelStatusEnum } from "./api/definitions/NotificationChannelStatus";
 
-import { ICreatedMessageEventSenderMetadata } from "./models/created_message_sender_metadata";
-import { IMessageContent } from "./models/message";
-import { INotification, NotificationModel } from "./models/notification";
-import {
-  INotificationEvent,
-  isNotificationEvent
-} from "./models/notification_event";
+import { CreatedMessageEventSenderMetadata } from "./models/created_message_sender_metadata";
+import { Notification, NotificationModel } from "./models/notification";
+import { NotificationEvent } from "./models/notification_event";
+
 import { markdownToHtml } from "./utils/markdown";
 
 import { MessageSubject } from "./api/definitions/MessageSubject";
@@ -83,11 +81,13 @@ const HTML_TO_TEXT_OPTIONS: HtmlToTextOptions = {
  * Input and output bindings for this function
  * see EmailNotificationsQueueHandler/function.json
  */
-interface IContextWithBindings extends IContext {
-  readonly bindings: {
-    readonly notificationEvent?: INotificationEvent;
-  };
-}
+const ContextWithBindings = t.interface({
+  bindings: t.partial({
+    notificationEvent: NotificationEvent
+  })
+});
+
+type ContextWithBindings = t.TypeOf<typeof ContextWithBindings> & IContext;
 
 export const enum ProcessingResult {
   OK
@@ -109,11 +109,11 @@ export const enum ProcessingError {
  */
 export async function generateDocumentHtml(
   subject: MessageSubject,
-  bodyMarkdown: MessageBodyMarkdown,
-  senderMetadata: ICreatedMessageEventSenderMetadata
+  markdown: MessageBodyMarkdown,
+  senderMetadata: CreatedMessageEventSenderMetadata
 ): Promise<string> {
   // converts the markdown body to HTML
-  const bodyHtml = (await markdownToHtml.process(bodyMarkdown)).toString();
+  const bodyHtml = (await markdownToHtml.process(markdown)).toString();
 
   // compose the service name from the department name and the service name
   const senderServiceName = `${senderMetadata.departmentName}<br />${senderMetadata.serviceName}`;
@@ -152,9 +152,7 @@ export async function sendMail(
 /**
  * Returns a copy of the Notification with the EmailNotification status as SENT
  */
-function setEmailNotificationToSent(
-  notification: INotification
-): INotification {
+function setEmailNotificationToSent(notification: Notification): Notification {
   const emailNotification = notification.emailNotification;
 
   // this should never happens
@@ -183,8 +181,8 @@ export async function handleNotification(
   notificationModel: NotificationModel,
   messageId: string,
   notificationId: string,
-  messageContent: IMessageContent,
-  senderMetadata: ICreatedMessageEventSenderMetadata
+  messageContent: MessageContent,
+  senderMetadata: CreatedMessageEventSenderMetadata
 ): Promise<Either<ProcessingError, ProcessingResult>> {
   // fetch the notification
   const errorOrMaybeNotification = await notificationModel.find(
@@ -234,7 +232,7 @@ export async function handleNotification(
 
   const documentHtml = await generateDocumentHtml(
     subject,
-    messageContent.bodyMarkdown,
+    messageContent.markdown,
     senderMetadata
   );
 
@@ -323,7 +321,7 @@ export async function handleNotification(
 
 export function processResolve(
   result: Either<ProcessingError, ProcessingResult>,
-  context: IContextWithBindings
+  context: ContextWithBindings
 ): void {
   if (isLeft(result)) {
     // if handler returned an error, decide what to do
@@ -348,8 +346,8 @@ export function processResolve(
 
 export function processReject(
   error: Either<ProcessingError, ProcessingResult>,
-  context: IContextWithBindings,
-  emailNotificationEvent: INotificationEvent
+  context: ContextWithBindings,
+  emailNotificationEvent: NotificationEvent
 ): void {
   // the promise failed
   winston.error(
@@ -364,7 +362,7 @@ export function processReject(
 /**
  * Function handler
  */
-export function index(context: IContextWithBindings): void {
+export function index(context: ContextWithBindings): void {
   const logLevel = isProduction ? "info" : "debug";
   configureAzureContextTransport(context, winston, logLevel);
   winston.debug(`STARTED|${context.invocationId}`);
@@ -377,10 +375,7 @@ export function index(context: IContextWithBindings): void {
   // since this function gets triggered by a queued message that gets
   // deserialized from a json object, we must first check that what we
   // got is what we expect.
-  if (
-    emailNotificationEvent === undefined ||
-    !isNotificationEvent(emailNotificationEvent)
-  ) {
+  if (NotificationEvent.is(emailNotificationEvent)) {
     winston.log(
       "error",
       `Fatal! No valid email notification found in bindings.`

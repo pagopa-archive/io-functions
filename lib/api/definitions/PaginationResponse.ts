@@ -23,9 +23,9 @@ const PaginationResponseO = t.partial({
   next: t.string
 });
 
-export const PaginationResponse = t.intersection([
-  PaginationResponseR,
-  PaginationResponseO
-]);
+export const PaginationResponse = t.intersection(
+  [PaginationResponseR, PaginationResponseO],
+  "PaginationResponse"
+);
 
 export type PaginationResponse = t.TypeOf<typeof PaginationResponse>;

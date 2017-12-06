@@ -26,9 +26,9 @@ const MessageResponseO = t.partial({
   notification: NotificationStatus
 });
 
-export const MessageResponse = t.intersection([
-  MessageResponseR,
-  MessageResponseO
-]);
+export const MessageResponse = t.intersection(
+  [MessageResponseR, MessageResponseO],
+  "MessageResponse"
+);
 
 export type MessageResponse = t.TypeOf<typeof MessageResponse>;

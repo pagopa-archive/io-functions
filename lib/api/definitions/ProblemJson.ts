@@ -31,6 +31,9 @@ const ProblemJsonO = t.partial({
   instance: t.string
 });
 
-export const ProblemJson = t.intersection([ProblemJsonR, ProblemJsonO]);
+export const ProblemJson = t.intersection(
+  [ProblemJsonR, ProblemJsonO],
+  "ProblemJson"
+);
 
 export type ProblemJson = t.TypeOf<typeof ProblemJson>;

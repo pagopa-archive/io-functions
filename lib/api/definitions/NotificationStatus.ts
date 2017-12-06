@@ -23,9 +23,9 @@ const NotificationStatusO = t.partial({
   email: NotificationChannelStatus
 });
 
-export const NotificationStatus = t.intersection([
-  NotificationStatusR,
-  NotificationStatusO
-]);
+export const NotificationStatus = t.intersection(
+  [NotificationStatusR, NotificationStatusO],
+  "NotificationStatus"
+);
 
 export type NotificationStatus = t.TypeOf<typeof NotificationStatus>;

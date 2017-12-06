@@ -13,7 +13,7 @@
 
 import * as t from "io-ts";
 
-import { createEnumType } from "../../utils/types";
+import { enumType } from "../../utils/types";
 
 export enum PreferredLanguageEnum {
   "it_IT" = "it_IT",
@@ -27,7 +27,7 @@ export enum PreferredLanguageEnum {
   "fr_FR" = "fr_FR"
 }
 
-export const PreferredLanguage = createEnumType<PreferredLanguageEnum>(
+export const PreferredLanguage = enumType<PreferredLanguageEnum>(
   PreferredLanguageEnum,
   "PreferredLanguage"
 );

@@ -42,6 +42,6 @@ const ServiceO = t.partial({
   id: t.string
 });
 
-export const Service = t.intersection([ServiceR, ServiceO]);
+export const Service = t.intersection([ServiceR, ServiceO], "Service");
 
 export type Service = t.TypeOf<typeof Service>;

@@ -1,4 +1,3 @@
-import { NonEmptyString } from "./strings";
 /*
  * Utility functions for interacting with DocumentDB
  *
@@ -9,7 +8,11 @@ import { NonEmptyString } from "./strings";
  *
  */
 
+import * as t from "io-ts";
+
 import * as DocumentDb from "documentdb";
+
+import { NonEmptyString } from "./strings";
 
 import { isNone, none, Option, some } from "fp-ts/lib/Option";
 
@@ -39,6 +42,37 @@ export interface IDocumentDbDocumentUri extends IDocumentDbUri {
   readonly documentId: string;
   readonly collectionUri: IDocumentDbCollectionUri;
 }
+
+//
+// mapping of DocumentDb types to io-ts types
+//
+
+export const UniqueId = t.interface({
+  id: NonEmptyString
+});
+
+export const NewDocument = t.intersection([
+  t.partial({
+    ttl: t.number
+  }),
+  UniqueId
+]);
+
+export const RetrievedDocument = t.intersection([
+  NewDocument,
+  t.interface({
+    /** The self link. */
+    _self: t.string,
+
+    /** The time the object was created. */
+    _ts: t.string
+  }),
+  t.partial({
+    _attachments: t.string,
+    _etag: t.string,
+    _rid: t.string
+  })
+]);
 
 /**
  * Result of DocumentDb queries.

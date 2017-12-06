@@ -21,7 +21,7 @@ import { EmailAddress } from "../../api/definitions/EmailAddress";
 import { FiscalCode } from "../../api/definitions/FiscalCode";
 import { MessageBodyMarkdown } from "../../api/definitions/MessageBodyMarkdown";
 import { MessageSubject } from "../../api/definitions/MessageSubject";
-import { NewMessage } from "../../api/definitions/NewMessage";
+import { NewMessage as ApiNewMessage } from "../../api/definitions/NewMessage";
 import { NotificationChannelStatusEnum } from "../../api/definitions/NotificationChannelStatus";
 
 import {
@@ -32,13 +32,14 @@ import { IAzureUserAttributes } from "../../utils/middlewares/azure_user_attribu
 import { EmailString, NonEmptyString } from "../../utils/strings";
 
 import {
-  INewMessage,
-  INewMessageWithoutContent,
-  IRetrievedMessageWithoutContent
+  NewMessage,
+  NewMessageWithContent,
+  NewMessageWithoutContent,
+  RetrievedMessageWithoutContent
 } from "../../models/message";
 import {
-  IRetrievedNotification,
-  NotificationAddressSource
+  NotificationAddressSourceEnum,
+  RetrievedNotification
 } from "../../models/notification";
 import {
   CreateMessage,
@@ -96,7 +97,7 @@ const aUserAuthenticationTrustedApplication: IAzureApiAuthorization = {
   userId: _getO(t.validate("u123", NonEmptyString).toOption())
 };
 
-const aMessagePayload: NewMessage = {
+const aMessagePayload: ApiNewMessage = {
   content: {
     markdown: aMessageBodyMarkdown
   }
@@ -108,7 +109,7 @@ const aCustomSubject = _getO(
 
 const aMessageId = _getO(t.validate("A_MESSAGE_ID", NonEmptyString).toOption());
 
-const aNewMessageWithoutContent: INewMessageWithoutContent = {
+const aNewMessageWithoutContent: NewMessageWithoutContent = {
   fiscalCode: aFiscalCode,
   id: _getO(t.validate("A_MESSAGE_ID", NonEmptyString).toOption()),
   kind: "INewMessageWithoutContent",
@@ -116,7 +117,7 @@ const aNewMessageWithoutContent: INewMessageWithoutContent = {
   senderUserId: _getO(t.validate("u123", NonEmptyString).toOption())
 };
 
-const aRetrievedMessageWithoutContent: IRetrievedMessageWithoutContent = {
+const aRetrievedMessageWithoutContent: RetrievedMessageWithoutContent = {
   ...aNewMessageWithoutContent,
   _self: "xyz",
   _ts: "xyz",
@@ -198,9 +199,9 @@ describe("CreateMessageHandler", () => {
 
     expect(mockMessageModel.create).toHaveBeenCalledTimes(1);
 
-    const messageDocument: INewMessage =
-      mockMessageModel.create.mock.calls[0][0];
-    expect(messageDocument.content).toBeUndefined();
+    const messageDocument = mockMessageModel.create.mock.calls[0][0];
+    expect(NewMessage.is(messageDocument)).toBeTruthy();
+    expect(NewMessageWithContent.is(messageDocument.content)).toBeFalsy();
 
     expect(mockMessageModel.create.mock.calls[0][1]).toEqual(aFiscalCode);
 
@@ -208,7 +209,7 @@ describe("CreateMessageHandler", () => {
       createdMessage: {
         message: aNewMessageWithoutContent,
         messageContent: {
-          bodyMarkdown: aMessagePayload.content.markdown
+          markdown: aMessagePayload.content.markdown
         },
         senderMetadata: {
           departmentName: "IT",
@@ -285,9 +286,9 @@ describe("CreateMessageHandler", () => {
 
     expect(mockMessageModel.create).toHaveBeenCalledTimes(1);
 
-    const messageDocument: INewMessage =
-      mockMessageModel.create.mock.calls[0][0];
-    expect(messageDocument.content).toBeUndefined();
+    const messageDocument = mockMessageModel.create.mock.calls[0][0];
+    expect(NewMessage.is(messageDocument)).toBeTruthy();
+    expect(NewMessageWithContent.is(messageDocument.content)).toBeFalsy();
 
     expect(mockMessageModel.create.mock.calls[0][1]).toEqual(aFiscalCode);
 
@@ -295,7 +296,7 @@ describe("CreateMessageHandler", () => {
       createdMessage: {
         message: aNewMessageWithoutContent,
         messageContent: {
-          bodyMarkdown: aMessagePayload.content.markdown
+          markdown: aMessagePayload.content.markdown
         },
         senderMetadata: {
           departmentName: "IT",
@@ -368,9 +369,9 @@ describe("CreateMessageHandler", () => {
 
     expect(mockMessageModel.create).toHaveBeenCalledTimes(1);
 
-    const messageDocument: INewMessage =
-      mockMessageModel.create.mock.calls[0][0];
-    expect(messageDocument.content).toBeUndefined();
+    const messageDocument = mockMessageModel.create.mock.calls[0][0];
+    expect(NewMessage.is(messageDocument)).toBeTruthy();
+    expect(NewMessageWithContent.is(messageDocument.content)).toBeFalsy();
 
     expect(mockMessageModel.create.mock.calls[0][1]).toEqual(aFiscalCode);
 
@@ -378,7 +379,7 @@ describe("CreateMessageHandler", () => {
       createdMessage: {
         message: aNewMessageWithoutContent,
         messageContent: {
-          bodyMarkdown: aMessagePayload.content.markdown,
+          markdown: aMessagePayload.content.markdown,
           subject: aCustomSubject
         },
         senderMetadata: {
@@ -432,7 +433,7 @@ describe("CreateMessageHandler", () => {
       log: jest.fn()
     };
 
-    const messagePayload: NewMessage = {
+    const messagePayload: ApiNewMessage = {
       ...aMessagePayload,
       default_addresses: {
         email: _getO(t.validate("test@example.com", EmailAddress).toOption())
@@ -456,9 +457,9 @@ describe("CreateMessageHandler", () => {
 
     expect(mockMessageModel.create).toHaveBeenCalledTimes(1);
 
-    const messageDocument: INewMessage =
-      mockMessageModel.create.mock.calls[0][0];
-    expect(messageDocument.content).toBeUndefined();
+    const messageDocument = mockMessageModel.create.mock.calls[0][0];
+    expect(NewMessage.is(messageDocument)).toBeTruthy();
+    expect(NewMessageWithContent.is(messageDocument.content)).toBeFalsy();
 
     expect(mockMessageModel.create.mock.calls[0][1]).toEqual(aFiscalCode);
 
@@ -469,7 +470,7 @@ describe("CreateMessageHandler", () => {
         },
         message: aNewMessageWithoutContent,
         messageContent: {
-          bodyMarkdown: messagePayload.content.markdown
+          markdown: messagePayload.content.markdown
         },
         senderMetadata: {
           departmentName: "IT",
@@ -522,7 +523,7 @@ describe("CreateMessageHandler", () => {
       log: jest.fn()
     };
 
-    const messagePayload: NewMessage = {
+    const messagePayload: ApiNewMessage = {
       ...aMessagePayload,
       default_addresses: {
         email: _getO(t.validate("test@example.com", EmailAddress).toOption())
@@ -774,11 +775,11 @@ describe("GetMessageHandler", () => {
   });
 
   it("should provide information about notification status", async () => {
-    const aRetrievedNotification: IRetrievedNotification = {
+    const aRetrievedNotification: RetrievedNotification = {
       _self: "xyz",
       _ts: "xyz",
       emailNotification: {
-        addressSource: NotificationAddressSource.PROFILE_ADDRESS,
+        addressSource: NotificationAddressSourceEnum.PROFILE_ADDRESS,
         status: NotificationChannelStatusEnum.SENT_TO_CHANNEL,
         toAddress: _getO(t.validate("x@example.com", EmailString).toOption())
       },

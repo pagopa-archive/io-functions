@@ -13,7 +13,7 @@ import { FiscalCode } from "../../api/definitions/FiscalCode";
 import { NonNegativeNumber } from "../../utils/numbers";
 import { EmailString, NonEmptyString } from "../../utils/strings";
 
-import { IProfile, IRetrievedProfile, ProfileModel } from "../profile";
+import { Profile, ProfileModel, RetrievedProfile } from "../profile";
 
 // DANGEROUS, only use in tests
 function _getO<T>(o: Option<T>): T {
@@ -30,7 +30,7 @@ const aFiscalCode = _getO(
   t.validate("FRLFRC74E04B157I", FiscalCode).toOption()
 );
 
-const aRetrievedProfile: IRetrievedProfile = {
+const aRetrievedProfile: RetrievedProfile = {
   _self: "xyz",
   _ts: "xyz",
   fiscalCode: aFiscalCode,
@@ -91,14 +91,16 @@ describe("createProfile", () => {
     const clientMock: any = {
       createDocument: jest.fn((_, newDocument, __, cb) => {
         cb(undefined, {
-          ...newDocument
+          ...newDocument,
+          _self: "self",
+          _ts: "123"
         });
       })
     };
 
     const model = new ProfileModel(clientMock, profilesCollectionUrl);
 
-    const newProfile: IProfile = {
+    const newProfile: Profile = {
       fiscalCode: aFiscalCode
     };
 
@@ -127,7 +129,7 @@ describe("createProfile", () => {
 
     const model = new ProfileModel(clientMock, profilesCollectionUrl);
 
-    const newProfile: IProfile = {
+    const newProfile: Profile = {
       fiscalCode: aFiscalCode
     };
 
@@ -147,7 +149,9 @@ describe("update", () => {
     const clientMock: any = {
       createDocument: jest.fn((_, newDocument, __, cb) => {
         cb(undefined, {
-          ...newDocument
+          ...newDocument,
+          _self: "self",
+          _ts: "123"
         });
       }),
       readDocument: jest.fn((_, __, cb) => cb(undefined, aRetrievedProfile))

@@ -23,9 +23,9 @@ const LimitedProfileO = t.partial({
   preferred_languages: PreferredLanguages
 });
 
-export const LimitedProfile = t.intersection([
-  LimitedProfileR,
-  LimitedProfileO
-]);
+export const LimitedProfile = t.intersection(
+  [LimitedProfileR, LimitedProfileO],
+  "LimitedProfile"
+);
 
 export type LimitedProfile = t.TypeOf<typeof LimitedProfile>;

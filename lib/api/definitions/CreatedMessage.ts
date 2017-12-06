@@ -33,9 +33,9 @@ const CreatedMessageO = t.partial({
   content: MessageContent
 });
 
-export const CreatedMessage = t.intersection([
-  CreatedMessageR,
-  CreatedMessageO
-]);
+export const CreatedMessage = t.intersection(
+  [CreatedMessageR, CreatedMessageO],
+  "CreatedMessage"
+);
 
 export type CreatedMessage = t.TypeOf<typeof CreatedMessage>;

@@ -53,17 +53,17 @@ import {
   clientIPAndCidrTuple as ipTuple
 } from "../utils/source_ip_check";
 
-import { IProfile, IRetrievedProfile, ProfileModel } from "../models/profile";
+import { Profile, ProfileModel, RetrievedProfile } from "../models/profile";
 import { ServiceModel } from "../models/service";
 
-function toExtendedProfile(profile: IRetrievedProfile): ExtendedProfile {
+function toExtendedProfile(profile: RetrievedProfile): ExtendedProfile {
   return {
     email: profile.email,
     version: profile.version
   };
 }
 
-function toLimitedProfile(_: IRetrievedProfile): LimitedProfile {
+function toLimitedProfile(_: RetrievedProfile): LimitedProfile {
   return {};
 }
 
@@ -188,7 +188,7 @@ async function createNewProfileFromPayload(
   profileModelPayload: ExtendedProfile
 ): Promise<IResponseSuccessJson<ExtendedProfile> | IResponseErrorQuery> {
   // create a new profile
-  const profile: IProfile = {
+  const profile: Profile = {
     email: profileModelPayload.email,
     fiscalCode
   };
@@ -208,7 +208,7 @@ async function createNewProfileFromPayload(
 
 async function updateExistingProfileFromPayload(
   profileModel: ProfileModel,
-  existingProfile: IRetrievedProfile,
+  existingProfile: RetrievedProfile,
   profileModelPayload: ExtendedProfile
 ): Promise<
   | IResponseSuccessJson<ExtendedProfile>
