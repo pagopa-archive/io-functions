@@ -5,25 +5,14 @@
 // tslint:disable:jsdoc-format
 // tslint:disable:interface-name
 // tslint:disable:no-any
+// tslint:disable:object-literal-sort-keys
 
 /**
  * This parameter specifies for how long (in seconds) the system will try to deliver the message to the channels configured by the user.
  */
 
-import { Option } from "fp-ts/lib/Option";
-
-import {
-  isWithinRangeNumber,
-  toWithinRangeNumber,
-  WithinRangeNumber
-} from "../../utils/numbers";
+import { WithinRangeNumber } from "../../utils/numbers";
 
 export type TimeToLive = WithinRangeNumber<3600, 31536000>;
 
-export function isTimeToLive(arg: any): arg is TimeToLive {
-  return isWithinRangeNumber(arg, 3600, 31536000);
-}
-
-export function toTimeToLive(arg: any): Option<TimeToLive> {
-  return toWithinRangeNumber(arg, 3600, 31536000);
-}
+export const TimeToLive = WithinRangeNumber(3600, 31536000);

@@ -1,4 +1,7 @@
 // tslint:disable:no-any
+
+import * as t from "io-ts";
+
 import { isLeft, isRight } from "fp-ts/lib/Either";
 import { isSome, Option, Some } from "fp-ts/lib/Option";
 
@@ -6,15 +9,11 @@ import * as DocumentDb from "documentdb";
 
 import * as DocumentDbUtils from "../../utils/documentdb";
 
-import { toFiscalCode } from "../../api/definitions/FiscalCode";
-import { toNonNegativeNumber } from "../../utils/numbers";
-import {
-  NonEmptyString,
-  toEmailString,
-  toNonEmptyString
-} from "../../utils/strings";
+import { FiscalCode } from "../../api/definitions/FiscalCode";
+import { NonNegativeNumber } from "../../utils/numbers";
+import { EmailString, NonEmptyString } from "../../utils/strings";
 
-import { IProfile, IRetrievedProfile, ProfileModel } from "../profile";
+import { Profile, ProfileModel, RetrievedProfile } from "../profile";
 
 // DANGEROUS, only use in tests
 function _getO<T>(o: Option<T>): T {
@@ -27,15 +26,17 @@ const profilesCollectionUrl = DocumentDbUtils.getCollectionUri(
   "profiles"
 );
 
-const aFiscalCode = _getO(toFiscalCode("FRLFRC74E04B157I"));
+const aFiscalCode = _getO(
+  t.validate("FRLFRC74E04B157I", FiscalCode).toOption()
+);
 
-const aRetrievedProfile: IRetrievedProfile = {
+const aRetrievedProfile: RetrievedProfile = {
   _self: "xyz",
   _ts: "xyz",
   fiscalCode: aFiscalCode,
-  id: _getO(toNonEmptyString("xyz")),
+  id: _getO(t.validate("xyz", NonEmptyString).toOption()),
   kind: "IRetrievedProfile",
-  version: _getO(toNonNegativeNumber(0))
+  version: _getO(t.validate(0, NonNegativeNumber).toOption())
 };
 
 describe("findOneProfileByFiscalCode", () => {
@@ -90,14 +91,16 @@ describe("createProfile", () => {
     const clientMock: any = {
       createDocument: jest.fn((_, newDocument, __, cb) => {
         cb(undefined, {
-          ...newDocument
+          ...newDocument,
+          _self: "self",
+          _ts: "123"
         });
       })
     };
 
     const model = new ProfileModel(clientMock, profilesCollectionUrl);
 
-    const newProfile: IProfile = {
+    const newProfile: Profile = {
       fiscalCode: aFiscalCode
     };
 
@@ -126,7 +129,7 @@ describe("createProfile", () => {
 
     const model = new ProfileModel(clientMock, profilesCollectionUrl);
 
-    const newProfile: IProfile = {
+    const newProfile: Profile = {
       fiscalCode: aFiscalCode
     };
 
@@ -146,7 +149,9 @@ describe("update", () => {
     const clientMock: any = {
       createDocument: jest.fn((_, newDocument, __, cb) => {
         cb(undefined, {
-          ...newDocument
+          ...newDocument,
+          _self: "self",
+          _ts: "123"
         });
       }),
       readDocument: jest.fn((_, __, cb) => cb(undefined, aRetrievedProfile))
@@ -160,7 +165,7 @@ describe("update", () => {
       p => {
         return {
           ...p,
-          email: _getO(toEmailString("new@example.com"))
+          email: _getO(t.validate("new@example.com", EmailString).toOption())
         };
       }
     );

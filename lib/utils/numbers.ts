@@ -2,8 +2,13 @@
  * Useful tagged types for numbers
  */
 
-import { fromNullable, Option } from "fp-ts/lib/Option";
-import is from "ts-is";
+import * as t from "io-ts";
+
+import { tag, Tagged } from "./types";
+
+/**
+ * A number guaranteed to be within the range [L,H)
+ */
 
 interface IWithinRangeNumberTag<L extends number, H extends number> {
   readonly lower: L;
@@ -11,56 +16,32 @@ interface IWithinRangeNumberTag<L extends number, H extends number> {
   readonly kind: "IWithinRangeNumberTag";
 }
 
-interface INonNegativeNumberTag {
-  readonly kind: "INonNegativeNumberTag";
-}
+export const WithinRangeNumber = <
+  L extends number,
+  H extends number,
+  T extends IWithinRangeNumberTag<L, H>
+>(
+  l: L,
+  h: H
+  // tslint:disable-next-line:no-any
+): Tagged<T, any, number> =>
+  tag<T>()(
+    t.refinement(t.number, s => s >= l && s < h, `number >= ${l} and < ${h}`)
+  );
 
-/**
- * A number guaranteed to be within the range [L,H)
- */
 export type WithinRangeNumber<L extends number, H extends number> = number &
   IWithinRangeNumberTag<L, H>;
 
 /**
- * Type guard for numbers that are within a range.
- */
-export function isWithinRangeNumber<L extends number, H extends number>(
-  // tslint:disable-next-line:no-any
-  arg: any,
-  l: L,
-  h: H
-): arg is WithinRangeNumber<L, H> {
-  return typeof arg === "number" && arg >= l && arg < h;
-}
-
-/**
- * Returns a defined option if the provided number is within the provided range.
- */
-export function toWithinRangeNumber<L extends number, H extends number>(
-  // tslint:disable-next-line:no-any
-  arg: any,
-  l: L,
-  h: H
-): Option<WithinRangeNumber<L, H>> {
-  return fromNullable(arg).filter(_ => isWithinRangeNumber(_, l, h));
-}
-
-/**
  * A non negative number
  */
-export type NonNegativeNumber = number & INonNegativeNumberTag;
 
-/**
- * Type guard for numbers that are non-negative.
- */
-export const isNonNegativeNumber = is<NonNegativeNumber>(
-  n => typeof n === "number" && n >= 0
+interface INonNegativeNumberTag {
+  readonly kind: "INonNegativeNumberTag";
+}
+
+export const NonNegativeNumber = tag<INonNegativeNumberTag>()(
+  t.refinement(t.number, s => s >= 0, "number >= 0")
 );
 
-/**
- * Returns a defined option if the provided number is non-negative.
- */
-// tslint:disable-next-line:no-any
-export function toNonNegativeNumber(arg: any): Option<NonNegativeNumber> {
-  return fromNullable(arg).filter(isNonNegativeNumber);
-}
+export type NonNegativeNumber = t.TypeOf<typeof NonNegativeNumber>;

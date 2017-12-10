@@ -2,6 +2,8 @@
  * Implements the API handlers for the Services resource.
  */
 
+import * as t from "io-ts";
+
 import * as express from "express";
 
 import {
@@ -10,16 +12,16 @@ import {
 } from "../../utils/middlewares/client_ip_middleware";
 
 import {
-  IRetrievedService,
-  IService,
+  RetrievedService,
+  Service,
   ServiceModel,
   toAuthorizedCIDRs,
   toAuthorizedRecipients
 } from "../../models/service";
 
-import { isCIDR } from "../../api/definitions/CIDR";
-import { isFiscalCode } from "../../api/definitions/FiscalCode";
-import { isService, Service } from "../../api/definitions/Service";
+import { CIDR } from "../../api/definitions/CIDR";
+import { FiscalCode } from "../../api/definitions/FiscalCode";
+import { Service as ApiService } from "../../api/definitions/Service";
 
 import {
   AzureApiAuthMiddleware,
@@ -41,6 +43,7 @@ import {
   IResponseErrorQuery,
   IResponseErrorValidation,
   IResponseSuccessJson,
+  ResponseErrorFromValidationErrors,
   ResponseErrorInternal,
   ResponseErrorNotFound,
   ResponseErrorQuery,
@@ -48,9 +51,9 @@ import {
   ResponseSuccessJson
 } from "../../utils/response";
 
-import { isLeft, isRight, left, right } from "fp-ts/lib/Either";
+import { isLeft, isRight } from "fp-ts/lib/Either";
 import { isNone } from "fp-ts/lib/Option";
-import { isNonEmptyString, NonEmptyString } from "../../utils/strings";
+import { NonEmptyString } from "../../utils/strings";
 
 import {
   AzureUserAttributesMiddleware,
@@ -66,8 +69,8 @@ type ICreateServiceHandler = (
   auth: IAzureApiAuthorization,
   clientIp: ClientIp,
   userAttributes: IAzureUserAttributes,
-  service: IService
-) => Promise<IResponseSuccessJson<Service> | IResponseErrorQuery>;
+  service: ApiService
+) => Promise<IResponseSuccessJson<ApiService> | IResponseErrorQuery>;
 
 type IGetServiceHandler = (
   auth: IAzureApiAuthorization,
@@ -75,7 +78,9 @@ type IGetServiceHandler = (
   userAttributes: IAzureUserAttributes,
   serviceId: NonEmptyString
 ) => Promise<
-  IResponseSuccessJson<Service> | IResponseErrorNotFound | IResponseErrorQuery
+  | IResponseSuccessJson<ApiService>
+  | IResponseErrorNotFound
+  | IResponseErrorQuery
 >;
 
 type IUpdateServiceHandler = (
@@ -83,9 +88,9 @@ type IUpdateServiceHandler = (
   clientIp: ClientIp,
   userAttributes: IAzureUserAttributes,
   serviceId: NonEmptyString,
-  service: IService
+  service: ApiService
 ) => Promise<
-  | IResponseSuccessJson<Service>
+  | IResponseSuccessJson<ApiService>
   | IResponseErrorValidation
   | IResponseErrorQuery
   | IResponseErrorInternal
@@ -96,15 +101,15 @@ type IUpdateServiceHandler = (
  * Converts a retrieved service to a service that can be shared via API
  */
 function retrievedServiceToPublic(
-  retrievedService: IRetrievedService
-): Service {
+  retrievedService: RetrievedService
+): ApiService {
   return {
     authorized_cidrs: Array.from(retrievedService.authorizedCIDRs).filter(
-      isCIDR
+      CIDR.is
     ),
     authorized_recipients: Array.from(
       retrievedService.authorizedRecipients
-    ).filter(isFiscalCode),
+    ).filter(FiscalCode.is),
     department_name: retrievedService.departmentName,
     id: retrievedService.id,
     organization_name: retrievedService.organizationName,
@@ -115,41 +120,39 @@ function retrievedServiceToPublic(
 }
 
 /**
+ * Converts an API Service to an internal Service model
+ */
+function servicePayloadToService(service: ApiService): Service {
+  return {
+    authorizedCIDRs: toAuthorizedCIDRs(service.authorized_cidrs),
+    authorizedRecipients: toAuthorizedRecipients(service.authorized_recipients),
+    departmentName: service.department_name,
+    organizationName: service.organization_name,
+    serviceId: service.service_id,
+    serviceName: service.service_name
+  };
+}
+
+/**
  * A middleware that extracts a Service payload from a request.
  */
 export const ServicePayloadMiddleware: IRequestMiddleware<
   IResponseErrorValidation,
-  IService
-> = request => {
-  const body = request.body;
-  if (!isService(body)) {
-    return Promise.resolve(
-      left<IResponseErrorValidation, IService>(
-        ResponseErrorValidation(
-          "Invalid service payload",
-          "Request body does not conform to the required service format"
-        )
-      )
+  ApiService
+> = request =>
+  new Promise(resolve => {
+    const validation = t.validate(request.body, ApiService);
+    const result = validation.mapLeft(
+      ResponseErrorFromValidationErrors(ApiService)
     );
-  }
-  const servicePayload: IService = {
-    authorizedCIDRs: toAuthorizedCIDRs(body.authorized_cidrs),
-    authorizedRecipients: toAuthorizedRecipients(body.authorized_recipients),
-    departmentName: body.department_name,
-    organizationName: body.organization_name,
-    serviceId: body.service_id,
-    serviceName: body.service_name
-  };
-  return Promise.resolve(
-    right<IResponseErrorValidation, IService>(servicePayload)
-  );
-};
+    resolve(result);
+  });
 
 export function UpdateServiceHandler(
   serviceModel: ServiceModel
 ): IUpdateServiceHandler {
   return async (_, __, ___, serviceId, serviceModelPayload) => {
-    if (serviceModelPayload.serviceId !== serviceId) {
+    if (serviceModelPayload.service_id !== serviceId) {
       return ResponseErrorValidation(
         "Error validating payload",
         "Value of `service_id` in the request body must match " +
@@ -182,7 +185,7 @@ export function UpdateServiceHandler(
       currentService => {
         const updatedService = {
           ...currentService,
-          ...serviceModelPayload,
+          ...servicePayloadToService(serviceModelPayload),
           serviceId
         };
         return updatedService;
@@ -209,24 +212,19 @@ export function UpdateServiceHandler(
 /**
  * Extracts the serviceId value from the URL path parameter.
  */
-const requiredServiceIdMiddleware = RequiredParamMiddleware<
+const requiredServiceIdMiddleware = RequiredParamMiddleware(
+  "serviceid",
   NonEmptyString
->(params => {
-  const serviceId = params.serviceid;
-  if (isNonEmptyString(serviceId)) {
-    return right(serviceId);
-  } else {
-    return left("Value of `serviceid` parameter must be a non empty string");
-  }
-});
+);
 
 export function CreateServiceHandler(
   serviceModel: ServiceModel
 ): ICreateServiceHandler {
   return async (_, __, ___, serviceModelPayload) => {
+    const service = servicePayloadToService(serviceModelPayload);
     const errorOrService = await serviceModel.create(
-      serviceModelPayload,
-      serviceModelPayload.serviceId
+      service,
+      service.serviceId
     );
     if (isRight(errorOrService)) {
       return ResponseSuccessJson(

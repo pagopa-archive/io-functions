@@ -1,9 +1,12 @@
+import * as t from "io-ts";
+import { PathReporter } from "io-ts/lib/PathReporter";
+
 import * as DocumentDb from "documentdb";
 import * as DocumentDbUtils from "../utils/documentdb";
 import {
   DocumentDbModelVersioned,
-  IVersionedModel,
-  ModelId
+  ModelId,
+  VersionedModel
 } from "../utils/documentdb_model_versioned";
 
 import { Either } from "fp-ts/lib/Either";
@@ -11,53 +14,63 @@ import { Option } from "fp-ts/lib/Option";
 
 import { Set } from "json-set-map";
 
-import { CIDR, isCIDR } from "../api/definitions/CIDR";
-import { FiscalCode, isFiscalCode } from "../api/definitions/FiscalCode";
+import { CIDR } from "../api/definitions/CIDR";
+import { FiscalCode } from "../api/definitions/FiscalCode";
 
 import { nonEmptyStringToModelId } from "../utils/conversions";
 import { NonNegativeNumber } from "../utils/numbers";
-import { NonEmptyString, toNonEmptyString } from "../utils/strings";
+import { NonEmptyString } from "../utils/strings";
+
+import { readonlySetType, tag } from "../utils/types";
 
 /**
  * Base interface for Service objects
  */
-export interface IService {
-  // this equals user's subscriptionId
-  readonly serviceId: NonEmptyString;
-  // the name of the department within the service
-  readonly departmentName: NonEmptyString;
-  // the name of the service
-  readonly serviceName: NonEmptyString;
-  // the name of the organization
-  readonly organizationName: NonEmptyString;
-  // list of authorized fiscal codes
-  readonly authorizedRecipients: ReadonlySet<FiscalCode>;
+export const Service = t.interface({
   // authorized source CIDRs
-  readonly authorizedCIDRs: ReadonlySet<CIDR>;
-}
+  authorizedCIDRs: readonlySetType(CIDR, "CIDRs"),
+  // list of authorized fiscal codes
+  authorizedRecipients: readonlySetType(FiscalCode, "fiscal codes"),
+  // the name of the department within the service
+  departmentName: NonEmptyString,
+  // the name of the organization
+  organizationName: NonEmptyString,
+  // this equals user's subscriptionId
+  serviceId: NonEmptyString,
+  // the name of the service
+  serviceName: NonEmptyString
+});
+
+export type Service = t.TypeOf<typeof Service>;
 
 /**
  * Interface for new Service objects
  */
-export interface INewService
-  extends IService,
-    DocumentDb.NewDocument,
-    IVersionedModel {
+
+interface INewServiceTag {
   readonly kind: "INewService";
 }
+
+export const NewService = tag<INewServiceTag>()(
+  t.intersection([Service, DocumentDbUtils.NewDocument, VersionedModel])
+);
+
+export type NewService = t.TypeOf<typeof NewService>;
 
 /**
  * Interface for retrieved Service objects
  *
  * Existing Service records have a version number.
  */
-export interface IRetrievedService
-  extends IService,
-    DocumentDb.RetrievedDocument,
-    IVersionedModel {
-  readonly id: NonEmptyString;
+interface IRetrievedServiceTag {
   readonly kind: "IRetrievedService";
 }
+
+export const RetrievedService = tag<IRetrievedServiceTag>()(
+  t.intersection([Service, DocumentDbUtils.RetrievedDocument, VersionedModel])
+);
+
+export type RetrievedService = t.TypeOf<typeof RetrievedService>;
 
 /**
  * Converts an Array or a Set of strings to a ReadonlySet of fiscalCodes.
@@ -65,53 +78,49 @@ export interface IRetrievedService
  * We need to handle Arrays as this method is called by database finders
  * who retrieve a plain json object.
  *
- * We need to handle Sets as this method is called on IService objects
- * passed to create(IService) and update(IService) model methods.
+ * We need to handle Sets as this method is called on Service objects
+ * passed to create(Service) and update(Service) model methods.
  *
  * @param authorizedRecipients  Array or Set of authorized fiscal codes
  *                              for this service.
+ *
+ * @deprecated Use the Service validation to do the conversion.
  */
 export function toAuthorizedRecipients(
   authorizedRecipients: ReadonlyArray<string> | ReadonlySet<string> | undefined
 ): ReadonlySet<FiscalCode> {
-  return new Set(Array.from(authorizedRecipients || []).filter(isFiscalCode));
+  return new Set(Array.from(authorizedRecipients || []).filter(FiscalCode.is));
 }
 
 /**
  * @see toAuthorizedRecipients
  * @param authorizedCIDRs   Array or Set of authorized CIDRs for this service.
+ *
+ * @deprecated Use the Service validation to do the conversion.
  */
 export function toAuthorizedCIDRs(
   authorizedCIDRs: ReadonlyArray<string> | ReadonlySet<string> | undefined
 ): ReadonlySet<CIDR> {
-  return new Set(Array.from(authorizedCIDRs || []).filter(isCIDR));
+  return new Set(Array.from(authorizedCIDRs || []).filter(CIDR.is));
 }
 
-function toRetrieved(result: DocumentDb.RetrievedDocument): IRetrievedService {
-  return {
-    ...result,
-    authorizedCIDRs: toAuthorizedCIDRs(result.authorizedCIDRs),
-    authorizedRecipients: toAuthorizedRecipients(result.authorizedRecipients),
-    departmentName: result.departmentName,
-    id: toNonEmptyString(result.id).toUndefined(),
-    kind: "IRetrievedService",
-    organizationName: result.organizationName,
-    serviceId: result.serviceId,
-    serviceName: result.serviceName,
-    version: result.version
-  } as IRetrievedService;
+function toRetrieved(result: DocumentDb.RetrievedDocument): RetrievedService {
+  const validation = t.validate(result, RetrievedService);
+  return validation.fold(_ => {
+    throw new Error(PathReporter.report(validation).join("\n"));
+  }, t.identity);
 }
 
-function getModelId(o: IService): ModelId {
+function getModelId(o: Service): ModelId {
   return nonEmptyStringToModelId(o.serviceId);
 }
 
 function updateModelId(
-  o: IService,
-  id: string,
+  o: Service,
+  id: NonEmptyString,
   version: NonNegativeNumber
-): INewService {
-  const newService: INewService = {
+): NewService {
+  const newService: NewService = {
     ...o,
     id,
     kind: "INewService",
@@ -120,7 +129,7 @@ function updateModelId(
   return newService;
 }
 
-function toBaseType(o: IRetrievedService): IService {
+function toBaseType(o: RetrievedService): Service {
   return {
     authorizedCIDRs: o.authorizedCIDRs,
     authorizedRecipients: o.authorizedRecipients,
@@ -135,9 +144,9 @@ function toBaseType(o: IRetrievedService): IService {
  * A model for handling Services
  */
 export class ServiceModel extends DocumentDbModelVersioned<
-  IService,
-  INewService,
-  IRetrievedService
+  Service,
+  NewService,
+  RetrievedService
 > {
   protected dbClient: DocumentDb.DocumentClient;
   protected collectionUri: DocumentDbUtils.IDocumentDbCollectionUri;
@@ -169,7 +178,7 @@ export class ServiceModel extends DocumentDbModelVersioned<
 
   public findOneByServiceId(
     serviceId: NonEmptyString
-  ): Promise<Either<DocumentDb.QueryError, Option<IRetrievedService>>> {
+  ): Promise<Either<DocumentDb.QueryError, Option<RetrievedService>>> {
     return super.findLastVersionByModelId("services", "serviceId", serviceId);
   }
 }

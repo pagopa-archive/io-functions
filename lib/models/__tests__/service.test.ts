@@ -1,16 +1,19 @@
 // tslint:disable:no-any
+
+import * as t from "io-ts";
+
 import { isLeft, isRight } from "fp-ts/lib/Either";
 import { isSome, Option, Some } from "fp-ts/lib/Option";
 
 import * as DocumentDb from "documentdb";
 
 import * as DocumentDbUtils from "../../utils/documentdb";
-import { toNonNegativeNumber } from "../../utils/numbers";
-import { NonEmptyString, toNonEmptyString } from "../../utils/strings";
+import { NonNegativeNumber } from "../../utils/numbers";
+import { NonEmptyString } from "../../utils/strings";
 
 import {
-  IRetrievedService,
-  IService,
+  RetrievedService,
+  Service,
   ServiceModel,
   toAuthorizedCIDRs,
   toAuthorizedRecipients
@@ -29,18 +32,18 @@ const servicesCollectionUrl = DocumentDbUtils.getCollectionUri(
 
 const aServiceId = "xyz";
 
-const aRetrievedService: IRetrievedService = {
+const aRetrievedService: RetrievedService = {
   _self: "xyz",
   _ts: "xyz",
   authorizedCIDRs: toAuthorizedCIDRs([]),
   authorizedRecipients: toAuthorizedRecipients([]),
-  departmentName: _getO(toNonEmptyString("MyDept")),
-  id: _getO(toNonEmptyString("xyz")),
+  departmentName: _getO(t.validate("MyDept", NonEmptyString).toOption()),
+  id: _getO(t.validate("xyz", NonEmptyString).toOption()),
   kind: "IRetrievedService",
-  organizationName: _getO(toNonEmptyString("MyOrg")),
-  serviceId: _getO(toNonEmptyString(aServiceId)),
-  serviceName: _getO(toNonEmptyString("MyService")),
-  version: _getO(toNonNegativeNumber(0))
+  organizationName: _getO(t.validate("MyOrg", NonEmptyString).toOption()),
+  serviceId: _getO(t.validate(aServiceId, NonEmptyString).toOption()),
+  serviceName: _getO(t.validate("MyService", NonEmptyString).toOption()),
+  version: _getO(t.validate(0, NonNegativeNumber).toOption())
 };
 
 const aSerializedService = {
@@ -64,7 +67,7 @@ describe("findOneServiceById", () => {
     );
 
     const result = await model.findOneByServiceId(
-      _getO(toNonEmptyString("id"))
+      _getO(t.validate("id", NonEmptyString).toOption())
     );
 
     expect(isRight(result)).toBeTruthy();
@@ -89,7 +92,7 @@ describe("findOneServiceById", () => {
     );
 
     const result = await model.findOneByServiceId(
-      _getO(toNonEmptyString("id"))
+      _getO(t.validate("id", NonEmptyString).toOption())
     );
 
     expect(isRight(result)).toBeTruthy();
@@ -104,20 +107,24 @@ describe("createService", () => {
     const clientMock: any = {
       createDocument: jest.fn((_, newDocument, __, cb) => {
         cb(undefined, {
-          ...newDocument
+          ...newDocument,
+          _self: "self",
+          _ts: "123"
         });
       })
     };
 
     const model = new ServiceModel(clientMock, servicesCollectionUrl);
 
-    const newService: IService = {
+    const newService: Service = {
       authorizedCIDRs: toAuthorizedCIDRs([]),
       authorizedRecipients: toAuthorizedRecipients([]),
-      departmentName: _getO(toNonEmptyString("MyService")),
-      organizationName: _getO(toNonEmptyString("MyService")),
-      serviceId: _getO(toNonEmptyString(aServiceId)),
-      serviceName: _getO(toNonEmptyString("MyService"))
+      departmentName: _getO(t.validate("MyService", NonEmptyString).toOption()),
+      organizationName: _getO(
+        t.validate("MyService", NonEmptyString).toOption()
+      ),
+      serviceId: _getO(t.validate(aServiceId, NonEmptyString).toOption()),
+      serviceName: _getO(t.validate("MyService", NonEmptyString).toOption())
     };
 
     const result = await model.create(newService, newService.serviceId);
@@ -145,13 +152,15 @@ describe("createService", () => {
 
     const model = new ServiceModel(clientMock, servicesCollectionUrl);
 
-    const newService: IService = {
+    const newService: Service = {
       authorizedCIDRs: toAuthorizedCIDRs([]),
       authorizedRecipients: toAuthorizedRecipients([]),
-      departmentName: _getO(toNonEmptyString("MyService")),
-      organizationName: _getO(toNonEmptyString("MyService")),
-      serviceId: _getO(toNonEmptyString(aServiceId)),
-      serviceName: _getO(toNonEmptyString("MyService"))
+      departmentName: _getO(t.validate("MyService", NonEmptyString).toOption()),
+      organizationName: _getO(
+        t.validate("MyService", NonEmptyString).toOption()
+      ),
+      serviceId: _getO(t.validate(aServiceId, NonEmptyString).toOption()),
+      serviceName: _getO(t.validate("MyService", NonEmptyString).toOption())
     };
 
     const result = await model.create(newService, newService.serviceId);
@@ -170,7 +179,9 @@ describe("update", () => {
     const clientMock: any = {
       createDocument: jest.fn((_, newDocument, __, cb) => {
         cb(undefined, {
-          ...newDocument
+          ...newDocument,
+          _self: "self",
+          _ts: "123"
         });
       }),
       readDocument: jest.fn((_, __, cb) => cb(undefined, aRetrievedService))

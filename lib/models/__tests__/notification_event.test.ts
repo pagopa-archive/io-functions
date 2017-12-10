@@ -1,35 +1,42 @@
 // tslint:disable:no-null-keyword
 // tslint:disable:no-any
+
+import * as t from "io-ts";
+
 import { Option, Some } from "fp-ts/lib/Option";
 
-import { toNonEmptyString } from "../../utils/strings";
+import { NonEmptyString } from "../../utils/strings";
 
-import { toMessageBodyMarkdown } from "../../api/definitions/MessageBodyMarkdown";
+import { MessageBodyMarkdown } from "../../api/definitions/MessageBodyMarkdown";
 
-import { isNotificationEvent } from "../notification_event";
+import { NotificationEvent } from "../notification_event";
 
-import { IMessageContent } from "../message";
+import { MessageContent } from "../../api/definitions/MessageContent";
 
-import { ICreatedMessageEventSenderMetadata } from "../created_message_sender_metadata";
+import { CreatedMessageEventSenderMetadata } from "../created_message_sender_metadata";
 
 // DANGEROUS, only use in tests
 function _getO<T>(o: Option<T>): T {
   return (o as Some<T>).value;
 }
 
-const aMessageId = _getO(toNonEmptyString("A_MESSAGE_ID"));
-const aNotificationId = _getO(toNonEmptyString("A_NOTIFICATION_ID"));
+const aMessageId = _getO(t.validate("A_MESSAGE_ID", NonEmptyString).toOption());
+const aNotificationId = _getO(
+  t.validate("A_NOTIFICATION_ID", NonEmptyString).toOption()
+);
 
-const aMessageBodyMarkdown = _getO(toMessageBodyMarkdown("test".repeat(80)));
+const aMessageBodyMarkdown = _getO(
+  t.validate("test".repeat(80), MessageBodyMarkdown).toOption()
+);
 
-const aMessageContent: IMessageContent = {
-  bodyMarkdown: aMessageBodyMarkdown
+const aMessageContent: MessageContent = {
+  markdown: aMessageBodyMarkdown
 };
 
-const aSenderMetadata: ICreatedMessageEventSenderMetadata = {
-  departmentName: _getO(toNonEmptyString("IT")),
-  organizationName: _getO(toNonEmptyString("AgID")),
-  serviceName: _getO(toNonEmptyString("Test"))
+const aSenderMetadata: CreatedMessageEventSenderMetadata = {
+  departmentName: _getO(t.validate("IT", NonEmptyString).toOption()),
+  organizationName: _getO(t.validate("AgID", NonEmptyString).toOption()),
+  serviceName: _getO(t.validate("Test", NonEmptyString).toOption())
 };
 
 describe("isNotificationEvent", () => {
@@ -43,7 +50,7 @@ describe("isNotificationEvent", () => {
       }
     ];
 
-    fixtures.forEach(f => expect(isNotificationEvent(f)).toBeTruthy());
+    fixtures.forEach(f => expect(NotificationEvent.is(f)).toBeTruthy());
   });
 
   it("should return false for invalid payloads", () => {
@@ -73,6 +80,6 @@ describe("isNotificationEvent", () => {
       }
     ];
 
-    fixtures.forEach(f => expect(isNotificationEvent(f)).toBeFalsy());
+    fixtures.forEach(f => expect(NotificationEvent.is(f)).toBeFalsy());
   });
 });

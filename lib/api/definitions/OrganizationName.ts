@@ -5,19 +5,14 @@
 // tslint:disable:jsdoc-format
 // tslint:disable:interface-name
 // tslint:disable:no-any
+// tslint:disable:object-literal-sort-keys
 
 /**
  * The organizazione that runs the service. Will be added to the content of sent messages to identify the sender.
  */
 
-import {
-  isNonEmptyString,
-  toNonEmptyString,
-  NonEmptyString
-} from "../../utils/strings";
+import { NonEmptyString } from "../../utils/strings";
 
 export type OrganizationName = NonEmptyString;
 
-export const isOrganizationName = isNonEmptyString;
-
-export const toOrganizationName = toNonEmptyString;
+export const OrganizationName = NonEmptyString;

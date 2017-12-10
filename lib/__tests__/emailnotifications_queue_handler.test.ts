@@ -11,6 +11,7 @@ process.env.COSMOSDB_NAME = "anyDbName";
 // tslint:disable-next-line:no-object-mutation
 process.env.CUSTOMCONNSTR_SENDGRID_KEY = "anySendgridKey";
 
+import * as t from "io-ts";
 import * as NodeMailer from "nodemailer";
 
 import MockTransport = require("nodemailer-mock-transport");
@@ -18,10 +19,10 @@ import MockTransport = require("nodemailer-mock-transport");
 import { none, Option, some, Some } from "fp-ts/lib/Option";
 
 import { isLeft, isRight, left, right } from "fp-ts/lib/Either";
-import { toEmailString, toNonEmptyString } from "../utils/strings";
+import { EmailString, NonEmptyString } from "../utils/strings";
 
-import { toFiscalCode } from "../api/definitions/FiscalCode";
-import { NotificationChannelStatus } from "../api/definitions/NotificationChannelStatus";
+import { FiscalCode } from "../api/definitions/FiscalCode";
+import { NotificationChannelStatusEnum } from "../api/definitions/NotificationChannelStatus";
 
 import {
   generateDocumentHtml,
@@ -34,36 +35,38 @@ import {
 } from "../emailnotifications_queue_handler";
 
 import * as winston from "winston";
-import { toMessageBodyMarkdown } from "../api/definitions/MessageBodyMarkdown";
-import { toMessageSubject } from "../api/definitions/MessageSubject";
-import { ICreatedMessageEventSenderMetadata } from "../models/created_message_sender_metadata";
+import { MessageBodyMarkdown } from "../api/definitions/MessageBodyMarkdown";
+import { MessageSubject } from "../api/definitions/MessageSubject";
+import { CreatedMessageEventSenderMetadata } from "../models/created_message_sender_metadata";
 import {
-  INotification,
-  NotificationAddressSource
+  Notification,
+  NotificationAddressSourceEnum
 } from "../models/notification";
-import { INotificationEvent } from "../models/notification_event";
+import { NotificationEvent } from "../models/notification_event";
 
 // DANGEROUS, only use in tests
 function _getO<T>(o: Option<T>): T {
   return (o as Some<T>).value;
 }
 
-const aFiscalCode = _getO(toFiscalCode("FRLFRC74E04B157I"));
+const aFiscalCode = _getO(
+  t.validate("FRLFRC74E04B157I", FiscalCode).toOption()
+);
 
-const aNotification: INotification = {
+const aNotification: Notification = {
   emailNotification: {
-    addressSource: NotificationAddressSource.DEFAULT_ADDRESS,
-    status: NotificationChannelStatus.QUEUED,
-    toAddress: _getO(toEmailString("pinco@pallino.com"))
+    addressSource: NotificationAddressSourceEnum.DEFAULT_ADDRESS,
+    status: NotificationChannelStatusEnum.QUEUED,
+    toAddress: _getO(t.validate("pinco@pallino.com", EmailString).toOption())
   },
   fiscalCode: aFiscalCode,
-  messageId: _getO(toNonEmptyString("A_MESSAGE_ID"))
+  messageId: _getO(t.validate("A_MESSAGE_ID", NonEmptyString).toOption())
 };
 
-const aSenderMetadata: ICreatedMessageEventSenderMetadata = {
-  departmentName: _getO(toNonEmptyString("IT")),
-  organizationName: _getO(toNonEmptyString("agid")),
-  serviceName: _getO(toNonEmptyString("Test"))
+const aSenderMetadata: CreatedMessageEventSenderMetadata = {
+  departmentName: _getO(t.validate("IT", NonEmptyString).toOption()),
+  organizationName: _getO(t.validate("agid", NonEmptyString).toOption()),
+  serviceName: _getO(t.validate("Test", NonEmptyString).toOption())
 };
 
 describe("sendMail", () => {
@@ -172,7 +175,7 @@ describe("handleNotification", () => {
     const mockTransporter = NodeMailer.createTransport(mockTransport);
 
     const aMessageContent = {
-      bodyMarkdown: "# Hello world!"
+      markdown: "# Hello world!"
     };
 
     const notificationModelMock = {
@@ -215,7 +218,7 @@ describe("handleNotification", () => {
     expect(mockAppinsights.trackEvent).toHaveBeenCalledWith({
       name: "notification.email.delivery",
       properties: {
-        addressSource: NotificationAddressSource.DEFAULT_ADDRESS,
+        addressSource: NotificationAddressSourceEnum.DEFAULT_ADDRESS,
         messageId: "A_MESSAGE_ID",
         notificationId: "A_NOTIFICATION_ID",
         success: "true",
@@ -233,7 +236,7 @@ describe("handleNotification", () => {
       })
     ).toEqual({
       emailNotification: {
-        status: NotificationChannelStatus.SENT_TO_CHANNEL
+        status: NotificationChannelStatusEnum.SENT_TO_CHANNEL
       }
     });
 
@@ -250,7 +253,7 @@ describe("handleNotification", () => {
     const mockTransporter = NodeMailer.createTransport(mockTransport);
 
     const aMessageContent = {
-      bodyMarkdown: `
+      markdown: `
 # Hello world!
 
 This is a *message* from the future!
@@ -298,7 +301,7 @@ This is a message from the future!`.replace(/[ \n]+/g, "|")
     const mockTransporter = NodeMailer.createTransport(mockTransport);
 
     const aMessageContent = {
-      bodyMarkdown: "# Hello world!"
+      markdown: "# Hello world!"
     };
 
     const notificationModelMock = {
@@ -333,7 +336,7 @@ This is a message from the future!`.replace(/[ \n]+/g, "|")
     const mockTransporter = NodeMailer.createTransport(mockTransport);
 
     const aMessageContent = {
-      bodyMarkdown: "# Hello world!",
+      markdown: "# Hello world!",
       subject: "A custom subject"
     };
 
@@ -369,7 +372,7 @@ This is a message from the future!`.replace(/[ \n]+/g, "|")
     const mockTransporter = NodeMailer.createTransport(mockTransport as any);
 
     const aMessageContent = {
-      bodyMarkdown: "# Hello world!"
+      markdown: "# Hello world!"
     };
 
     const notificationModelMock = {
@@ -390,7 +393,7 @@ This is a message from the future!`.replace(/[ \n]+/g, "|")
     expect(mockAppinsights.trackEvent).toHaveBeenCalledWith({
       name: "notification.email.delivery",
       properties: {
-        addressSource: NotificationAddressSource.DEFAULT_ADDRESS,
+        addressSource: NotificationAddressSourceEnum.DEFAULT_ADDRESS,
         messageId: "A_MESSAGE_ID",
         notificationId: "A_NOTIFICATION_ID",
         success: "false",
@@ -413,7 +416,7 @@ This is a message from the future!`.replace(/[ \n]+/g, "|")
     const mockTransporter = NodeMailer.createTransport(mockTransport);
 
     const aMessageContent = {
-      bodyMarkdown: "# Hello world!"
+      markdown: "# Hello world!"
     };
 
     const notificationModelMock = {
@@ -443,7 +446,7 @@ This is a message from the future!`.replace(/[ \n]+/g, "|")
       })
     ).toEqual({
       emailNotification: {
-        status: NotificationChannelStatus.SENT_TO_CHANNEL
+        status: NotificationChannelStatusEnum.SENT_TO_CHANNEL
       }
     });
 
@@ -503,16 +506,18 @@ describe("test processReject function", () => {
       done: jest.fn()
     };
 
-    const emailNotificationMock: INotificationEvent = {
+    const emailNotificationMock: NotificationEvent = {
       messageContent: {
-        bodyMarkdown: _getO(toMessageBodyMarkdown("test".repeat(80)))
+        markdown: _getO(
+          t.validate("test".repeat(80), MessageBodyMarkdown).toOption()
+        )
       },
-      messageId: _getO(toNonEmptyString("xxx")),
-      notificationId: _getO(toNonEmptyString("yyy")),
+      messageId: _getO(t.validate("xxx", NonEmptyString).toOption()),
+      notificationId: _getO(t.validate("yyy", NonEmptyString).toOption()),
       senderMetadata: {
-        departmentName: _getO(toNonEmptyString("aaa")),
-        organizationName: _getO(toNonEmptyString("agid")),
-        serviceName: _getO(toNonEmptyString("ccc"))
+        departmentName: _getO(t.validate("aaa", NonEmptyString).toOption()),
+        organizationName: _getO(t.validate("agid", NonEmptyString).toOption()),
+        serviceName: _getO(t.validate("ccc", NonEmptyString).toOption())
       }
     };
 
@@ -533,7 +538,9 @@ describe("test processReject function", () => {
 });
 describe("generate html document", () => {
   it("should convert markdown to the right html", async () => {
-    const subject = _getO(toMessageSubject("This is the subject"));
+    const subject = _getO(
+      t.validate("This is the subject", MessageSubject).toOption()
+    );
     const markdown = `
 # This is an H1
 Lorem ipsum
@@ -549,11 +556,15 @@ Lorem ipsum
 2.  McHale
 3.  Parish
 `;
-    const body = _getO(toMessageBodyMarkdown(markdown));
-    const metadata: ICreatedMessageEventSenderMetadata = {
-      departmentName: _getO(toNonEmptyString("departmentXXX")),
-      organizationName: _getO(toNonEmptyString("organizationXXX")),
-      serviceName: _getO(toNonEmptyString("serviceZZZ"))
+    const body = _getO(t.validate(markdown, MessageBodyMarkdown).toOption());
+    const metadata: CreatedMessageEventSenderMetadata = {
+      departmentName: _getO(
+        t.validate("departmentXXX", NonEmptyString).toOption()
+      ),
+      organizationName: _getO(
+        t.validate("organizationXXX", NonEmptyString).toOption()
+      ),
+      serviceName: _getO(t.validate("serviceZZZ", NonEmptyString).toOption())
     };
 
     const result = await generateDocumentHtml(subject, body, metadata);

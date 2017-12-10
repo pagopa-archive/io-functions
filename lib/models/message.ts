@@ -1,62 +1,40 @@
+import * as t from "io-ts";
+
 import * as DocumentDb from "documentdb";
-import is from "ts-is";
+
+import { tag } from "../utils/types";
 
 import * as DocumentDbUtils from "../utils/documentdb";
 import { DocumentDbModel } from "../utils/documentdb_model";
 
 import { Either, isLeft, left, right } from "fp-ts/lib/Either";
 import { Option } from "fp-ts/lib/Option";
-import { isNonEmptyString, NonEmptyString } from "../utils/strings";
+import { NonEmptyString } from "../utils/strings";
 
-import {
-  isMessageBodyMarkdown,
-  MessageBodyMarkdown
-} from "../api/definitions/MessageBodyMarkdown";
-import {
-  isMessageSubject,
-  MessageSubject
-} from "../api/definitions/MessageSubject";
+import { MessageContent } from "../api/definitions/MessageContent";
 
-import { FiscalCode, isFiscalCode } from "../api/definitions/FiscalCode";
+import { FiscalCode } from "../api/definitions/FiscalCode";
 
 import { BlobService } from "azure-storage";
 import { upsertBlobFromObject } from "../utils/azure_storage";
 
 const MESSAGE_BLOB_STORAGE_SUFFIX = ".json";
 
-/**
- * The content of a Message
- */
-export interface IMessageContent {
-  readonly bodyMarkdown: MessageBodyMarkdown;
-  readonly subject?: MessageSubject;
-}
+const MessageBase = t.interface({
+  // the fiscal code of the recipient
+  fiscalCode: FiscalCode,
 
-/**
- * Type guard for IMessageContent
- */
-export const isIMessageContent = is<IMessageContent>(
-  arg =>
-    arg &&
-    isMessageBodyMarkdown(arg.bodyMarkdown) &&
-    (arg.subject === undefined ||
-      arg.subject === null ||
-      isMessageSubject(arg.subject))
-);
+  // the identifier of the service of the sender
+  senderServiceId: t.string,
+
+  // the userId of the sender (this is opaque and depends on the API gateway)
+  senderUserId: NonEmptyString
+});
 
 /**
  * The attributes common to all types of Message
  */
-interface IMessageBase {
-  // the fiscal code of the recipient
-  readonly fiscalCode: FiscalCode;
-
-  // the identifier of the service of the sender
-  readonly senderServiceId: string;
-
-  // the userId of the sender (this is opaque and depends on the API gateway)
-  readonly senderUserId: NonEmptyString;
-}
+type MessageBase = t.TypeOf<typeof MessageBase>;
 
 /**
  * A Message without content.
@@ -64,7 +42,9 @@ interface IMessageBase {
  * A Message gets stored without content if the recipient didn't opt-in
  * to have the content of the messages permanently stored in his inbox.
  */
-export type IMessageWithoutContent = IMessageBase;
+export type MessageWithoutContent = MessageBase;
+
+export const MessageWithoutContent = MessageBase;
 
 /**
  * A Message with content
@@ -72,158 +52,106 @@ export type IMessageWithoutContent = IMessageBase;
  * A Message gets stored with content if the recipient opted-in
  * to have the content of the messages permanently stored in his inbox.
  */
-export interface IMessageWithContent extends IMessageBase {
-  readonly content: IMessageContent;
-}
+export const MessageWithContent = t.intersection([
+  t.interface({
+    content: MessageContent
+  }),
+  MessageBase
+]);
+
+export type MessageWithContent = t.TypeOf<typeof MessageWithContent>;
 
 /**
  * A Message can be with our without content
  */
-export type IMessage = IMessageWithoutContent | IMessageWithContent;
+export const Message = t.union([MessageWithoutContent, MessageWithContent]);
 
-/**
- * Type guard for IMessageBase
- */
-const isIMessageBase = is<IMessageBase>(
-  arg =>
-    arg &&
-    isFiscalCode(arg.fiscalCode) &&
-    isNonEmptyString(arg.senderServiceId) &&
-    isNonEmptyString(arg.senderUserId)
-);
-
-/**
- * Type guard for IMessageWithContent
- */
-export const isIMessageWithContent = is<IMessageWithContent>(
-  arg => arg && isIMessageContent(arg.content) && isIMessageBase(arg)
-);
-
-/**
- * Type guard for IMessageWithoutContent
- */
-export const isIMessageWithoutContent = is<IMessageWithoutContent>(
-  arg =>
-    arg &&
-    (arg.content === undefined || arg.content === null) &&
-    isIMessageBase(arg)
-);
-
-/**
- * Type guard for IMessage
- */
-export const isIMessage = is<IMessage>(
-  arg => isIMessageWithContent(arg) || isIMessageWithoutContent(arg)
-);
+export type Message = t.TypeOf<typeof Message>;
 
 /**
  * A (yet to be saved) Message with content
  */
-export interface INewMessageWithContent
-  extends IMessageWithContent,
-    DocumentDb.NewDocument {
+
+interface INewMessageWithContentTag {
   readonly kind: "INewMessageWithContent";
-  readonly id: NonEmptyString;
 }
+
+export const NewMessageWithContent = tag<INewMessageWithContentTag>()(
+  t.intersection([MessageWithContent, DocumentDbUtils.NewDocument])
+);
+
+export type NewMessageWithContent = t.TypeOf<typeof NewMessageWithContent>;
 
 /**
  * A (yet to be saved) Message without content
  */
-export interface INewMessageWithoutContent
-  extends IMessageWithoutContent,
-    DocumentDb.NewDocument {
+interface INewMessageWithoutContentTag {
   readonly kind: "INewMessageWithoutContent";
-  readonly id: NonEmptyString;
 }
+
+export const NewMessageWithoutContent = tag<INewMessageWithoutContentTag>()(
+  t.intersection([MessageWithoutContent, DocumentDbUtils.NewDocument])
+);
+
+export type NewMessageWithoutContent = t.TypeOf<
+  typeof NewMessageWithoutContent
+>;
 
 /**
  * A (yet to be saved) Message
  */
-export type INewMessage = INewMessageWithContent | INewMessageWithoutContent;
+export const NewMessage = t.union([
+  NewMessageWithContent,
+  NewMessageWithoutContent
+]);
 
-/**
- * Type guard for INewMessageWithContent
- */
-export const isINewMessageWithContent = is<INewMessageWithContent>(
-  arg => isNonEmptyString(arg.id) && isIMessageWithContent(arg)
-);
-
-/**
- * Type guard for INewMessageWithoutContent
- */
-export const isINewMessageWithoutContent = is<INewMessageWithoutContent>(
-  arg => isNonEmptyString(arg.id) && isIMessageWithoutContent(arg)
-);
-
-/**
- * Type guard for INewMessage
- */
-export const isINewMessage = is<INewMessage>(
-  arg => isINewMessageWithContent(arg) || isINewMessageWithoutContent(arg)
-);
+export type NewMessage = t.TypeOf<typeof NewMessage>;
 
 /**
  * A (previously saved) retrieved Message with content
  */
-export interface IRetrievedMessageWithContent
-  extends Readonly<IMessageWithContent>,
-    Readonly<DocumentDb.RetrievedDocument> {
-  readonly id: NonEmptyString;
+
+interface IRetrievedMessageWithContentTag {
   readonly kind: "IRetrievedMessageWithContent";
 }
+
+export const RetrievedMessageWithContent = tag<
+  IRetrievedMessageWithContentTag
+>()(t.intersection([MessageWithContent, DocumentDbUtils.RetrievedDocument]));
+
+export type RetrievedMessageWithContent = t.TypeOf<
+  typeof RetrievedMessageWithContent
+>;
 
 /**
  * A (previously saved) retrieved Message without content
  */
-export interface IRetrievedMessageWithoutContent
-  extends Readonly<IMessageWithoutContent>,
-    Readonly<DocumentDb.RetrievedDocument> {
-  readonly id: NonEmptyString;
+
+interface IRetrievedMessageWithoutContentTag {
   readonly kind: "IRetrievedMessageWithoutContent";
 }
+
+export const RetrievedMessageWithoutContent = tag<
+  IRetrievedMessageWithoutContentTag
+>()(t.intersection([MessageWithoutContent, DocumentDbUtils.RetrievedDocument]));
+
+export type RetrievedMessageWithoutContent = t.TypeOf<
+  typeof RetrievedMessageWithoutContent
+>;
 
 /**
  * A (previously saved) retrieved Message
  */
-export type IRetrievedMessage =
-  | IRetrievedMessageWithContent
-  | IRetrievedMessageWithoutContent;
 
-/**
- * Type guard for IRetrievedMessageWithContent
- */
-export const isIRetrievedMessageWithContent = is<IRetrievedMessageWithContent>(
-  arg =>
-    isNonEmptyString(arg.id) &&
-    typeof arg._self === "string" &&
-    (typeof arg._ts === "string" || typeof arg._ts === "number") &&
-    isIMessageWithContent(arg)
-);
+export const RetrievedMessage = t.union([
+  RetrievedMessageWithContent,
+  RetrievedMessageWithoutContent
+]);
 
-/**
- * Type guard for IRetrievedMessageWithoutContent
- */
-export const isIRetrievedMessageWithoutContent = is<
-  IRetrievedMessageWithoutContent
->(
-  arg =>
-    isNonEmptyString(arg.id) &&
-    typeof arg._self === "string" &&
-    (typeof arg._ts === "string" || typeof arg._ts === "number") &&
-    isIMessageWithoutContent(arg)
-);
+export type RetrievedMessage = t.TypeOf<typeof RetrievedMessage>;
 
-/**
- * Type guard for IRetrievedMessage
- */
-export const isIRetrievedMessage = is<IRetrievedMessage>(
-  arg =>
-    isIRetrievedMessageWithContent(arg) ||
-    isIRetrievedMessageWithoutContent(arg)
-);
-
-function toBaseType(o: IRetrievedMessage): IMessage {
-  if (isIRetrievedMessageWithContent(o)) {
+function toBaseType(o: RetrievedMessage): Message {
+  if (RetrievedMessageWithContent.is(o)) {
     return {
       content: o.content,
       fiscalCode: o.fiscalCode,
@@ -239,31 +167,25 @@ function toBaseType(o: IRetrievedMessage): IMessage {
   }
 }
 
-function toRetrieved(
-  result: DocumentDb.RetrievedDocument
-): IRetrievedMessageWithContent | IRetrievedMessageWithoutContent {
-  if (isIRetrievedMessageWithContent(result)) {
-    return {
-      ...result,
-      kind: "IRetrievedMessageWithContent"
-    } as IRetrievedMessageWithContent;
-  } else {
-    // TODO: we kind of trusting the data storage that this is indeed valid
-    // TODO: possibly return an Option in case result fails validation
-    return {
-      ...result,
-      kind: "IRetrievedMessageWithoutContent"
-    } as IRetrievedMessageWithoutContent;
+function toRetrieved(result: DocumentDb.RetrievedDocument): RetrievedMessage {
+  if (RetrievedMessageWithContent.is(result)) {
+    return result;
   }
+  if (RetrievedMessageWithoutContent.is(result)) {
+    return result;
+  }
+  throw new Error(
+    "retrieved result was neither a RetrievedMessageWithContent nor a RetrievedMessageWithoutContent"
+  );
 }
 
 /**
  * A model for handling Messages
  */
 export class MessageModel extends DocumentDbModel<
-  IMessage,
-  INewMessage,
-  IRetrievedMessage
+  Message,
+  NewMessage,
+  RetrievedMessage
 > {
   protected dbClient: DocumentDb.DocumentClient;
   protected collectionUri: DocumentDbUtils.IDocumentDbCollectionUri;
@@ -303,7 +225,7 @@ export class MessageModel extends DocumentDbModel<
   public async findMessageForRecipient(
     fiscalCode: FiscalCode,
     messageId: string
-  ): Promise<Either<DocumentDb.QueryError, Option<IRetrievedMessage>>> {
+  ): Promise<Either<DocumentDb.QueryError, Option<RetrievedMessage>>> {
     const errorOrMaybeMessage = await this.find(messageId, fiscalCode);
 
     return errorOrMaybeMessage.map(maybeMessage =>
@@ -318,7 +240,7 @@ export class MessageModel extends DocumentDbModel<
    */
   public findMessages(
     fiscalCode: FiscalCode
-  ): DocumentDbUtils.IResultIterator<IRetrievedMessageWithContent> {
+  ): DocumentDbUtils.IResultIterator<RetrievedMessageWithContent> {
     return DocumentDbUtils.queryDocuments(this.dbClient, this.collectionUri, {
       parameters: [
         {
@@ -342,7 +264,7 @@ export class MessageModel extends DocumentDbModel<
     blobService: BlobService,
     messageId: string,
     partitionKey: string,
-    messageContent: IMessageContent
+    messageContent: MessageContent
   ): Promise<
     Either<Error | DocumentDb.QueryError, Option<DocumentDb.AttachmentMeta>>
   > {
@@ -350,7 +272,7 @@ export class MessageModel extends DocumentDbModel<
     const blobId = `${messageId}${MESSAGE_BLOB_STORAGE_SUFFIX}`;
 
     // store media (attachment) with message content in blob storage
-    const errorOrMessageContent = await upsertBlobFromObject<IMessageContent>(
+    const errorOrMessageContent = await upsertBlobFromObject<MessageContent>(
       blobService,
       this.containerName,
       blobId,

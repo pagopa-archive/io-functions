@@ -1,9 +1,11 @@
 /*
- * This function will process events triggered by newly created messages.
- * For each new input message, the delivery preferences associated to the
- * recipient of the message gets retrieved and a notification gets delivered
- * to each configured channel.
- */
+* This function will process events triggered by newly created messages.
+* For each new input message, the delivery preferences associated to the
+* recipient of the message gets retrieved and a notification gets delivered
+* to each configured channel.
+*/
+
+import * as t from "io-ts";
 
 import { ulid } from "ulid";
 import * as winston from "winston";
@@ -20,29 +22,23 @@ import { fromNullable, isNone, Option } from "fp-ts/lib/Option";
 
 import { BlobService, createBlobService } from "azure-storage";
 
+import { MessageContent } from "./api/definitions/MessageContent";
 import { NewMessageDefaultAddresses } from "./api/definitions/NewMessageDefaultAddresses";
-import { NotificationChannelStatus } from "./api/definitions/NotificationChannelStatus";
+import { NotificationChannelStatusEnum } from "./api/definitions/NotificationChannelStatus";
 
 import { getRequiredStringEnv } from "./utils/env";
 
+import { CreatedMessageEvent } from "./models/created_message_event";
+import { CreatedMessageEventSenderMetadata } from "./models/created_message_sender_metadata";
+import { MessageModel, NewMessageWithoutContent } from "./models/message";
 import {
-  ICreatedMessageEvent,
-  isICreatedMessageEvent
-} from "./models/created_message_event";
-import { ICreatedMessageEventSenderMetadata } from "./models/created_message_sender_metadata";
-import {
-  IMessageContent,
-  INewMessageWithoutContent,
-  MessageModel
-} from "./models/message";
-import {
-  INewNotification,
-  INotificationChannelEmail,
-  IRetrievedNotification,
-  NotificationAddressSource,
-  NotificationModel
+  NewNotification,
+  NotificationAddressSourceEnum,
+  NotificationChannelEmail,
+  NotificationModel,
+  RetrievedNotification
 } from "./models/notification";
-import { INotificationEvent } from "./models/notification_event";
+import { NotificationEvent } from "./models/notification_event";
 import { ProfileModel } from "./models/profile";
 
 import { Either, isLeft, isRight, left, right } from "fp-ts/lib/Either";
@@ -79,16 +75,18 @@ const storageConnectionString = getRequiredStringEnv("QueueStorageConnection");
  * Input and output bindings for this function
  * see CreatedMessageQueueHandler/function.json
  */
-interface IContextWithBindings extends IContext {
-  readonly bindings: {
+const ContextWithBindings = t.interface({
+  bindings: t.partial({
     // input bindings
-    readonly createdMessage?: ICreatedMessageEvent;
+    createdMessage: CreatedMessageEvent,
 
     // output bindings
     // tslint:disable-next-line:readonly-keyword
-    emailNotification?: INotificationEvent;
-  };
-}
+    emailNotification: NotificationEvent
+  })
+});
+
+type ContextWithBindings = t.TypeOf<typeof ContextWithBindings> & IContext;
 
 /**
  * Bad things that can happen while we process the message
@@ -113,10 +111,10 @@ export async function handleMessage(
   messageModel: MessageModel,
   notificationModel: NotificationModel,
   blobService: BlobService,
-  newMessageWithoutContent: INewMessageWithoutContent,
-  messageContent: IMessageContent,
+  newMessageWithoutContent: NewMessageWithoutContent,
+  messageContent: MessageContent,
   defaultAddresses: Option<NewMessageDefaultAddresses>
-): Promise<Either<ProcessingError, IRetrievedNotification>> {
+): Promise<Either<ProcessingError, RetrievedNotification>> {
   // async fetch of profile data associated to the fiscal code the message
   // should be delivered to
   const errorOrMaybeProfile = await profileModel.findOneProfileByFiscalCode(
@@ -159,17 +157,17 @@ export async function handleMessage(
   //
   const maybeProfileEmail = maybeProfile
     .chain(profile => fromNullable(profile.email))
-    .map(email => Tuple2(email, NotificationAddressSource.PROFILE_ADDRESS));
+    .map(email => Tuple2(email, NotificationAddressSourceEnum.PROFILE_ADDRESS));
   const maybeDefaultEmail = defaultAddresses
     .chain(addresses => fromNullable(addresses.email))
-    .map(email => Tuple2(email, NotificationAddressSource.DEFAULT_ADDRESS));
+    .map(email => Tuple2(email, NotificationAddressSourceEnum.DEFAULT_ADDRESS));
   const maybeEmail = maybeProfileEmail.alt(maybeDefaultEmail);
   const maybeEmailNotification: Option<
-    INotificationChannelEmail
+    NotificationChannelEmail
   > = maybeEmail.map(({ e1: toAddress, e2: addressSource }) => {
     return {
       addressSource,
-      status: NotificationChannelStatus.QUEUED,
+      status: NotificationChannelStatusEnum.QUEUED,
       toAddress
     };
   });
@@ -183,7 +181,7 @@ export async function handleMessage(
   // create a new Notification object with the configured notification channels
   // only some of the channels may be configured, for the channel that have not
   // generated a notification, we set the field to undefined
-  const notification: INewNotification = {
+  const notification: NewNotification = {
     // if we have an emailNotification, we initialize its status
     emailNotification: maybeEmailNotification.toUndefined(),
     fiscalCode: newMessageWithoutContent.fiscalCode,
@@ -209,11 +207,11 @@ export async function handleMessage(
 }
 
 export function processResolve(
-  errorOrNotification: Either<ProcessingError, IRetrievedNotification>,
-  context: IContextWithBindings,
-  newMessageWithoutContent: INewMessageWithoutContent,
-  messageContent: IMessageContent,
-  senderMetadata: ICreatedMessageEventSenderMetadata
+  errorOrNotification: Either<ProcessingError, RetrievedNotification>,
+  context: ContextWithBindings,
+  newMessageWithoutContent: NewMessageWithoutContent,
+  messageContent: MessageContent,
+  senderMetadata: CreatedMessageEventSenderMetadata
 ): void {
   if (isRight(errorOrNotification)) {
     // the notification has been created
@@ -256,9 +254,9 @@ export function processResolve(
 }
 
 export function processReject(
-  context: IContextWithBindings,
-  newMessageWithoutContent: INewMessageWithoutContent,
-  error: Either<ProcessingError, IRetrievedNotification>
+  context: ContextWithBindings,
+  newMessageWithoutContent: NewMessageWithoutContent,
+  error: Either<ProcessingError, RetrievedNotification>
 ): void {
   // the promise failed
   winston.error(
@@ -273,7 +271,7 @@ export function processReject(
 /**
  * Handler that gets triggered on incoming event.
  */
-export function index(context: IContextWithBindings): void {
+export function index(context: ContextWithBindings): void {
   // redirect winston logs to Azure Functions log
   const logLevel = isProduction ? "info" : "debug";
   configureAzureContextTransport(context, winston, logLevel);
@@ -285,10 +283,7 @@ export function index(context: IContextWithBindings): void {
   // since this function gets triggered by a queued message that gets
   // deserialized from a json object, we must first check that what we
   // got is what we expect.
-  if (
-    createdMessageEvent === undefined ||
-    !isICreatedMessageEvent(createdMessageEvent)
-  ) {
+  if (!CreatedMessageEvent.is(createdMessageEvent)) {
     winston.error(`Fatal! No valid message found in bindings.`);
     // we will never be able to recover from this, so don't trigger an error
     // TODO: perhaps forward this message to a failed events queue for review
@@ -296,7 +291,7 @@ export function index(context: IContextWithBindings): void {
     return;
   }
 
-  // it is an ICreatedMessageEvent
+  // it is an CreatedMessageEvent
   const newMessageWithoutContent = createdMessageEvent.message;
   const messageContent = createdMessageEvent.messageContent;
   const defaultAddresses = fromNullable(createdMessageEvent.defaultAddresses);
@@ -333,7 +328,7 @@ export function index(context: IContextWithBindings): void {
     messageContent,
     defaultAddresses
   ).then(
-    (errorOrNotification: Either<ProcessingError, IRetrievedNotification>) => {
+    (errorOrNotification: Either<ProcessingError, RetrievedNotification>) => {
       processResolve(
         errorOrNotification,
         context,
@@ -342,7 +337,7 @@ export function index(context: IContextWithBindings): void {
         senderMetadata
       );
     },
-    (error: Either<ProcessingError, IRetrievedNotification>) => {
+    (error: Either<ProcessingError, RetrievedNotification>) => {
       processReject(context, newMessageWithoutContent, error);
     }
   );

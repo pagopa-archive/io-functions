@@ -5,29 +5,27 @@
 // tslint:disable:jsdoc-format
 // tslint:disable:interface-name
 // tslint:disable:no-any
+// tslint:disable:object-literal-sort-keys
 
-import { isPreferredLanguages, PreferredLanguages } from "./PreferredLanguages";
+import { PreferredLanguages } from "./PreferredLanguages";
 
 /**
  * Describes the citizen's profile, mostly interesting for preferences attributes.
  */
 
-import { fromNullable, Option } from "fp-ts/lib/Option";
+import * as t from "io-ts";
 
-export interface LimitedProfile {
-  readonly preferred_languages?: PreferredLanguages;
-}
+// required attributes
+const LimitedProfileR = t.interface({});
 
-export function isLimitedProfile(arg: any): arg is LimitedProfile {
-  return (
-    arg &&
-    (arg.preferred_languages === undefined ||
-      arg.preferred_languages === null ||
-      isPreferredLanguages(arg.preferred_languages)) &&
-    true
-  );
-}
+// optional attributes
+const LimitedProfileO = t.partial({
+  preferred_languages: PreferredLanguages
+});
 
-export function toLimitedProfile(arg: any): Option<LimitedProfile> {
-  return fromNullable(arg).filter(isLimitedProfile);
-}
+export const LimitedProfile = t.intersection(
+  [LimitedProfileR, LimitedProfileO],
+  "LimitedProfile"
+);
+
+export type LimitedProfile = t.TypeOf<typeof LimitedProfile>;

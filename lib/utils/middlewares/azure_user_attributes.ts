@@ -1,15 +1,18 @@
-import { isNone } from "fp-ts/lib/Option";
 /*
  * A middle ware that extracts custom user attributes from the request.
  */
+
+import * as t from "io-ts";
 
 import * as winston from "winston";
 
 import { isLeft, left, right } from "fp-ts/lib/Either";
 
-import { EmailString, toEmailString, toNonEmptyString } from "../strings";
+import { isNone } from "fp-ts/lib/Option";
 
-import { IService, ServiceModel } from "../../models/service";
+import { EmailString, NonEmptyString } from "../strings";
+
+import { Service, ServiceModel } from "../../models/service";
 import { IRequestMiddleware } from "../request_middleware";
 import {
   IResponseErrorForbiddenNotAuthorized,
@@ -33,7 +36,7 @@ export interface IAzureUserAttributes {
   // the email of the registered user
   readonly email: EmailString;
   // the service associated to the user
-  readonly service: IService;
+  readonly service: Service;
 }
 
 /**
@@ -56,7 +59,9 @@ export function AzureUserAttributesMiddleware(
   IAzureUserAttributes
 > {
   return async request => {
-    const maybeUserEmail = toEmailString(request.header(HEADER_USER_EMAIL));
+    const maybeUserEmail = t
+      .validate(request.header(HEADER_USER_EMAIL), EmailString)
+      .toOption();
 
     if (isNone(maybeUserEmail)) {
       return left(
@@ -68,9 +73,9 @@ export function AzureUserAttributesMiddleware(
 
     const userEmail = maybeUserEmail.value;
 
-    const maybeUserSubscriptionIdHeader = toNonEmptyString(
-      request.header(HEADER_USER_SUBSCRIPTION_KEY)
-    );
+    const maybeUserSubscriptionIdHeader = t
+      .validate(request.header(HEADER_USER_SUBSCRIPTION_KEY), NonEmptyString)
+      .toOption();
 
     if (isNone(maybeUserSubscriptionIdHeader)) {
       return left(

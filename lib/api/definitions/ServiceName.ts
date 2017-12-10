@@ -5,19 +5,14 @@
 // tslint:disable:jsdoc-format
 // tslint:disable:interface-name
 // tslint:disable:no-any
+// tslint:disable:object-literal-sort-keys
 
 /**
  * The name of the service. Will be added to the content of sent messages.
  */
 
-import {
-  isNonEmptyString,
-  toNonEmptyString,
-  NonEmptyString
-} from "../../utils/strings";
+import { NonEmptyString } from "../../utils/strings";
 
 export type ServiceName = NonEmptyString;
 
-export const isServiceName = isNonEmptyString;
-
-export const toServiceName = toNonEmptyString;
+export const ServiceName = NonEmptyString;

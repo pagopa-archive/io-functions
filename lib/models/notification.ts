@@ -3,104 +3,103 @@
  * a Message. A notification can be sent on multiple channels, based on the
  * User's preference.
  */
+import { enumType } from "../utils/types";
 
 import * as DocumentDb from "documentdb";
-import is from "ts-is";
+import * as t from "io-ts";
+
+import { tag } from "../utils/types";
 
 import * as DocumentDbUtils from "../utils/documentdb";
 import { DocumentDbModel } from "../utils/documentdb_model";
 
 import { Option } from "fp-ts/lib/Option";
 
-import { EmailAddress, isEmailAddress } from "../api/definitions/EmailAddress";
-import { FiscalCode, isFiscalCode } from "../api/definitions/FiscalCode";
-import {
-  isNotificationChannelStatus,
-  NotificationChannelStatus
-} from "../api/definitions/NotificationChannelStatus";
+import { EmailAddress } from "../api/definitions/EmailAddress";
+import { FiscalCode } from "../api/definitions/FiscalCode";
+import { NotificationChannelStatus } from "../api/definitions/NotificationChannelStatus";
 
 import { Either } from "fp-ts/lib/Either";
-import { isNonEmptyString, NonEmptyString } from "../utils/strings";
+import { NonEmptyString } from "../utils/strings";
 
 /**
  * All possible sources that can provide the address of the recipient.
  */
-export enum NotificationAddressSource {
+export enum NotificationAddressSourceEnum {
   // the notification address comes from the user profile
   PROFILE_ADDRESS = "PROFILE_ADDRESS",
   // the notification address was provided as default address by the sender
   DEFAULT_ADDRESS = "DEFAULT_ADDRESS"
 }
 
-/**
- * Type guard for NotificationAddressSource
- */
-export const isNotificationAddressSource = is<NotificationAddressSource>(
-  arg => NotificationAddressSource[arg] !== undefined
-);
+export const NotificationAddressSource = enumType<
+  NotificationAddressSourceEnum
+>(NotificationAddressSourceEnum, "NotificationAddressSource");
+
+export type NotificationAddressSource = NotificationAddressSourceEnum;
 
 /**
  * Attributes for the email channel
  */
-export interface INotificationChannelEmail {
-  readonly status: NotificationChannelStatus;
-  readonly addressSource: NotificationAddressSource;
-  readonly toAddress: EmailAddress;
-  readonly fromAddress?: EmailAddress;
-}
+export const NotificationChannelEmail = t.intersection([
+  t.interface({
+    addressSource: NotificationAddressSource,
+    status: NotificationChannelStatus,
+    toAddress: EmailAddress
+  }),
+  t.partial({
+    fromAddress: EmailAddress
+  })
+]);
 
-/**
- * Type guard for INotificationChannelEmail objects
- */
-export const isINotificationChannelEmail = is<INotificationChannelEmail>(
-  arg =>
-    isEmailAddress(arg.toAddress) &&
-    isNotificationChannelStatus(arg.status) &&
-    isNotificationAddressSource(arg.addressSource) &&
-    (!arg.fromAddress || isEmailAddress(arg.fromAddress))
-);
+export type NotificationChannelEmail = t.TypeOf<
+  typeof NotificationChannelEmail
+>;
 
 /**
  * Base interface for Notification objects
  */
-export interface INotification {
-  readonly fiscalCode: FiscalCode;
-  readonly messageId: NonEmptyString;
-  readonly emailNotification?: INotificationChannelEmail;
-}
+export const Notification = t.intersection([
+  t.interface({
+    fiscalCode: FiscalCode,
+    messageId: NonEmptyString
+  }),
+  t.partial({
+    emailNotification: NotificationChannelEmail
+  })
+]);
 
-/**
- * Type guard for INotification objects
- */
-export const isINotification = is<INotification>(
-  arg =>
-    isFiscalCode(arg.fiscalCode) &&
-    isNonEmptyString(arg.messageId) &&
-    (!arg.emailNotification ||
-      isINotificationChannelEmail(arg.emailNotification))
-);
+export type Notification = t.TypeOf<typeof Notification>;
 
 /**
  * Interface for new Notification objects
  */
-export interface INewNotification
-  extends INotification,
-    DocumentDb.NewDocument {
-  readonly id: NonEmptyString;
+
+interface INewNotificationTag {
   readonly kind: "INewNotification";
 }
+
+export const NewNotification = tag<INewNotificationTag>()(
+  t.intersection([Notification, DocumentDbUtils.NewDocument])
+);
+
+export type NewNotification = t.TypeOf<typeof NewNotification>;
 
 /**
  * Interface for retrieved Notification objects
  */
-export interface IRetrievedNotification
-  extends Readonly<INotification>,
-    Readonly<DocumentDb.RetrievedDocument> {
-  readonly id: NonEmptyString;
+
+interface IRetrievedNotificationTag {
   readonly kind: "IRetrievedNotification";
 }
 
-function toBaseType(o: IRetrievedNotification): INotification {
+export const RetrievedNotification = tag<IRetrievedNotificationTag>()(
+  t.intersection([Notification, DocumentDbUtils.RetrievedDocument])
+);
+
+export type RetrievedNotification = t.TypeOf<typeof RetrievedNotification>;
+
+function toBaseType(o: RetrievedNotification): Notification {
   return {
     emailNotification: o.emailNotification,
     fiscalCode: o.fiscalCode,
@@ -110,20 +109,20 @@ function toBaseType(o: IRetrievedNotification): INotification {
 
 function toRetrieved(
   result: DocumentDb.RetrievedDocument
-): IRetrievedNotification {
+): RetrievedNotification {
   return {
     ...result,
     kind: "IRetrievedNotification"
-  } as IRetrievedNotification;
+  } as RetrievedNotification;
 }
 
 /**
  * A model for handling Notifications
  */
 export class NotificationModel extends DocumentDbModel<
-  INotification,
-  INewNotification,
-  IRetrievedNotification
+  Notification,
+  NewNotification,
+  RetrievedNotification
 > {
   protected dbClient: DocumentDb.DocumentClient;
   protected collectionUri: DocumentDbUtils.IDocumentDbCollectionUri;
@@ -156,7 +155,7 @@ export class NotificationModel extends DocumentDbModel<
    */
   public findNotificationForMessage(
     messageId: string
-  ): Promise<Either<DocumentDb.QueryError, Option<IRetrievedNotification>>> {
+  ): Promise<Either<DocumentDb.QueryError, Option<RetrievedNotification>>> {
     return DocumentDbUtils.queryOneDocument(this.dbClient, this.collectionUri, {
       parameters: [
         {

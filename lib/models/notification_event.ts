@@ -1,13 +1,10 @@
-import is from "ts-is";
+import * as t from "io-ts";
 
-import { isNonEmptyString, NonEmptyString } from "../utils/strings";
+import { NonEmptyString } from "../utils/strings";
 
-import { IMessageContent, isIMessageContent } from "./message";
+import { MessageContent } from "../api/definitions/MessageContent";
 
-import {
-  ICreatedMessageEventSenderMetadata,
-  isICreatedMessageEventSenderMetadata
-} from "./created_message_sender_metadata";
+import { CreatedMessageEventSenderMetadata } from "./created_message_sender_metadata";
 
 /**
  * Payload of a notification event.
@@ -15,25 +12,11 @@ import {
  * This event gets triggered on new notifications to the channels that
  * have been configured for that notification.
  */
-export interface INotificationEvent {
-  readonly messageId: NonEmptyString;
-  readonly messageContent: IMessageContent;
-  readonly notificationId: NonEmptyString;
-  readonly senderMetadata: ICreatedMessageEventSenderMetadata;
-}
+export const NotificationEvent = t.interface({
+  messageContent: MessageContent,
+  messageId: NonEmptyString,
+  notificationId: NonEmptyString,
+  senderMetadata: CreatedMessageEventSenderMetadata
+});
 
-/**
- * Type guard for INotificationEvent objects
- */
-export const isNotificationEvent = is<INotificationEvent>(
-  arg =>
-    arg &&
-    arg.notificationId &&
-    isNonEmptyString(arg.notificationId) &&
-    arg.messageId &&
-    isNonEmptyString(arg.messageId) &&
-    arg.messageContent &&
-    isIMessageContent(arg.messageContent) &&
-    arg.senderMetadata &&
-    isICreatedMessageEventSenderMetadata(arg.senderMetadata)
-);
+export type NotificationEvent = t.TypeOf<typeof NotificationEvent>;

@@ -5,42 +5,33 @@
 // tslint:disable:jsdoc-format
 // tslint:disable:interface-name
 // tslint:disable:no-any
+// tslint:disable:object-literal-sort-keys
 
-import { isTimeToLive, TimeToLive } from "./TimeToLive";
-import { isMessageContent, MessageContent } from "./MessageContent";
-import {
-  isNewMessageDefaultAddresses,
-  NewMessageDefaultAddresses
-} from "./NewMessageDefaultAddresses";
+import { TimeToLive } from "./TimeToLive";
+import { MessageContent } from "./MessageContent";
+import { NewMessageDefaultAddresses } from "./NewMessageDefaultAddresses";
 
 /**
  * 
  */
 
-import { fromNullable, Option } from "fp-ts/lib/Option";
+import * as t from "io-ts";
 
-export interface NewMessage {
-  readonly time_to_live?: TimeToLive;
+// required attributes
+const NewMessageR = t.interface({
+  content: MessageContent
+});
 
-  readonly content: MessageContent;
+// optional attributes
+const NewMessageO = t.partial({
+  time_to_live: TimeToLive,
 
-  readonly default_addresses?: NewMessageDefaultAddresses;
-}
+  default_addresses: NewMessageDefaultAddresses
+});
 
-export function isNewMessage(arg: any): arg is NewMessage {
-  return (
-    arg &&
-    (arg.time_to_live === undefined ||
-      arg.time_to_live === null ||
-      isTimeToLive(arg.time_to_live)) &&
-    isMessageContent(arg.content) &&
-    (arg.default_addresses === undefined ||
-      arg.default_addresses === null ||
-      isNewMessageDefaultAddresses(arg.default_addresses)) &&
-    true
-  );
-}
+export const NewMessage = t.intersection(
+  [NewMessageR, NewMessageO],
+  "NewMessage"
+);
 
-export function toNewMessage(arg: any): Option<NewMessage> {
-  return fromNullable(arg).filter(isNewMessage);
-}
+export type NewMessage = t.TypeOf<typeof NewMessage>;

@@ -1,4 +1,7 @@
 // tslint:disable:no-any
+
+import * as t from "io-ts";
+
 import { isLeft, isRight } from "fp-ts/lib/Either";
 import { Option, Some } from "fp-ts/lib/Option";
 
@@ -6,21 +9,17 @@ import * as DocumentDb from "documentdb";
 
 import * as DocumentDbUtils from "../../utils/documentdb";
 
-import { toFiscalCode } from "../../api/definitions/FiscalCode";
-import { NotificationChannelStatus } from "../../api/definitions/NotificationChannelStatus";
+import { FiscalCode } from "../../api/definitions/FiscalCode";
+import { NotificationChannelStatusEnum } from "../../api/definitions/NotificationChannelStatus";
+
+import { EmailString, NonEmptyString } from "../../utils/strings";
 
 import {
-  NonEmptyString,
-  toEmailString,
-  toNonEmptyString
-} from "../../utils/strings";
-
-import {
-  INewNotification,
-  INotificationChannelEmail,
-  IRetrievedNotification,
-  NotificationAddressSource,
-  NotificationModel
+  NewNotification,
+  NotificationAddressSourceEnum,
+  NotificationChannelEmail,
+  NotificationModel,
+  RetrievedNotification
 } from "../notification";
 
 // DANGEROUS, only use in tests
@@ -34,16 +33,18 @@ const aNotificationsCollectionUri = DocumentDbUtils.getCollectionUri(
   "notifications"
 );
 
-const aFiscalCode = _getO(toFiscalCode("FRLFRC74E04B157I"));
+const aFiscalCode = _getO(
+  t.validate("FRLFRC74E04B157I", FiscalCode).toOption()
+);
 
-const aNewNotification: INewNotification = {
+const aNewNotification: NewNotification = {
   fiscalCode: aFiscalCode,
-  id: _getO(toNonEmptyString("A_NOTIFICATION_ID")),
+  id: _getO(t.validate("A_NOTIFICATION_ID", NonEmptyString).toOption()),
   kind: "INewNotification",
-  messageId: _getO(toNonEmptyString("A_MESSAGE_ID"))
+  messageId: _getO(t.validate("A_MESSAGE_ID", NonEmptyString).toOption())
 };
 
-const aRetrievedNotification: IRetrievedNotification = {
+const aRetrievedNotification: RetrievedNotification = {
   ...aNewNotification,
   _self: "xyz",
   _ts: "xyz",
@@ -163,10 +164,10 @@ describe("find", () => {
 });
 
 describe("update", () => {
-  const anEmailNotification: INotificationChannelEmail = {
-    addressSource: NotificationAddressSource.DEFAULT_ADDRESS,
-    status: NotificationChannelStatus.SENT_TO_CHANNEL,
-    toAddress: _getO(toEmailString("to@example.com"))
+  const anEmailNotification: NotificationChannelEmail = {
+    addressSource: NotificationAddressSourceEnum.DEFAULT_ADDRESS,
+    status: NotificationChannelStatusEnum.SENT_TO_CHANNEL,
+    toAddress: _getO(t.validate("to@example.com", EmailString).toOption())
   };
 
   const updateFunction = jest.fn(n => {

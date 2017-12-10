@@ -5,49 +5,35 @@
 // tslint:disable:jsdoc-format
 // tslint:disable:interface-name
 // tslint:disable:no-any
+// tslint:disable:object-literal-sort-keys
 
-import { isHttpStatusCode, HttpStatusCode } from "./HttpStatusCode";
+import { HttpStatusCode } from "./HttpStatusCode";
 
 /**
  * 
  */
 
-import { fromNullable, Option } from "fp-ts/lib/Option";
+import * as t from "io-ts";
 
-export interface ProblemJson {
-  readonly type?: string;
+// required attributes
+const ProblemJsonR = t.interface({});
 
-  readonly title?: string;
+// optional attributes
+const ProblemJsonO = t.partial({
+  type: t.string,
 
-  readonly status?: HttpStatusCode;
+  title: t.string,
 
-  readonly detail?: string;
+  status: HttpStatusCode,
 
-  readonly instance?: string;
-}
+  detail: t.string,
 
-export function isProblemJson(arg: any): arg is ProblemJson {
-  return (
-    arg &&
-    (arg.type === undefined ||
-      arg.type === null ||
-      typeof arg.type === "string") &&
-    (arg.title === undefined ||
-      arg.title === null ||
-      typeof arg.title === "string") &&
-    (arg.status === undefined ||
-      arg.status === null ||
-      isHttpStatusCode(arg.status)) &&
-    (arg.detail === undefined ||
-      arg.detail === null ||
-      typeof arg.detail === "string") &&
-    (arg.instance === undefined ||
-      arg.instance === null ||
-      typeof arg.instance === "string") &&
-    true
-  );
-}
+  instance: t.string
+});
 
-export function toProblemJson(arg: any): Option<ProblemJson> {
-  return fromNullable(arg).filter(isProblemJson);
-}
+export const ProblemJson = t.intersection(
+  [ProblemJsonR, ProblemJsonO],
+  "ProblemJson"
+);
+
+export type ProblemJson = t.TypeOf<typeof ProblemJson>;

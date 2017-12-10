@@ -5,19 +5,14 @@
 // tslint:disable:jsdoc-format
 // tslint:disable:interface-name
 // tslint:disable:no-any
+// tslint:disable:object-literal-sort-keys
 
 /**
  * The ID of the Service. Equals the subscriptionId of a registered API user.
  */
 
-import {
-  isNonEmptyString,
-  toNonEmptyString,
-  NonEmptyString
-} from "../../utils/strings";
+import { NonEmptyString } from "../../utils/strings";
 
 export type ServiceId = NonEmptyString;
 
-export const isServiceId = isNonEmptyString;
-
-export const toServiceId = toNonEmptyString;
+export const ServiceId = NonEmptyString;

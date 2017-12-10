@@ -5,14 +5,17 @@
 // tslint:disable:jsdoc-format
 // tslint:disable:interface-name
 // tslint:disable:no-any
+// tslint:disable:object-literal-sort-keys
 
 /**
  * 
  */
 
-import { fromNullable, Option } from "fp-ts/lib/Option";
+import * as t from "io-ts";
 
-export enum PreferredLanguage {
+import { enumType } from "../../utils/types";
+
+export enum PreferredLanguageEnum {
   "it_IT" = "it_IT",
 
   "en_GB" = "en_GB",
@@ -24,10 +27,9 @@ export enum PreferredLanguage {
   "fr_FR" = "fr_FR"
 }
 
-export function isPreferredLanguage(arg: any): arg is PreferredLanguage {
-  return PreferredLanguage[arg] !== undefined;
-}
+export const PreferredLanguage = enumType<PreferredLanguageEnum>(
+  PreferredLanguageEnum,
+  "PreferredLanguage"
+);
 
-export function toPreferredLanguage(arg: any): Option<PreferredLanguage> {
-  return fromNullable(arg).filter(isPreferredLanguage);
-}
+export type PreferredLanguage = t.TypeOf<typeof PreferredLanguage>;

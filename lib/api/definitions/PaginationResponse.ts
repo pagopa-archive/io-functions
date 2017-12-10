@@ -5,32 +5,27 @@
 // tslint:disable:jsdoc-format
 // tslint:disable:interface-name
 // tslint:disable:no-any
+// tslint:disable:object-literal-sort-keys
 
 /**
  * Pagination response parameters.
  */
 
-import { fromNullable, Option } from "fp-ts/lib/Option";
+import * as t from "io-ts";
 
-export interface PaginationResponse {
-  readonly page_size?: number;
+// required attributes
+const PaginationResponseR = t.interface({});
 
-  readonly next?: string;
-}
+// optional attributes
+const PaginationResponseO = t.partial({
+  page_size: t.number,
 
-export function isPaginationResponse(arg: any): arg is PaginationResponse {
-  return (
-    arg &&
-    (arg.page_size === undefined ||
-      arg.page_size === null ||
-      typeof arg.page_size === "number") &&
-    (arg.next === undefined ||
-      arg.next === null ||
-      typeof arg.next === "string") &&
-    true
-  );
-}
+  next: t.string
+});
 
-export function toPaginationResponse(arg: any): Option<PaginationResponse> {
-  return fromNullable(arg).filter(isPaginationResponse);
-}
+export const PaginationResponse = t.intersection(
+  [PaginationResponseR, PaginationResponseO],
+  "PaginationResponse"
+);
+
+export type PaginationResponse = t.TypeOf<typeof PaginationResponse>;

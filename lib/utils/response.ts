@@ -1,3 +1,5 @@
+import * as t from "io-ts";
+
 import * as DocumentDb from "documentdb";
 import * as express from "express";
 
@@ -5,6 +7,8 @@ import { IResultIterator, iteratorToArray } from "./documentdb";
 
 import { HttpStatusCode } from "../api/definitions/HttpStatusCode";
 import { ProblemJson } from "../api/definitions/ProblemJson";
+
+import { errorsToReadableMessages } from "./validation_reporters";
 
 const HTTP_STATUS_400 = 400 as HttpStatusCode;
 const HTTP_STATUS_403 = 403 as HttpStatusCode;
@@ -179,8 +183,6 @@ export interface IResponseErrorValidation extends IResponse {
 
 /**
  * Returns a response describing a validation error.
- *
- * @param message The error message
  */
 export function ResponseErrorValidation(
   title: string,
@@ -189,6 +191,18 @@ export function ResponseErrorValidation(
   return {
     ...ResponseErrorGeneric(HTTP_STATUS_400, title, detail),
     kind: "IResponseErrorValidation"
+  };
+}
+
+/**
+ * Returns a response describing a validation error.
+ */
+export function ResponseErrorFromValidationErrors<S, A>(
+  type: t.Type<S, A>
+): (errors: ReadonlyArray<t.ValidationError>) => IResponseErrorValidation {
+  return errors => {
+    const detail = errorsToReadableMessages(errors).join("\n");
+    return ResponseErrorValidation(`Invalid ${type.name}`, detail);
   };
 }
 

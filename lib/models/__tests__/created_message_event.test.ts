@@ -1,18 +1,23 @@
 // tslint:disable:no-any
-import { Option, Some } from "fp-ts/lib/Option";
-import { isICreatedMessageEvent } from "../created_message_event";
 
-import { toMessageBodyMarkdown } from "../../api/definitions/MessageBodyMarkdown";
+import * as t from "io-ts";
+
+import { Option, Some } from "fp-ts/lib/Option";
+import { CreatedMessageEvent } from "../created_message_event";
+
+import { MessageBodyMarkdown } from "../../api/definitions/MessageBodyMarkdown";
 
 // DANGEROUS, only use in tests
 function _getO<T>(o: Option<T>): T {
   return (o as Some<T>).value;
 }
 
-const aMessageBodyMarkdown = _getO(toMessageBodyMarkdown("test".repeat(80)));
+const aMessageBodyMarkdown = _getO(
+  t.validate("test".repeat(80), MessageBodyMarkdown).toOption()
+);
 
 describe("", () => {
-  it("should validate valid events ICreatedMessageEvents", () => {
+  it("should validate valid events CreatedMessageEvents", () => {
     const payloads: ReadonlyArray<any> = [
       {
         defaultAddresses: { email: "federico@teamdigitale.governo.it" },
@@ -25,12 +30,12 @@ describe("", () => {
           _ts: 1505754168,
           fiscalCode: "FRLFRC73E04B157I",
           id: "01BTAZ2HS1PWDJERA510FDXYV4",
-          kind: "IRetrievedMessage",
+          kind: "RetrievedMessage",
           senderServiceId: "test",
           senderUserId: "u123"
         },
         messageContent: {
-          bodyMarkdown: aMessageBodyMarkdown
+          markdown: aMessageBodyMarkdown
         },
         senderMetadata: {
           departmentName: "IT",
@@ -40,7 +45,7 @@ describe("", () => {
       }
     ];
     payloads.forEach(payload => {
-      expect(isICreatedMessageEvent(payload)).toBeTruthy();
+      expect(CreatedMessageEvent.is(payload)).toBeTruthy();
     });
   });
 });

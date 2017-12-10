@@ -1,34 +1,28 @@
-import { Either, isRight, left, right } from "fp-ts/lib/Either";
+import * as t from "io-ts";
 
 import { IRequestMiddleware } from "../request_middleware";
-import { IResponseErrorValidation, ResponseErrorValidation } from "../response";
-
-type ParameterType = string | number | object;
-
-interface IRequestParameters {
-  readonly [key: string]: ParameterType;
-}
+import {
+  IResponseErrorValidation,
+  ResponseErrorFromValidationErrors
+} from "../response";
 
 /**
  * Returns a request middleware that validates the presence of a required
  * parameter in the request.params object.
  *
- * @param f       A function that should extract the required parameter from
- *                the params object or return an error string.
+ * @param name  The name of the parameter
+ * @param type  The io-ts Type for validating the parameter
  */
-export function RequiredParamMiddleware<T>(
-  f: (params: IRequestParameters) => Either<string, T>
-): IRequestMiddleware<IResponseErrorValidation, T> {
-  return request => {
-    const v = f(request.params);
-    if (isRight(v)) {
-      return Promise.resolve(right<IResponseErrorValidation, T>(v.value));
-    } else {
-      const response = ResponseErrorValidation(
-        "A required parameter is missing",
-        v.value
+export function RequiredParamMiddleware<S, A>(
+  name: string,
+  type: t.Type<S, A>
+): IRequestMiddleware<IResponseErrorValidation, A> {
+  return request =>
+    new Promise(resolve => {
+      const validation = t.validate(request.params[name], type);
+      const result = validation.mapLeft(
+        ResponseErrorFromValidationErrors(type)
       );
-      return Promise.resolve(left<IResponseErrorValidation, T>(response));
-    }
-  };
+      resolve(result);
+    });
 }

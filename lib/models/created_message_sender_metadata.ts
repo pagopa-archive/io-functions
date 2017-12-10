@@ -1,22 +1,16 @@
-import is from "ts-is";
+import * as t from "io-ts";
 
-import { isNonEmptyString, NonEmptyString } from "../utils/strings";
+import { NonEmptyString } from "../utils/strings";
 
 /**
  * Sender metadata associated to a message
  */
-export interface ICreatedMessageEventSenderMetadata {
-  readonly serviceName: NonEmptyString;
-  readonly organizationName: NonEmptyString;
-  readonly departmentName: NonEmptyString;
-}
+export const CreatedMessageEventSenderMetadata = t.interface({
+  departmentName: NonEmptyString,
+  organizationName: NonEmptyString,
+  serviceName: NonEmptyString
+});
 
-export const isICreatedMessageEventSenderMetadata = is<
-  ICreatedMessageEventSenderMetadata
->(
-  arg =>
-    arg.departmentName &&
-    isNonEmptyString(arg.departmentName) &&
-    arg.serviceName &&
-    isNonEmptyString(arg.serviceName)
-);
+export type CreatedMessageEventSenderMetadata = t.TypeOf<
+  typeof CreatedMessageEventSenderMetadata
+>;
