@@ -55,7 +55,6 @@
     "remark-parse": "^4.0.0",
     "remark-rehype": "^2.0.1",
     "request-ip": "^2.0.2",
-    "ts-is": "^1.0.0",
     "typescript": "^2.6.0",
     "ulid": "^2.2.2",
     "unified": "^6.1.5",

@@ -6152,12 +6152,6 @@ trough@^1.0.0:
   version "1.0.1"
   resolved "https://registry.yarnpkg.com/trough/-/trough-1.0.1.tgz#a9fd8b0394b0ae8fff82e0633a0a36ccad5b5f86"
 
-ts-is@^1.0.0:
-  version "1.0.0"
-  resolved "https://registry.yarnpkg.com/ts-is/-/ts-is-1.0.0.tgz#c274aefbda42338a8d84da9d019176fa3174353d"
-  dependencies:
-    typescript "^2.4.1"
-
 ts-jest@^21.0.0:
   version "21.0.0"
   resolved "https://registry.yarnpkg.com/ts-jest/-/ts-jest-21.0.0.tgz#261c0b90270bfaa57c8d9ef2a0b5f3a41efc38e9"
@@ -6279,10 +6273,6 @@ type-is@~1.6.15:
   dependencies:
     media-typer "0.3.0"
     mime-types "~2.1.15"
-
-typescript@^2.4.1:
-  version "2.5.2"
-  resolved "https://registry.yarnpkg.com/typescript/-/typescript-2.5.2.tgz#038a95f7d9bbb420b1bf35ba31d4c5c1dd3ffe34"
 
 typescript@^2.6.0:
   version "2.6.1"
