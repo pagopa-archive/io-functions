@@ -239,7 +239,9 @@ export function processResolve(
     switch (errorOrNotification.value) {
       case ProcessingError.NO_ADDRESSES: {
         winston.error(
-          `Fiscal code has no associated profile and no default addresses provided|${newMessageWithoutContent.fiscalCode}`
+          `Fiscal code has no associated profile and no default addresses provided|${
+            newMessageWithoutContent.fiscalCode
+          }`
         );
         context.done();
         break;
@@ -263,7 +265,9 @@ export function processReject(
 ): void {
   // the promise failed
   winston.error(
-    `Error while processing event, retrying|${newMessageWithoutContent.fiscalCode}|${error}`
+    `Error while processing event, retrying|${
+      newMessageWithoutContent.fiscalCode
+    }|${error}`
   );
   // in case of error, we return a failure to trigger a retry (up to the
   // configured max retries) TODO: schedule next retry with exponential
@@ -312,7 +316,9 @@ export function index(context: ContextWithBindings): void {
   const senderMetadata = createdMessageEvent.senderMetadata;
 
   winston.info(
-    `A new message was created|${newMessageWithoutContent.id}|${newMessageWithoutContent.fiscalCode}`
+    `A new message was created|${newMessageWithoutContent.id}|${
+      newMessageWithoutContent.fiscalCode
+    }`
   );
 
   // setup required models

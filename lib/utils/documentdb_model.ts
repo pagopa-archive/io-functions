@@ -141,11 +141,13 @@ export abstract class DocumentDbModel<
 
     const updatedObject = updater(currentObject);
 
-    const kindlessNewDocument: T &
-      DocumentDb.NewDocument = Object.assign(Object.assign({}, updatedObject), {
-      id: documentId,
-      kind: undefined
-    });
+    const kindlessNewDocument: T & DocumentDb.NewDocument = Object.assign(
+      Object.assign({}, updatedObject),
+      {
+        id: documentId,
+        kind: undefined
+      }
+    );
 
     const updatedDocument = await DocumentDbUtils.replaceDocument(
       this.dbClient,
