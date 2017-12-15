@@ -100,7 +100,7 @@ import { PatternString } from "../../utils/strings";
 export type {{ definitionName }} = PatternString<"{{ definition.pattern }}">;
 
 {% set typedef %}PatternString("{{ definition.pattern }}"){% endset %}
-{{ macro.exportConst(definition.default, definitionName, typedef) }}
+{{ macro.exportConst(definition.default, definitionName, typedef, quote=true) }}
 
   {% elif definition.minLength and definition.maxLength %}
 
@@ -109,7 +109,7 @@ import { WithinRangeString } from "../../utils/strings";
 export type {{ definitionName }} = WithinRangeString<{{ definition.minLength }}, {{ definition.maxLength }}>;
 
 {% set typedef %}WithinRangeString({{ definition.minLength }}, {{ definition.maxLength }}){% endset %}
-{{ macro.exportConst(definition.default, definitionName, typedef) }}
+{{ macro.exportConst(definition.default, definitionName, typedef, quote=true) }}
 
   {% elif definition.minLength == 1 %}
 
@@ -118,7 +118,7 @@ import { NonEmptyString } from "../../utils/strings";
 export type {{ definitionName }} = NonEmptyString;
 
 {% set typedef %}NonEmptyString{% endset %}
-{{ macro.exportConst(definition.default, definitionName, typedef) }}
+{{ macro.exportConst(definition.default, definitionName, typedef, quote=true) }}
 
   {% elif definition.format == "email" %}
 
@@ -127,7 +127,7 @@ import { EmailString } from "../../utils/strings";
 export type {{ definitionName }} = EmailString;
 
 {% set typedef %}EmailString{% endset %}
-{{ macro.exportConst(definition.default, definitionName, typedef) }}
+{{ macro.exportConst(definition.default, definitionName, typedef, quote=true) }}
 
   {% elif definition["x-extensible-enum"] %}
 
@@ -145,7 +145,7 @@ export enum {{ definitionName }}Enum {
   {{ definitionName }}Enum,
   "{{ definitionName }}"
 ){% endset %}
-{{ macro.exportConst(definition.default, definitionName, typedef) }}
+{{ macro.exportConst(definition.default, definitionName, typedef, quote=true) }}
 
 export type {{ definitionName }} = t.TypeOf<typeof {{ definitionName }}>;
 
@@ -162,13 +162,11 @@ import * as t from "io-ts";
 
 import { {{ realPropName }} } from "./{{ realPropName }}";
 
-{% set typedef %}t.readonlyArray({{ realPropName }}, "array of {{ realPropName }}"){% endset %}
-{{ macro.exportConst(definition.default, definitionName, typedef) }}
+export const {{ definitionName }} = t.readonlyArray({{ realPropName }}, "array of {{ realPropName }}");
 
   {% else %}
 
-{% set typedef %}t.readonlyArray(t.{{ definition.items.type | replace("integer", "number") }}, "array of {{ definition.items.type | replace("integer", "number") }}"){% endset %}
-{{ macro.exportConst(definition.default, definitionName, typedef) }}
+export const {{ definitionName }} = t.readonlyArray(t.{{ definition.items.type | replace("integer", "number") }}, "array of {{ definition.items.type | replace("integer", "number") }}");
 
   {% endif %}
 

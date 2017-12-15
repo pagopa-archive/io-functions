@@ -1,14 +1,14 @@
-{% macro exportConst(defaultValue, type, typedef) %}
+{% macro exportConst(defaultValue, type, typedef, quote = false) %}
   {% if defaultValue !== undefined %}
     {% set typeName = type + "X" %}
-    {% set q = '"' if type == "string" else "" %}
+    {% set q = '"' if quote else "" %}
     import * as t from "io-ts";
 
     import { withDefault } from "../../utils/default";
 
     const {{ typeName }} = {{ typedef | safe }};
 
-    const defaultValue = t.validate({{ q }}{{ defaultValue }}{{ q }}, {{ typeName }}).fold(_ => {
+    const defaultValue = t.validate({{ q | safe }}{{ defaultValue }}{{ q | safe }}, {{ typeName }}).fold(_ => {
       throw new Error("Invalid default value for {{ type }}");
     }, t.identity);
 
