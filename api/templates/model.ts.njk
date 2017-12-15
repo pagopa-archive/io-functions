@@ -1,3 +1,5 @@
+{% import "macros.njk" as macro %}
+
 // tslint:disable:ordered-imports
 // tslint:disable:no-consecutive-blank-lines
 // tslint:disable:no-trailing-whitespace
@@ -16,6 +18,12 @@
     import { {{ realPropName }} } from "./{{ realPropName }}";{%
   endif %}{%
 endfor %}
+
+{% for propName, prop in definition.properties -%}
+  {% if prop.default !== undefined %}
+    import { withDefault } from "../../utils/default";
+  {% endif %}
+{% endfor %}
 
 /**
  * {{ definition.description | safe }}
@@ -37,7 +45,10 @@ const {{ definitionName }}R = t.interface({
         set realPropType %}t.{{ prop.type | replace("integer", "number") }}{% endset %}{%
       endif
     %}
-    {{ propName }}: {{ realPropType | safe }},
+    {% set q = '"' if prop.type == "string" else "" %}
+    {% set pds = "withDefault(" if prop.default !== undefined else "" %}
+    {% set pde = ", " + q + prop.default + q + ")" if prop.default !== undefined else "" %}
+    {{ propName }}: {{ pds | safe }}{{ realPropType | safe }}{{ pde | safe }},
   {% endif %}
 {% endfor %}
 })
@@ -55,7 +66,10 @@ const {{ definitionName }}O = t.partial({
         set realPropType %}t.{{ prop.type | replace("integer", "number") }}{% endset %}{%
       endif
     %}
-    {{ propName }}: {{ realPropType | safe }},
+    {% set q = '"' if prop.type == "string" else "" %}
+    {% set pds = "withDefault(" if prop.default !== undefined else "" %}
+    {% set pde = ", " + q + prop.default + q + ")" if prop.default !== undefined else "" %}
+    {{ propName }}: {{ pds | safe }}{{ realPropType | safe }}{{ pde | safe }},
   {% endif %}
 {% endfor %}
 })
@@ -72,7 +86,8 @@ import { WithinRangeNumber } from "../../utils/numbers";
 
 export type {{ definitionName }} = WithinRangeNumber<{{ definition.minimum }}, {{ definition.maximum }}>;
 
-export const {{ definitionName }} = WithinRangeNumber({{ definition.minimum }}, {{ definition.maximum }});
+{% set typedef %}WithinRangeNumber({{ definition.minimum }}, {{ definition.maximum }}){% endset %}
+{{ macro.exportConst(definition.default, definitionName, typedef) }}
 
   {% else %}
 export type {{ definitionName }} = number;
@@ -84,7 +99,8 @@ import { PatternString } from "../../utils/strings";
 
 export type {{ definitionName }} = PatternString<"{{ definition.pattern }}">;
 
-export const {{ definitionName }} = PatternString("{{ definition.pattern }}");
+{% set typedef %}PatternString("{{ definition.pattern }}"){% endset %}
+{{ macro.exportConst(definition.default, definitionName, typedef, quote=true) }}
 
   {% elif definition.minLength and definition.maxLength %}
 
@@ -92,7 +108,8 @@ import { WithinRangeString } from "../../utils/strings";
 
 export type {{ definitionName }} = WithinRangeString<{{ definition.minLength }}, {{ definition.maxLength }}>;
 
-export const {{ definitionName }} = WithinRangeString({{ definition.minLength }}, {{ definition.maxLength }});
+{% set typedef %}WithinRangeString({{ definition.minLength }}, {{ definition.maxLength }}){% endset %}
+{{ macro.exportConst(definition.default, definitionName, typedef, quote=true) }}
 
   {% elif definition.minLength == 1 %}
 
@@ -100,7 +117,8 @@ import { NonEmptyString } from "../../utils/strings";
 
 export type {{ definitionName }} = NonEmptyString;
 
-export const {{ definitionName }} = NonEmptyString;
+{% set typedef %}NonEmptyString{% endset %}
+{{ macro.exportConst(definition.default, definitionName, typedef, quote=true) }}
 
   {% elif definition.format == "email" %}
 
@@ -108,7 +126,8 @@ import { EmailString } from "../../utils/strings";
 
 export type {{ definitionName }} = EmailString;
 
-export const {{ definitionName }} = EmailString;
+{% set typedef %}EmailString{% endset %}
+{{ macro.exportConst(definition.default, definitionName, typedef, quote=true) }}
 
   {% elif definition["x-extensible-enum"] %}
 
@@ -122,10 +141,11 @@ export enum {{ definitionName }}Enum {
     {% endfor %}
 }
 
-export const {{ definitionName }} = enumType<{{ definitionName }}Enum>(
+{% set typedef %}enumType<{{ definitionName }}Enum>(
   {{ definitionName }}Enum,
   "{{ definitionName }}"
-);
+){% endset %}
+{{ macro.exportConst(definition.default, definitionName, typedef, quote=true) }}
 
 export type {{ definitionName }} = t.TypeOf<typeof {{ definitionName }}>;
 

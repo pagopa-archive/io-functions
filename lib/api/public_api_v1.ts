@@ -385,6 +385,7 @@ export const specs = {
     },
     TimeToLive: {
       type: "integer",
+      default: 3600,
       minimum: 3600,
       maximum: 31536000,
       description:
