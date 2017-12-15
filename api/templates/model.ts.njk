@@ -17,6 +17,18 @@
   endif %}{%
 endfor %}
 
+{% if definition.default !== undefined %}
+  import { withDefault } from "../../utils/default";
+  {% set ds = "withDefault(" %}
+  {% set de = ", " + definition.default + " as any)" %}
+{% endif %}
+
+{% for propName, prop in definition.properties -%}
+  {% if prop.default !== undefined %}
+    import { withDefault } from "../../utils/default";
+  {% endif %}
+{% endfor %}
+
 /**
  * {{ definition.description | safe }}
  */
@@ -37,7 +49,10 @@ const {{ definitionName }}R = t.interface({
         set realPropType %}t.{{ prop.type | replace("integer", "number") }}{% endset %}{%
       endif
     %}
-    {{ propName }}: {{ realPropType | safe }},
+    {% set q = '"' if prop.type == "string" else "" %}
+    {% set pds = "withDefault(" if prop.default !== undefined else "" %}
+    {% set pde = ", " + q + prop.default + q + ")" if prop.default !== undefined else "" %}
+    {{ propName }}: {{ pds | safe }}{{ realPropType | safe }}{{ pde | safe }},
   {% endif %}
 {% endfor %}
 })
@@ -55,7 +70,10 @@ const {{ definitionName }}O = t.partial({
         set realPropType %}t.{{ prop.type | replace("integer", "number") }}{% endset %}{%
       endif
     %}
-    {{ propName }}: {{ realPropType | safe }},
+    {% set q = '"' if prop.type == "string" else "" %}
+    {% set pds = "withDefault(" if prop.default !== undefined else "" %}
+    {% set pde = ", " + q + prop.default + q + ")" if prop.default !== undefined else "" %}
+    {{ propName }}: {{ pds | safe }}{{ realPropType | safe }}{{ pde | safe }},
   {% endif %}
 {% endfor %}
 })
@@ -72,7 +90,7 @@ import { WithinRangeNumber } from "../../utils/numbers";
 
 export type {{ definitionName }} = WithinRangeNumber<{{ definition.minimum }}, {{ definition.maximum }}>;
 
-export const {{ definitionName }} = WithinRangeNumber({{ definition.minimum }}, {{ definition.maximum }});
+export const {{ definitionName }} = {{ ds }}WithinRangeNumber({{ definition.minimum }}, {{ definition.maximum }}){{ de }};
 
   {% else %}
 export type {{ definitionName }} = number;
@@ -84,7 +102,7 @@ import { PatternString } from "../../utils/strings";
 
 export type {{ definitionName }} = PatternString<"{{ definition.pattern }}">;
 
-export const {{ definitionName }} = PatternString("{{ definition.pattern }}");
+export const {{ definitionName }} = {{ ds }}PatternString("{{ definition.pattern }}"){{ de }};
 
   {% elif definition.minLength and definition.maxLength %}
 
@@ -92,7 +110,7 @@ import { WithinRangeString } from "../../utils/strings";
 
 export type {{ definitionName }} = WithinRangeString<{{ definition.minLength }}, {{ definition.maxLength }}>;
 
-export const {{ definitionName }} = WithinRangeString({{ definition.minLength }}, {{ definition.maxLength }});
+export const {{ definitionName }} = {{ ds }}WithinRangeString({{ definition.minLength }}, {{ definition.maxLength }}){{ de }};
 
   {% elif definition.minLength == 1 %}
 
@@ -100,7 +118,7 @@ import { NonEmptyString } from "../../utils/strings";
 
 export type {{ definitionName }} = NonEmptyString;
 
-export const {{ definitionName }} = NonEmptyString;
+export const {{ definitionName }} = {{ ds }}NonEmptyString{{ de }};
 
   {% elif definition.format == "email" %}
 
@@ -108,7 +126,7 @@ import { EmailString } from "../../utils/strings";
 
 export type {{ definitionName }} = EmailString;
 
-export const {{ definitionName }} = EmailString;
+export const {{ definitionName }} = {{ ds }}EmailString{{ de }};
 
   {% elif definition["x-extensible-enum"] %}
 
@@ -122,10 +140,10 @@ export enum {{ definitionName }}Enum {
     {% endfor %}
 }
 
-export const {{ definitionName }} = enumType<{{ definitionName }}Enum>(
+export const {{ definitionName }} = {{ ds }}enumType<{{ definitionName }}Enum>(
   {{ definitionName }}Enum,
   "{{ definitionName }}"
-);
+){{ de }};
 
 export type {{ definitionName }} = t.TypeOf<typeof {{ definitionName }}>;
 
@@ -142,11 +160,11 @@ import * as t from "io-ts";
 
 import { {{ realPropName }} } from "./{{ realPropName }}";
 
-export const {{ definitionName }} = t.readonlyArray({{ realPropName }}, "array of {{ realPropName }}");
+export const {{ definitionName }} = {{ ds }}t.readonlyArray({{ realPropName }}, "array of {{ realPropName }}"){{ de }};
 
   {% else %}
 
-export const {{ definitionName }} = t.readonlyArray(t.{{ definition.items.type | replace("integer", "number") }}, "array of {{ definition.items.type | replace("integer", "number") }}");
+export const {{ definitionName }} = {{ ds }}t.readonlyArray(t.{{ definition.items.type | replace("integer", "number") }}, "array of {{ definition.items.type | replace("integer", "number") }}"){{ de }};
 
   {% endif %}
 
