@@ -900,7 +900,11 @@ describe("MessagePayloadMiddleware", () => {
         };
         const result = await MessagePayloadMiddleware(r as any);
         expect(isRight(result)).toBeTruthy();
-        expect(result.value).toEqual(f);
+        expect(result.value).toEqual({
+          ...f,
+          default_addresses: f.default_addresses,
+          time_to_live: 3600
+        });
       })
     );
   });

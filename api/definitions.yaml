@@ -157,6 +157,7 @@ ExtendedProfile:
       type: integer
 TimeToLive:
   type: integer
+  default: 3600
   minimum: 3600
   maximum: 31536000
   description: This parameter specifies for how long (in seconds) the system will

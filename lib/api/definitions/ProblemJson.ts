@@ -9,6 +9,8 @@
 
 import { HttpStatusCode } from "./HttpStatusCode";
 
+import { withDefault } from "../../utils/default";
+
 /**
  * 
  */
@@ -20,7 +22,7 @@ const ProblemJsonR = t.interface({});
 
 // optional attributes
 const ProblemJsonO = t.partial({
-  type: t.string,
+  type: withDefault(t.string, "about:blank"),
 
   title: t.string,
 

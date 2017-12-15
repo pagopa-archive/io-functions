@@ -15,4 +15,8 @@ import { WithinRangeNumber } from "../../utils/numbers";
 
 export type TimeToLive = WithinRangeNumber<3600, 31536000>;
 
-export const TimeToLive = WithinRangeNumber(3600, 31536000);
+import { withDefault } from "../../utils/default";
+
+const TimeToLiveBase = WithinRangeNumber(3600, 31536000);
+
+export const TimeToLive = withDefault(TimeToLiveBase, 3600 as TimeToLive);
