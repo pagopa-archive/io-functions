@@ -7,8 +7,6 @@
 // tslint:disable:no-any
 // tslint:disable:object-literal-sort-keys
 
-import { withDefault } from "../../utils/default";
-
 /**
  * This parameter specifies for how long (in seconds) the system will try to deliver the message to the channels configured by the user.
  */
@@ -17,7 +15,14 @@ import { WithinRangeNumber } from "../../utils/numbers";
 
 export type TimeToLive = WithinRangeNumber<3600, 31536000>;
 
-export const TimeToLive = withDefault(
-  WithinRangeNumber(3600, 31536000),
-  3600 as any
-);
+import * as t from "io-ts";
+
+import { withDefault } from "../../utils/default";
+
+const TimeToLiveX = WithinRangeNumber(3600, 31536000);
+
+const defaultValue = t.validate(3600, TimeToLiveX).fold(_ => {
+  throw new Error("Invalid default value for TimeToLive");
+}, t.identity);
+
+export const TimeToLive = withDefault(TimeToLiveX, defaultValue);

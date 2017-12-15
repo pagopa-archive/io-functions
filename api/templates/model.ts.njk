@@ -1,3 +1,5 @@
+{% import "macros.njk" as macro %}
+
 // tslint:disable:ordered-imports
 // tslint:disable:no-consecutive-blank-lines
 // tslint:disable:no-trailing-whitespace
@@ -16,12 +18,6 @@
     import { {{ realPropName }} } from "./{{ realPropName }}";{%
   endif %}{%
 endfor %}
-
-{% if definition.default !== undefined %}
-  import { withDefault } from "../../utils/default";
-  {% set ds = "withDefault(" %}
-  {% set de = ", " + definition.default + " as any)" %}
-{% endif %}
 
 {% for propName, prop in definition.properties -%}
   {% if prop.default !== undefined %}
@@ -90,7 +86,8 @@ import { WithinRangeNumber } from "../../utils/numbers";
 
 export type {{ definitionName }} = WithinRangeNumber<{{ definition.minimum }}, {{ definition.maximum }}>;
 
-export const {{ definitionName }} = {{ ds }}WithinRangeNumber({{ definition.minimum }}, {{ definition.maximum }}){{ de }};
+{% set typedef %}WithinRangeNumber({{ definition.minimum }}, {{ definition.maximum }}){% endset %}
+{{ macro.exportConst(definition.default, definitionName, typedef) }}
 
   {% else %}
 export type {{ definitionName }} = number;
@@ -102,7 +99,8 @@ import { PatternString } from "../../utils/strings";
 
 export type {{ definitionName }} = PatternString<"{{ definition.pattern }}">;
 
-export const {{ definitionName }} = {{ ds }}PatternString("{{ definition.pattern }}"){{ de }};
+{% set typedef %}PatternString("{{ definition.pattern }}"){% endset %}
+{{ macro.exportConst(definition.default, definitionName, typedef) }}
 
   {% elif definition.minLength and definition.maxLength %}
 
@@ -110,7 +108,8 @@ import { WithinRangeString } from "../../utils/strings";
 
 export type {{ definitionName }} = WithinRangeString<{{ definition.minLength }}, {{ definition.maxLength }}>;
 
-export const {{ definitionName }} = {{ ds }}WithinRangeString({{ definition.minLength }}, {{ definition.maxLength }}){{ de }};
+{% set typedef %}WithinRangeString({{ definition.minLength }}, {{ definition.maxLength }}){% endset %}
+{{ macro.exportConst(definition.default, definitionName, typedef) }}
 
   {% elif definition.minLength == 1 %}
 
@@ -118,7 +117,8 @@ import { NonEmptyString } from "../../utils/strings";
 
 export type {{ definitionName }} = NonEmptyString;
 
-export const {{ definitionName }} = {{ ds }}NonEmptyString{{ de }};
+{% set typedef %}NonEmptyString{% endset %}
+{{ macro.exportConst(definition.default, definitionName, typedef) }}
 
   {% elif definition.format == "email" %}
 
@@ -126,7 +126,8 @@ import { EmailString } from "../../utils/strings";
 
 export type {{ definitionName }} = EmailString;
 
-export const {{ definitionName }} = {{ ds }}EmailString{{ de }};
+{% set typedef %}EmailString{% endset %}
+{{ macro.exportConst(definition.default, definitionName, typedef) }}
 
   {% elif definition["x-extensible-enum"] %}
 
@@ -140,10 +141,11 @@ export enum {{ definitionName }}Enum {
     {% endfor %}
 }
 
-export const {{ definitionName }} = {{ ds }}enumType<{{ definitionName }}Enum>(
+{% set typedef %}enumType<{{ definitionName }}Enum>(
   {{ definitionName }}Enum,
   "{{ definitionName }}"
-){{ de }};
+){% endset %}
+{{ macro.exportConst(definition.default, definitionName, typedef) }}
 
 export type {{ definitionName }} = t.TypeOf<typeof {{ definitionName }}>;
 
@@ -160,11 +162,13 @@ import * as t from "io-ts";
 
 import { {{ realPropName }} } from "./{{ realPropName }}";
 
-export const {{ definitionName }} = {{ ds }}t.readonlyArray({{ realPropName }}, "array of {{ realPropName }}"){{ de }};
+{% set typedef %}t.readonlyArray({{ realPropName }}, "array of {{ realPropName }}"){% endset %}
+{{ macro.exportConst(definition.default, definitionName, typedef) }}
 
   {% else %}
 
-export const {{ definitionName }} = {{ ds }}t.readonlyArray(t.{{ definition.items.type | replace("integer", "number") }}, "array of {{ definition.items.type | replace("integer", "number") }}"){{ de }};
+{% set typedef %}t.readonlyArray(t.{{ definition.items.type | replace("integer", "number") }}, "array of {{ definition.items.type | replace("integer", "number") }}"){% endset %}
+{{ macro.exportConst(definition.default, definitionName, typedef) }}
 
   {% endif %}
 

@@ -12,7 +12,8 @@ export function withDefault<T extends t.Any>(
   return new t.Type(
     type.name,
     (v: any): v is T => type.is(v),
-    (v: any, c: any) => type.validate(v !== undefined ? v : defaultValue, c),
+    (v: any, c: any) =>
+      type.validate(v !== undefined && v !== null ? v : defaultValue, c),
     (v: any) => type.serialize(v)
   );
 }
