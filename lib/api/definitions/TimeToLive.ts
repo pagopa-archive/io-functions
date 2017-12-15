@@ -15,14 +15,8 @@ import { WithinRangeNumber } from "../../utils/numbers";
 
 export type TimeToLive = WithinRangeNumber<3600, 31536000>;
 
-import * as t from "io-ts";
-
 import { withDefault } from "../../utils/default";
 
-const TimeToLiveX = WithinRangeNumber(3600, 31536000);
+const TimeToLiveBase = WithinRangeNumber(3600, 31536000);
 
-const defaultValue = t.validate(3600, TimeToLiveX).fold(_ => {
-  throw new Error("Invalid default value for TimeToLive");
-}, t.identity);
-
-export const TimeToLive = withDefault(TimeToLiveX, defaultValue);
+export const TimeToLive = withDefault(TimeToLiveBase, 3600 as TimeToLive);
