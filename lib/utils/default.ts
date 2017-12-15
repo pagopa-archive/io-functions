@@ -1,6 +1,10 @@
-// tslint:disable:no-any
 import * as t from "io-ts";
 
+/**
+ * Sets properties default values when calling t.validate() method on models
+ * see https://github.com/gcanti/io-ts/issues/8
+ */
+// tslint:disable:no-any
 export function withDefault<T extends t.Any>(
   type: T,
   defaultValue: t.TypeOf<T>
