@@ -69,7 +69,7 @@ const notificationsCollectionUrl = documentDbUtils.getCollectionUri(
   "notifications"
 );
 
-const storageConnectionString = getRequiredStringEnv("AzureWebJobsStorage");
+const storageConnectionString = getRequiredStringEnv("QueueStorageConnection");
 
 /**
  * Input and output bindings for this function

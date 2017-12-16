@@ -11,7 +11,7 @@ process.env.COSMOSDB_NAME = "anyDbName";
 // tslint:disable-next-line:no-object-mutation
 process.env.MESSAGE_CONTAINER_NAME = "anyMessageContainerName";
 // tslint:disable-next-line:no-object-mutation
-process.env.AzureWebJobsStorage = "anyAzureWebJobsStorage";
+process.env.QueueStorageConnection = "anyQueueStorageConnection";
 
 import * as t from "io-ts";
 
