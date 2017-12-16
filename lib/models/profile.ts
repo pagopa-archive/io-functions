@@ -109,7 +109,9 @@ export class ProfileModel extends DocumentDbModelVersioned<
   NewProfile,
   RetrievedProfile
 > {
+  // tslint:disable-next-line:readonly-keyword
   protected dbClient: DocumentDb.DocumentClient;
+  // tslint:disable-next-line:readonly-keyword
   protected collectionUri: DocumentDbUtils.IDocumentDbCollectionUri;
 
   /**

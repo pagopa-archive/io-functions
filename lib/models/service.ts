@@ -148,7 +148,9 @@ export class ServiceModel extends DocumentDbModelVersioned<
   NewService,
   RetrievedService
 > {
+  // tslint:disable-next-line:readonly-keyword
   protected dbClient: DocumentDb.DocumentClient;
+  // tslint:disable-next-line:readonly-keyword
   protected collectionUri: DocumentDbUtils.IDocumentDbCollectionUri;
 
   /**
