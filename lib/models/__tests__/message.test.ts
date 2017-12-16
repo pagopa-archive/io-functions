@@ -1,8 +1,6 @@
 // tslint:disable:no-object-mutation
 // tslint:disable:no-any
 
-import * as t from "io-ts";
-
 import { isLeft, isRight, right } from "fp-ts/lib/Either";
 
 import * as DocumentDb from "documentdb";
@@ -15,7 +13,7 @@ import { MessageContent } from "../../api/definitions/MessageContent";
 
 import { NonEmptyString } from "../../utils/strings";
 
-import { fromNullable, Option, Some } from "fp-ts/lib/Option";
+import { fromNullable } from "fp-ts/lib/Option";
 
 import {
   MessageModel,
@@ -28,11 +26,6 @@ import { ModelId } from "../../utils/documentdb_model_versioned";
 jest.mock("../../utils/azure_storage");
 import * as azureStorageUtils from "../../utils/azure_storage";
 
-// DANGEROUS, only use in tests
-function _getO<T>(o: Option<T>): T {
-  return (o as Some<T>).value;
-}
-
 const MESSAGE_CONTAINER_NAME = "message-content" as NonEmptyString;
 
 const aDatabaseUri = DocumentDbUtils.getDatabaseUri("mockdb" as NonEmptyString);
@@ -41,25 +34,21 @@ const aMessagesCollectionUrl = DocumentDbUtils.getCollectionUri(
   "messages"
 );
 
-const aMessageBodyMarkdown = _getO(
-  t.validate("test".repeat(80), MessageBodyMarkdown).toOption()
-);
+const aMessageBodyMarkdown = "test".repeat(80) as MessageBodyMarkdown;
 
 const aMessageContent: MessageContent = {
   markdown: aMessageBodyMarkdown
 };
 
-const aFiscalCode = _getO(
-  t.validate("FRLFRC74E04B157I", FiscalCode).toOption()
-);
+const aFiscalCode = "FRLFRC74E04B157I" as FiscalCode;
 
 const aNewMessageWithContent: NewMessageWithContent = {
   content: aMessageContent,
   fiscalCode: aFiscalCode,
-  id: _getO(t.validate("A_MESSAGE_ID", NonEmptyString).toOption()),
+  id: "A_MESSAGE_ID" as NonEmptyString,
   kind: "INewMessageWithContent",
   senderServiceId: "agid" as ModelId,
-  senderUserId: _getO(t.validate("u123", NonEmptyString).toOption())
+  senderUserId: "u123" as NonEmptyString
 };
 
 const aRetrievedMessageWithContent: RetrievedMessageWithContent = {
@@ -287,7 +276,7 @@ describe("findMessageForRecipient", () => {
     );
 
     const result = await model.findMessageForRecipient(
-      _getO(t.validate("FRLFRC73E04B157I", FiscalCode).toOption()),
+      "FRLFRC73E04B157I" as FiscalCode,
       aRetrievedMessageWithContent.id
     );
 
@@ -310,7 +299,7 @@ describe("findMessageForRecipient", () => {
     );
 
     const result = await model.findMessageForRecipient(
-      _getO(t.validate("FRLFRC73E04B157I", FiscalCode).toOption()),
+      "FRLFRC73E04B157I" as FiscalCode,
       aRetrievedMessageWithContent.id
     );
 

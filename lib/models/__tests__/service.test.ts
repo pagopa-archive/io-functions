@@ -1,9 +1,7 @@
 // tslint:disable:no-any
 
-import * as t from "io-ts";
-
 import { isLeft, isRight } from "fp-ts/lib/Either";
-import { isSome, Option, Some } from "fp-ts/lib/Option";
+import { isSome } from "fp-ts/lib/Option";
 
 import * as DocumentDb from "documentdb";
 
@@ -19,31 +17,26 @@ import {
   toAuthorizedRecipients
 } from "../service";
 
-// DANGEROUS, only use in tests
-function _getO<T>(o: Option<T>): T {
-  return (o as Some<T>).value;
-}
-
 const aDatabaseUri = DocumentDbUtils.getDatabaseUri("mockdb" as NonEmptyString);
 const servicesCollectionUrl = DocumentDbUtils.getCollectionUri(
   aDatabaseUri,
   "services"
 );
 
-const aServiceId = "xyz";
+const aServiceId = "xyz" as NonEmptyString;
 
 const aRetrievedService: RetrievedService = {
   _self: "xyz",
   _ts: "xyz",
   authorizedCIDRs: toAuthorizedCIDRs([]),
   authorizedRecipients: toAuthorizedRecipients([]),
-  departmentName: _getO(t.validate("MyDept", NonEmptyString).toOption()),
-  id: _getO(t.validate("xyz", NonEmptyString).toOption()),
+  departmentName: "MyDept" as NonEmptyString,
+  id: "xyz" as NonEmptyString,
   kind: "IRetrievedService",
-  organizationName: _getO(t.validate("MyOrg", NonEmptyString).toOption()),
-  serviceId: _getO(t.validate(aServiceId, NonEmptyString).toOption()),
-  serviceName: _getO(t.validate("MyService", NonEmptyString).toOption()),
-  version: _getO(t.validate(0, NonNegativeNumber).toOption())
+  organizationName: "MyOrg" as NonEmptyString,
+  serviceId: aServiceId,
+  serviceName: "MyService" as NonEmptyString,
+  version: 0 as NonNegativeNumber
 };
 
 const aSerializedService = {
@@ -66,9 +59,7 @@ describe("findOneServiceById", () => {
       servicesCollectionUrl
     );
 
-    const result = await model.findOneByServiceId(
-      _getO(t.validate("id", NonEmptyString).toOption())
-    );
+    const result = await model.findOneByServiceId("id" as NonEmptyString);
 
     expect(isRight(result)).toBeTruthy();
     if (isRight(result)) {
@@ -91,9 +82,7 @@ describe("findOneServiceById", () => {
       servicesCollectionUrl
     );
 
-    const result = await model.findOneByServiceId(
-      _getO(t.validate("id", NonEmptyString).toOption())
-    );
+    const result = await model.findOneByServiceId("id" as NonEmptyString);
 
     expect(isRight(result)).toBeTruthy();
     if (isRight(result)) {
@@ -119,12 +108,10 @@ describe("createService", () => {
     const newService: Service = {
       authorizedCIDRs: toAuthorizedCIDRs([]),
       authorizedRecipients: toAuthorizedRecipients([]),
-      departmentName: _getO(t.validate("MyService", NonEmptyString).toOption()),
-      organizationName: _getO(
-        t.validate("MyService", NonEmptyString).toOption()
-      ),
-      serviceId: _getO(t.validate(aServiceId, NonEmptyString).toOption()),
-      serviceName: _getO(t.validate("MyService", NonEmptyString).toOption())
+      departmentName: "MyService" as NonEmptyString,
+      organizationName: "MyService" as NonEmptyString,
+      serviceId: aServiceId,
+      serviceName: "MyService" as NonEmptyString
     };
 
     const result = await model.create(newService, newService.serviceId);
@@ -155,12 +142,10 @@ describe("createService", () => {
     const newService: Service = {
       authorizedCIDRs: toAuthorizedCIDRs([]),
       authorizedRecipients: toAuthorizedRecipients([]),
-      departmentName: _getO(t.validate("MyService", NonEmptyString).toOption()),
-      organizationName: _getO(
-        t.validate("MyService", NonEmptyString).toOption()
-      ),
-      serviceId: _getO(t.validate(aServiceId, NonEmptyString).toOption()),
-      serviceName: _getO(t.validate("MyService", NonEmptyString).toOption())
+      departmentName: "MyService" as NonEmptyString,
+      organizationName: "MyService" as NonEmptyString,
+      serviceId: aServiceId,
+      serviceName: "MyService" as NonEmptyString
     };
 
     const result = await model.create(newService, newService.serviceId);

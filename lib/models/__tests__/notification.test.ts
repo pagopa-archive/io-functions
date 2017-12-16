@@ -1,9 +1,6 @@
 // tslint:disable:no-any
 
-import * as t from "io-ts";
-
 import { isLeft, isRight } from "fp-ts/lib/Either";
-import { Option, Some } from "fp-ts/lib/Option";
 
 import * as DocumentDb from "documentdb";
 
@@ -22,26 +19,19 @@ import {
   RetrievedNotification
 } from "../notification";
 
-// DANGEROUS, only use in tests
-function _getO<T>(o: Option<T>): T {
-  return (o as Some<T>).value;
-}
-
 const aDatabaseUri = DocumentDbUtils.getDatabaseUri("mockdb" as NonEmptyString);
 const aNotificationsCollectionUri = DocumentDbUtils.getCollectionUri(
   aDatabaseUri,
   "notifications"
 );
 
-const aFiscalCode = _getO(
-  t.validate("FRLFRC74E04B157I", FiscalCode).toOption()
-);
+const aFiscalCode = "FRLFRC74E04B157I" as FiscalCode;
 
 const aNewNotification: NewNotification = {
   fiscalCode: aFiscalCode,
-  id: _getO(t.validate("A_NOTIFICATION_ID", NonEmptyString).toOption()),
+  id: "A_NOTIFICATION_ID" as NonEmptyString,
   kind: "INewNotification",
-  messageId: _getO(t.validate("A_MESSAGE_ID", NonEmptyString).toOption())
+  messageId: "A_MESSAGE_ID" as NonEmptyString
 };
 
 const aRetrievedNotification: RetrievedNotification = {
@@ -167,7 +157,7 @@ describe("update", () => {
   const anEmailNotification: NotificationChannelEmail = {
     addressSource: NotificationAddressSourceEnum.DEFAULT_ADDRESS,
     status: NotificationChannelStatusEnum.SENT_TO_CHANNEL,
-    toAddress: _getO(t.validate("to@example.com", EmailString).toOption())
+    toAddress: "to@example.com" as EmailString
   };
 
   const updateFunction = jest.fn(n => {

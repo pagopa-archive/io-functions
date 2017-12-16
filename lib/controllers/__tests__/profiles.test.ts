@@ -1,9 +1,7 @@
 // tslint:disable:no-any
 
-import * as t from "io-ts";
-
 import { right } from "fp-ts/lib/Either";
-import { none, Option, some, Some } from "fp-ts/lib/Option";
+import { none, some } from "fp-ts/lib/Option";
 import { EmailString, NonEmptyString } from "../../utils/strings";
 
 import { RetrievedProfile } from "../../models/profile";
@@ -19,21 +17,14 @@ import { LimitedProfile } from "../../api/definitions/LimitedProfile";
 
 import { NonNegativeNumber } from "../../utils/numbers";
 
-// DANGEROUS, only use in tests
-function _getO<T>(o: Option<T>): T {
-  return (o as Some<T>).value;
-}
-
 const anAzureAuthorization: IAzureApiAuthorization = {
   groups: new Set([UserGroup.ApiLimitedProfileRead]),
   kind: "IAzureApiAuthorization",
-  subscriptionId: _getO(t.validate("s123", NonEmptyString).toOption()),
-  userId: _getO(t.validate("u123", NonEmptyString).toOption())
+  subscriptionId: "s123" as NonEmptyString,
+  userId: "u123" as NonEmptyString
 };
 
-const aFiscalCode = _getO(
-  t.validate("FRLFRC74E04B157I", FiscalCode).toOption()
-);
+const aFiscalCode = "FRLFRC74E04B157I" as FiscalCode;
 
 const aProfilePayloadMock = {
   email: "x@example.com"
@@ -42,11 +33,11 @@ const aProfilePayloadMock = {
 const aRetrievedProfile: RetrievedProfile = {
   _self: "123",
   _ts: "123",
-  email: _getO(t.validate("x@example.com", EmailString).toOption()),
+  email: "x@example.com" as EmailString,
   fiscalCode: aFiscalCode,
-  id: _getO(t.validate("123", NonEmptyString).toOption()),
+  id: "123" as NonEmptyString,
   kind: "IRetrievedProfile",
-  version: _getO(t.validate(1, NonNegativeNumber).toOption())
+  version: 1 as NonNegativeNumber
 };
 
 const aPublicExtendedProfile: ExtendedProfile = {
@@ -207,7 +198,7 @@ it("should update an existing profile", async () => {
   const upsertProfileHandler = UpsertProfileHandler(profileModelMock as any);
 
   const profilePayloadMock = {
-    email: _getO(t.validate("y@example.com", EmailString).toOption())
+    email: "y@example.com" as EmailString
   };
 
   const response = await upsertProfileHandler(

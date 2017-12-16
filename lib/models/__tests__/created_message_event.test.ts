@@ -1,20 +1,10 @@
 // tslint:disable:no-any
 
-import * as t from "io-ts";
-
-import { Option, Some } from "fp-ts/lib/Option";
 import { CreatedMessageEvent } from "../created_message_event";
 
 import { MessageBodyMarkdown } from "../../api/definitions/MessageBodyMarkdown";
 
-// DANGEROUS, only use in tests
-function _getO<T>(o: Option<T>): T {
-  return (o as Some<T>).value;
-}
-
-const aMessageBodyMarkdown = _getO(
-  t.validate("test".repeat(80), MessageBodyMarkdown).toOption()
-);
+const aMessageBodyMarkdown = "test".repeat(80) as MessageBodyMarkdown;
 
 describe("", () => {
   it("should validate valid events CreatedMessageEvents", () => {

@@ -7,6 +7,7 @@ import { tag, Tagged } from "./types";
 // a generator of identifiers
 export type ObjectIdGenerator = () => NonEmptyString;
 
+// tslint:disable-next-line:no-useless-cast
 export const ulidGenerator: ObjectIdGenerator = () => ulid() as NonEmptyString;
 
 /**
