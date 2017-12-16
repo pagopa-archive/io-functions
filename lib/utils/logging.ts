@@ -8,6 +8,7 @@ import { IContext } from "azure-function-express";
  * A custom Winston Transport that logs to the Azure Functions context
  */
 class AzureContextTransport extends winston.Transport {
+  // tslint:disable-next-line:readonly-keyword
   private azureContext: IContext<{}>;
 
   constructor(azureContext: IContext<{}>, options: winston.TransportOptions) {

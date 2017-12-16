@@ -1,6 +1,7 @@
 {
     "defaultSeverity": "error",
     "extends": [
+      // "typestrict",
       "tslint:recommended",
       "tslint-immutable",
       "tslint-plugin-prettier",
@@ -22,6 +23,7 @@
       "readonly-array": true,
       "no-let": true,
       "no-object-mutation": true,
+      "no-method-signature": true,
 
       // tslint-immutable: Functional style rules
       // "no-this": true,
