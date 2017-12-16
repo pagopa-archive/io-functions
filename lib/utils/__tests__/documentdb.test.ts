@@ -227,7 +227,7 @@ describe("queryDocuments", () => {
     const clientMock = {
       queryDocuments: jest.fn((__, ___) => iteratorMock)
     };
-    const iterator = await DocumentDbUtils.queryDocuments(
+    const iterator = DocumentDbUtils.queryDocuments(
       (clientMock as any) as DocumentDb.DocumentClient,
       collectionUriFixture,
       "QUERY"
@@ -253,7 +253,7 @@ describe("queryDocuments", () => {
     const clientMock = {
       queryDocuments: jest.fn((__, ___) => iteratorMock)
     };
-    const iterator = await DocumentDbUtils.queryDocuments(
+    const iterator = DocumentDbUtils.queryDocuments(
       (clientMock as any) as DocumentDb.DocumentClient,
       collectionUriFixture,
       "QUERY"
@@ -464,7 +464,7 @@ describe("queryAttachments", () => {
     const clientMock = {
       readAttachments: jest.fn((__, ___) => iteratorMock)
     };
-    const iterator = await DocumentDbUtils.queryAttachments(
+    const iterator = DocumentDbUtils.queryAttachments(
       (clientMock as any) as DocumentDb.DocumentClient,
       aDocumentUri,
       someFeedOptions

@@ -213,7 +213,7 @@ describe("findMessages", () => {
       MESSAGE_CONTAINER_NAME
     );
 
-    const resultIterator = await model.findMessages(
+    const resultIterator = model.findMessages(
       aRetrievedMessageWithContent.fiscalCode
     );
 
