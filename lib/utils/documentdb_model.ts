@@ -22,20 +22,24 @@ export abstract class DocumentDbModel<
   TR extends T & DocumentDb.RetrievedDocument
 > {
   // instance of a DocumentDB client
+  // tslint:disable-next-line:readonly-keyword
   protected dbClient: DocumentDb.DocumentClient;
 
   // the URI of the collection associated to this model
+  // tslint:disable-next-line:readonly-keyword
   protected collectionUri: DocumentDbUtils.IDocumentDbCollectionUri;
 
   /**
    * An helper that converts a retrieved document to the base document type
    */
+  // tslint:disable-next-line:readonly-keyword
   protected toBaseType: (o: TR) => T;
 
   /**
    * An helper that converts the result of a query (a plain DocumentDB document
    * to the retrieved type).
    */
+  // tslint:disable-next-line:readonly-keyword
   protected toRetrieved: (result: DocumentDb.RetrievedDocument) => TR;
 
   /**
