@@ -510,9 +510,7 @@ export function GetMessagesHandler(
   messageModel: MessageModel
 ): IGetMessagesHandler {
   return async (_, __, ___, fiscalCode) => {
-    const retrievedMessagesIterator = await messageModel.findMessages(
-      fiscalCode
-    );
+    const retrievedMessagesIterator = messageModel.findMessages(fiscalCode);
     const publicExtendedMessagesIterator = mapResultIterator(
       retrievedMessagesIterator,
       retrievedMessageToPublic
