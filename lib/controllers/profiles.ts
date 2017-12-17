@@ -59,8 +59,8 @@ import { ServiceModel } from "../models/service";
 function toExtendedProfile(profile: RetrievedProfile): ExtendedProfile {
   return {
     email: profile.email,
-    version: profile.version,
-    is_inbox_enabled: profile.isInboxEnabled
+    is_inbox_enabled: profile.isInboxEnabled,
+    version: profile.version
   };
 }
 
