@@ -34,6 +34,7 @@ const aRetrievedProfile: RetrievedProfile = {
   _self: "xyz",
   _ts: "xyz",
   fiscalCode: aFiscalCode,
+  isInboxEnabled: false,
   id: _getO(t.validate("xyz", NonEmptyString).toOption()),
   kind: "IRetrievedProfile",
   version: _getO(t.validate(0, NonNegativeNumber).toOption())

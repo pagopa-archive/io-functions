@@ -15,6 +15,7 @@ import { Option } from "fp-ts/lib/Option";
 
 import { EmailAddress } from "../api/definitions/EmailAddress";
 import { FiscalCode } from "../api/definitions/FiscalCode";
+import { IsInboxEnabled } from "../api/definitions/IsInboxEnabled";
 import { fiscalCodeToModelId } from "../utils/conversions";
 import { NonNegativeNumber } from "../utils/numbers";
 import { NonEmptyString } from "../utils/strings";
@@ -34,7 +35,7 @@ export const Profile = t.intersection([
     email: EmailAddress,
 
     // whether to store the content of messages sent to this citizen
-    isInboxEnabled: t.boolean
+    isInboxEnabled: IsInboxEnabled
   })
 ]);
 
