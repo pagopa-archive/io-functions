@@ -15,6 +15,8 @@ one gets generated from the client attributes.
 
 import { WithinRangeString } from "../../utils/strings";
 
-export type MessageSubject = WithinRangeString<10, 120>;
+import * as t from "io-ts";
+
+export type MessageSubject = t.TypeOf<typeof MessageSubject>;
 
 export const MessageSubject = WithinRangeString(10, 120);

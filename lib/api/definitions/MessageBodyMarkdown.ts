@@ -15,6 +15,8 @@ limit in terms of content size (e.g. email, etc...).
 
 import { WithinRangeString } from "../../utils/strings";
 
-export type MessageBodyMarkdown = WithinRangeString<80, 10000>;
+import * as t from "io-ts";
+
+export type MessageBodyMarkdown = t.TypeOf<typeof MessageBodyMarkdown>;
 
 export const MessageBodyMarkdown = WithinRangeString(80, 10000);

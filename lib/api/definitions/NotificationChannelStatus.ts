@@ -11,8 +11,6 @@
  * 
  */
 
-import * as t from "io-ts";
-
 import { enumType } from "../../utils/types";
 
 export enum NotificationChannelStatusEnum {
@@ -21,10 +19,12 @@ export enum NotificationChannelStatusEnum {
   "SENT_TO_CHANNEL" = "SENT_TO_CHANNEL"
 }
 
-export const NotificationChannelStatus = enumType<
-  NotificationChannelStatusEnum
->(NotificationChannelStatusEnum, "NotificationChannelStatus");
+import * as t from "io-ts";
 
 export type NotificationChannelStatus = t.TypeOf<
   typeof NotificationChannelStatus
 >;
+
+export const NotificationChannelStatus = enumType<
+  NotificationChannelStatusEnum
+>(NotificationChannelStatusEnum, "NotificationChannelStatus");

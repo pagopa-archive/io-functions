@@ -9,6 +9,7 @@
 
 import { EmailAddress } from "./EmailAddress";
 import { PreferredLanguages } from "./PreferredLanguages";
+import { IsInboxEnabled } from "./IsInboxEnabled";
 
 /**
  * Describes the citizen's profile, mostly interesting for preferences attributes.
@@ -24,6 +25,8 @@ const ExtendedProfileO = t.partial({
   email: EmailAddress,
 
   preferred_languages: PreferredLanguages,
+
+  is_inbox_enabled: IsInboxEnabled,
 
   version: t.number
 });

@@ -26,6 +26,7 @@ const aRetrievedProfile: RetrievedProfile = {
   _ts: "xyz",
   fiscalCode: aFiscalCode,
   id: "xyz" as NonEmptyString,
+  isInboxEnabled: false,
   kind: "IRetrievedProfile",
   version: 0 as NonNegativeNumber
 };

@@ -417,8 +417,15 @@ export const specs = {
       properties: {
         email: { $ref: "#/definitions/EmailAddress" },
         preferred_languages: { $ref: "#/definitions/PreferredLanguages" },
+        is_inbox_enabled: { $ref: "#/definitions/IsInboxEnabled" },
         version: { type: "integer" }
       }
+    },
+    IsInboxEnabled: {
+      type: "boolean",
+      default: false,
+      description:
+        "True if the recipient of a message wants to store its content for later retrieval."
     },
     TimeToLive: {
       type: "integer",

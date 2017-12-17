@@ -80,97 +80,101 @@ export type {{ definitionName }} = t.TypeOf<typeof {{ definitionName }}>;
 
 {% elif definition.type == "integer" %}
 
-import { WithinRangeNumber } from "../../utils/numbers";
+  import { WithinRangeNumber } from "../../utils/numbers";
 
   {% if definition.minimum and definition.maximum %}
 
-export type {{ definitionName }} = WithinRangeNumber<{{ definition.minimum }}, {{ definition.maximum }}>;
-
-{% set typedef %}WithinRangeNumber({{ definition.minimum }}, {{ definition.maximum }}){% endset %}
-{{ macro.exportConst(definition.default, definitionName, typedef) }}
+    {% set typedef %}WithinRangeNumber({{ definition.minimum }}, {{ definition.maximum }}){% endset %}
+    {{ macro.exportConst(definition.default, definitionName, typedef) }}
 
   {% else %}
-export type {{ definitionName }} = number;
+
+    {% set typedef %}t.number{% endset %}
+    {{ macro.exportConst(definition.default, definitionName, typedef) }}
+
   {% endif %}
+
 {% elif definition.type == "string" %}
+
   {% if definition.pattern %}
 
-import { PatternString } from "../../utils/strings";
+    import { PatternString } from "../../utils/strings";
 
-export type {{ definitionName }} = PatternString<"{{ definition.pattern }}">;
-
-{% set typedef %}PatternString("{{ definition.pattern }}"){% endset %}
-{{ macro.exportConst(definition.default, definitionName, typedef, quote=true) }}
+    {% set typedef %}PatternString("{{ definition.pattern }}"){% endset %}
+    {{ macro.exportConst(definition.default, definitionName, typedef, quote=true) }}
 
   {% elif definition.minLength and definition.maxLength %}
 
-import { WithinRangeString } from "../../utils/strings";
+    import { WithinRangeString } from "../../utils/strings";
 
-export type {{ definitionName }} = WithinRangeString<{{ definition.minLength }}, {{ definition.maxLength }}>;
-
-{% set typedef %}WithinRangeString({{ definition.minLength }}, {{ definition.maxLength }}){% endset %}
-{{ macro.exportConst(definition.default, definitionName, typedef, quote=true) }}
+    {% set typedef %}WithinRangeString({{ definition.minLength }}, {{ definition.maxLength }}){% endset %}
+    {{ macro.exportConst(definition.default, definitionName, typedef, quote=true) }}
 
   {% elif definition.minLength == 1 %}
 
-import { NonEmptyString } from "../../utils/strings";
+    import { NonEmptyString } from "../../utils/strings";
 
-export type {{ definitionName }} = NonEmptyString;
-
-{% set typedef %}NonEmptyString{% endset %}
-{{ macro.exportConst(definition.default, definitionName, typedef, quote=true) }}
+    {% set typedef %}NonEmptyString{% endset %}
+    {{ macro.exportConst(definition.default, definitionName, typedef, quote=true) }}
 
   {% elif definition.format == "email" %}
 
-import { EmailString } from "../../utils/strings";
+    import { EmailString } from "../../utils/strings";
 
-export type {{ definitionName }} = EmailString;
-
-{% set typedef %}EmailString{% endset %}
-{{ macro.exportConst(definition.default, definitionName, typedef, quote=true) }}
+    {% set typedef %}EmailString{% endset %}
+    {{ macro.exportConst(definition.default, definitionName, typedef, quote=true) }}
 
   {% elif definition["x-extensible-enum"] %}
 
-import * as t from "io-ts";
+    import { enumType } from "../../utils/types";
 
-import { enumType } from "../../utils/types";
+    export enum {{ definitionName }}Enum {
+        {% for enum in definition["x-extensible-enum"] %}
+          "{{ enum }}" = "{{ enum }}",
+        {% endfor %}
+    }
 
-export enum {{ definitionName }}Enum {
-    {% for enum in definition["x-extensible-enum"] %}
-      "{{ enum }}" = "{{ enum }}",
-    {% endfor %}
-}
-
-{% set typedef %}enumType<{{ definitionName }}Enum>(
-  {{ definitionName }}Enum,
-  "{{ definitionName }}"
-){% endset %}
-{{ macro.exportConst(definition.default, definitionName, typedef, quote=true) }}
-
-export type {{ definitionName }} = t.TypeOf<typeof {{ definitionName }}>;
+    {% set typedef %}enumType<{{ definitionName }}Enum>(
+      {{ definitionName }}Enum,
+      "{{ definitionName }}"
+    ){% endset %}
+    {{ macro.exportConst(definition.default, definitionName, typedef, quote=true) }}
 
   {% else %}
-export type {{ definitionName }} = string;
+
+    {% set typedef %}t.string{% endset %}
+    {{ macro.exportConst(definition.default, definitionName, typedef) }}
+
   {% endif %}
+
+{% elif definition.type == "boolean" %}
+
+    {% set typedef %}t.boolean{% endset %}
+    {{ macro.exportConst(definition.default, definitionName, typedef) }}
+
 {% elif definition.type == "array" %}
+
+  import * as t from "io-ts";
 
   {% if definition.items.$ref %}
 
     {%- set realPropName = definition.items.$ref | replace("#/definitions/", "") -%}
 
-import * as t from "io-ts";
+    import { {{ realPropName }} } from "./{{ realPropName }}";
 
-import { {{ realPropName }} } from "./{{ realPropName }}";
+    export const {{ definitionName }} = t.readonlyArray({{ realPropName }}, "array of {{ realPropName }}");
 
-export const {{ definitionName }} = t.readonlyArray({{ realPropName }}, "array of {{ realPropName }}");
+    export type {{ definitionName }} = t.TypeOf<typeof {{ realPropName }}>;
 
   {% else %}
 
-export const {{ definitionName }} = t.readonlyArray(t.{{ definition.items.type | replace("integer", "number") }}, "array of {{ definition.items.type | replace("integer", "number") }}");
+    {%- set realPropName = definition.items.type | replace("integer", "number") -%}
+
+    export const {{ definitionName }} = t.readonlyArray(t.{{ realPropName }}, "array of {{ realPropName }}");
+
+    export type {{ definitionName }} = t.TypeOf<typeof t.{{ realPropName }}>;
 
   {% endif %}
-
-export type {{ definitionName }} = t.TypeOf< typeof {{ realPropName }}>;
 
 {% else %}
 

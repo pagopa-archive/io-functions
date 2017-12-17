@@ -13,6 +13,8 @@
 
 import { NonEmptyString } from "../../utils/strings";
 
-export type ServiceId = NonEmptyString;
+import * as t from "io-ts";
+
+export type ServiceId = t.TypeOf<typeof ServiceId>;
 
 export const ServiceId = NonEmptyString;

@@ -13,6 +13,8 @@
 
 import { EmailString } from "../../utils/strings";
 
-export type EmailAddress = EmailString;
+import * as t from "io-ts";
+
+export type EmailAddress = t.TypeOf<typeof EmailAddress>;
 
 export const EmailAddress = EmailString;

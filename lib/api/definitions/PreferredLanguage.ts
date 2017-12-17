@@ -11,8 +11,6 @@
  * 
  */
 
-import * as t from "io-ts";
-
 import { enumType } from "../../utils/types";
 
 export enum PreferredLanguageEnum {
@@ -27,9 +25,11 @@ export enum PreferredLanguageEnum {
   "fr_FR" = "fr_FR"
 }
 
+import * as t from "io-ts";
+
+export type PreferredLanguage = t.TypeOf<typeof PreferredLanguage>;
+
 export const PreferredLanguage = enumType<PreferredLanguageEnum>(
   PreferredLanguageEnum,
   "PreferredLanguage"
 );
-
-export type PreferredLanguage = t.TypeOf<typeof PreferredLanguage>;
