@@ -154,23 +154,27 @@ export type {{ definitionName }} = t.TypeOf<typeof {{ definitionName }}>;
 
 {% elif definition.type == "array" %}
 
+  import * as t from "io-ts";
+
   {% if definition.items.$ref %}
 
     {%- set realPropName = definition.items.$ref | replace("#/definitions/", "") -%}
-
-    import * as t from "io-ts";
 
     import { {{ realPropName }} } from "./{{ realPropName }}";
 
     export const {{ definitionName }} = t.readonlyArray({{ realPropName }}, "array of {{ realPropName }}");
 
+    export type {{ definitionName }} = t.TypeOf< typeof {{ realPropName }}>;
+
   {% else %}
 
-    export const {{ definitionName }} = t.readonlyArray(t.{{ definition.items.type | replace("integer", "number") }}, "array of {{ definition.items.type | replace("integer", "number") }}");
+    {%- set realPropName = definition.items.type | replace("integer", "number") -%}
+
+    export const {{ definitionName }} = t.readonlyArray(t.{{ realPropName }}, "array of {{ realPropName }}");
+
+    export type {{ definitionName }} = t.TypeOf< typeof t.{{ realPropName }}>;
 
   {% endif %}
-
-    export type {{ definitionName }} = t.TypeOf< typeof {{ realPropName }}>;
 
 {% else %}
 
