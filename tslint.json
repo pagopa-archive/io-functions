@@ -1,7 +1,7 @@
 {
     "defaultSeverity": "error",
     "extends": [
-      // "typestrict",
+      "typestrict",
       "tslint:recommended",
       "tslint-immutable",
       "tslint-plugin-prettier",

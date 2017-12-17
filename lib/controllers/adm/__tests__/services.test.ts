@@ -1,8 +1,6 @@
 // tslint:disable:no-any
 
-import * as t from "io-ts";
-
-import { none, Option, some, Some } from "fp-ts/lib/Option";
+import { none, some } from "fp-ts/lib/Option";
 
 import { isLeft, isRight, left, right } from "fp-ts/lib/Either";
 import { NonNegativeNumber } from "../../../utils/numbers";
@@ -37,41 +35,36 @@ import {
   UpdateServiceHandler
 } from "../services";
 
-// DANGEROUS, only use in tests
-function _getO<T>(o: Option<T>): T {
-  return (o as Some<T>).value;
-}
-
 const anAzureAuthorization: IAzureApiAuthorization = {
   groups: new Set([UserGroup.ApiServiceWrite]),
   kind: "IAzureApiAuthorization",
-  subscriptionId: _getO(t.validate("s123", NonEmptyString).toOption()),
-  userId: _getO(t.validate("u123", NonEmptyString).toOption())
+  subscriptionId: "s123" as NonEmptyString,
+  userId: "u123" as NonEmptyString
 };
 
 const aServicePayload: ApiService = {
   authorized_cidrs: [],
   authorized_recipients: [],
-  department_name: _getO(t.validate("MyDeptName", NonEmptyString).toOption()),
-  organization_name: _getO(t.validate("MyOrgName", NonEmptyString).toOption()),
-  service_id: _getO(t.validate("MySubscriptionId", NonEmptyString).toOption()),
-  service_name: _getO(t.validate("MyServiceName", NonEmptyString).toOption())
+  department_name: "MyDeptName" as NonEmptyString,
+  organization_name: "MyOrgName" as NonEmptyString,
+  service_id: "MySubscriptionId" as NonEmptyString,
+  service_name: "MyServiceName" as NonEmptyString
 };
 
 const aService: Service = {
   authorizedCIDRs: toAuthorizedCIDRs([]),
   authorizedRecipients: toAuthorizedRecipients([]),
-  departmentName: _getO(t.validate("MyDeptName", NonEmptyString).toOption()),
-  organizationName: _getO(t.validate("MyOrgName", NonEmptyString).toOption()),
-  serviceId: _getO(t.validate("MySubscriptionId", NonEmptyString).toOption()),
-  serviceName: _getO(t.validate("MyServiceName", NonEmptyString).toOption())
+  departmentName: "MyDeptName" as NonEmptyString,
+  organizationName: "MyOrgName" as NonEmptyString,
+  serviceId: "MySubscriptionId" as NonEmptyString,
+  serviceName: "MyServiceName" as NonEmptyString
 };
 
 const aNewService: NewService = {
   ...aService,
-  id: _getO(t.validate("123", NonEmptyString).toOption()),
+  id: "123" as NonEmptyString,
   kind: "INewService",
-  version: _getO(t.validate(1, NonNegativeNumber).toOption())
+  version: 1 as NonNegativeNumber
 };
 
 const aRetrievedService: RetrievedService = {
@@ -83,8 +76,8 @@ const aRetrievedService: RetrievedService = {
 
 const aSeralizedService: ApiService = {
   ...aServicePayload,
-  id: _getO(t.validate("123", NonEmptyString).toOption()),
-  version: _getO(t.validate(1, NonNegativeNumber).toOption())
+  id: "123" as NonEmptyString,
+  version: 1 as NonNegativeNumber
 };
 
 describe("GetServiceHandler", () => {
@@ -94,7 +87,7 @@ describe("GetServiceHandler", () => {
         return Promise.resolve(right(some(aRetrievedService)));
       })
     };
-    const aServiceId = _getO(t.validate("1", NonEmptyString).toOption());
+    const aServiceId = "1" as NonEmptyString;
     const getServiceHandler = GetServiceHandler(serviceModelMock as any);
     const response = await getServiceHandler(
       anAzureAuthorization,
@@ -116,7 +109,7 @@ describe("GetServiceHandler", () => {
         return Promise.resolve(left(none));
       })
     };
-    const aServiceId = _getO(t.validate("1", NonEmptyString).toOption());
+    const aServiceId = "1" as NonEmptyString;
     const getServiceHandler = GetServiceHandler(serviceModelMock as any);
     const response = await getServiceHandler(
       anAzureAuthorization,
@@ -135,7 +128,7 @@ describe("GetServiceHandler", () => {
         return Promise.resolve(right(none));
       })
     };
-    const aServiceId = _getO(t.validate("1", NonEmptyString).toOption());
+    const aServiceId = "1" as NonEmptyString;
     const getServiceHandler = GetServiceHandler(serviceModelMock as any);
     const response = await getServiceHandler(
       anAzureAuthorization,
@@ -238,7 +231,7 @@ describe("UpdateServiceHandler", () => {
     };
 
     const updateServiceHandler = UpdateServiceHandler(serviceModelMock as any);
-    const aDepartmentName = "UpdateDept";
+    const aDepartmentName = "UpdateDept" as NonEmptyString;
     const response = await updateServiceHandler(
       anAzureAuthorization,
       undefined as any, // not used
@@ -246,9 +239,7 @@ describe("UpdateServiceHandler", () => {
       aServicePayload.service_id,
       {
         ...aServicePayload,
-        department_name: _getO(
-          t.validate(aDepartmentName, NonEmptyString).toOption()
-        )
+        department_name: aDepartmentName
       }
     );
     expect(serviceModelMock.findOneByServiceId).toHaveBeenCalledWith(
@@ -259,9 +250,7 @@ describe("UpdateServiceHandler", () => {
     if (response.kind === "IResponseSuccessJson") {
       expect(response.value).toEqual({
         ...aSeralizedService,
-        department_name: _getO(
-          t.validate(aDepartmentName, NonEmptyString).toOption()
-        )
+        department_name: aDepartmentName
       });
     }
   });
@@ -274,11 +263,8 @@ describe("UpdateServiceHandler", () => {
       aServicePayload.service_id,
       {
         ...aServicePayload,
-        service_id: _getO(
-          t
-            .validate(aServicePayload.service_id + "x", NonEmptyString)
-            .toOption()
-        )
+        service_id: ((aServicePayload.service_id as string) +
+          "x") as NonEmptyString
       }
     );
     expect(response.kind).toBe("IResponseErrorValidation");

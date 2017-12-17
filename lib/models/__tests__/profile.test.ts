@@ -1,9 +1,7 @@
 // tslint:disable:no-any
 
-import * as t from "io-ts";
-
 import { isLeft, isRight } from "fp-ts/lib/Either";
-import { isSome, Option, Some } from "fp-ts/lib/Option";
+import { isSome } from "fp-ts/lib/Option";
 
 import * as DocumentDb from "documentdb";
 
@@ -15,29 +13,22 @@ import { EmailString, NonEmptyString } from "../../utils/strings";
 
 import { Profile, ProfileModel, RetrievedProfile } from "../profile";
 
-// DANGEROUS, only use in tests
-function _getO<T>(o: Option<T>): T {
-  return (o as Some<T>).value;
-}
-
 const aDatabaseUri = DocumentDbUtils.getDatabaseUri("mockdb" as NonEmptyString);
 const profilesCollectionUrl = DocumentDbUtils.getCollectionUri(
   aDatabaseUri,
   "profiles"
 );
 
-const aFiscalCode = _getO(
-  t.validate("FRLFRC74E04B157I", FiscalCode).toOption()
-);
+const aFiscalCode = "FRLFRC74E04B157I" as FiscalCode;
 
 const aRetrievedProfile: RetrievedProfile = {
   _self: "xyz",
   _ts: "xyz",
   fiscalCode: aFiscalCode,
   isInboxEnabled: false,
-  id: _getO(t.validate("xyz", NonEmptyString).toOption()),
+  id: "xyz" as NonEmptyString,
   kind: "IRetrievedProfile",
-  version: _getO(t.validate(0, NonNegativeNumber).toOption())
+  version: 0 as NonNegativeNumber
 };
 
 describe("findOneProfileByFiscalCode", () => {
@@ -166,7 +157,7 @@ describe("update", () => {
       p => {
         return {
           ...p,
-          email: _getO(t.validate("new@example.com", EmailString).toOption())
+          email: "new@example.com" as EmailString
         };
       }
     );

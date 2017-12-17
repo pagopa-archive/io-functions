@@ -185,6 +185,7 @@ export async function handleMessage(
     // if we have an emailNotification, we initialize its status
     emailNotification: maybeEmailNotification.toUndefined(),
     fiscalCode: newMessageWithoutContent.fiscalCode,
+    // tslint:disable-next-line:no-useless-cast
     id: ulid() as NonEmptyString,
     kind: "INewNotification",
     messageId: newMessageWithoutContent.id
