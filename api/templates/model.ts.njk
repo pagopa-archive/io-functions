@@ -164,7 +164,7 @@ export type {{ definitionName }} = t.TypeOf<typeof {{ definitionName }}>;
 
     export const {{ definitionName }} = t.readonlyArray({{ realPropName }}, "array of {{ realPropName }}");
 
-    export type {{ definitionName }} = t.TypeOf< typeof {{ realPropName }}>;
+    export type {{ definitionName }} = t.TypeOf<typeof {{ realPropName }}>;
 
   {% else %}
 
@@ -172,7 +172,7 @@ export type {{ definitionName }} = t.TypeOf<typeof {{ definitionName }}>;
 
     export const {{ definitionName }} = t.readonlyArray(t.{{ realPropName }}, "array of {{ realPropName }}");
 
-    export type {{ definitionName }} = t.TypeOf< typeof t.{{ realPropName }}>;
+    export type {{ definitionName }} = t.TypeOf<typeof t.{{ realPropName }}>;
 
   {% endif %}
 
