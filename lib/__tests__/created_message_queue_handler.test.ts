@@ -483,7 +483,7 @@ describe("test handleMessage function", () => {
           right(
             some({
               ...aRetrievedProfileWithEmail,
-              isStorageOfMessageContentEnabled: true
+              isInboxEnabled: true
             })
           )
         );
@@ -556,7 +556,7 @@ describe("test handleMessage function", () => {
           right(
             some({
               ...aRetrievedProfileWithEmail,
-              isStorageOfMessageContentEnabled: true
+              isInboxEnabled: true
             })
           )
         );

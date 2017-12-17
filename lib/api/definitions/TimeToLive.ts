@@ -13,9 +13,11 @@
 
 import { WithinRangeNumber } from "../../utils/numbers";
 
-export type TimeToLive = WithinRangeNumber<3600, 31536000>;
+import * as t from "io-ts";
 
 import { withDefault } from "../../utils/default";
+
+export type TimeToLive = t.TypeOf<typeof TimeToLiveBase>;
 
 const TimeToLiveBase = WithinRangeNumber(3600, 31536000);
 

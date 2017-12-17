@@ -13,6 +13,8 @@
 
 import { NonEmptyString } from "../../utils/strings";
 
-export type DepartmentName = NonEmptyString;
+import * as t from "io-ts";
+
+export type DepartmentName = t.TypeOf<typeof DepartmentName>;
 
 export const DepartmentName = NonEmptyString;

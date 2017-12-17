@@ -59,7 +59,8 @@ import { ServiceModel } from "../models/service";
 function toExtendedProfile(profile: RetrievedProfile): ExtendedProfile {
   return {
     email: profile.email,
-    version: profile.version
+    version: profile.version,
+    is_inbox_enabled: profile.isInboxEnabled
   };
 }
 
@@ -190,7 +191,8 @@ async function createNewProfileFromPayload(
   // create a new profile
   const profile: Profile = {
     email: profileModelPayload.email,
-    fiscalCode
+    fiscalCode,
+    isInboxEnabled: profileModelPayload.is_inbox_enabled
   };
   const errorOrProfile = await profileModel.create(profile, profile.fiscalCode);
   const errorOrProfileAsPublicExtendedProfile = errorOrProfile.map(
@@ -221,7 +223,8 @@ async function updateExistingProfileFromPayload(
     p => {
       return {
         ...p,
-        email: profileModelPayload.email
+        email: profileModelPayload.email,
+        isInboxEnabled: profileModelPayload.is_inbox_enabled
       };
     }
   );

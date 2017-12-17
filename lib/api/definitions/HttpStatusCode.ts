@@ -15,6 +15,8 @@ of the problem.
 
 import { WithinRangeNumber } from "../../utils/numbers";
 
-export type HttpStatusCode = WithinRangeNumber<100, 600>;
+import * as t from "io-ts";
+
+export type HttpStatusCode = t.TypeOf<typeof HttpStatusCode>;
 
 export const HttpStatusCode = WithinRangeNumber(100, 600);

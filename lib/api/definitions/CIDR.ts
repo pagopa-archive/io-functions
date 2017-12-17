@@ -13,9 +13,9 @@
 
 import { PatternString } from "../../utils/strings";
 
-export type CIDR = PatternString<
-  "([0-9]{1,3}.){3}[0-9]{1,3}(/([0-9]|[1-2][0-9]|3[0-2]))?"
->;
+import * as t from "io-ts";
+
+export type CIDR = t.TypeOf<typeof CIDR>;
 
 export const CIDR = PatternString(
   "([0-9]{1,3}.){3}[0-9]{1,3}(/([0-9]|[1-2][0-9]|3[0-2]))?"

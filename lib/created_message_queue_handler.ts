@@ -131,7 +131,7 @@ export async function handleMessage(
 
   // whether the recipient wants us to store the message content
   const isMessageStorageEnabled = maybeProfile.exists(
-    profile => profile.isStorageOfMessageContentEnabled === true
+    profile => profile.isInboxEnabled === true
   );
 
   if (isMessageStorageEnabled) {

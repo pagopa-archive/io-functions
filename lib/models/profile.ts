@@ -34,7 +34,7 @@ export const Profile = t.intersection([
     email: EmailAddress,
 
     // whether to store the content of messages sent to this citizen
-    isStorageOfMessageContentEnabled: t.boolean
+    isInboxEnabled: t.boolean
   })
 ]);
 
