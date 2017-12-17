@@ -11,12 +11,11 @@ process.env.COSMOSDB_NAME = "anyDbName";
 // tslint:disable-next-line:no-object-mutation
 process.env.CUSTOMCONNSTR_SENDGRID_KEY = "anySendgridKey";
 
-import * as t from "io-ts";
 import * as NodeMailer from "nodemailer";
 
 import MockTransport = require("nodemailer-mock-transport");
 
-import { none, Option, some, Some } from "fp-ts/lib/Option";
+import { none, some } from "fp-ts/lib/Option";
 
 import { isLeft, isRight, left, right } from "fp-ts/lib/Either";
 import { EmailString, NonEmptyString } from "../utils/strings";
@@ -44,29 +43,22 @@ import {
 } from "../models/notification";
 import { NotificationEvent } from "../models/notification_event";
 
-// DANGEROUS, only use in tests
-function _getO<T>(o: Option<T>): T {
-  return (o as Some<T>).value;
-}
-
-const aFiscalCode = _getO(
-  t.validate("FRLFRC74E04B157I", FiscalCode).toOption()
-);
+const aFiscalCode = "FRLFRC74E04B157I" as FiscalCode;
 
 const aNotification: Notification = {
   emailNotification: {
     addressSource: NotificationAddressSourceEnum.DEFAULT_ADDRESS,
     status: NotificationChannelStatusEnum.QUEUED,
-    toAddress: _getO(t.validate("pinco@pallino.com", EmailString).toOption())
+    toAddress: "pinco@pallino.com" as EmailString
   },
   fiscalCode: aFiscalCode,
-  messageId: _getO(t.validate("A_MESSAGE_ID", NonEmptyString).toOption())
+  messageId: "A_MESSAGE_ID" as NonEmptyString
 };
 
 const aSenderMetadata: CreatedMessageEventSenderMetadata = {
-  departmentName: _getO(t.validate("IT", NonEmptyString).toOption()),
-  organizationName: _getO(t.validate("agid", NonEmptyString).toOption()),
-  serviceName: _getO(t.validate("Test", NonEmptyString).toOption())
+  departmentName: "IT" as NonEmptyString,
+  organizationName: "agid" as NonEmptyString,
+  serviceName: "Test" as NonEmptyString
 };
 
 describe("sendMail", () => {
@@ -508,16 +500,14 @@ describe("test processReject function", () => {
 
     const emailNotificationMock: NotificationEvent = {
       messageContent: {
-        markdown: _getO(
-          t.validate("test".repeat(80), MessageBodyMarkdown).toOption()
-        )
+        markdown: "test".repeat(80) as MessageBodyMarkdown
       },
-      messageId: _getO(t.validate("xxx", NonEmptyString).toOption()),
-      notificationId: _getO(t.validate("yyy", NonEmptyString).toOption()),
+      messageId: "xxx" as NonEmptyString,
+      notificationId: "yyy" as NonEmptyString,
       senderMetadata: {
-        departmentName: _getO(t.validate("aaa", NonEmptyString).toOption()),
-        organizationName: _getO(t.validate("agid", NonEmptyString).toOption()),
-        serviceName: _getO(t.validate("ccc", NonEmptyString).toOption())
+        departmentName: "aaa" as NonEmptyString,
+        organizationName: "agid" as NonEmptyString,
+        serviceName: "ccc" as NonEmptyString
       }
     };
 
@@ -538,9 +528,7 @@ describe("test processReject function", () => {
 });
 describe("generate html document", () => {
   it("should convert markdown to the right html", async () => {
-    const subject = _getO(
-      t.validate("This is the subject", MessageSubject).toOption()
-    );
+    const subject = "This is the subject" as MessageSubject;
     const markdown = `
 # This is an H1
 Lorem ipsum
@@ -555,16 +543,12 @@ Lorem ipsum
 1.  Bird
 2.  McHale
 3.  Parish
-`;
-    const body = _getO(t.validate(markdown, MessageBodyMarkdown).toOption());
+` as MessageBodyMarkdown;
+    const body = markdown;
     const metadata: CreatedMessageEventSenderMetadata = {
-      departmentName: _getO(
-        t.validate("departmentXXX", NonEmptyString).toOption()
-      ),
-      organizationName: _getO(
-        t.validate("organizationXXX", NonEmptyString).toOption()
-      ),
-      serviceName: _getO(t.validate("serviceZZZ", NonEmptyString).toOption())
+      departmentName: "departmentXXX" as NonEmptyString,
+      organizationName: "organizationXXX" as NonEmptyString,
+      serviceName: "serviceZZZ" as NonEmptyString
     };
 
     const result = await generateDocumentHtml(subject, body, metadata);

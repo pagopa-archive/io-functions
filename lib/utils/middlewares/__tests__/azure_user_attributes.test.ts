@@ -1,8 +1,6 @@
 // tslint:disable:no-any
 
-import * as t from "io-ts";
-
-import { none, Option, some, Some } from "fp-ts/lib/Option";
+import { none, some } from "fp-ts/lib/Option";
 
 import { isLeft, isRight, left, right } from "fp-ts/lib/Either";
 
@@ -12,11 +10,6 @@ import { NonEmptyString } from "../../../utils/strings";
 
 import { Set } from "json-set-map";
 import { AzureUserAttributesMiddleware } from "../azure_user_attributes";
-
-// DANGEROUS, only use in tests
-function _getO<T>(o: Option<T>): T {
-  return (o as Some<T>).value;
-}
 
 interface IHeaders {
   readonly [key: string]: string | undefined;
@@ -29,10 +22,10 @@ function lookup(h: IHeaders): (k: string) => string | undefined {
 const aService: Service = {
   authorizedCIDRs: toAuthorizedCIDRs([]),
   authorizedRecipients: new Set([]),
-  departmentName: _getO(t.validate("MyDept", NonEmptyString).toOption()),
-  organizationName: _getO(t.validate("MyService", NonEmptyString).toOption()),
-  serviceId: _getO(t.validate("serviceId", NonEmptyString).toOption()),
-  serviceName: _getO(t.validate("MyService", NonEmptyString).toOption())
+  departmentName: "MyDept" as NonEmptyString,
+  organizationName: "MyService" as NonEmptyString,
+  serviceId: "serviceId" as NonEmptyString,
+  serviceName: "MyService" as NonEmptyString
 };
 
 describe("AzureUserAttributesMiddleware", () => {

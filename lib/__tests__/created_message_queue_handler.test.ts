@@ -13,8 +13,6 @@ process.env.MESSAGE_CONTAINER_NAME = "anyMessageContainerName";
 // tslint:disable-next-line:no-object-mutation
 process.env.QueueStorageConnection = "anyQueueStorageConnection";
 
-import * as t from "io-ts";
-
 import {
   handleMessage,
   index,
@@ -25,7 +23,7 @@ import {
 import { CreatedMessageEvent } from "../models/created_message_event";
 import { NewMessageWithoutContent } from "../models/message";
 
-import { none, Option, some, Some } from "fp-ts/lib/Option";
+import { none, some } from "fp-ts/lib/Option";
 import { FiscalCode } from "../api/definitions/FiscalCode";
 import { MessageBodyMarkdown } from "../api/definitions/MessageBodyMarkdown";
 import { NotificationChannelStatusEnum } from "../api/definitions/NotificationChannelStatus";
@@ -42,59 +40,50 @@ import * as winston from "winston";
 import { NonNegativeNumber } from "../utils/numbers";
 import { EmailString, NonEmptyString } from "../utils/strings";
 
-// DANGEROUS, only use in tests
-function _getO<T>(o: Option<T>): T {
-  return (o as Some<T>).value;
-}
-
-const aCorrectFiscalCode = _getO(
-  t.validate("FRLFRC74E04B157I", FiscalCode).toOption()
-);
+const aCorrectFiscalCode = "FRLFRC74E04B157I" as FiscalCode;
 const aWrongFiscalCode = "FRLFRC74E04B157" as FiscalCode;
-const anEmail = _getO(t.validate("x@example.com", EmailString).toOption());
+const anEmail = "x@example.com" as EmailString;
 const anEmailNotification: NotificationChannelEmail = {
   addressSource: NotificationAddressSourceEnum.PROFILE_ADDRESS,
   status: NotificationChannelStatusEnum.QUEUED,
   toAddress: anEmail
 };
 
-const aMessageBodyMarkdown = _getO(
-  t.validate("test".repeat(80), MessageBodyMarkdown).toOption()
-);
+const aMessageBodyMarkdown = "test".repeat(80) as MessageBodyMarkdown;
 
 const aRetrievedProfileWithEmail: RetrievedProfile = {
   _self: "123",
   _ts: "123",
   email: anEmail,
   fiscalCode: aCorrectFiscalCode,
-  id: _getO(t.validate("123", NonEmptyString).toOption()),
+  id: "123" as NonEmptyString,
   kind: "IRetrievedProfile",
-  version: _getO(t.validate(1, NonNegativeNumber).toOption())
+  version: 1 as NonNegativeNumber
 };
 
 const aRetrievedProfileWithoutEmail: RetrievedProfile = {
   _self: "123",
   _ts: "123",
   fiscalCode: aCorrectFiscalCode,
-  id: _getO(t.validate("123", NonEmptyString).toOption()),
+  id: "123" as NonEmptyString,
   kind: "IRetrievedProfile",
-  version: _getO(t.validate(1, NonNegativeNumber).toOption())
+  version: 1 as NonNegativeNumber
 };
 
 const aCreatedNotificationWithEmail: NewNotification = {
   emailNotification: anEmailNotification,
   fiscalCode: aCorrectFiscalCode,
-  id: _getO(t.validate("123", NonEmptyString).toOption()),
+  id: "123" as NonEmptyString,
   kind: "INewNotification",
-  messageId: _getO(t.validate("123", NonEmptyString).toOption())
+  messageId: "123" as NonEmptyString
 };
 
 const aCreatedNotificationWithoutEmail: NewNotification = {
   emailNotification: undefined,
   fiscalCode: aCorrectFiscalCode,
-  id: _getO(t.validate("123", NonEmptyString).toOption()),
+  id: "123" as NonEmptyString,
   kind: "INewNotification",
-  messageId: _getO(t.validate("123", NonEmptyString).toOption())
+  messageId: "123" as NonEmptyString
 };
 
 const aBlobService = {};
@@ -139,10 +128,10 @@ describe("test index function", () => {
   it("should return failure if createdMessage is invalid (wrong fiscal code)", async () => {
     const aMessage: NewMessageWithoutContent = {
       fiscalCode: aWrongFiscalCode,
-      id: _getO(t.validate("xyz", NonEmptyString).toOption()),
+      id: "xyz" as NonEmptyString,
       kind: "INewMessageWithoutContent",
       senderServiceId: "",
-      senderUserId: _getO(t.validate("u123", NonEmptyString).toOption())
+      senderUserId: "u123" as NonEmptyString
     };
 
     const aMessageEvent: CreatedMessageEvent = {
@@ -151,9 +140,9 @@ describe("test index function", () => {
         markdown: aMessageBodyMarkdown
       },
       senderMetadata: {
-        departmentName: _getO(t.validate("IT", NonEmptyString).toOption()),
-        organizationName: _getO(t.validate("agid", NonEmptyString).toOption()),
-        serviceName: _getO(t.validate("Test", NonEmptyString).toOption())
+        departmentName: "IT" as NonEmptyString,
+        organizationName: "agid" as NonEmptyString,
+        serviceName: "Test" as NonEmptyString
       }
     };
 
@@ -190,7 +179,7 @@ describe("test index function", () => {
       _ts: "",
       bodyShort: _getO(toBodyShort("xyz")),
       fiscalCode: aCorrectFiscalCode,
-      id: _getO(t.validate("xyz", NonEmptyString).toOption()),
+      id: "xyz" as NonEmptyString,
       kind: "RetrievedMessage",
       senderServiceId: "",
     };

@@ -13,7 +13,7 @@
     "build:tsc": "tsc",
     "build:tsc-noemit": "tsc --noEmit",
     "build": "npm-run-all generate:templates build:tsc",
-    "lint": "tslint -p . -c tslint.json",
+    "lint": "tslint -p . -c tslint.json -t verbose",
     "prettify": "prettier --write './**/*.ts'",
     "test": "gulp test",
     "generate:models": "ts-node ./api/generate_models.ts",

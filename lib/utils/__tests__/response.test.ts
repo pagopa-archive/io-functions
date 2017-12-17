@@ -25,7 +25,7 @@ describe("ResponseSuccessJson", () => {
       kind: "I_AM_UNIQUE"
     };
 
-    const mockResponse = (MockResponse() as any) as Express.Response;
+    const mockResponse = MockResponse() as Express.Response;
 
     const jsonResponse = ResponseSuccessJson(kindedData);
 
@@ -47,7 +47,7 @@ describe("ResponseSuccessJsonIterator", () => {
 
     const streamingResponse = ResponseSuccessJsonIterator(mockIterator);
 
-    const mockResponse = (MockResponse() as any) as Express.Response;
+    const mockResponse = MockResponse() as Express.Response;
 
     streamingResponse.apply(mockResponse);
 
@@ -74,7 +74,7 @@ describe("ResponseSuccessJsonIterator", () => {
 
     const streamingResponse = ResponseSuccessJsonIterator(mockIterator);
 
-    const mockResponse = (MockResponse() as any) as Express.Response;
+    const mockResponse = MockResponse() as Express.Response;
 
     streamingResponse.apply(mockResponse);
 
@@ -102,7 +102,7 @@ describe("ResponseSuccessJsonIterator", () => {
 
     const streamingResponse = ResponseSuccessJsonIterator(mockIterator);
 
-    const mockResponse = (MockResponse() as any) as Express.Response;
+    const mockResponse = MockResponse() as Express.Response;
 
     streamingResponse.apply(mockResponse);
 

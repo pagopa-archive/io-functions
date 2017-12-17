@@ -45,7 +45,7 @@ export function generateVersionedModelId(
   version: NonNegativeNumber
 ): NonEmptyString {
   const paddingLength = 16; // length of Number.MAX_SAFE_INTEGER == 9007199254740991
-  const paddedVersion = ("0".repeat(paddingLength) + version).slice(
+  const paddedVersion = ("0".repeat(paddingLength) + String(version)).slice(
     -paddingLength
   );
   return `${modelId}-${paddedVersion}` as NonEmptyString;
@@ -122,7 +122,10 @@ export abstract class DocumentDbModelVersioned<
 
     const modelId = this.getModelId(updatedObject);
     const nextVersion = (t
-      .validate(currentRetrievedDocument.version + 1, NonNegativeNumber)
+      .validate(
+        (currentRetrievedDocument.version as number) + 1,
+        NonNegativeNumber
+      )
       .toOption() as Some<NonNegativeNumber>).value;
     const versionedModelId = generateVersionedModelId(modelId, nextVersion);
 

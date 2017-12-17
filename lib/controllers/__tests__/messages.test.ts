@@ -1,7 +1,5 @@
 // tslint:disable:no-any
 
-import * as t from "io-ts";
-
 import { toAuthorizedCIDRs } from "../../models/service";
 
 import * as winston from "winston";
@@ -12,7 +10,7 @@ winston.configure({
 import { response as MockResponse } from "jest-mock-express";
 
 import { isLeft, isRight, left, right } from "fp-ts/lib/Either";
-import { none, Option, some, Some } from "fp-ts/lib/Option";
+import { none, some } from "fp-ts/lib/Option";
 
 import { ModelId } from "../../utils/documentdb_model_versioned";
 
@@ -49,11 +47,6 @@ import {
   MessagePayloadMiddleware
 } from "../messages";
 
-// DANGEROUS, only use in tests
-function _getO<T>(o: Option<T>): T {
-  return (o as Some<T>).value;
-}
-
 interface IHeaders {
   readonly [key: string]: string | undefined;
 }
@@ -62,13 +55,9 @@ function lookup(h: IHeaders): (k: string) => string | undefined {
   return (k: string) => h[k];
 }
 
-const aFiscalCode = _getO(
-  t.validate("FRLFRC74E04B157I", FiscalCode).toOption()
-);
-const anEmail = _getO(t.validate("test@example.com", EmailString).toOption());
-const aMessageBodyMarkdown = _getO(
-  t.validate("test".repeat(80), MessageBodyMarkdown).toOption()
-);
+const aFiscalCode = "FRLFRC74E04B157I" as FiscalCode;
+const anEmail = "test@example.com" as EmailString;
+const aMessageBodyMarkdown = "test".repeat(80) as MessageBodyMarkdown;
 
 const someUserAttributes: IAzureUserAttributes = {
   email: anEmail,
@@ -76,25 +65,25 @@ const someUserAttributes: IAzureUserAttributes = {
   service: {
     authorizedCIDRs: toAuthorizedCIDRs([]),
     authorizedRecipients: new Set([]),
-    departmentName: _getO(t.validate("IT", NonEmptyString).toOption()),
-    organizationName: _getO(t.validate("AgID", NonEmptyString).toOption()),
-    serviceId: _getO(t.validate("test", NonEmptyString).toOption()),
-    serviceName: _getO(t.validate("Test", NonEmptyString).toOption())
+    departmentName: "IT" as NonEmptyString,
+    organizationName: "AgID" as NonEmptyString,
+    serviceId: "test" as NonEmptyString,
+    serviceName: "Test" as NonEmptyString
   }
 };
 
 const aUserAuthenticationDeveloper: IAzureApiAuthorization = {
   groups: new Set([UserGroup.ApiMessageRead, UserGroup.ApiMessageWrite]),
   kind: "IAzureApiAuthorization",
-  subscriptionId: _getO(t.validate("s123", NonEmptyString).toOption()),
-  userId: _getO(t.validate("u123", NonEmptyString).toOption())
+  subscriptionId: "s123" as NonEmptyString,
+  userId: "u123" as NonEmptyString
 };
 
 const aUserAuthenticationTrustedApplication: IAzureApiAuthorization = {
   groups: new Set([UserGroup.ApiMessageRead, UserGroup.ApiMessageList]),
   kind: "IAzureApiAuthorization",
-  subscriptionId: _getO(t.validate("s123", NonEmptyString).toOption()),
-  userId: _getO(t.validate("u123", NonEmptyString).toOption())
+  subscriptionId: "s123" as NonEmptyString,
+  userId: "u123" as NonEmptyString
 };
 
 const aMessagePayload: ApiNewMessage = {
@@ -103,18 +92,16 @@ const aMessagePayload: ApiNewMessage = {
   }
 };
 
-const aCustomSubject = _getO(
-  t.validate("A custom subject", MessageSubject).toOption()
-);
+const aCustomSubject = "A custom subject" as MessageSubject;
 
-const aMessageId = _getO(t.validate("A_MESSAGE_ID", NonEmptyString).toOption());
+const aMessageId = "A_MESSAGE_ID" as NonEmptyString;
 
 const aNewMessageWithoutContent: NewMessageWithoutContent = {
   fiscalCode: aFiscalCode,
-  id: _getO(t.validate("A_MESSAGE_ID", NonEmptyString).toOption()),
+  id: "A_MESSAGE_ID" as NonEmptyString,
   kind: "INewMessageWithoutContent",
   senderServiceId: "test" as ModelId,
-  senderUserId: _getO(t.validate("u123", NonEmptyString).toOption())
+  senderUserId: "u123" as NonEmptyString
 };
 
 const aRetrievedMessageWithoutContent: RetrievedMessageWithoutContent = {
@@ -436,7 +423,7 @@ describe("CreateMessageHandler", () => {
     const messagePayload: ApiNewMessage = {
       ...aMessagePayload,
       default_addresses: {
-        email: _getO(t.validate("test@example.com", EmailAddress).toOption())
+        email: "test@example.com" as EmailAddress
       }
     };
 
@@ -466,7 +453,7 @@ describe("CreateMessageHandler", () => {
     expect(mockContext.bindings).toEqual({
       createdMessage: {
         defaultAddresses: {
-          email: _getO(t.validate("test@example.com", EmailAddress).toOption())
+          email: "test@example.com" as EmailAddress
         },
         message: aNewMessageWithoutContent,
         messageContent: {
@@ -526,7 +513,7 @@ describe("CreateMessageHandler", () => {
     const messagePayload: ApiNewMessage = {
       ...aMessagePayload,
       default_addresses: {
-        email: _getO(t.validate("test@example.com", EmailAddress).toOption())
+        email: "test@example.com" as EmailAddress
       }
     };
 
@@ -781,12 +768,12 @@ describe("GetMessageHandler", () => {
       emailNotification: {
         addressSource: NotificationAddressSourceEnum.PROFILE_ADDRESS,
         status: NotificationChannelStatusEnum.SENT_TO_CHANNEL,
-        toAddress: _getO(t.validate("x@example.com", EmailString).toOption())
+        toAddress: "x@example.com" as EmailString
       },
       fiscalCode: aFiscalCode,
-      id: _getO(t.validate("A_NOTIFICATION_ID", NonEmptyString).toOption()),
+      id: "A_NOTIFICATION_ID" as NonEmptyString,
       kind: "IRetrievedNotification",
-      messageId: _getO(t.validate("A_MESSAGE_ID", NonEmptyString).toOption())
+      messageId: "A_MESSAGE_ID" as NonEmptyString
     };
 
     const mockMessageModel = {
@@ -974,7 +961,7 @@ describe("CreateMessage", () => {
       },
       body: {}
     };
-    createMessage(request as any, mockResponse as any, _ => _);
+    createMessage(request as any, mockResponse, _ => _);
     await Promise.resolve({});
     expect(request.app.get).toHaveBeenCalledWith("context");
     expect(mockResponse.set).toHaveBeenCalledWith(
@@ -999,7 +986,7 @@ describe("CreateMessage", () => {
       body: {},
       header: jest.fn(lookup(headers))
     };
-    createMessage(request as any, mockResponse as any, _ => _);
+    createMessage(request as any, mockResponse, _ => _);
     await Promise.resolve({});
     expect(mockResponse.set).toHaveBeenCalledWith(
       "Content-Type",
@@ -1024,7 +1011,7 @@ describe("CreateMessage", () => {
       body: {},
       header: jest.fn(lookup(headers))
     };
-    createMessage(request as any, mockResponse as any, _ => _);
+    createMessage(request as any, mockResponse, _ => _);
     await Promise.resolve({});
     // expect(request.header).toHaveBeenCalledWith("x-user-id");
     // expect(request.header).toHaveBeenCalledWith("x-subscription-id");
