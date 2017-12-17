@@ -33,5 +33,3 @@ export const PreferredLanguage = enumType<PreferredLanguageEnum>(
   PreferredLanguageEnum,
   "PreferredLanguage"
 );
-
-// export type PreferredLanguage = t.TypeOf<typeof PreferredLanguage>;

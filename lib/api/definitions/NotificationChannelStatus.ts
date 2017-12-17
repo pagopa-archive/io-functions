@@ -28,5 +28,3 @@ export type NotificationChannelStatus = t.TypeOf<
 export const NotificationChannelStatus = enumType<
   NotificationChannelStatusEnum
 >(NotificationChannelStatusEnum, "NotificationChannelStatus");
-
-// export type NotificationChannelStatus = t.TypeOf<typeof NotificationChannelStatus>;
