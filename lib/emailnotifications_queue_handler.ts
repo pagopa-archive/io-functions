@@ -375,7 +375,7 @@ export function index(context: ContextWithBindings): void {
   // since this function gets triggered by a queued message that gets
   // deserialized from a json object, we must first check that what we
   // got is what we expect.
-  if (NotificationEvent.is(emailNotificationEvent)) {
+  if (!NotificationEvent.is(emailNotificationEvent)) {
     winston.log(
       "error",
       `Fatal! No valid email notification found in bindings.`
