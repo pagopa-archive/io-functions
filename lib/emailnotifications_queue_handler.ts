@@ -1,3 +1,4 @@
+import { ReadableReporter } from "./utils/validation_reporters";
 /*
  * This function will process events triggered by newly created messages.
  * For each new input message, the delivery preferences associated to the
@@ -376,10 +377,15 @@ export function index(context: ContextWithBindings): void {
   // deserialized from a json object, we must first check that what we
   // got is what we expect.
   if (!NotificationEvent.is(emailNotificationEvent)) {
-    winston.log(
-      "error",
-      `Fatal! No valid email notification found in bindings.`
+    winston.error(`Fatal! No valid email notification found in bindings.`);
+
+    const validation = t.validate(emailNotificationEvent, NotificationEvent);
+    winston.debug(
+      `EmailNotificationsHandlerIndex|validationError|${ReadableReporter.report(
+        validation
+      ).join("\n")}`
     );
+
     context.done();
     return;
   }

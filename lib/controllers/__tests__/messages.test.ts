@@ -634,7 +634,8 @@ describe("GetMessageHandler", () => {
     const mockMessageModel = {
       findMessageForRecipient: jest.fn(() =>
         right(some(aRetrievedMessageWithoutContent))
-      )
+      ),
+      getStoredContent: jest.fn(() => right(none))
     };
 
     const mockNotificationModel = {
@@ -643,7 +644,8 @@ describe("GetMessageHandler", () => {
 
     const getMessageHandler = GetMessageHandler(
       mockMessageModel as any,
-      mockNotificationModel as any
+      mockNotificationModel as any,
+      {} as any
     );
 
     const result = await getMessageHandler(
@@ -654,6 +656,7 @@ describe("GetMessageHandler", () => {
       aRetrievedMessageWithoutContent.id
     );
 
+    expect(mockMessageModel.getStoredContent).toHaveBeenCalledTimes(1);
     expect(mockMessageModel.findMessageForRecipient).toHaveBeenCalledTimes(1);
     expect(mockMessageModel.findMessageForRecipient).toHaveBeenCalledWith(
       aRetrievedMessageWithoutContent.fiscalCode,
@@ -668,11 +671,12 @@ describe("GetMessageHandler", () => {
     }
   });
 
-  it("should respond with a message if requesting user is a trusted application", async () => {
+  it("should fail if any error occurs trying to retrieve the message content", async () => {
     const mockMessageModel = {
       findMessageForRecipient: jest.fn(() =>
         right(some(aRetrievedMessageWithoutContent))
-      )
+      ),
+      getStoredContent: jest.fn(() => left(new Error()))
     };
 
     const mockNotificationModel = {
@@ -681,7 +685,44 @@ describe("GetMessageHandler", () => {
 
     const getMessageHandler = GetMessageHandler(
       mockMessageModel as any,
-      mockNotificationModel as any
+      mockNotificationModel as any,
+      {} as any
+    );
+
+    const result = await getMessageHandler(
+      aUserAuthenticationDeveloper,
+      undefined as any, // not used
+      someUserAttributes,
+      aFiscalCode,
+      aRetrievedMessageWithoutContent.id
+    );
+
+    expect(mockMessageModel.getStoredContent).toHaveBeenCalledTimes(1);
+    expect(mockMessageModel.findMessageForRecipient).toHaveBeenCalledTimes(1);
+    expect(mockMessageModel.findMessageForRecipient).toHaveBeenCalledWith(
+      aRetrievedMessageWithoutContent.fiscalCode,
+      aRetrievedMessageWithoutContent.id
+    );
+
+    expect(result.kind).toBe("IResponseErrorInternal");
+  });
+
+  it("should respond with a message if requesting user is a trusted application", async () => {
+    const mockMessageModel = {
+      findMessageForRecipient: jest.fn(() =>
+        right(some(aRetrievedMessageWithoutContent))
+      ),
+      getStoredContent: jest.fn(() => right(none))
+    };
+
+    const mockNotificationModel = {
+      findNotificationForMessage: jest.fn(() => right(none))
+    };
+
+    const getMessageHandler = GetMessageHandler(
+      mockMessageModel as any,
+      mockNotificationModel as any,
+      {} as any
     );
 
     const result = await getMessageHandler(
@@ -692,6 +733,7 @@ describe("GetMessageHandler", () => {
       aRetrievedMessageWithoutContent.id
     );
 
+    expect(mockMessageModel.getStoredContent).toHaveBeenCalledTimes(1);
     expect(mockMessageModel.findMessageForRecipient).toHaveBeenCalledTimes(1);
     expect(mockMessageModel.findMessageForRecipient).toHaveBeenCalledWith(
       aRetrievedMessageWithoutContent.fiscalCode,
@@ -713,11 +755,13 @@ describe("GetMessageHandler", () => {
     };
 
     const mockMessageModel = {
-      findMessageForRecipient: jest.fn(() => right(some(message)))
+      findMessageForRecipient: jest.fn(() => right(some(message))),
+      getStoredContent: jest.fn(() => right(none))
     };
 
     const getMessageHandler = GetMessageHandler(
       mockMessageModel as any,
+      {} as any,
       {} as any
     );
 
@@ -740,11 +784,13 @@ describe("GetMessageHandler", () => {
 
   it("should respond with not found a message doesn not exist", async () => {
     const mockMessageModel = {
-      findMessageForRecipient: jest.fn(() => right(none))
+      findMessageForRecipient: jest.fn(() => right(none)),
+      getStoredContent: jest.fn(() => right(none))
     };
 
     const getMessageHandler = GetMessageHandler(
       mockMessageModel as any,
+      {} as any,
       {} as any
     );
 
@@ -779,7 +825,8 @@ describe("GetMessageHandler", () => {
     const mockMessageModel = {
       findMessageForRecipient: jest.fn(() =>
         right(some(aRetrievedMessageWithoutContent))
-      )
+      ),
+      getStoredContent: jest.fn(() => right(none))
     };
 
     const mockNotificationModel = {
@@ -790,7 +837,8 @@ describe("GetMessageHandler", () => {
 
     const getMessageHandler = GetMessageHandler(
       mockMessageModel as any,
-      mockNotificationModel as any
+      mockNotificationModel as any,
+      {} as any
     );
 
     const result = await getMessageHandler(
@@ -801,6 +849,7 @@ describe("GetMessageHandler", () => {
       aRetrievedMessageWithoutContent.id
     );
 
+    expect(mockMessageModel.getStoredContent).toHaveBeenCalledTimes(1);
     expect(mockMessageModel.findMessageForRecipient).toHaveBeenCalledTimes(1);
     expect(mockMessageModel.findMessageForRecipient).toHaveBeenCalledWith(
       aRetrievedMessageWithoutContent.fiscalCode,

@@ -20,7 +20,7 @@ export function upsertBlobFromText(
   blobName: string,
   text: string | Buffer
 ): Promise<Either<Error, Option<azureStorage.BlobService.BlobResult>>> {
-  return new Promise((resolve, _) =>
+  return new Promise(resolve =>
     blobService.createBlockBlobFromText(
       containerName,
       blobName,
@@ -63,4 +63,27 @@ export function upsertBlobFromObject<T>(
     blobName,
     JSON.stringify(content)
   );
+}
+
+/**
+ * Get a blob content as text (string).
+ * 
+ * @param blobService     the Azure blob service
+ * @param containerName   the name of the Azure blob storage container
+ * @param blobName        blob file name
+ */
+export function getBlobAsText(
+  blobService: azureStorage.BlobService,
+  containerName: string,
+  blobName: string
+): Promise<Either<Error, Option<string>>> {
+  return new Promise(resolve => {
+    blobService.getBlobToText(containerName, blobName, (err, result, __) => {
+      if (err) {
+        return resolve(left<Error, Option<string>>(err));
+      } else {
+        return resolve(right<Error, Option<string>>(fromNullable(result)));
+      }
+    });
+  });
 }

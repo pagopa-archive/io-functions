@@ -44,6 +44,7 @@ import { ProfileModel } from "./models/profile";
 import { Either, isLeft, isRight, left, right } from "fp-ts/lib/Either";
 import { NonEmptyString } from "./utils/strings";
 import { Tuple2 } from "./utils/tuples";
+import { ReadableReporter } from "./utils/validation_reporters";
 
 // Whether we're in a production environment
 const isProduction = process.env.NODE_ENV === "production";
@@ -147,6 +148,7 @@ export async function handleMessage(
     winston.debug(`handleMessage|${JSON.stringify(newMessageWithoutContent)}`);
 
     if (isLeft(errorOrAttachment)) {
+      winston.error(`handleMessage|${JSON.stringify(errorOrAttachment)}`);
       // we consider errors while updating message as transient
       return left(ProcessingError.TRANSIENT);
     }
@@ -276,16 +278,27 @@ export function index(context: ContextWithBindings): void {
   // redirect winston logs to Azure Functions log
   const logLevel = isProduction ? "info" : "debug";
   configureAzureContextTransport(context, winston, logLevel);
-  winston.debug(`bindings|${JSON.stringify(context.bindings)}`);
+  winston.debug(
+    `CreatedMessageQueueHandlerIndex|bindings|${JSON.stringify(
+      context.bindings
+    )}`
+  );
 
   const createdMessageEvent = context.bindings.createdMessage;
-  winston.debug(`createdMessageEvent|${JSON.stringify(createdMessageEvent)}`);
 
   // since this function gets triggered by a queued message that gets
   // deserialized from a json object, we must first check that what we
   // got is what we expect.
   if (!CreatedMessageEvent.is(createdMessageEvent)) {
     winston.error(`Fatal! No valid message found in bindings.`);
+
+    const validation = t.validate(createdMessageEvent, CreatedMessageEvent);
+    winston.debug(
+      `CreatedMessageQueueHandlerIndex|validationError|${ReadableReporter.report(
+        validation
+      ).join("\n")}`
+    );
+
     // we will never be able to recover from this, so don't trigger an error
     // TODO: perhaps forward this message to a failed events queue for review
     context.done();

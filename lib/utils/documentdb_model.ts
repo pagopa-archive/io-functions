@@ -186,9 +186,13 @@ export abstract class DocumentDbModel<
     return right(fromNullable(attachmentMeta.value));
   }
 
+  /**
+   * Get attachments (media link) for the given model.
+   * You *must* provide a partitionKey through FeedOptions.
+   */
   public async getAttachments(
     documentId: string,
-    options: DocumentDb.FeedOptions = {}
+    options: DocumentDb.FeedOptions
   ): Promise<DocumentDbUtils.IResultIterator<DocumentDb.AttachmentMeta>> {
     return DocumentDbUtils.queryAttachments(
       this.dbClient,
