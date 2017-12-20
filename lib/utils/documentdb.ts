@@ -65,7 +65,7 @@ export const RetrievedDocument = t.intersection([
     _self: t.string,
 
     /** The time the object was created. */
-    _ts: t.string
+    _ts: t.union([t.string, t.number])
   }),
   t.partial({
     _attachments: t.string,
