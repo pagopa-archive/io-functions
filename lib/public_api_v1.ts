@@ -32,6 +32,8 @@ import { GetProfile, UpsertProfile } from "./controllers/profiles";
 import * as express from "express";
 import { secureExpressApp } from "./utils/express";
 
+import { createBlobService } from "azure-storage";
+
 // Whether we're in a production environment
 const isProduction = process.env.NODE_ENV === "production";
 
@@ -80,6 +82,9 @@ const notificationModel = new NotificationModel(
   notificationsCollectionUrl
 );
 
+const storageConnectionString = getRequiredStringEnv("QueueStorageConnection");
+const blobService = createBlobService(storageConnectionString);
+
 // Setup ApplicationInsights
 
 const appInsightsClient = new ApplicationInsights.TelemetryClient();
@@ -98,7 +103,7 @@ app.post(
 
 app.get(
   "/api/v1/messages/:fiscalcode/:id",
-  GetMessage(serviceModel, messageModel, notificationModel)
+  GetMessage(serviceModel, messageModel, notificationModel, blobService)
 );
 app.get(
   "/api/v1/messages/:fiscalcode",

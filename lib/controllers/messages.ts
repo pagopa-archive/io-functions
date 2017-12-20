@@ -2,7 +2,6 @@
 * Implements the API handlers for the Message resource.
 */
 
-import { isNone } from "fp-ts/lib/Option";
 import * as t from "io-ts";
 
 import * as express from "express";
@@ -17,13 +16,13 @@ import {
 
 import { IContext } from "azure-function-express";
 
-import { isLeft } from "fp-ts/lib/Either";
-
 import { CreatedMessage } from "../api/definitions/CreatedMessage";
 import { FiscalCode } from "../api/definitions/FiscalCode";
 import { MessageContent } from "../api/definitions/MessageContent";
 import { MessageResponse } from "../api/definitions/MessageResponse";
 import { NewMessage as ApiNewMessage } from "../api/definitions/NewMessage";
+
+import { CreatedMessageEvent } from "./../models/created_message_event";
 
 import { RequiredParamMiddleware } from "../utils/middlewares/required_param";
 
@@ -48,6 +47,7 @@ import {
   IResponseErrorForbiddenNotAuthorizedForDefaultAddresses,
   IResponseErrorForbiddenNotAuthorizedForProduction,
   IResponseErrorForbiddenNotAuthorizedForRecipient,
+  IResponseErrorInternal,
   IResponseErrorNotFound,
   IResponseErrorQuery,
   IResponseErrorValidation,
@@ -59,6 +59,7 @@ import {
   ResponseErrorForbiddenNotAuthorizedForProduction,
   ResponseErrorForbiddenNotAuthorizedForRecipient,
   ResponseErrorFromValidationErrors,
+  ResponseErrorInternal,
   ResponseErrorNotFound,
   ResponseErrorQuery,
   ResponseSuccessJson,
@@ -78,10 +79,10 @@ import {
 
 import { mapResultIterator } from "../utils/documentdb";
 
-import { CreatedMessageEvent } from "../models/created_message_event";
-
 import { NotificationModel } from "../models/notification";
 import { ServiceModel } from "../models/service";
+
+import { BlobService } from "azure-storage";
 
 import {
   Message,
@@ -89,6 +90,11 @@ import {
   NewMessageWithoutContent,
   RetrievedMessage
 } from "../models/message";
+
+import { withoutUndefinedValues } from "../utils/objects";
+
+import { isLeft } from "fp-ts/lib/Either";
+import { isNone } from "fp-ts/lib/Option";
 
 /**
  * Input and output bindings for this function
@@ -171,6 +177,7 @@ type IGetMessageHandler = (
   | IResponseErrorQuery
   | IResponseErrorValidation
   | IResponseErrorForbiddenNotAuthorized
+  | IResponseErrorInternal
 >;
 
 /**
@@ -312,7 +319,9 @@ export function CreateMessageHandler(
     };
 
     // prepare the created message event
-    const createdMessageEvent: CreatedMessageEvent = {
+    // we filter out undefined values as they are
+    // deserialized to null(s) when enqueued
+    const createdMessageEvent: CreatedMessageEvent = withoutUndefinedValues({
       defaultAddresses: messagePayload.default_addresses,
       message: newMessageWithoutContent,
       messageContent,
@@ -321,7 +330,7 @@ export function CreateMessageHandler(
         organizationName: userAttributes.service.organizationName,
         serviceName: userAttributes.service.serviceName
       }
-    };
+    });
 
     // queue the message to the created messages queue by setting
     // the message to the output binding of this function
@@ -397,7 +406,8 @@ export function CreateMessage(
  */
 export function GetMessageHandler(
   messageModel: MessageModel,
-  notificationModel: NotificationModel
+  notificationModel: NotificationModel,
+  blobService: BlobService
 ): IGetMessageHandler {
   return async (userAuth, _, userAttributes, fiscalCode, messageId) => {
     // whether the user is a trusted application (i.e. can access all messages for a user)
@@ -439,8 +449,7 @@ export function GetMessageHandler(
     // a trusted application or he is the sender of the message
     const isUserAllowed =
       canListMessages ||
-      (userAttributes.service &&
-        retrievedMessage.senderServiceId === userAttributes.service.serviceId);
+      retrievedMessage.senderServiceId === userAttributes.service.serviceId;
 
     if (!isUserAllowed) {
       // the user is not allowed to see the message
@@ -467,8 +476,29 @@ export function GetMessageHandler(
       };
     });
 
+    const maybeContentOrError = await messageModel.getStoredContent(
+      blobService,
+      retrievedMessage.id,
+      retrievedMessage.fiscalCode
+    );
+
+    if (isLeft(maybeContentOrError)) {
+      winston.error(
+        `GetMessageHandler|${JSON.stringify(maybeContentOrError.value)}`
+      );
+      return ResponseErrorInternal(
+        `${maybeContentOrError.value.name}: ${maybeContentOrError.value
+          .message}`
+      );
+    }
+
+    const message: CreatedMessage = withoutUndefinedValues({
+      content: maybeContentOrError.value.toUndefined(),
+      ...retrievedMessageToPublic(retrievedMessage)
+    });
+
     const messageStatus: MessageResponse = {
-      message: retrievedMessageToPublic(retrievedMessage),
+      message,
       notification: maybeNotificationStatus.isSome()
         ? maybeNotificationStatus.toUndefined()
         : undefined
@@ -484,9 +514,14 @@ export function GetMessageHandler(
 export function GetMessage(
   serviceModel: ServiceModel,
   messageModel: MessageModel,
-  notificationModel: NotificationModel
+  notificationModel: NotificationModel,
+  blobService: BlobService
 ): express.RequestHandler {
-  const handler = GetMessageHandler(messageModel, notificationModel);
+  const handler = GetMessageHandler(
+    messageModel,
+    notificationModel,
+    blobService
+  );
   const middlewaresWrap = withRequestMiddlewares(
     AzureApiAuthMiddleware(
       new Set([UserGroup.ApiMessageRead, UserGroup.ApiMessageList])

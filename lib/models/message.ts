@@ -1,5 +1,7 @@
 import * as t from "io-ts";
 
+import { ReadableReporter } from "./../utils/validation_reporters";
+
 import * as DocumentDb from "documentdb";
 
 import { tag } from "../utils/types";
@@ -8,7 +10,7 @@ import * as DocumentDbUtils from "../utils/documentdb";
 import { DocumentDbModel } from "../utils/documentdb_model";
 
 import { Either, isLeft, left, right } from "fp-ts/lib/Either";
-import { Option } from "fp-ts/lib/Option";
+import { isNone, none, Option, some } from "fp-ts/lib/Option";
 import { NonEmptyString } from "../utils/strings";
 
 import { MessageContent } from "../api/definitions/MessageContent";
@@ -16,7 +18,8 @@ import { MessageContent } from "../api/definitions/MessageContent";
 import { FiscalCode } from "../api/definitions/FiscalCode";
 
 import { BlobService } from "azure-storage";
-import { upsertBlobFromObject } from "../utils/azure_storage";
+import { getBlobAsText, upsertBlobFromObject } from "../utils/azure_storage";
+import { iteratorToArray } from "../utils/documentdb";
 
 const MESSAGE_BLOB_STORAGE_SUFFIX = ".json";
 
@@ -179,6 +182,10 @@ function toRetrieved(result: DocumentDb.RetrievedDocument): RetrievedMessage {
   );
 }
 
+function blobIdFromMessageId(messageId: string): string {
+  return `${messageId}${MESSAGE_BLOB_STORAGE_SUFFIX}`;
+}
+
 /**
  * A model for handling Messages
  */
@@ -272,7 +279,7 @@ export class MessageModel extends DocumentDbModel<
     Either<Error | DocumentDb.QueryError, Option<DocumentDb.AttachmentMeta>>
   > {
     // this is the attachment id __and__ the media filename
-    const blobId = `${messageId}${MESSAGE_BLOB_STORAGE_SUFFIX}`;
+    const blobId = blobIdFromMessageId(messageId);
 
     // store media (attachment) with message content in blob storage
     const errorOrMessageContent = await upsertBlobFromObject<MessageContent>(
@@ -300,5 +307,67 @@ export class MessageModel extends DocumentDbModel<
     }
 
     return right(errorOrAttachmentMeta.value);
+  }
+
+  /**
+   * Get stored MessageContent (if any) from blob service.
+   */
+  public async getStoredContent(
+    blobService: BlobService,
+    messageId: string,
+    fiscalCode: FiscalCode
+  ): Promise<Either<Error, Option<MessageContent>>> {
+    // get link to attached blob(s)
+    const media = await iteratorToArray(
+      await this.getAttachments(messageId, {
+        partitionKey: fiscalCode
+      })
+    );
+
+    // no blob(s) attached to the message
+    if (!media || !media[0]) {
+      return right<Error, Option<MessageContent>>(none);
+    }
+
+    const blobId = blobIdFromMessageId(messageId);
+
+    // retrieve blob content and deserialize
+    const maybeContentAsTextOrError = await getBlobAsText(
+      blobService,
+      this.containerName,
+      blobId
+    );
+
+    if (isLeft(maybeContentAsTextOrError)) {
+      return left<Error, Option<MessageContent>>(
+        maybeContentAsTextOrError.value
+      );
+    }
+
+    // media exists but the content is empty
+    const maybeContentAsText = maybeContentAsTextOrError.value;
+    if (isNone(maybeContentAsText)) {
+      return left<Error, Option<MessageContent>>(
+        new Error("Cannot get stored message content from attachment")
+      );
+    }
+
+    const contentAsText = maybeContentAsText.value;
+
+    // deserialize text into JSON
+    const contentOrError = t.validate(
+      JSON.parse(contentAsText),
+      MessageContent
+    );
+
+    if (isLeft(contentOrError)) {
+      const errors: string = ReadableReporter.report(contentOrError).join(", ");
+      return left<Error, Option<MessageContent>>(
+        new Error(`Cannot deserialize stored message content: ${errors}`)
+      );
+    }
+
+    const content = contentOrError.value;
+    return right<Error, Option<MessageContent>>(some(content));
   }
 }

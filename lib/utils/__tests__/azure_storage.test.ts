@@ -1,5 +1,5 @@
 import { isRight } from "fp-ts/lib/Either";
-import { upsertBlobFromText } from "../azure_storage";
+import { getBlobAsText, upsertBlobFromText } from "../azure_storage";
 
 jest.mock("azure-storage");
 import * as azureStorage from "azure-storage";
@@ -73,5 +73,31 @@ describe("upsertBlobFromObject", () => {
       expect(result.value.toUndefined()).toEqual(aBlobResult);
     }
     spy.mockReset();
+  });
+
+  describe("getBlobAsText", () => {
+    it("should call blobService.getBlobToText once", async () => {
+      const spy = jest
+        .spyOn(aBlobService, "getBlobToText")
+        .mockImplementation((_, __, cb) => {
+          cb(undefined, aRandomText);
+        });
+      const result = await getBlobAsText(
+        aBlobService,
+        aContainerName,
+        anAttachmentName
+      );
+      expect(spy).toHaveBeenCalledTimes(1);
+      expect(spy).toHaveBeenCalledWith(
+        aContainerName,
+        anAttachmentName,
+        expect.any(Function)
+      );
+      expect(isRight(result)).toBeTruthy();
+      if (isRight(result)) {
+        expect(result.value.toUndefined()).toEqual(aRandomText);
+      }
+      spy.mockReset();
+    });
   });
 });
