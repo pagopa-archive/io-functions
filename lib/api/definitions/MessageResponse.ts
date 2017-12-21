@@ -11,7 +11,7 @@ import { CreatedMessage } from "./CreatedMessage";
 import { NotificationStatus } from "./NotificationStatus";
 
 /**
- * 
+ *
  */
 
 import * as t from "io-ts";

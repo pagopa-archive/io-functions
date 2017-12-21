@@ -10,7 +10,7 @@
 import { NotificationChannelStatus } from "./NotificationChannelStatus";
 
 /**
- * 
+ *
  */
 
 import * as t from "io-ts";

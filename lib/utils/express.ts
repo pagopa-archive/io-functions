@@ -6,7 +6,7 @@ import * as referrerPolicy from "referrer-policy";
 /**
  * Set up secure HTTP headers applying middlewares
  * to the express application passed in input.
- * 
+ *
  * @param app an express application.
  */
 export function secureExpressApp(app: express.Express): void {

@@ -191,12 +191,16 @@ describe("handleNotification", () => {
     expect(sentMail.data.to).toBe("pinco@pallino.com");
     expect(sentMail.data.messageId).toBe("A_MESSAGE_ID");
     expect(sentMail.data.subject).not.toBeUndefined();
-    expect(sentMail.data.headers["X-Italia-Messages-MessageId"]).toBe(
-      "A_MESSAGE_ID"
-    );
-    expect(sentMail.data.headers["X-Italia-Messages-NotificationId"]).toBe(
-      "A_NOTIFICATION_ID"
-    );
+    expect(sentMail.data.headers).not.toBeUndefined();
+    if (sentMail.data.headers) {
+      const headers: {
+        readonly [index: string]: string;
+      } = sentMail.data.headers as any;
+      expect(headers["X-Italia-Messages-MessageId"]).toBe("A_MESSAGE_ID");
+      expect(headers["X-Italia-Messages-NotificationId"]).toBe(
+        "A_NOTIFICATION_ID"
+      );
+    }
     const emailBody = String(sentMail.data.html);
     expect(emailBody.indexOf("<h1>Hello world!</h1>")).toBeGreaterThan(0);
     expect(emailBody.indexOf(aSenderMetadata.departmentName)).toBeGreaterThan(
@@ -517,7 +521,9 @@ describe("test processReject function", () => {
 
     expect(spy.mock.calls[0][0]).toEqual(
       `Error while processing event, retrying` +
-        `|${emailNotificationMock.messageId}|${emailNotificationMock.notificationId}|${errorMock}`
+        `|${emailNotificationMock.messageId}|${
+          emailNotificationMock.notificationId
+        }|${errorMock}`
     );
     expect(contextMock.done).toHaveBeenCalledTimes(1);
     expect(contextMock.done.mock.calls[0][0]).toEqual(errorMock);
