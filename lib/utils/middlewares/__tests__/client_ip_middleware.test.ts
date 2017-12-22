@@ -31,20 +31,17 @@ describe("ClientIpMiddleware", () => {
   });
 
   it("should return an empty value if client IP is not valid", async () => {
-    [
-      "",
-      "123",
-      "xyz, 5.90.26.229",
-      "5.90.26.229.2, 13.93.94.8:1112"
-    ].forEach(async h => {
-      const mockRequest = {
-        header: jest.fn(lookup({ "x-forwarded-for": h }))
-      };
-      const res = await ClientIpMiddleware(mockRequest as any);
-      expect(isRight(res)).toBeTruthy();
-      if (isRight(res)) {
-        expect(isNone(res.value)).toBeTruthy();
+    ["", "123", "xyz, 5.90.26.229", "5.90.26.229.2, 13.93.94.8:1112"].forEach(
+      async h => {
+        const mockRequest = {
+          header: jest.fn(lookup({ "x-forwarded-for": h }))
+        };
+        const res = await ClientIpMiddleware(mockRequest as any);
+        expect(isRight(res)).toBeTruthy();
+        if (isRight(res)) {
+          expect(isNone(res.value)).toBeTruthy();
+        }
       }
-    });
+    );
   });
 });

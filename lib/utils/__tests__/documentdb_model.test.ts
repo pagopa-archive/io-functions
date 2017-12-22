@@ -322,11 +322,14 @@ describe("attach", () => {
     const model = new MyModel(aDbClient, aCollectionUri);
     const result = await model.attach(aDocumentId, aPartitionKey, anAttachment);
     expect(getDocumentUriSpy).toBeCalledWith(aCollectionUri, aDocumentId);
-    expect(
-      upsertAttachmentSpy
-    ).toBeCalledWith(aDbClient, undefined, anAttachment, {
-      partitionKey: aPartitionKey
-    });
+    expect(upsertAttachmentSpy).toBeCalledWith(
+      aDbClient,
+      undefined,
+      anAttachment,
+      {
+        partitionKey: aPartitionKey
+      }
+    );
     expect(isRight(result)).toBeTruthy();
     if (isRight(result)) {
       expect(result.value.isNone()).toBeFalsy();
