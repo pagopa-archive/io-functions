@@ -12,7 +12,7 @@ import { MessageContent } from "./MessageContent";
 import { NewMessageDefaultAddresses } from "./NewMessageDefaultAddresses";
 
 /**
- * 
+ *
  */
 
 import * as t from "io-ts";

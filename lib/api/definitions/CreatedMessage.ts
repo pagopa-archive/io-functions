@@ -12,7 +12,7 @@ import { TimeToLive } from "./TimeToLive";
 import { MessageContent } from "./MessageContent";
 
 /**
- * 
+ *
  */
 
 import * as t from "io-ts";

@@ -12,7 +12,7 @@ import { HttpStatusCode } from "./HttpStatusCode";
 import { withDefault } from "../../utils/default";
 
 /**
- * 
+ *
  */
 
 import * as t from "io-ts";

@@ -11,7 +11,7 @@ import { MessageSubject } from "./MessageSubject";
 import { MessageBodyMarkdown } from "./MessageBodyMarkdown";
 
 /**
- * 
+ *
  */
 
 import * as t from "io-ts";
