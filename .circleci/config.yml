@@ -37,12 +37,11 @@ jobs:
       - run: curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
       - run: chmod +x ./cc-test-reporter
 
-      # run lint and build
-      - run: yarn lint
+      # run build
       - run: yarn build
 
       # run tests!
       - run: '[ -z "$CC_TEST_REPORTER_ID" ] || ./cc-test-reporter before-build'
-      - run: gulp unit:test
+      - run: yarn test
       - run: '[ -z "$CC_TEST_REPORTER_ID" ] || (./cc-test-reporter after-build -t lcov < ./coverage/lcov.info)'
       - run: 'bash <(curl -s https://codecov.io/bash)'
