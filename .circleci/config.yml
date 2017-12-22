@@ -42,6 +42,6 @@ jobs:
 
       # run tests!
       - run: '[ -z "$CC_TEST_REPORTER_ID" ] || ./cc-test-reporter before-build'
-      - run: test
+      - run: yarn test
       - run: '[ -z "$CC_TEST_REPORTER_ID" ] || (./cc-test-reporter after-build -t lcov < ./coverage/lcov.info)'
       - run: 'bash <(curl -s https://codecov.io/bash)'
