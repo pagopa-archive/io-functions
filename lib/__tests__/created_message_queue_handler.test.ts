@@ -726,7 +726,9 @@ describe("test processResolve function", () => {
 
     expect(contextMock.done).toHaveBeenCalledTimes(1);
     expect(spy.mock.calls[0][0]).toEqual(
-      `Fiscal code has no associated profile and no default addresses provided|${retrievedMessageMock.fiscalCode}`
+      `Fiscal code has no associated profile and no default addresses provided|${
+        retrievedMessageMock.fiscalCode
+      }`
     );
     expect(contextMock.bindings.emailNotification).toEqual(undefined);
 
@@ -797,7 +799,9 @@ describe("test processReject function", () => {
     expect(contextMock.done).toHaveBeenCalledTimes(1);
     expect(spy).toHaveBeenCalledTimes(1);
     expect(spy.mock.calls[0][0]).toEqual(
-      `Error while processing event, retrying|${retrievedMessageMock.fiscalCode}|${errorMock}`
+      `Error while processing event, retrying|${
+        retrievedMessageMock.fiscalCode
+      }|${errorMock}`
     );
     expect(contextMock.bindings.emailNotification).toEqual(undefined);
 

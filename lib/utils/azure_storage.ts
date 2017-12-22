@@ -67,7 +67,7 @@ export function upsertBlobFromObject<T>(
 
 /**
  * Get a blob content as text (string).
- * 
+ *
  * @param blobService     the Azure blob service
  * @param containerName   the name of the Azure blob storage container
  * @param blobName        blob file name

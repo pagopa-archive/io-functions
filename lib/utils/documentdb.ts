@@ -219,10 +219,9 @@ export function createDocument<T>(
           );
         } else {
           resolve(
-            right<
-              DocumentDb.QueryError,
-              T & DocumentDb.RetrievedDocument
-            >(created as T & DocumentDb.RetrievedDocument)
+            right<DocumentDb.QueryError, T & DocumentDb.RetrievedDocument>(
+              created as T & DocumentDb.RetrievedDocument
+            )
           );
         }
       }
@@ -254,10 +253,9 @@ export function readDocument<T>(
           );
         } else {
           resolve(
-            right<
-              DocumentDb.QueryError,
-              T & DocumentDb.RetrievedDocument
-            >(result as T & DocumentDb.RetrievedDocument)
+            right<DocumentDb.QueryError, T & DocumentDb.RetrievedDocument>(
+              result as T & DocumentDb.RetrievedDocument
+            )
           );
         }
       }
@@ -480,10 +478,9 @@ export function replaceDocument<T>(
           );
         } else {
           resolve(
-            right<
-              DocumentDb.QueryError,
-              T & DocumentDb.RetrievedDocument
-            >(created as T & DocumentDb.RetrievedDocument)
+            right<DocumentDb.QueryError, T & DocumentDb.RetrievedDocument>(
+              created as T & DocumentDb.RetrievedDocument
+            )
           );
         }
       }
@@ -519,10 +516,9 @@ export function upsertAttachment<T>(
           );
         } else {
           resolve(
-            right<
-              DocumentDb.QueryError,
-              T & DocumentDb.AttachmentMeta
-            >(meta as T & DocumentDb.AttachmentMeta)
+            right<DocumentDb.QueryError, T & DocumentDb.AttachmentMeta>(
+              meta as T & DocumentDb.AttachmentMeta
+            )
           );
         }
       }

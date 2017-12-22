@@ -8,7 +8,7 @@
 // tslint:disable:object-literal-sort-keys
 
 /**
- * 
+ *
  */
 
 import { EmailString } from "../../utils/strings";

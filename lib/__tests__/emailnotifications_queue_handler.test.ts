@@ -517,7 +517,9 @@ describe("test processReject function", () => {
 
     expect(spy.mock.calls[0][0]).toEqual(
       `Error while processing event, retrying` +
-        `|${emailNotificationMock.messageId}|${emailNotificationMock.notificationId}|${errorMock}`
+        `|${emailNotificationMock.messageId}|${
+          emailNotificationMock.notificationId
+        }|${errorMock}`
     );
     expect(contextMock.done).toHaveBeenCalledTimes(1);
     expect(contextMock.done.mock.calls[0][0]).toEqual(errorMock);
