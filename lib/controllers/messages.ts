@@ -306,9 +306,7 @@ export function CreateMessageHandler(
     const retrievedMessage = errorOrMessage.value;
 
     winston.debug(
-      `CreateMessageHandler|message created|${userService.serviceId}|${
-        retrievedMessage.id
-      }`
+      `CreateMessageHandler|message created|${userService.serviceId}|${retrievedMessage.id}`
     );
 
     //
@@ -489,9 +487,8 @@ export function GetMessageHandler(
         `GetMessageHandler|${JSON.stringify(maybeContentOrError.value)}`
       );
       return ResponseErrorInternal(
-        `${maybeContentOrError.value.name}: ${
-          maybeContentOrError.value.message
-        }`
+        `${maybeContentOrError.value.name}: ${maybeContentOrError.value
+          .message}`
       );
     }
 

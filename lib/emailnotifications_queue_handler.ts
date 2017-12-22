@@ -117,9 +117,7 @@ export async function generateDocumentHtml(
   const bodyHtml = (await markdownToHtml.process(markdown)).toString();
 
   // compose the service name from the department name and the service name
-  const senderServiceName = `${senderMetadata.departmentName}<br />${
-    senderMetadata.serviceName
-  }`;
+  const senderServiceName = `${senderMetadata.departmentName}<br />${senderMetadata.serviceName}`;
 
   // wrap the generated HTML into an email template
   const documentHtml = defaultEmailTemplate(
@@ -197,9 +195,7 @@ export async function handleNotification(
     const error = errorOrMaybeNotification.value;
     // we got an error while fetching the notification
     winston.warn(
-      `Error while fetching the notification|notification=${notificationId}|message=${messageId}|error=${
-        error.code
-      }`
+      `Error while fetching the notification|notification=${notificationId}|message=${messageId}|error=${error.code}`
     );
     return left(ProcessingError.TRANSIENT);
   }
@@ -283,9 +279,7 @@ export async function handleNotification(
     });
     const error = sendResult.value;
     winston.warn(
-      `Error while sending email|notification=${notificationId}|message=${messageId}|error=${
-        error.message
-      }`
+      `Error while sending email|notification=${notificationId}|message=${messageId}|error=${error.message}`
     );
     return left(ProcessingError.TRANSIENT);
   }
@@ -314,9 +308,7 @@ export async function handleNotification(
     // TODO: this will re-send the email, check whether sendgrid supports idempotent calls (dedup on notificationId)
     const error = updateResult.value;
     winston.warn(
-      `Error while updating the notification|notification=${notificationId}|message=${messageId}|error=${
-        error.code
-      }`
+      `Error while updating the notification|notification=${notificationId}|message=${messageId}|error=${error.code}`
     );
     return left(ProcessingError.TRANSIENT);
   }
@@ -361,9 +353,7 @@ export function processReject(
   // the promise failed
   winston.error(
     `Error while processing event, retrying` +
-      `|${emailNotificationEvent.messageId}|${
-        emailNotificationEvent.notificationId
-      }|${error}`
+      `|${emailNotificationEvent.messageId}|${emailNotificationEvent.notificationId}|${error}`
   );
   // in case of error, we return a failure to trigger a retry (up to the configured max retries)
   // TODO: schedule next retry with exponential backoff, see #150597257
