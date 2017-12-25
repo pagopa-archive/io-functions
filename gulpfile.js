@@ -41,7 +41,9 @@ const currentPackageJson = JSON.parse(fs.readFileSync(packageJsonPath));
 // the release process, not super efficient but it's the easiest way to share
 // them across tasks
 const currentVersion = semver.parse(currentPackageJson.version);
-const releaseVersionValue = `${currentVersion.major}.${currentVersion.minor}.${currentVersion.patch}`;
+const releaseVersionValue = `${currentVersion.major}.${currentVersion.minor}.${
+  currentVersion.patch
+}`;
 const nextVersionValue = `${semver.inc(releaseVersionValue, "minor")}-SNAPSHOT`;
 const funcpackBranchPrefix = "funcpack-release";
 const releaseVersionFuncpackBranchName = `${funcpackBranchPrefix}-v${releaseVersionValue}`;
@@ -104,7 +106,7 @@ gulp.task("yarn:lint", () => {
 gulp.task("unit:test", () => {
   return gulp
     .src(TYPESCRIPT_SOURCE_DIR)
-    .pipe(run("jest --coverage --runInBand"));
+    .pipe(run("jest --coverage --runInBand --forceExit"));
 });
 
 /**
