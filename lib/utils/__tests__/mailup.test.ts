@@ -11,10 +11,10 @@ import { ENDPOINTS, MailUpTransport, SmtpAuthInfo } from "../mailup";
 
 // format required by nodemailer
 const anEmailMessage: Mail.Options = {
+  from: "<foo> foo@example.com",
   headers: {
     "X-Header": "value"
   },
-  from: "<foo> foo@example.com",
   html: "lorem ipsum <b>html></b>",
   replyTo: "foobar@example.com",
   subject: "lorem ipsum",
@@ -47,8 +47,8 @@ const someCreds = t
 
 const aResponsePayload = {
   Code: "0",
-  Status: "200",
-  Message: ""
+  Message: "",
+  Status: "200"
 };
 
 const aNodemailerTransporter = nodemailer.createTransport(
@@ -63,11 +63,11 @@ describe("sendMail", () => {
     const requestSpy = jest.fn();
     const superagentMock = mockSuperagent(request, [
       {
-        pattern: ENDPOINTS.sendTransactionalMail,
         fixtures: (_: any, params: any) => {
           requestSpy(params);
           return aResponsePayload;
         },
+        pattern: ENDPOINTS.sendTransactionalMail,
         post: (_: any, data: any) => {
           responseSpy(data);
           return { body: data };
@@ -90,10 +90,10 @@ describe("sendMail", () => {
   it("should fail on empty from address", async () => {
     const superagentMock = mockSuperagent(request, [
       {
-        pattern: ENDPOINTS.sendTransactionalMail,
         fixtures: (_: any, __: any) => {
           return aResponsePayload;
         },
+        pattern: ENDPOINTS.sendTransactionalMail,
         post: (_: any, data: any) => {
           return { body: data };
         }
@@ -118,10 +118,10 @@ describe("sendMail", () => {
   it("should fail on empty destination address", async () => {
     const superagentMock = mockSuperagent(request, [
       {
-        pattern: ENDPOINTS.sendTransactionalMail,
         fixtures: (_: any, __: any) => {
           return aResponsePayload;
         },
+        pattern: ENDPOINTS.sendTransactionalMail,
         post: (_: any, data: any) => {
           return { body: data };
         }
