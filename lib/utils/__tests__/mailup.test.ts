@@ -146,10 +146,10 @@ describe("sendMail", () => {
   it("should fail on API error", async () => {
     const superagentMock = mockSuperagent(request, [
       {
-        pattern: ENDPOINTS.sendTransactionalMail,
         fixtures: (_: any, __: any) => {
           return { error: "500" };
         },
+        pattern: ENDPOINTS.sendTransactionalMail,
         post: (_: any, data: any) => {
           return { body: data };
         }
