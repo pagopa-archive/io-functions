@@ -11,7 +11,7 @@ import { ENDPOINTS, MailUpTransport, SmtpAuthInfo } from "../mailup";
 
 // format required by nodemailer
 const anEmailMessage: Mail.Options = {
-  from: "<foo> foo@example.com",
+  from: "foo <foo@example.com>",
   headers: {
     "X-Header": "value"
   },
@@ -19,18 +19,18 @@ const anEmailMessage: Mail.Options = {
   replyTo: "foobar@example.com",
   subject: "lorem ipsum",
   text: "lorem impsum",
-  to: "<bar> bar@example.com"
+  to: "bar <bar@example.com>"
 };
 
 // format required by MailUp APIs
 const anEmailPayload = {
   ExtendedHeaders: [{ N: "X-Header", V: "value" }],
-  From: { Email: "@foo", Name: "foo@example.com" },
+  From: { Email: "foo@example.com", Name: "foo" },
   Html: { Body: "lorem ipsum <b>html></b>" },
   ReplyTo: "foobar@example.com",
   Subject: "lorem ipsum",
   Text: "lorem impsum",
-  To: [{ Email: "@bar", Name: "bar@example.com" }]
+  To: [{ Email: "bar@example.com", Name: "bar" }]
 };
 
 const someCreds = t

@@ -9,7 +9,7 @@ import * as t from "io-ts";
 import * as request from "superagent";
 
 import { Either, isLeft, isRight, left, right } from "fp-ts/lib/Either";
-import { NonEmptyString } from "./strings";
+import { EmailString, NonEmptyString } from "./strings";
 
 import * as nodemailer from "nodemailer";
 
@@ -17,6 +17,7 @@ import { Address as NodemailerAddress } from "nodemailer/lib/addressparser";
 
 import * as winston from "winston";
 
+import { fromNullable, none, Option, some } from "fp-ts/lib/Option";
 import { ReadableReporter } from "./validation_reporters";
 
 // request timeout in milliseconds
@@ -56,7 +57,7 @@ const ApiResponse = t.interface({
 type ApiResponse = t.TypeOf<typeof ApiResponse>;
 
 const Address = t.interface({
-  Email: NonEmptyString,
+  Email: EmailString,
   Name: t.string
 });
 
@@ -85,7 +86,9 @@ const EmailPayload = t.intersection([
     To: t.array(Address)
   }),
   t.partial({
-    ReplyTo: t.string
+    ReplyTo: t.string,
+    Cc: t.array(Address),
+    Bcc: t.array(Address)
   })
 ]);
 
@@ -153,6 +156,35 @@ async function sendTransactionalMail(
   }
 }
 
+function toMailupAddresses(
+  addresses: ReadonlyArray<NodemailerAddress> | undefined
+): Option<ReadonlyArray<Address>> {
+  return Array.isArray(addresses) && addresses.length > 0
+    ? some(
+        addresses.map((address: NodemailerAddress) => {
+          return {
+            Name: address.name || address.address,
+            Email: t.validate(address.address, EmailString).fold(() => {
+              // this never happens as nodemailer has already parsed the address
+              throw new Error(
+                `Error while parsing email address (toMailupAddresses): invalid format '${
+                  address.address
+                }'.`
+              );
+            }, t.identity)
+          };
+        })
+      )
+    : none;
+}
+
+function toMailupAddress(
+  addresses: ReadonlyArray<NodemailerAddress> | undefined
+): Option<Address> {
+  const addrs = toMailupAddresses(addresses).toUndefined();
+  return addrs ? fromNullable(addrs[0]) : none;
+}
+
 /**
  * Nodemailer transport for MailUp transactional APIs
  *
@@ -195,29 +227,6 @@ export function MailUpTransport(
       // The following cast exists because of a bug in nodemailer typings.
       const addresses: IAddresses = mail.message.getAddresses() as IAddresses;
 
-      if (!addresses.from || !addresses.from[0] || !addresses.from[0].address) {
-        return callback(
-          new Error("Cannot send email with an empty from address"),
-          undefined
-        );
-      }
-
-      if (!addresses.to || !addresses.to[0] || !addresses.to[0].address) {
-        return callback(
-          new Error("Cannot send email with an empty destination address"),
-          undefined
-        );
-      }
-
-      // replyTo can be left empty
-      const replyTo =
-        addresses["reply-to"] !== undefined &&
-        (addresses["reply-to"] as ReadonlyArray<NodemailerAddress>)[0] !==
-          undefined
-          ? (addresses["reply-to"] as ReadonlyArray<NodemailerAddress>)[0]
-              .address
-          : undefined;
-
       // To convert nodemailer streams to strings:
       //  const resolveContent = promisify.typed(mail.resolveContent);
       //  const text = await resolveContent(mail.data, "text");
@@ -231,28 +240,23 @@ export function MailUpTransport(
         V: (mail.data.headers as any)[header]
       }));
 
-      const errorOrEmail = t.validate(
-        {
-          ExtendedHeaders: headers,
-          From: {
-            Email: addresses.from[0].address,
-            Name: addresses.from[0].name || addresses.from[0].address
-          },
-          Html: {
-            Body: mail.data.html
-          },
-          ReplyTo: replyTo,
-          Subject: mail.data.subject,
-          Text: mail.data.text,
-          To: [
-            {
-              Email: addresses.to[0].address,
-              Name: addresses.to[0].name || addresses.to[0].address
-            }
-          ]
+      const replyTo = toMailupAddress(addresses["reply-to"]).toUndefined();
+
+      const emailPayload = {
+        ExtendedHeaders: headers,
+        From: toMailupAddress(addresses.from).toUndefined(),
+        Html: {
+          Body: mail.data.html
         },
-        EmailPayload
-      );
+        ReplyTo: replyTo ? replyTo.Email : undefined,
+        Subject: mail.data.subject,
+        Text: mail.data.text,
+        To: toMailupAddresses(addresses.to).toUndefined(),
+        Cc: toMailupAddresses(addresses.cc).toUndefined(),
+        Bcc: toMailupAddresses(addresses.bcc).toUndefined()
+      };
+
+      const errorOrEmail = t.validate(emailPayload, EmailPayload);
 
       if (isLeft(errorOrEmail)) {
         const errors = ReadableReporter.report(errorOrEmail).join("; ");
