@@ -256,7 +256,7 @@ export function MailUpTransport(
 
       if (isLeft(errorOrEmail)) {
         const errors = ReadableReporter.report(errorOrEmail).join("; ");
-        winston.debug("MailUpTransport|errors", JSON.stringify(errors));
+        winston.debug("MailUpTransport|errors", errors);
         return callback(
           new Error(`Invalid email payload: ${errors}`),
           undefined
@@ -271,12 +271,12 @@ export function MailUpTransport(
 
       if (isRight(errorOrResponse)) {
         // tslint:disable-next-line:no-null-keyword
-        callback(null, {
+        return callback(null, {
           ...errorOrResponse.value,
           messageId: mail.data.messageId
         });
       } else {
-        callback(errorOrResponse.value, undefined);
+        return callback(errorOrResponse.value, undefined);
       }
     }
   };

@@ -1,4 +1,4 @@
-// tslint:disable:no-let no-any
+// tslint:disable:no-any
 import * as t from "io-ts";
 
 import * as request from "superagent";
@@ -99,19 +99,39 @@ describe("sendMail", () => {
         }
       }
     ]);
-
-    aNodemailerTransporter
-      .sendMail({
+    expect.assertions(1);
+    try {
+      await aNodemailerTransporter.sendMail({
         ...anEmailMessage,
         from: undefined
-      })
-      .then(e => {
-        expect(e).not.toBeDefined();
-      })
-      .catch(e => {
-        expect(e).toBeInstanceOf(Error);
       });
+    } catch (e) {
+      expect(e).toBeInstanceOf(Error);
+    }
+    superagentMock.unset();
+  });
 
+  it("should fail on malformed email payload", async () => {
+    const superagentMock = mockSuperagent(request, [
+      {
+        fixtures: (_: any, __: any) => {
+          return aResponsePayload;
+        },
+        pattern: ENDPOINTS.sendTransactionalMail,
+        post: (_: any, data: any) => {
+          return { body: data };
+        }
+      }
+    ]);
+    expect.assertions(1);
+    try {
+      await aNodemailerTransporter.sendMail({
+        ...anEmailMessage,
+        subject: undefined
+      });
+    } catch (e) {
+      expect(e).toBeInstanceOf(Error);
+    }
     superagentMock.unset();
   });
 
@@ -127,19 +147,15 @@ describe("sendMail", () => {
         }
       }
     ]);
-
-    aNodemailerTransporter
-      .sendMail({
+    expect.assertions(1);
+    try {
+      await aNodemailerTransporter.sendMail({
         ...anEmailMessage,
         to: undefined
-      })
-      .then(e => {
-        expect(e).not.toBeDefined();
-      })
-      .catch(e => {
-        expect(e).toBeInstanceOf(Error);
       });
-
+    } catch (e) {
+      expect(e).toBeInstanceOf(Error);
+    }
     superagentMock.unset();
   });
 
@@ -155,16 +171,12 @@ describe("sendMail", () => {
         }
       }
     ]);
-
-    aNodemailerTransporter
-      .sendMail(anEmailMessage)
-      .then(e => {
-        expect(e).not.toBeDefined();
-      })
-      .catch(e => {
-        expect(e).toBeInstanceOf(Error);
-      });
-
+    expect.assertions(1);
+    try {
+      await aNodemailerTransporter.sendMail(anEmailMessage);
+    } catch (e) {
+      expect(e).toBeInstanceOf(Error);
+    }
     superagentMock.unset();
   });
 });
