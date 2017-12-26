@@ -144,7 +144,7 @@ async function sendTransactionalMail(
     return errorOrResponse;
   } else {
     const response = errorOrResponse.value;
-    if (response.Code === "0") {
+    if (response && response.Code && response.Code === "0") {
       return right(response);
     } else {
       return left(
@@ -163,7 +163,6 @@ function toMailupAddresses(
     ? some(
         addresses.map((address: NodemailerAddress) => {
           return {
-            Name: address.name || address.address,
             Email: t.validate(address.address, EmailString).fold(() => {
               // this never happens as nodemailer has already parsed the address
               throw new Error(
@@ -171,7 +170,8 @@ function toMailupAddresses(
                   address.address
                 }'.`
               );
-            }, t.identity)
+            }, t.identity),
+            Name: address.name || address.address
           };
         })
       )
