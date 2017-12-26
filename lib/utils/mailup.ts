@@ -86,9 +86,9 @@ const EmailPayload = t.intersection([
     To: t.array(Address)
   }),
   t.partial({
-    ReplyTo: t.string,
+    Bcc: t.array(Address),
     Cc: t.array(Address),
-    Bcc: t.array(Address)
+    ReplyTo: t.string
   })
 ]);
 
@@ -99,12 +99,12 @@ export interface IMailUpTransportOptions {
 }
 
 interface IAddresses {
+  readonly bcc?: ReadonlyArray<NodemailerAddress>;
+  readonly cc?: ReadonlyArray<NodemailerAddress>;
   readonly from?: ReadonlyArray<NodemailerAddress>;
   readonly sender?: ReadonlyArray<NodemailerAddress>;
   readonly "reply-to"?: ReadonlyArray<NodemailerAddress>;
   readonly to?: ReadonlyArray<NodemailerAddress>;
-  readonly cc?: ReadonlyArray<NodemailerAddress>;
-  readonly bcc?: ReadonlyArray<NodemailerAddress>;
 }
 
 function callMailUpApi(
@@ -243,6 +243,8 @@ export function MailUpTransport(
       const replyTo = toMailupAddress(addresses["reply-to"]).toUndefined();
 
       const emailPayload = {
+        Bcc: toMailupAddresses(addresses.bcc).toUndefined(),
+        Cc: toMailupAddresses(addresses.cc).toUndefined(),
         ExtendedHeaders: headers,
         From: toMailupAddress(addresses.from).toUndefined(),
         Html: {
@@ -251,9 +253,7 @@ export function MailUpTransport(
         ReplyTo: replyTo ? replyTo.Email : undefined,
         Subject: mail.data.subject,
         Text: mail.data.text,
-        To: toMailupAddresses(addresses.to).toUndefined(),
-        Cc: toMailupAddresses(addresses.cc).toUndefined(),
-        Bcc: toMailupAddresses(addresses.bcc).toUndefined()
+        To: toMailupAddresses(addresses.to).toUndefined()
       };
 
       const errorOrEmail = t.validate(emailPayload, EmailPayload);
