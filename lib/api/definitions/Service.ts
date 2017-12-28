@@ -19,6 +19,7 @@ import { FiscalCode } from "./FiscalCode";
  */
 
 import * as t from "io-ts";
+import { strictInterfaceWithOptionals } from "../../utils/types";
 
 // required attributes
 const ServiceR = t.interface({
@@ -42,6 +43,10 @@ const ServiceO = t.partial({
   id: t.string
 });
 
-export const Service = t.intersection([ServiceR, ServiceO], "Service");
+export const Service = strictInterfaceWithOptionals(
+  ServiceR.props,
+  ServiceO.props,
+  "Service"
+);
 
 export type Service = t.TypeOf<typeof Service>;

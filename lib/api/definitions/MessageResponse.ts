@@ -15,6 +15,7 @@ import { NotificationStatus } from "./NotificationStatus";
  */
 
 import * as t from "io-ts";
+import { strictInterfaceWithOptionals } from "../../utils/types";
 
 // required attributes
 const MessageResponseR = t.interface({
@@ -26,8 +27,9 @@ const MessageResponseO = t.partial({
   notification: NotificationStatus
 });
 
-export const MessageResponse = t.intersection(
-  [MessageResponseR, MessageResponseO],
+export const MessageResponse = strictInterfaceWithOptionals(
+  MessageResponseR.props,
+  MessageResponseO.props,
   "MessageResponse"
 );
 

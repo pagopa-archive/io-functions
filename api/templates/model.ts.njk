@@ -31,6 +31,7 @@ endfor %}
 {% if definition.type == "object" %}
 
 import * as t from "io-ts";
+import { strictInterfaceWithOptionals } from "../../utils/types";
 
 // required attributes
 const {{ definitionName }}R = t.interface({
@@ -74,7 +75,11 @@ const {{ definitionName }}O = t.partial({
 {% endfor %}
 })
 
-export const {{ definitionName }} = t.intersection([{{ definitionName }}R, {{ definitionName }}O], "{{ definitionName }}");
+export const {{ definitionName }} = strictInterfaceWithOptionals(
+  {{ definitionName }}R.props, 
+  {{ definitionName }}O.props, 
+  "{{ definitionName }}"
+);
 
 export type {{ definitionName }} = t.TypeOf<typeof {{ definitionName }}>;
 

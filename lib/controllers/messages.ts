@@ -91,7 +91,7 @@ import {
   RetrievedMessage
 } from "../models/message";
 
-import { withoutUndefinedValues } from "../utils/objects";
+import { withoutUndefinedValues } from "../utils/types";
 
 import { isLeft } from "fp-ts/lib/Either";
 import { isNone } from "fp-ts/lib/Option";

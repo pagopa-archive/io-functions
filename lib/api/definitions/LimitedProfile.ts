@@ -14,6 +14,7 @@ import { PreferredLanguages } from "./PreferredLanguages";
  */
 
 import * as t from "io-ts";
+import { strictInterfaceWithOptionals } from "../../utils/types";
 
 // required attributes
 const LimitedProfileR = t.interface({});
@@ -23,8 +24,9 @@ const LimitedProfileO = t.partial({
   preferred_languages: PreferredLanguages
 });
 
-export const LimitedProfile = t.intersection(
-  [LimitedProfileR, LimitedProfileO],
+export const LimitedProfile = strictInterfaceWithOptionals(
+  LimitedProfileR.props,
+  LimitedProfileO.props,
   "LimitedProfile"
 );
 
