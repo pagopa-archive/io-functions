@@ -90,7 +90,7 @@ export function withoutUndefinedValues<T extends object>(obj: T): T {
 }
 
 /**
- *  Returns a new type that validates succesfully only
+ *  Return a new type that validates successfully only
  *  when the instance (object) contains no unknow properties.
  *
  *  @\required  required properties
