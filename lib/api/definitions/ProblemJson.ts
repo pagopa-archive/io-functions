@@ -16,6 +16,7 @@ import { withDefault } from "../../utils/default";
  */
 
 import * as t from "io-ts";
+import { strictInterfaceWithOptionals } from "../../utils/types";
 
 // required attributes
 const ProblemJsonR = t.interface({});
@@ -33,8 +34,9 @@ const ProblemJsonO = t.partial({
   instance: t.string
 });
 
-export const ProblemJson = t.intersection(
-  [ProblemJsonR, ProblemJsonO],
+export const ProblemJson = strictInterfaceWithOptionals(
+  ProblemJsonR.props,
+  ProblemJsonO.props,
   "ProblemJson"
 );
 

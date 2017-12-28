@@ -14,6 +14,10 @@ function getContextPath(context: Context): string {
   const keysPath = context.map(({ key }) => key).join(".");
   const lastType = context[context.length - 1].type;
 
+  if ("never" === lastType.name) {
+    return `${keysPath}: unknow property`;
+  }
+
   return `${keysPath} is not a ${lastType.name}`;
 }
 

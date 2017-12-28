@@ -14,6 +14,7 @@ import { NotificationChannelStatus } from "./NotificationChannelStatus";
  */
 
 import * as t from "io-ts";
+import { strictInterfaceWithOptionals } from "../../utils/types";
 
 // required attributes
 const NotificationStatusR = t.interface({});
@@ -23,8 +24,9 @@ const NotificationStatusO = t.partial({
   email: NotificationChannelStatus
 });
 
-export const NotificationStatus = t.intersection(
-  [NotificationStatusR, NotificationStatusO],
+export const NotificationStatus = strictInterfaceWithOptionals(
+  NotificationStatusR.props,
+  NotificationStatusO.props,
   "NotificationStatus"
 );
 

@@ -14,6 +14,7 @@ import { EmailAddress } from "./EmailAddress";
  */
 
 import * as t from "io-ts";
+import { strictInterfaceWithOptionals } from "../../utils/types";
 
 // required attributes
 const NewMessageDefaultAddressesR = t.interface({});
@@ -23,8 +24,9 @@ const NewMessageDefaultAddressesO = t.partial({
   email: EmailAddress
 });
 
-export const NewMessageDefaultAddresses = t.intersection(
-  [NewMessageDefaultAddressesR, NewMessageDefaultAddressesO],
+export const NewMessageDefaultAddresses = strictInterfaceWithOptionals(
+  NewMessageDefaultAddressesR.props,
+  NewMessageDefaultAddressesO.props,
   "NewMessageDefaultAddresses"
 );
 
