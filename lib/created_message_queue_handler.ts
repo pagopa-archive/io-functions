@@ -20,7 +20,12 @@ import * as documentDbUtils from "./utils/documentdb";
 
 import { fromNullable, isNone, Option } from "fp-ts/lib/Option";
 
-import { BlobService, createBlobService } from "azure-storage";
+import {
+  BlobService,
+  createBlobService,
+  createQueueService,
+  QueueService
+} from "azure-storage";
 
 import { MessageContent } from "./api/definitions/MessageContent";
 import { NewMessageDefaultAddresses } from "./api/definitions/NewMessageDefaultAddresses";
@@ -39,7 +44,7 @@ import {
   RetrievedNotification
 } from "./models/notification";
 import { NotificationEvent } from "./models/notification_event";
-import { ProfileModel } from "./models/profile";
+import { ProfileModel, RetrievedProfile } from "./models/profile";
 
 import { Either, isLeft, isRight, left, right } from "fp-ts/lib/Either";
 import { NonEmptyString } from "./utils/strings";
@@ -48,6 +53,8 @@ import { ReadableReporter } from "./utils/validation_reporters";
 
 // Whether we're in a production environment
 const isProduction = process.env.NODE_ENV === "production";
+
+const MAX_RETRIES = 5;
 
 // Setup DocumentDB
 
@@ -71,6 +78,7 @@ const notificationsCollectionUrl = documentDbUtils.getCollectionUri(
 );
 
 const storageConnectionString = getRequiredStringEnv("QueueStorageConnection");
+const queueConnectionString = getRequiredStringEnv("QueueStorageConnection");
 
 /**
  * Input and output bindings for this function
@@ -89,16 +97,52 @@ const ContextWithBindings = t.interface({
 
 type ContextWithBindings = t.TypeOf<typeof ContextWithBindings> & IContext;
 
-/**
- * Bad things that can happen while we process the message
- */
-export enum ProcessingError {
-  // a transient error, e.g. database is not available
-  TRANSIENT,
+function queueMessageToString(context: ContextWithBindings): string {
+  return [
+    "Work item",
+    context.bindings.createdMessage,
+    "queueTrigger =",
+    context.bindingData.queueTrigger,
+    "expirationTime =",
+    context.bindingData.expirationTime,
+    "insertionTime =",
+    context.bindingData.insertionTime,
+    "nextVisibleTime =",
+    context.bindingData.nextVisibleTime,
+    "id =",
+    context.bindingData.id,
+    "popReceipt =",
+    context.bindingData.popReceipt,
+    "dequeueCount =",
+    context.bindingData.dequeueCount
+  ].join(";");
+}
 
-  // user has no profile and no default addresses have been provided,
-  // we can't deliver a notification
-  NO_ADDRESSES
+/**
+ * Attempt to resolve an email address from the recipient profile
+ * or from a provided default address.
+ *
+ * @param maybeProfile      the recipient's profile (or none)
+ * @param defaultAddresses  default addresses (one per channel)
+ */
+function getEmailNotification(
+  maybeProfile: Option<RetrievedProfile>,
+  defaultAddresses: Option<NewMessageDefaultAddresses>
+): Option<NotificationChannelEmail> {
+  const maybeProfileEmail = maybeProfile
+    .chain(profile => fromNullable(profile.email))
+    .map(email => Tuple2(email, NotificationAddressSourceEnum.PROFILE_ADDRESS));
+  const maybeDefaultEmail = defaultAddresses
+    .chain(addresses => fromNullable(addresses.email))
+    .map(email => Tuple2(email, NotificationAddressSourceEnum.DEFAULT_ADDRESS));
+  const maybeEmail = maybeProfileEmail.alt(maybeDefaultEmail);
+  return maybeEmail.map(({ e1: toAddress, e2: addressSource }) => {
+    return {
+      addressSource,
+      status: NotificationChannelStatusEnum.QUEUED,
+      toAddress
+    };
+  });
 }
 
 /**
@@ -115,7 +159,7 @@ export async function handleMessage(
   newMessageWithoutContent: NewMessageWithoutContent,
   messageContent: MessageContent,
   defaultAddresses: Option<NewMessageDefaultAddresses>
-): Promise<Either<ProcessingError, RetrievedNotification>> {
+): Promise<Either<Error, RetrievedNotification>> {
   // async fetch of profile data associated to the fiscal code the message
   // should be delivered to
   const errorOrMaybeProfile = await profileModel.findOneProfileByFiscalCode(
@@ -123,8 +167,10 @@ export async function handleMessage(
   );
 
   if (isLeft(errorOrMaybeProfile)) {
-    // query failed
-    return left(ProcessingError.TRANSIENT);
+    // The query has failed.
+    // It's critical to trigger a retry here
+    // otherwise no message content will be saved
+    throw new Error("Cannot get user's profile");
   }
 
   // query succeeded, we may have a profile
@@ -136,8 +182,10 @@ export async function handleMessage(
   );
 
   if (isMessageStorageEnabled) {
-    // if the recipient wants to store the messages
-    // we add the content of the message to the blob storage for later retrieval
+    // If the recipient wants to store the messages
+    // we add the content of the message to the blob storage for later retrieval.
+    // In case of retry this will overwrite the message content with itself
+    // (we don't know if the operation succeeded at first)
     const errorOrAttachment = await messageModel.attachStoredContent(
       blobService,
       newMessageWithoutContent.id,
@@ -145,39 +193,35 @@ export async function handleMessage(
       messageContent
     );
 
-    winston.debug(`handleMessage|${JSON.stringify(newMessageWithoutContent)}`);
+    winston.debug(
+      `handleMessage|attachStoredContent|${JSON.stringify(
+        newMessageWithoutContent
+      )}`
+    );
 
     if (isLeft(errorOrAttachment)) {
       winston.error(`handleMessage|${JSON.stringify(errorOrAttachment)}`);
-      // we consider errors while updating message as transient
-      return left(ProcessingError.TRANSIENT);
+      // we consider errors while updating message content as transient
+      throw new Error("Cannot store message content");
     }
   }
 
-  //
   // attempt to resolve an email notification
-  //
-  const maybeProfileEmail = maybeProfile
-    .chain(profile => fromNullable(profile.email))
-    .map(email => Tuple2(email, NotificationAddressSourceEnum.PROFILE_ADDRESS));
-  const maybeDefaultEmail = defaultAddresses
-    .chain(addresses => fromNullable(addresses.email))
-    .map(email => Tuple2(email, NotificationAddressSourceEnum.DEFAULT_ADDRESS));
-  const maybeEmail = maybeProfileEmail.alt(maybeDefaultEmail);
-  const maybeEmailNotification: Option<
-    NotificationChannelEmail
-  > = maybeEmail.map(({ e1: toAddress, e2: addressSource }) => {
-    return {
-      addressSource,
-      status: NotificationChannelStatusEnum.QUEUED,
-      toAddress
-    };
-  });
+  const maybeEmailNotification = getEmailNotification(
+    maybeProfile,
+    defaultAddresses
+  );
 
   // check whether there's at least a channel we can send the notification to
   if (isNone(maybeEmailNotification)) {
     // no channels to notify the user
-    return left(ProcessingError.NO_ADDRESSES);
+    return left(
+      new Error(
+        `No default addresses provided and none found in profile|${
+          newMessageWithoutContent.fiscalCode
+        }`
+      )
+    );
   }
 
   // create a new Notification object with the configured notification channels
@@ -202,17 +246,19 @@ export async function handleMessage(
   if (isLeft(result)) {
     // saved failed, fail with a transient error
     // TODO: we could check the error to see if it's actually transient
-    return left(ProcessingError.TRANSIENT);
+    throw new Error("Cannot save notification to database");
   }
 
   // save succeeded, return the saved Notification
   return right(result.value);
 }
 
+/**
+ * Handles success and/or permanent failures.
+ */
 export function processResolve(
-  errorOrNotification: Either<ProcessingError, RetrievedNotification>,
+  errorOrNotification: Either<Error, RetrievedNotification>,
   context: ContextWithBindings,
-  newMessageWithoutContent: NewMessageWithoutContent,
   messageContent: MessageContent,
   senderMetadata: CreatedMessageEventSenderMetadata
 ): void {
@@ -232,47 +278,76 @@ export function processResolve(
         senderMetadata
       };
     }
-
-    context.done();
   } else {
-    // the processing failed
-    switch (errorOrNotification.value) {
-      case ProcessingError.NO_ADDRESSES: {
-        winston.error(
-          `Fiscal code has no associated profile and no default addresses provided|${
-            newMessageWithoutContent.fiscalCode
-          }`
-        );
-        context.done();
-        break;
-      }
-      case ProcessingError.TRANSIENT: {
-        winston.error(
-          `Transient error, retrying|${newMessageWithoutContent.fiscalCode}`
-        );
-        context.done("Transient error"); // here we trigger a retry by calling
-        // done(error)
-        break;
-      }
-    }
+    // the processing failed with an unrecoverable error
+    winston.error(errorOrNotification.value.message);
   }
+  context.done();
 }
 
+/**
+ * Handles temporay failures.
+ * ie. the promise failed (async function throws)
+ */
 export function processReject(
   context: ContextWithBindings,
-  newMessageWithoutContent: NewMessageWithoutContent,
-  error: Either<ProcessingError, RetrievedNotification>
+  queueService: QueueService,
+  createdMessageEvent: CreatedMessageEvent,
+  error: Error
 ): void {
-  // the promise failed
   winston.error(
     `Error while processing event, retrying|${
-      newMessageWithoutContent.fiscalCode
-    }|${error}`
+      createdMessageEvent.message.fiscalCode
+    }:${createdMessageEvent.message.id}|${error.message}`
   );
-  // in case of error, we return a failure to trigger a retry (up to the
-  // configured max retries) TODO: schedule next retry with exponential
-  // backoff, see #150597257
-  context.done(error);
+  const retries = context.bindingData.dequeueCount;
+  // We handle transient errore triggering a retry
+  // TODO: check time to live
+  // TODO: dequeCount is only for old message and wont work here
+  //  we need a retries field on the message
+  if (retries < MAX_RETRIES) {
+    // timeout in seconds before the message can be processed again
+    const timeout = Math.min(3600 * 24, Math.pow(10, retries));
+    winston.debug(
+      `Retrying with timeout|${createdMessageEvent.message.fiscalCode}:${
+        createdMessageEvent.message.id
+      }|${timeout} seconds`
+    );
+    queueService.updateMessage(
+      "createdmessages",
+      context.bindingData.id,
+      context.bindingData.popReceipt,
+      timeout,
+      err => {
+        if (err) {
+          // cannot enqueue a message, retry the whole procedure
+          context.done(err);
+        } else {
+          // put the item in the queue again
+          context.done(error.message);
+        }
+      }
+    );
+    // queueService.createMessage(
+    //   "createdmessages-poison",
+    //   CreatedMessageEvent.serialize(createdMessageEvent),
+    //   {
+    //     visibilityTimeout: timeout
+    //   },
+    //   err => {
+    //     if (err) {
+    //       // cannot enqueue a message, retry the whole procedure
+    //       context.done(err);
+    //     } else {
+    //       context.done();
+    //     }
+    //   }
+    // );
+  } else {
+    // maximum retries reached,
+    // removes the message from the queue
+    context.done();
+  }
 }
 
 /**
@@ -282,9 +357,10 @@ export function index(context: ContextWithBindings): void {
   // redirect winston logs to Azure Functions log
   const logLevel = isProduction ? "info" : "debug";
   configureAzureContextTransport(context, winston, logLevel);
+
   winston.debug(
-    `CreatedMessageQueueHandlerIndex|bindings|${JSON.stringify(
-      context.bindings
+    `CreatedMessageQueueHandlerIndex|queueMessage|${queueMessageToString(
+      context
     )}`
   );
 
@@ -337,6 +413,7 @@ export function index(context: ContextWithBindings): void {
   );
 
   const blobService = createBlobService(storageConnectionString);
+  const queueService = createQueueService(queueConnectionString);
 
   // now we can trigger the notifications for the message
   handleMessage(
@@ -347,29 +424,16 @@ export function index(context: ContextWithBindings): void {
     newMessageWithoutContent,
     messageContent,
     defaultAddresses
-  ).then(
-    (errorOrNotification: Either<ProcessingError, RetrievedNotification>) => {
+  )
+    .then((errorOrNotification: Either<Error, RetrievedNotification>) => {
       processResolve(
         errorOrNotification,
         context,
-        newMessageWithoutContent,
         messageContent,
         senderMetadata
       );
-    },
-    (error: Either<ProcessingError, RetrievedNotification>) => {
-      processReject(context, newMessageWithoutContent, error);
-    }
-  );
+    })
+    .catch((error: Error) => {
+      processReject(context, queueService, createdMessageEvent, error);
+    });
 }
-
-/*
-2017-08-14T13:58:19.356 Queue trigger function processed work item { messageId: '5991ac7944430d3670b81b74' }
-2017-08-14T13:58:19.356 queueTrigger = {"messageId":"5991ac7944430d3670b81b74"}
-2017-08-14T13:58:19.356 expirationTime = 8/21/2017 1:58:17 PM +00:00
-2017-08-14T13:58:19.356 insertionTime = 8/14/2017 1:58:17 PM +00:00
-2017-08-14T13:58:19.356 nextVisibleTime = 8/14/2017 2:08:19 PM +00:00
-2017-08-14T13:58:19.356 id= 5f149158-92fa-4aaf-84c9-667750fdfaad
-2017-08-14T13:58:19.356 popReceipt = AgAAAAMAAAAAAAAAtS7dxwYV0wE=
-2017-08-14T13:58:19.356 dequeueCount = 1
-*/

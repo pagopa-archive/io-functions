@@ -2,6 +2,8 @@
 
 import { toAuthorizedCIDRs } from "../../models/service";
 
+import * as t from "io-ts";
+
 import * as winston from "winston";
 winston.configure({
   level: "debug"
@@ -47,6 +49,8 @@ import {
   MessagePayloadMiddleware
 } from "../messages";
 
+import { TimeToLive } from "../../api/definitions/TimeToLive";
+
 interface IHeaders {
   readonly [key: string]: string | undefined;
 }
@@ -86,11 +90,19 @@ const aUserAuthenticationTrustedApplication: IAzureApiAuthorization = {
   userId: "u123" as NonEmptyString
 };
 
-const aMessagePayload: ApiNewMessage = {
-  content: {
-    markdown: aMessageBodyMarkdown
-  }
-};
+// sets the default time to live
+const aMessagePayload = t
+  .validate(
+    {
+      content: {
+        markdown: aMessageBodyMarkdown
+      }
+    },
+    ApiNewMessage
+  )
+  .fold(() => {
+    throw new Error("Invalid ApiNewMessage");
+  }, t.identity);
 
 const aCustomSubject = "A custom subject" as MessageSubject;
 
@@ -101,7 +113,8 @@ const aNewMessageWithoutContent: NewMessageWithoutContent = {
   id: "A_MESSAGE_ID" as NonEmptyString,
   kind: "INewMessageWithoutContent",
   senderServiceId: "test" as ModelId,
-  senderUserId: "u123" as NonEmptyString
+  senderUserId: "u123" as NonEmptyString,
+  timeToLive: 3600 as TimeToLive
 };
 
 const aRetrievedMessageWithoutContent: RetrievedMessageWithoutContent = {

@@ -26,6 +26,8 @@ import { ModelId } from "../../utils/documentdb_model_versioned";
 jest.mock("../../utils/azure_storage");
 import * as azureStorageUtils from "../../utils/azure_storage";
 
+import { TimeToLive } from "../../api/definitions/TimeToLive";
+
 const MESSAGE_CONTAINER_NAME = "message-content" as NonEmptyString;
 
 const aDatabaseUri = DocumentDbUtils.getDatabaseUri("mockdb" as NonEmptyString);
@@ -48,7 +50,8 @@ const aNewMessageWithContent: NewMessageWithContent = {
   id: "A_MESSAGE_ID" as NonEmptyString,
   kind: "INewMessageWithContent",
   senderServiceId: "agid" as ModelId,
-  senderUserId: "u123" as NonEmptyString
+  senderUserId: "u123" as NonEmptyString,
+  timeToLive: 3600 as TimeToLive
 };
 
 const aRetrievedMessageWithContent: RetrievedMessageWithContent = {

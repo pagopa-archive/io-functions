@@ -18,6 +18,7 @@ import { MessageContent } from "../api/definitions/MessageContent";
 import { FiscalCode } from "../api/definitions/FiscalCode";
 
 import { BlobService } from "azure-storage";
+import { TimeToLive } from "../api/definitions/TimeToLive";
 import { getBlobAsText, upsertBlobFromObject } from "../utils/azure_storage";
 import { iteratorToArray } from "../utils/documentdb";
 
@@ -31,7 +32,10 @@ const MessageBase = t.interface({
   senderServiceId: t.string,
 
   // the userId of the sender (this is opaque and depends on the API gateway)
-  senderUserId: NonEmptyString
+  senderUserId: NonEmptyString,
+
+  // time to live in seconds
+  timeToLive: TimeToLive
 });
 
 /**
@@ -159,13 +163,15 @@ function toBaseType(o: RetrievedMessage): Message {
       content: o.content,
       fiscalCode: o.fiscalCode,
       senderServiceId: o.senderServiceId,
-      senderUserId: o.senderUserId
+      senderUserId: o.senderUserId,
+      timeToLive: o.timeToLive
     };
   } else {
     return {
       fiscalCode: o.fiscalCode,
       senderServiceId: o.senderServiceId,
-      senderUserId: o.senderUserId
+      senderUserId: o.senderUserId,
+      timeToLive: o.timeToLive
     };
   }
 }

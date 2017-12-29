@@ -1,0 +1,13 @@
+{
+  "scriptFile": "./index.js",
+  "disabled": false,
+  "bindings": [
+   {
+    "type": "queueTrigger",
+    "direction": "in",
+    "name": "testMessage",
+    "queueName": "testmessages",
+    "connection": "QueueStorageConnection"
+   }
+  ] 
+}

@@ -37,6 +37,7 @@ import { RetrievedProfile } from "../models/profile";
 
 import { isLeft, isRight, left, right } from "fp-ts/lib/Either";
 import * as winston from "winston";
+import { TimeToLive } from "../api/definitions/TimeToLive";
 import { NonNegativeNumber } from "../utils/numbers";
 import { EmailString, NonEmptyString } from "../utils/strings";
 
@@ -131,7 +132,8 @@ describe("test index function", () => {
       id: "xyz" as NonEmptyString,
       kind: "INewMessageWithoutContent",
       senderServiceId: "",
-      senderUserId: "u123" as NonEmptyString
+      senderUserId: "u123" as NonEmptyString,
+      timeToLive: 3600 as TimeToLive
     };
 
     const aMessageEvent: CreatedMessageEvent = {
