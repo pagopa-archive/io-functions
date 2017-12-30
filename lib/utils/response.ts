@@ -19,8 +19,8 @@ const HTTP_STATUS_500 = 500 as HttpStatusCode;
  * Interface for a Response that can be returned by a middleware or
  * by the handlers.
  */
-export interface IResponse {
-  readonly kind: string;
+export interface IResponse<T> {
+  readonly kind: T;
   readonly apply: (response: express.Response) => void;
 }
 
@@ -31,8 +31,8 @@ export interface IResponse {
 /**
  * Interface for a successful response returning a json object.
  */
-export interface IResponseSuccessJson<T> extends IResponse {
-  readonly kind: "IResponseSuccessJson";
+export interface IResponseSuccessJson<T>
+  extends IResponse<"IResponseSuccessJson"> {
   readonly value: T; // needed to discriminate from other T subtypes
 }
 
@@ -55,8 +55,8 @@ export function ResponseSuccessJson<T>(o: T): IResponseSuccessJson<T> {
 /**
  * Interface for a successful response returning a json object.
  */
-export interface IResponseSuccessJsonIterator<T> extends IResponse {
-  readonly kind: "IResponseSuccessJsonIterator";
+export interface IResponseSuccessJsonIterator<T>
+  extends IResponse<"IResponseSuccessJsonIterator"> {
   readonly value: T; // needed to discriminate from other T subtypes
 }
 
@@ -86,8 +86,8 @@ export function ResponseSuccessJsonIterator<T>(
 /**
  * Interface for a successful response returning a redirect to a resource.
  */
-export interface IResponseSuccessRedirectToResource<T, V> extends IResponse {
-  readonly kind: "IResponseSuccessRedirectToResource";
+export interface IResponseSuccessRedirectToResource<T, V>
+  extends IResponse<"IResponseSuccessRedirectToResource"> {
   readonly resource: T; // type checks the right kind of resource
   readonly payload: V;
 }
@@ -119,9 +119,7 @@ export function ResponseSuccessRedirectToResource<T, V>(
 /**
  * Interface for a response describing a generic server error.
  */
-interface IResponseErrorGeneric extends IResponse {
-  readonly kind: "IResponseErrorGeneric";
-}
+interface IResponseErrorGeneric extends IResponse<"IResponseErrorGeneric"> {}
 
 /**
  * Returns a response describing a generic error.
@@ -155,9 +153,8 @@ function ResponseErrorGeneric(
 /**
  * Interface for a response describing a 404 error.
  */
-export interface IResponseErrorNotFound extends IResponse {
-  readonly kind: "IResponseErrorNotFound";
-}
+export interface IResponseErrorNotFound
+  extends IResponse<"IResponseErrorNotFound"> {}
 
 /**
  * Returns a response describing a 404 error.
@@ -177,9 +174,8 @@ export function ResponseErrorNotFound(
 /**
  * Interface for a response describing a validation error.
  */
-export interface IResponseErrorValidation extends IResponse {
-  readonly kind: "IResponseErrorValidation";
-}
+export interface IResponseErrorValidation
+  extends IResponse<"IResponseErrorValidation"> {}
 
 /**
  * Returns a response describing a validation error.
@@ -209,9 +205,8 @@ export function ResponseErrorFromValidationErrors<S, A>(
 /**
  * The user is not allowed here.
  */
-export interface IResponseErrorForbiddenNotAuthorized extends IResponse {
-  readonly kind: "IResponseErrorForbiddenNotAuthorized";
-}
+export interface IResponseErrorForbiddenNotAuthorized
+  extends IResponse<"IResponseErrorForbiddenNotAuthorized"> {}
 
 /**
  * The user is not allowed here.
@@ -229,9 +224,7 @@ export const ResponseErrorForbiddenNotAuthorized: IResponseErrorForbiddenNotAuth
  * The user is not allowed to issue production requests.
  */
 export interface IResponseErrorForbiddenNotAuthorizedForProduction
-  extends IResponse {
-  readonly kind: "IResponseErrorForbiddenNotAuthorizedForProduction";
-}
+  extends IResponse<"IResponseErrorForbiddenNotAuthorizedForProduction"> {}
 
 /**
  * The user is not allowed to issue production requests.
@@ -249,9 +242,7 @@ export const ResponseErrorForbiddenNotAuthorizedForProduction: IResponseErrorFor
  * The user is not allowed to issue requests for the recipient.
  */
 export interface IResponseErrorForbiddenNotAuthorizedForRecipient
-  extends IResponse {
-  readonly kind: "IResponseErrorForbiddenNotAuthorizedForRecipient";
-}
+  extends IResponse<"IResponseErrorForbiddenNotAuthorizedForRecipient"> {}
 
 /**
  * The user is not allowed to issue requests for the recipient.
@@ -269,9 +260,9 @@ export const ResponseErrorForbiddenNotAuthorizedForRecipient: IResponseErrorForb
  * The user is not allowed to send messages with default addresses.
  */
 export interface IResponseErrorForbiddenNotAuthorizedForDefaultAddresses
-  extends IResponse {
-  readonly kind: "IResponseErrorForbiddenNotAuthorizedForDefaultAddresses";
-}
+  extends IResponse<
+      "IResponseErrorForbiddenNotAuthorizedForDefaultAddresses"
+    > {}
 
 /**
  * The user is not allowed to send messages with default addresses.
@@ -288,9 +279,8 @@ export const ResponseErrorForbiddenNotAuthorizedForDefaultAddresses: IResponseEr
 /**
  * The user is anonymous.
  */
-export interface IResponseErrorForbiddenAnonymousUser extends IResponse {
-  readonly kind: "IResponseErrorForbiddenAnonymousUser";
-}
+export interface IResponseErrorForbiddenAnonymousUser
+  extends IResponse<"IResponseErrorForbiddenAnonymousUser"> {}
 
 /**
  * The user is anonymous.
@@ -308,9 +298,7 @@ export const ResponseErrorForbiddenAnonymousUser: IResponseErrorForbiddenAnonymo
  * The user is not part of any valid authorization groups.
  */
 export interface IResponseErrorForbiddenNoAuthorizationGroups
-  extends IResponse {
-  readonly kind: "IResponseErrorForbiddenNoAuthorizationGroups";
-}
+  extends IResponse<"IResponseErrorForbiddenNoAuthorizationGroups"> {}
 
 /**
  * The user is not part of any valid authorization groups.
@@ -327,9 +315,7 @@ export const ResponseErrorForbiddenNoAuthorizationGroups: IResponseErrorForbidde
 /**
  * Interface for a response describing a database error.
  */
-export interface IResponseErrorQuery extends IResponse {
-  readonly kind: "IResponseErrorQuery";
-}
+export interface IResponseErrorQuery extends IResponse<"IResponseErrorQuery"> {}
 
 /**
  * Returns a response describing a database error.
@@ -354,9 +340,8 @@ export function ResponseErrorQuery(
 /**
  * Interface for a response describing an internal server error.
  */
-export interface IResponseErrorInternal extends IResponse {
-  readonly kind: "IResponseErrorInternal";
-}
+export interface IResponseErrorInternal
+  extends IResponse<"IResponseErrorInternal"> {}
 
 /**
  * Returns a response describing an internal server error.

@@ -103,9 +103,9 @@ function getGroupsFromHeader(groupsHeader: string): Set<UserGroup> {
 export function AzureApiAuthMiddleware(
   allowedGroups: Set<UserGroup>
 ): IRequestMiddleware<
-  | IResponseErrorForbiddenNotAuthorized
-  | IResponseErrorForbiddenAnonymousUser
-  | IResponseErrorForbiddenNoAuthorizationGroups,
+  | "IResponseErrorForbiddenNotAuthorized"
+  | "IResponseErrorForbiddenAnonymousUser"
+  | "IResponseErrorForbiddenNoAuthorizationGroups",
   IAzureApiAuthorization
 > {
   return request =>
