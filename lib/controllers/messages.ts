@@ -109,7 +109,7 @@ interface IBindings {
  * A request middleware that validates the Message payload.
  */
 export const MessagePayloadMiddleware: IRequestMiddleware<
-  IResponseErrorValidation,
+  "IResponseErrorValidation",
   ApiNewMessage
 > = request =>
   new Promise(resolve => {

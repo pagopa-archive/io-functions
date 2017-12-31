@@ -17,7 +17,7 @@ const ResolvingMiddleware: IRequestMiddleware<never, string> = req => {
 };
 
 const RejectingMiddleware: IRequestMiddleware<
-  IResponseErrorValidation,
+  "IResponseErrorValidation",
   string
 > = _ => {
   return Promise.resolve(
@@ -33,7 +33,7 @@ const request = {
   }
 };
 
-const response = {} as IResponse;
+const response = {} as IResponse<{}>;
 
 describe("withRequestMiddlewares", () => {
   it("should process a request with a resolving middleware (1)", () => {

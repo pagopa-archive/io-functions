@@ -172,7 +172,7 @@ export function GetProfile(
  * A middleware that extracts a Profile payload from a request.
  */
 export const ProfilePayloadMiddleware: IRequestMiddleware<
-  IResponseErrorValidation,
+  "IResponseErrorValidation",
   ExtendedProfile
 > = request =>
   new Promise(resolve => {

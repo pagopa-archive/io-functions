@@ -137,7 +137,7 @@ function servicePayloadToService(service: ApiService): Service {
  * A middleware that extracts a Service payload from a request.
  */
 export const ServicePayloadMiddleware: IRequestMiddleware<
-  IResponseErrorValidation,
+  "IResponseErrorValidation",
   ApiService
 > = request =>
   new Promise(resolve => {
