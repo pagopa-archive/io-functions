@@ -14,22 +14,15 @@ export type Tagged<T, S, A> = t.Type<S, A & T>;
 export const tag = <T>() => <S, A>(type: t.Type<S, A>): Tagged<T, S, A> =>
   type as any;
 
-const getObjectValues = <T extends object>(obj: T): ReadonlyArray<string> =>
-  Object.keys(obj).reduce<ReadonlyArray<string>>(
-    (acc, key) => [...acc, (obj as any)[key]],
-    []
-  );
-
 /**
  * Creates an io-ts Type from an enum
  */
 export const enumType = <E>(e: {}, name: string): t.Type<any, E> => {
-  const values = getObjectValues(e);
-
   return new t.Type<any, E>(
     name,
-    (v): v is E => typeof v === "string" && values.indexOf(v) >= 0,
-    (s, c) => (this.is(s) ? t.success(s) : t.failure(s, c)),
+    (v): v is E => typeof (e as any)[v] === "string",
+    (v, c) =>
+      typeof (e as any)[v] === "string" ? t.success(v) : t.failure(v, c),
     t.identity
   );
 };
