@@ -60,58 +60,45 @@ export type IRequestMiddleware<R, T> = (
 // and each parameter must be of the same type returned by the corresponding middleware.
 //
 
-export function withRequestMiddlewares<RH, R1, T1>(
+export function withRequestMiddlewares<R1, T1>(
   v1: IRequestMiddleware<R1, T1>
-): (handler: (v1: T1) => Promise<IResponse<RH>>) => RequestHandler<RH | R1>;
+): <RH>(handler: (v1: T1) => Promise<IResponse<RH>>) => RequestHandler<RH | R1>;
 
-export function withRequestMiddlewares<RH, R1, R2, T1, T2>(
+export function withRequestMiddlewares<R1, R2, T1, T2>(
   v1: IRequestMiddleware<R1, T1>,
   v2: IRequestMiddleware<R2, T2>
-): (
+): <RH>(
   handler: (v1: T1, v2: T2) => Promise<IResponse<RH>>
 ) => RequestHandler<RH | R1 | R2>;
 
-export function withRequestMiddlewares<RH, R1, R2, R3, T1, T2, T3>(
+export function withRequestMiddlewares<R1, R2, R3, T1, T2, T3>(
   v1: IRequestMiddleware<R1, T1>,
   v2: IRequestMiddleware<R2, T2>,
   v3: IRequestMiddleware<R3, T3>
-): (
+): <RH>(
   handler: (v1: T1, v2: T2, v3: T3) => Promise<IResponse<RH>>
 ) => RequestHandler<RH | R1 | R2 | R3>;
 
-export function withRequestMiddlewares<RH, R1, R2, R3, R4, T1, T2, T3, T4>(
+export function withRequestMiddlewares<R1, R2, R3, R4, T1, T2, T3, T4>(
   v1: IRequestMiddleware<R1, T1>,
   v2: IRequestMiddleware<R2, T2>,
   v3: IRequestMiddleware<R3, T3>,
   v4: IRequestMiddleware<R4, T4>
-): (
+): <RH>(
   handler: (v1: T1, v2: T2, v3: T3, v4: T4) => Promise<IResponse<RH>>
 ) => RequestHandler<RH | R1 | R2 | R3 | R4>;
 
-export function withRequestMiddlewares<
-  RH,
-  R1,
-  R2,
-  R3,
-  R4,
-  R5,
-  T1,
-  T2,
-  T3,
-  T4,
-  T5
->(
+export function withRequestMiddlewares<R1, R2, R3, R4, R5, T1, T2, T3, T4, T5>(
   v1: IRequestMiddleware<R1, T1>,
   v2: IRequestMiddleware<R2, T2>,
   v3: IRequestMiddleware<R3, T3>,
   v4: IRequestMiddleware<R4, T4>,
   v5: IRequestMiddleware<R5, T5>
-): (
+): <RH>(
   handler: (v1: T1, v2: T2, v3: T3, v4: T4, v5: T5) => Promise<IResponse<RH>>
 ) => RequestHandler<RH | R1 | R2 | R3 | R4 | R5>;
 
 export function withRequestMiddlewares<
-  RH,
   R1,
   R2,
   R3,
@@ -131,7 +118,7 @@ export function withRequestMiddlewares<
   v4: IRequestMiddleware<R4, T4>,
   v5: IRequestMiddleware<R5, T5>,
   v6: IRequestMiddleware<R6, T6>
-): (
+): <RH>(
   handler: (
     v1: T1,
     v2: T2,
@@ -154,7 +141,6 @@ export function withRequestMiddlewares<
  * That final response gets sent to the client.
  */
 export function withRequestMiddlewares<
-  RH,
   R1,
   R2,
   R3,
@@ -174,7 +160,7 @@ export function withRequestMiddlewares<
   v4?: IRequestMiddleware<R4, T4>,
   v5?: IRequestMiddleware<R5, T5>,
   v6?: IRequestMiddleware<R6, T6>
-): (
+): <RH>(
   handler: (
     v1: T1,
     v2?: T2,
@@ -184,7 +170,16 @@ export function withRequestMiddlewares<
     v6?: T6
   ) => Promise<IResponse<RH>>
 ) => RequestHandler<R1 | R2 | R3 | R4 | R5 | R6 | RH> {
-  return handler => {
+  return <RH>(
+    handler: (
+      v1: T1,
+      v2?: T2,
+      v3?: T3,
+      v4?: T4,
+      v5?: T5,
+      v6?: T6
+    ) => Promise<IResponse<RH>>
+  ) => {
     // The outer promise with resolve to a type that can either be the the type returned
     // by the handler or one of the types returned by any of the middlewares (i.e., when
     // a middleware returns an error response).
