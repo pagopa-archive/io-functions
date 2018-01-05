@@ -16,15 +16,20 @@ enum aValidEnum {
 }
 
 describe("enumType", () => {
-  it("should not validate", () => {
+  it("should validate with valid enum keys", () => {
+    const aValidEnumType = enumType<aValidEnum>(aValidEnum, "aValidEnum");
+    const validation = t.validate("foo", aValidEnumType);
+    expect(isRight(validation)).toBeTruthy();
+  });
+  it("should not validate invalid enum keys", () => {
     const aValidEnumType = enumType<aValidEnum>(aValidEnum, "aValidEnum");
     const validation = t.validate("foof", aValidEnumType);
     expect(isRight(validation)).toBeFalsy();
   });
-  it("should validate", () => {
+  it("should not validate inherithed properties", () => {
     const aValidEnumType = enumType<aValidEnum>(aValidEnum, "aValidEnum");
-    const validation = t.validate("foo", aValidEnumType);
-    expect(isRight(validation)).toBeTruthy();
+    const validation = t.validate("__proto__", aValidEnumType);
+    expect(isRight(validation)).toBeFalsy();
   });
 });
 
