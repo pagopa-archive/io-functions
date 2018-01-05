@@ -5,10 +5,28 @@ import {
   withoutUndefinedValues
 } from "./../types";
 
-import { isLeft } from "fp-ts/lib/Either";
+import { isLeft, isRight } from "fp-ts/lib/Either";
 import { ReadableReporter } from "../validation_reporters";
 
-import { readonlySetType } from "../types";
+import { enumType, readonlySetType } from "../types";
+
+enum aValidEnum {
+  "foo" = "fooValue",
+  "bar" = "barValue"
+}
+
+describe("enumType", () => {
+  it("should validate with valid enum values", () => {
+    const aValidEnumType = enumType<aValidEnum>(aValidEnum, "aValidEnum");
+    const validation = t.validate("fooValue", aValidEnumType);
+    expect(isRight(validation)).toBeTruthy();
+  });
+  it("should not validate invalid enum values", () => {
+    const aValidEnumType = enumType<aValidEnum>(aValidEnum, "aValidEnum");
+    const validation = t.validate("booValue", aValidEnumType);
+    expect(isRight(validation)).toBeFalsy();
+  });
+});
 
 describe("readonlySetType", () => {
   const aSetOfStrings = readonlySetType(t.string, "Set of strings");

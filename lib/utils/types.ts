@@ -25,11 +25,12 @@ const getObjectValues = <T extends object>(obj: T): ReadonlyArray<string> =>
  */
 export const enumType = <E>(e: {}, name: string): t.Type<any, E> => {
   const values = getObjectValues(e);
-
+  const isE: (v: any) => boolean = v =>
+    typeof v === "string" && values.indexOf(v) >= 0;
   return new t.Type<any, E>(
     name,
-    (v): v is E => typeof v === "string" && values.indexOf(v) >= 0,
-    (s, c) => (this.is(s) ? t.success(s) : t.failure(s, c)),
+    (v): v is E => isE(v),
+    (v, c) => (isE(v) ? t.success(v) : t.failure(v, c)),
     t.identity
   );
 };
