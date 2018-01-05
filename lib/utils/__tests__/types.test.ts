@@ -11,24 +11,19 @@ import { ReadableReporter } from "../validation_reporters";
 import { enumType, readonlySetType } from "../types";
 
 enum aValidEnum {
-  "foo" = "foo",
-  "bar" = "bar"
+  "foo" = "fooValue",
+  "bar" = "barValue"
 }
 
 describe("enumType", () => {
-  it("should validate with valid enum keys", () => {
+  it("should validate with valid enum values", () => {
     const aValidEnumType = enumType<aValidEnum>(aValidEnum, "aValidEnum");
-    const validation = t.validate("foo", aValidEnumType);
+    const validation = t.validate("fooValue", aValidEnumType);
     expect(isRight(validation)).toBeTruthy();
   });
-  it("should not validate invalid enum keys", () => {
+  it("should not validate invalid enum values", () => {
     const aValidEnumType = enumType<aValidEnum>(aValidEnum, "aValidEnum");
-    const validation = t.validate("foof", aValidEnumType);
-    expect(isRight(validation)).toBeFalsy();
-  });
-  it("should not validate inherithed properties", () => {
-    const aValidEnumType = enumType<aValidEnum>(aValidEnum, "aValidEnum");
-    const validation = t.validate("__proto__", aValidEnumType);
+    const validation = t.validate("booValue", aValidEnumType);
     expect(isRight(validation)).toBeFalsy();
   });
 });
