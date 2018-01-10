@@ -127,7 +127,11 @@ function callMailUpApi(
       }
       return right<Error, ApiResponse>(response.body);
     })
-    .catch(err => left<Error, ApiResponse>(new Error(err.response)));
+    .catch(err =>
+      left<Error, ApiResponse>(
+        new Error(`Error calling MailUp API: ${err.code}:${err.errno}`)
+      )
+    );
 }
 
 async function sendTransactionalMail(
@@ -144,9 +148,7 @@ async function sendTransactionalMail(
       return right(response);
     } else {
       return left(
-        new Error(
-          `Error while sending email: ${response.Code} - ${response.Message}`
-        )
+        new Error(`Error sending email: ${response.Code}:${response.Message}`)
       );
     }
   });
