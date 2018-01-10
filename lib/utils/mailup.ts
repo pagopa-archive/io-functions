@@ -17,7 +17,7 @@ import { Address as NodemailerAddress } from "nodemailer/lib/addressparser";
 
 import * as winston from "winston";
 
-import { fromNullable, none, Option, some } from "fp-ts/lib/Option";
+import { fromNullable, Option } from "fp-ts/lib/Option";
 import { ReadableReporter } from "./validation_reporters";
 
 // request timeout in milliseconds
@@ -26,9 +26,8 @@ const DEFAULT_REQUEST_TIMEOUT_MS = 10000;
 // number of retries in case of HTTP errors
 const DEFAULT_REQUEST_RETRIES = 2;
 
-export const ENDPOINTS = {
-  sendTransactionalMail: "https://send.mailup.com/API/v2.0/messages/sendmessage"
-};
+export const SEND_TRANSACTIONAL_MAIL_ENDPOINT =
+  "https://send.mailup.com/API/v2.0/messages/sendmessage";
 
 type HttpMethod = "GET" | "POST";
 
@@ -37,6 +36,7 @@ const TRANSPORT_VERSION = "0.1";
 
 /**
  * You need to create a SMTP+ user in MailUp administration panel
+ * see also http://help.mailup.com/display/MUG/SMTP+Settings
  */
 export const SmtpAuthInfo = t.interface({
   Secret: NonEmptyString,
@@ -134,16 +134,12 @@ async function sendTransactionalMail(
   creds: SmtpAuthInfo,
   payload: EmailPayload
 ): Promise<Either<Error, ApiResponse>> {
-  const errorOrResponse = await callMailUpApi(
+  return (await callMailUpApi(
     "POST",
-    ENDPOINTS.sendTransactionalMail,
+    SEND_TRANSACTIONAL_MAIL_ENDPOINT,
     creds,
     payload
-  );
-  if (isLeft(errorOrResponse)) {
-    return errorOrResponse;
-  } else {
-    const response = errorOrResponse.value;
+  )).chain(response => {
     if (response && response.Code && response.Code === "0") {
       return right(response);
     } else {
@@ -153,36 +149,42 @@ async function sendTransactionalMail(
         )
       );
     }
-  }
+  });
 }
 
+/**
+ * Translates nodemailer parsed addresses ({ name: <name>, address: <address> })
+ * to the format expected by the MailUp API ({ Name: <name>, Email: <address> })
+ */
 function toMailupAddresses(
-  addresses: ReadonlyArray<NodemailerAddress> | undefined
-): Option<ReadonlyArray<Address>> {
-  return Array.isArray(addresses) && addresses.length > 0
-    ? some(
-        addresses.map((address: NodemailerAddress) => {
-          return {
-            Email: t.validate(address.address, EmailString).fold(() => {
-              // this never happens as nodemailer has already parsed the address
-              throw new Error(
-                `Error while parsing email address (toMailupAddresses): invalid format '${
-                  address.address
-                }'.`
-              );
-            }, t.identity),
-            Name: address.name || address.address
-          };
-        })
-      )
-    : none;
+  addresses: ReadonlyArray<NodemailerAddress>
+): ReadonlyArray<Address> {
+  return addresses.map((address: NodemailerAddress) => {
+    return {
+      Email: t.validate(address.address, EmailString).fold(() => {
+        // this never happens as nodemailer has already parsed
+        // the email address (so it's a valid one)
+        throw new Error(
+          `Error while parsing email address (toMailupAddresses): invalid format '${
+            address.address
+          }'.`
+        );
+      }, t.identity),
+      Name: address.name || address.address
+    };
+  });
 }
 
+/**
+ * Translates nodemailer parsed addresses ({ name: <name>, address: <address> })
+ * to the format expected by the MailUp API ({ Name: <name>, Email: <address> })
+ * then get the first one from the input array.
+ */
 function toMailupAddress(
-  addresses: ReadonlyArray<NodemailerAddress> | undefined
+  addresses: ReadonlyArray<NodemailerAddress>
 ): Option<Address> {
-  const addrs = toMailupAddresses(addresses).toUndefined();
-  return addrs ? fromNullable(addrs[0]) : none;
+  const addrs = toMailupAddresses(addresses);
+  return fromNullable(addrs[0]);
 }
 
 /**
@@ -223,15 +225,18 @@ export function MailUpTransport(
     version: TRANSPORT_VERSION,
 
     send: async (mail, callback) => {
-      // We don't use mail.data.from / mail.data.to as they are not parsed.
-      // The following cast exists because of a bug in nodemailer typings.
+      // We don't extract email addresses from mail.data.from / mail.data.to
+      // as they are just strings that can contain invalid addresses.
+      // Instead, mail.message.getAddresses() gets the email addresses
+      // already validated by nodemailer (or undefined in case there are
+      // no valid addresses for one specific field).
+      // The following cast exists because of a bug in nodemailer typings
+      // (MimeNode.Addresses are *not* just array of strings)
       const addresses: IAddresses = mail.message.getAddresses() as IAddresses;
 
-      // To convert nodemailer streams to strings:
-      //  const resolveContent = promisify.typed(mail.resolveContent);
-      //  const text = await resolveContent(mail.data, "text");
-      //  const html = await resolveContent(mail.data, "html");
-
+      // Convert SMTP headers from the format used by nodemailer
+      // to (N: <headerName>, V: <headerValue>) tuples
+      // used by the MailUp APIs
       const headers = Object.keys(mail.data.headers as {
         readonly [s: string]: string;
       }).map(header => ({
@@ -240,20 +245,29 @@ export function MailUpTransport(
         V: (mail.data.headers as any)[header]
       }));
 
-      const replyTo = toMailupAddress(addresses["reply-to"]).toUndefined();
-
       const emailPayload = {
-        Bcc: toMailupAddresses(addresses.bcc).toUndefined(),
-        Cc: toMailupAddresses(addresses.cc).toUndefined(),
+        Bcc: fromNullable(addresses.bcc)
+          .map(toMailupAddresses)
+          .toUndefined(),
+        Cc: fromNullable(addresses.cc)
+          .map(toMailupAddresses)
+          .toUndefined(),
         ExtendedHeaders: headers,
-        From: toMailupAddress(addresses.from).toUndefined(),
+        From: fromNullable(addresses.from)
+          .chain(toMailupAddress)
+          .toUndefined(),
         Html: {
           Body: mail.data.html
         },
-        ReplyTo: replyTo ? replyTo.Email : undefined,
+        ReplyTo: fromNullable(addresses["reply-to"])
+          .chain(toMailupAddress)
+          .map(addr => addr.Email)
+          .toUndefined(),
         Subject: mail.data.subject,
         Text: mail.data.text,
-        To: toMailupAddresses(addresses.to).toUndefined()
+        To: fromNullable(addresses.to)
+          .map(toMailupAddresses)
+          .toUndefined()
       };
 
       const errorOrEmail = t.validate(emailPayload, EmailPayload);

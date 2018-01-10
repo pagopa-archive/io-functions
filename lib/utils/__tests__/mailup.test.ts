@@ -7,7 +7,11 @@ import * as mockSuperagent from "superagent-mock";
 import Mail = require("nodemailer/lib/mailer");
 
 import * as nodemailer from "nodemailer";
-import { ENDPOINTS, MailUpTransport, SmtpAuthInfo } from "../mailup";
+import {
+  MailUpTransport,
+  SEND_TRANSACTIONAL_MAIL_ENDPOINT,
+  SmtpAuthInfo
+} from "../mailup";
 
 // format required by nodemailer
 const anEmailMessage: Mail.Options = {
@@ -67,7 +71,7 @@ describe("sendMail", () => {
           requestSpy(params);
           return aResponsePayload;
         },
-        pattern: ENDPOINTS.sendTransactionalMail,
+        pattern: SEND_TRANSACTIONAL_MAIL_ENDPOINT,
         post: (_: any, data: any) => {
           responseSpy(data);
           return { body: data };
@@ -93,7 +97,7 @@ describe("sendMail", () => {
         fixtures: (_: any, __: any) => {
           return aResponsePayload;
         },
-        pattern: ENDPOINTS.sendTransactionalMail,
+        pattern: SEND_TRANSACTIONAL_MAIL_ENDPOINT,
         post: (_: any, data: any) => {
           return { body: data };
         }
@@ -117,7 +121,7 @@ describe("sendMail", () => {
         fixtures: (_: any, __: any) => {
           return aResponsePayload;
         },
-        pattern: ENDPOINTS.sendTransactionalMail,
+        pattern: SEND_TRANSACTIONAL_MAIL_ENDPOINT,
         post: (_: any, data: any) => {
           return { body: data };
         }
@@ -141,7 +145,7 @@ describe("sendMail", () => {
         fixtures: (_: any, __: any) => {
           return aResponsePayload;
         },
-        pattern: ENDPOINTS.sendTransactionalMail,
+        pattern: SEND_TRANSACTIONAL_MAIL_ENDPOINT,
         post: (_: any, data: any) => {
           return { body: data };
         }
@@ -165,7 +169,7 @@ describe("sendMail", () => {
         fixtures: (_: any, __: any) => {
           return { error: "500" };
         },
-        pattern: ENDPOINTS.sendTransactionalMail,
+        pattern: SEND_TRANSACTIONAL_MAIL_ENDPOINT,
         post: (_: any, data: any) => {
           return { body: data };
         }
