@@ -15,9 +15,6 @@ import { EmailString, NonEmptyString } from "../strings";
 import { Service, ServiceModel } from "../../models/service";
 import { IRequestMiddleware } from "../request_middleware";
 import {
-  IResponseErrorForbiddenNotAuthorized,
-  IResponseErrorInternal,
-  IResponseErrorQuery,
   ResponseErrorForbiddenNotAuthorized,
   ResponseErrorInternal,
   ResponseErrorQuery
@@ -53,9 +50,9 @@ export interface IAzureUserAttributes {
 export function AzureUserAttributesMiddleware(
   serviceModel: ServiceModel
 ): IRequestMiddleware<
-  | IResponseErrorForbiddenNotAuthorized
-  | IResponseErrorQuery
-  | IResponseErrorInternal,
+  | "IResponseErrorForbiddenNotAuthorized"
+  | "IResponseErrorQuery"
+  | "IResponseErrorInternal",
   IAzureUserAttributes
 > {
   return async request => {

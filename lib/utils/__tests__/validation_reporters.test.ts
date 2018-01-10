@@ -6,6 +6,8 @@ import { NonEmptyString } from "../strings";
 
 import { NonNegativeNumber } from "../numbers";
 
+import { strictInterfaceWithOptionals } from "../types";
+
 import { ReadableReporter } from "../validation_reporters";
 
 const TestType = t.interface(
@@ -61,5 +63,18 @@ describe("ReadableReporter", () => {
 
       expect(res).toEqual(e);
     });
+  });
+
+  it("should report validation errors on unknow properties", () => {
+    const aType = strictInterfaceWithOptionals(
+      {
+        foo: t.boolean
+      },
+      {},
+      "aType"
+    );
+    const validation = t.validate({ foo: true, x: true }, aType);
+    const res = ReadableReporter.report(validation);
+    expect(res).toEqual(["value.x: unknow property"]);
   });
 });

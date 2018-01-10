@@ -15,6 +15,7 @@ import { MessageBodyMarkdown } from "./MessageBodyMarkdown";
  */
 
 import * as t from "io-ts";
+import { strictInterfaceWithOptionals } from "../../utils/types";
 
 // required attributes
 const MessageContentR = t.interface({
@@ -26,8 +27,9 @@ const MessageContentO = t.partial({
   subject: MessageSubject
 });
 
-export const MessageContent = t.intersection(
-  [MessageContentR, MessageContentO],
+export const MessageContent = strictInterfaceWithOptionals(
+  MessageContentR.props,
+  MessageContentO.props,
   "MessageContent"
 );
 

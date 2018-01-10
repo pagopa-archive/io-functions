@@ -31,7 +31,7 @@ export function getAppContext<T>(
  * @param T The type of the bindings found in the context.
  */
 export function ContextMiddleware<T>(): IRequestMiddleware<
-  IResponseErrorInternal,
+  "IResponseErrorInternal",
   IContext<T>
 > {
   return request =>
