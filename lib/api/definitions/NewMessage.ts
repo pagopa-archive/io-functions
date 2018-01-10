@@ -16,6 +16,7 @@ import { NewMessageDefaultAddresses } from "./NewMessageDefaultAddresses";
  */
 
 import * as t from "io-ts";
+import { strictInterfaceWithOptionals } from "../../utils/types";
 
 // required attributes
 const NewMessageR = t.interface({
@@ -29,8 +30,9 @@ const NewMessageO = t.partial({
   default_addresses: NewMessageDefaultAddresses
 });
 
-export const NewMessage = t.intersection(
-  [NewMessageR, NewMessageO],
+export const NewMessage = strictInterfaceWithOptionals(
+  NewMessageR.props,
+  NewMessageO.props,
   "NewMessage"
 );
 

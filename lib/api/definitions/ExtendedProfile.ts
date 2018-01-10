@@ -16,6 +16,7 @@ import { IsInboxEnabled } from "./IsInboxEnabled";
  */
 
 import * as t from "io-ts";
+import { strictInterfaceWithOptionals } from "../../utils/types";
 
 // required attributes
 const ExtendedProfileR = t.interface({});
@@ -31,8 +32,9 @@ const ExtendedProfileO = t.partial({
   version: t.number
 });
 
-export const ExtendedProfile = t.intersection(
-  [ExtendedProfileR, ExtendedProfileO],
+export const ExtendedProfile = strictInterfaceWithOptionals(
+  ExtendedProfileR.props,
+  ExtendedProfileO.props,
   "ExtendedProfile"
 );
 

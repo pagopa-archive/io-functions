@@ -1,10 +1,7 @@
 import * as t from "io-ts";
 
 import { IRequestMiddleware } from "../request_middleware";
-import {
-  IResponseErrorValidation,
-  ResponseErrorFromValidationErrors
-} from "../response";
+import { ResponseErrorFromValidationErrors } from "../response";
 
 /**
  * Returns a request middleware that validates the presence of a required
@@ -16,7 +13,7 @@ import {
 export function RequiredParamMiddleware<S, A>(
   name: string,
   type: t.Type<S, A>
-): IRequestMiddleware<IResponseErrorValidation, A> {
+): IRequestMiddleware<"IResponseErrorValidation", A> {
   return request =>
     new Promise(resolve => {
       const validation = t.validate(request.params[name], type);

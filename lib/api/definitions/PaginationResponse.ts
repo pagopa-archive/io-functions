@@ -12,6 +12,7 @@
  */
 
 import * as t from "io-ts";
+import { strictInterfaceWithOptionals } from "../../utils/types";
 
 // required attributes
 const PaginationResponseR = t.interface({});
@@ -23,8 +24,9 @@ const PaginationResponseO = t.partial({
   next: t.string
 });
 
-export const PaginationResponse = t.intersection(
-  [PaginationResponseR, PaginationResponseO],
+export const PaginationResponse = strictInterfaceWithOptionals(
+  PaginationResponseR.props,
+  PaginationResponseO.props,
   "PaginationResponse"
 );
 
