@@ -23,9 +23,6 @@ import { ReadableReporter } from "./validation_reporters";
 // request timeout in milliseconds
 const DEFAULT_REQUEST_TIMEOUT_MS = 10000;
 
-// number of retries in case of HTTP errors
-const DEFAULT_REQUEST_RETRIES = 2;
-
 export const SEND_TRANSACTIONAL_MAIL_ENDPOINT =
   "https://send.mailup.com/API/v2.0/messages/sendmessage";
 
@@ -116,7 +113,6 @@ function callMailUpApi(
   return request(method, url)
     .timeout(DEFAULT_REQUEST_TIMEOUT_MS)
     .send({ ...payload, User: creds })
-    .retry(DEFAULT_REQUEST_RETRIES)
     .then(response => {
       if (response.error) {
         return left<Error, ApiResponse>(
