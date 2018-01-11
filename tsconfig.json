@@ -13,6 +13,7 @@
     "sourceMap": true
   },
   "exclude": [
+    "lib/**/local.*",
     "node_modules"
   ]
 }

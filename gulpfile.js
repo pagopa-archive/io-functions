@@ -41,7 +41,9 @@ const currentPackageJson = JSON.parse(fs.readFileSync(packageJsonPath));
 // the release process, not super efficient but it's the easiest way to share
 // them across tasks
 const currentVersion = semver.parse(currentPackageJson.version);
-const releaseVersionValue = `${currentVersion.major}.${currentVersion.minor}.${currentVersion.patch}`;
+const releaseVersionValue = `${currentVersion.major}.${currentVersion.minor}.${
+  currentVersion.patch
+}`;
 const nextVersionValue = `${semver.inc(releaseVersionValue, "minor")}-SNAPSHOT`;
 const funcpackBranchPrefix = "funcpack-release";
 const releaseVersionFuncpackBranchName = `${funcpackBranchPrefix}-v${releaseVersionValue}`;
@@ -102,9 +104,19 @@ gulp.task("yarn:lint", () => {
  * Run unit tests
  */
 gulp.task("unit:test", () => {
-  return gulp
-    .src(TYPESCRIPT_SOURCE_DIR)
-    .pipe(run("jest --coverage --runInBand"));
+  return (
+    gulp
+      .src(TYPESCRIPT_SOURCE_DIR)
+      // for some unknow reason jest tests won't exit on win32 machine
+      // when run through gulp (running the tests directly through the jest CLI just works)
+      // that's the reason of the `forceExit` flag
+      .pipe(
+        run(
+          "jest --coverage --runInBand" +
+            (process.platform === "win32" ? " --forceExit" : "")
+        )
+      )
+  );
 });
 
 /**
