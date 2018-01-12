@@ -404,6 +404,19 @@ export function index(context: ContextWithBindings): void {
     `Dequeued email notification|${emailNotificationEvent.notificationId}`
   );
 
+  // TODO
+  // does not process the message if expired
+  // if (ExpiredMessage.is(emailNotificationEvent.message)) {
+  //   // TODO: change message status to "expired"
+  //   winston.info(
+  //     `TimeToLive exceeded, quit|${emailNotificationEvent.messageId}|${
+  //       emailNotificationEvent.message.fiscalCode
+  //     }`
+  //   );
+  //   context.done();
+  //   return;
+  // }
+
   // setup required models
   const documentClient = new DocumentDBClient(cosmosDbUri, {
     masterKey: cosmosDbKey

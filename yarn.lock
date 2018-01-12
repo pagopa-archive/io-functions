@@ -2892,9 +2892,9 @@ invert-kv@^1.0.0:
   version "1.0.0"
   resolved "https://registry.yarnpkg.com/invert-kv/-/invert-kv-1.0.0.tgz#104a8e4aaca6d3d8cd157a8ef8bfab2d7a3ffdb6"
 
-io-ts@^0.9.3:
-  version "0.9.3"
-  resolved "https://registry.yarnpkg.com/io-ts/-/io-ts-0.9.3.tgz#523ff71ad10f116fec203b80494297eb060e230a"
+io-ts@^0.9.4:
+  version "0.9.4"
+  resolved "https://registry.yarnpkg.com/io-ts/-/io-ts-0.9.4.tgz#b3ba3b64fa521dba7fef0b1e1ae9f90f9c62d3a4"
   dependencies:
     fp-ts "^0.6.4"
 
@@ -4664,6 +4664,12 @@ mjml@^3.3.5:
   resolved "https://registry.yarnpkg.com/mkdirp/-/mkdirp-0.5.1.tgz#30057438eac6cf7f8c4767f38648d6697d75c903"
   dependencies:
     minimist "0.0.8"
+
+monocle-ts@^0.5.2:
+  version "0.5.2"
+  resolved "https://registry.yarnpkg.com/monocle-ts/-/monocle-ts-0.5.2.tgz#9a1cc719872c9792eee4366527582805d242e016"
+  dependencies:
+    fp-ts "^0.6.4"
 
 ms@2.0.0:
   version "2.0.0"

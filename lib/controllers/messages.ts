@@ -62,6 +62,7 @@ import {
   ResponseErrorInternal,
   ResponseErrorNotFound,
   ResponseErrorQuery,
+  ResponseErrorValidation,
   ResponseSuccessJson,
   ResponseSuccessJsonIterator,
   ResponseSuccessRedirectToResource
@@ -95,6 +96,8 @@ import { withoutUndefinedValues } from "../utils/types";
 
 import { isLeft } from "fp-ts/lib/Either";
 import { isNone } from "fp-ts/lib/Option";
+import { MessageStatusEnum } from "../api/definitions/MessageStatus";
+import { NonNegativeNumber } from "../utils/numbers";
 
 /**
  * Input and output bindings for this function
@@ -129,7 +132,9 @@ function retrievedMessageToPublic(
   return {
     fiscal_code: retrievedMessage.fiscalCode,
     id: retrievedMessage.id,
-    sender_service_id: retrievedMessage.senderServiceId
+    sender_service_id: retrievedMessage.senderServiceId,
+    time_to_live: retrievedMessage.timeToLive,
+    status: retrievedMessage.status
   };
 }
 
@@ -257,6 +262,14 @@ export function CreateMessageHandler(
       return ResponseErrorForbiddenNotAuthorizedForDefaultAddresses;
     }
 
+    // this never happens as the payload is already validated here
+    if (messagePayload.time_to_live === undefined) {
+      return ResponseErrorValidation(
+        "Invalid value for time to live",
+        "Check that the property time_to_live is not empty."
+      );
+    }
+
     // create a new message from the payload
     // this object contains only the message metadata, the content of the
     // message is handled separately (see below)
@@ -265,7 +278,10 @@ export function CreateMessageHandler(
       id: generateObjectId(),
       kind: "INewMessageWithoutContent",
       senderServiceId: userService.serviceId,
-      senderUserId: auth.userId
+      senderUserId: auth.userId,
+      timeToLive: messagePayload.time_to_live,
+      status: MessageStatusEnum.ACCEPTED,
+      createdAt: Date.now() as NonNegativeNumber
     };
 
     //

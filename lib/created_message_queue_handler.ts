@@ -30,7 +30,11 @@ import { getRequiredStringEnv } from "./utils/env";
 
 import { CreatedMessageEvent } from "./models/created_message_event";
 import { CreatedMessageEventSenderMetadata } from "./models/created_message_sender_metadata";
-import { MessageModel, NewMessageWithoutContent } from "./models/message";
+import {
+  ExpiredMessage,
+  MessageModel,
+  NewMessageWithoutContent
+} from "./models/message";
 import {
   NewNotification,
   NotificationAddressSourceEnum,
@@ -148,7 +152,7 @@ export async function handleMessage(
     winston.debug(`handleMessage|${JSON.stringify(newMessageWithoutContent)}`);
 
     if (isLeft(errorOrAttachment)) {
-      winston.error(`handleMessage|${JSON.stringify(errorOrAttachment)}`);
+      winston.error(`handleMessage|${JSON.stringify(errorOrAttachment.value)}`);
       // we consider errors while updating message as transient
       return left(ProcessingError.TRANSIENT);
     }
@@ -314,6 +318,18 @@ export function index(context: ContextWithBindings): void {
   const messageContent = createdMessageEvent.messageContent;
   const defaultAddresses = fromNullable(createdMessageEvent.defaultAddresses);
   const senderMetadata = createdMessageEvent.senderMetadata;
+
+  // does not process the message if expired
+  if (ExpiredMessage.is(createdMessageEvent.message)) {
+    // TODO: change message status to "expired"
+    winston.info(
+      `TimeToLive exceeded, quit|${newMessageWithoutContent.id}|${
+        newMessageWithoutContent.fiscalCode
+      }`
+    );
+    context.done();
+    return;
+  }
 
   winston.info(
     `A new message was created|${newMessageWithoutContent.id}|${

@@ -289,9 +289,19 @@ export const specs = {
       },
       required: ["content"]
     },
+    MessageStatus: {
+      type: "string",
+      "x-extensible-enum": ["ACCEPTED", "FAILED", "THROTTLED"]
+    },
     NotificationChannelStatus: {
       type: "string",
-      "x-extensible-enum": ["QUEUED", "SENT_TO_CHANNEL"],
+      "x-extensible-enum": [
+        "EXPIRED",
+        "FAILED",
+        "QUEUED",
+        "SENT_TO_CHANNEL",
+        "THROTTLED"
+      ],
       example: "SENT_TO_CHANNEL"
     },
     NotificationStatus: {
@@ -307,9 +317,10 @@ export const specs = {
         fiscal_code: { $ref: "#/definitions/FiscalCode" },
         time_to_live: { $ref: "#/definitions/TimeToLive" },
         content: { $ref: "#/definitions/MessageContent" },
-        sender_service_id: { type: "string" }
+        sender_service_id: { type: "string" },
+        status: { $ref: "#/definitions/MessageStatus" }
       },
-      required: ["fiscal_code", "sender_service_id"]
+      required: ["fiscal_code", "sender_service_id", "status"]
     },
     MessageResponse: {
       type: "object",

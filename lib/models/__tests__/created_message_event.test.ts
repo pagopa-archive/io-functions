@@ -3,6 +3,7 @@
 import { CreatedMessageEvent } from "../created_message_event";
 
 import { MessageBodyMarkdown } from "../../api/definitions/MessageBodyMarkdown";
+import { MessageStatusEnum } from "../../api/definitions/MessageStatus";
 
 const aMessageBodyMarkdown = "test".repeat(80) as MessageBodyMarkdown;
 
@@ -22,7 +23,10 @@ describe("", () => {
           id: "01BTAZ2HS1PWDJERA510FDXYV4",
           kind: "RetrievedMessage",
           senderServiceId: "test",
-          senderUserId: "u123"
+          senderUserId: "u123",
+          timeToLive: 3600,
+          createdAt: 12345,
+          status: MessageStatusEnum.ACCEPTED
         },
         messageContent: {
           markdown: aMessageBodyMarkdown

@@ -10,6 +10,7 @@
 import { FiscalCode } from "./FiscalCode";
 import { TimeToLive } from "./TimeToLive";
 import { MessageContent } from "./MessageContent";
+import { MessageStatus } from "./MessageStatus";
 
 /**
  *
@@ -22,7 +23,9 @@ import { strictInterfaceWithOptionals } from "../../utils/types";
 const CreatedMessageR = t.interface({
   fiscal_code: FiscalCode,
 
-  sender_service_id: t.string
+  sender_service_id: t.string,
+
+  status: MessageStatus
 });
 
 // optional attributes

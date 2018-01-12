@@ -14,9 +14,15 @@
 import { enumType } from "../../utils/types";
 
 export enum NotificationChannelStatusEnum {
+  "EXPIRED" = "EXPIRED",
+
+  "FAILED" = "FAILED",
+
   "QUEUED" = "QUEUED",
 
-  "SENT_TO_CHANNEL" = "SENT_TO_CHANNEL"
+  "SENT_TO_CHANNEL" = "SENT_TO_CHANNEL",
+
+  "THROTTLED" = "THROTTLED"
 }
 
 import * as t from "io-ts";

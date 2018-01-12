@@ -2,6 +2,8 @@
 
 import { toAuthorizedCIDRs } from "../../models/service";
 
+import * as t from "io-ts";
+
 import * as winston from "winston";
 winston.configure({
   level: "debug"
@@ -47,6 +49,10 @@ import {
   MessagePayloadMiddleware
 } from "../messages";
 
+import { MessageStatusEnum } from "../../api/definitions/MessageStatus";
+import { TimeToLive } from "../../api/definitions/TimeToLive";
+import { NonNegativeNumber } from "../../utils/numbers";
+
 interface IHeaders {
   readonly [key: string]: string | undefined;
 }
@@ -86,11 +92,19 @@ const aUserAuthenticationTrustedApplication: IAzureApiAuthorization = {
   userId: "u123" as NonEmptyString
 };
 
-const aMessagePayload: ApiNewMessage = {
-  content: {
-    markdown: aMessageBodyMarkdown
-  }
-};
+// sets the default time to live
+const aMessagePayload = t
+  .validate(
+    {
+      content: {
+        markdown: aMessageBodyMarkdown
+      }
+    },
+    ApiNewMessage
+  )
+  .fold(() => {
+    throw new Error("Invalid ApiNewMessage");
+  }, t.identity);
 
 const aCustomSubject = "A custom subject" as MessageSubject;
 
@@ -101,20 +115,25 @@ const aNewMessageWithoutContent: NewMessageWithoutContent = {
   id: "A_MESSAGE_ID" as NonEmptyString,
   kind: "INewMessageWithoutContent",
   senderServiceId: "test" as ModelId,
-  senderUserId: "u123" as NonEmptyString
+  senderUserId: "u123" as NonEmptyString,
+  timeToLive: 3600 as TimeToLive,
+  status: MessageStatusEnum.ACCEPTED,
+  createdAt: Date.now() as NonNegativeNumber
 };
 
 const aRetrievedMessageWithoutContent: RetrievedMessageWithoutContent = {
   ...aNewMessageWithoutContent,
   _self: "xyz",
-  _ts: "xyz",
+  _ts: 12345,
   kind: "IRetrievedMessageWithoutContent"
 };
 
 const aPublicExtendedMessage: CreatedMessage = {
   fiscal_code: aNewMessageWithoutContent.fiscalCode,
   id: "A_MESSAGE_ID",
-  sender_service_id: aNewMessageWithoutContent.senderServiceId
+  sender_service_id: aNewMessageWithoutContent.senderServiceId,
+  time_to_live: aNewMessageWithoutContent.timeToLive,
+  status: MessageStatusEnum.ACCEPTED
 };
 
 describe("CreateMessageHandler", () => {
@@ -194,7 +213,10 @@ describe("CreateMessageHandler", () => {
 
     expect(mockContext.bindings).toEqual({
       createdMessage: {
-        message: aNewMessageWithoutContent,
+        message: {
+          ...aNewMessageWithoutContent,
+          createdAt: expect.any(Number)
+        },
         messageContent: {
           markdown: aMessagePayload.content.markdown
         },
@@ -281,7 +303,10 @@ describe("CreateMessageHandler", () => {
 
     expect(mockContext.bindings).toEqual({
       createdMessage: {
-        message: aNewMessageWithoutContent,
+        message: {
+          ...aNewMessageWithoutContent,
+          createdAt: expect.any(Number)
+        },
         messageContent: {
           markdown: aMessagePayload.content.markdown
         },
@@ -364,7 +389,10 @@ describe("CreateMessageHandler", () => {
 
     expect(mockContext.bindings).toEqual({
       createdMessage: {
-        message: aNewMessageWithoutContent,
+        message: {
+          ...aNewMessageWithoutContent,
+          createdAt: expect.any(Number)
+        },
         messageContent: {
           markdown: aMessagePayload.content.markdown,
           subject: aCustomSubject
@@ -455,7 +483,10 @@ describe("CreateMessageHandler", () => {
         defaultAddresses: {
           email: "test@example.com" as EmailAddress
         },
-        message: aNewMessageWithoutContent,
+        message: {
+          ...aNewMessageWithoutContent,
+          createdAt: expect.any(Number)
+        },
         messageContent: {
           markdown: messagePayload.content.markdown
         },
@@ -810,7 +841,7 @@ describe("GetMessageHandler", () => {
   it("should provide information about notification status", async () => {
     const aRetrievedNotification: RetrievedNotification = {
       _self: "xyz",
-      _ts: "xyz",
+      _ts: 12345,
       emailNotification: {
         addressSource: NotificationAddressSourceEnum.PROFILE_ADDRESS,
         status: NotificationChannelStatusEnum.SENT_TO_CHANNEL,

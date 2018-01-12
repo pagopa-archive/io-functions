@@ -18,21 +18,47 @@ import { MessageContent } from "../api/definitions/MessageContent";
 import { FiscalCode } from "../api/definitions/FiscalCode";
 
 import { BlobService } from "azure-storage";
+import { TimeToLive } from "../api/definitions/TimeToLive";
 import { getBlobAsText, upsertBlobFromObject } from "../utils/azure_storage";
 import { iteratorToArray } from "../utils/documentdb";
 
+import { MessageStatus } from "../api/definitions/MessageStatus";
+import { NonNegativeNumber } from "../utils/numbers";
+
 const MESSAGE_BLOB_STORAGE_SUFFIX = ".json";
 
-const MessageBase = t.interface({
-  // the fiscal code of the recipient
-  fiscalCode: FiscalCode,
+const MessageBaseR = t.interface(
+  {
+    // the fiscal code of the recipient
+    fiscalCode: FiscalCode,
 
-  // the identifier of the service of the sender
-  senderServiceId: t.string,
+    // the identifier of the service of the sender
+    senderServiceId: t.string,
 
-  // the userId of the sender (this is opaque and depends on the API gateway)
-  senderUserId: NonEmptyString
+    // the userId of the sender (this is opaque and depends on the API gateway)
+    senderUserId: NonEmptyString,
+
+    // time to live in seconds
+    timeToLive: TimeToLive,
+
+    // message status
+    status: MessageStatus,
+
+    // timestamp: the message was accepted by the system
+    createdAt: NonNegativeNumber
+  },
+  "MessageBaseR"
+);
+
+const MessageBaseO = t.partial({
+  // timestamp: the message failed to trigger any notification
+  failedAt: NonNegativeNumber,
+
+  // timestamp: the message has been re-scheduled
+  throttledAt: NonNegativeNumber
 });
+
+const MessageBase = t.intersection([MessageBaseR, MessageBaseO]);
 
 /**
  * The attributes common to all types of Message
@@ -142,6 +168,18 @@ export type RetrievedMessageWithoutContent = t.TypeOf<
   typeof RetrievedMessageWithoutContent
 >;
 
+interface IExpiredMessageTag {
+  readonly kind: "IExpiredMessage";
+}
+
+export const ExpiredMessage = tag<IExpiredMessageTag>()(
+  t.refinement(
+    MessageBase,
+    message => Date.now() - message.createdAt > message.timeToLive,
+    "ExpiredMessage"
+  )
+);
+
 /**
  * A (previously saved) retrieved Message
  */
@@ -159,13 +197,19 @@ function toBaseType(o: RetrievedMessage): Message {
       content: o.content,
       fiscalCode: o.fiscalCode,
       senderServiceId: o.senderServiceId,
-      senderUserId: o.senderUserId
+      senderUserId: o.senderUserId,
+      timeToLive: o.timeToLive,
+      status: o.status,
+      createdAt: o.createdAt
     };
   } else {
     return {
       fiscalCode: o.fiscalCode,
       senderServiceId: o.senderServiceId,
-      senderUserId: o.senderUserId
+      senderUserId: o.senderUserId,
+      timeToLive: o.timeToLive,
+      status: o.status,
+      createdAt: o.createdAt
     };
   }
 }
@@ -177,9 +221,13 @@ function toRetrieved(result: DocumentDb.RetrievedDocument): RetrievedMessage {
   if (RetrievedMessageWithoutContent.is(result)) {
     return result;
   }
-  throw new Error(
-    "retrieved result was neither a RetrievedMessageWithContent nor a RetrievedMessageWithoutContent"
-  );
+  const validation = t.validate(result, RetrievedMessageWithoutContent);
+  return validation.getOrElse(() => {
+    throw new Error(
+      "Result wasn't a RetrievedMessage: " +
+        ReadableReporter.report(validation).join("; ")
+    );
+  });
 }
 
 function blobIdFromMessageId(messageId: string): string {
@@ -224,6 +272,16 @@ export class MessageModel extends DocumentDbModel<
     this.collectionUri = collectionUrl;
     // tslint:disable-next-line:no-object-mutation
     this.containerName = containerName;
+  }
+
+  public async setStatus(
+    status: MessageStatus,
+    fiscalCode: FiscalCode,
+    messageId: string
+  ): Promise<Either<DocumentDb.QueryError, Option<RetrievedMessage>>> {
+    return this.update(messageId, fiscalCode, (currentMessage: Message) => {
+      return { ...currentMessage, status };
+    });
   }
 
   /**

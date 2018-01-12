@@ -40,6 +40,9 @@ import * as winston from "winston";
 import { NonNegativeNumber } from "../utils/numbers";
 import { EmailString, NonEmptyString } from "../utils/strings";
 
+import { MessageStatusEnum } from "../api/definitions/MessageStatus";
+import { TimeToLive } from "../api/definitions/TimeToLive";
+
 const aCorrectFiscalCode = "FRLFRC74E04B157I" as FiscalCode;
 const aWrongFiscalCode = "FRLFRC74E04B157" as FiscalCode;
 const anEmail = "x@example.com" as EmailString;
@@ -97,6 +100,8 @@ function flushPromises<T>(): Promise<T> {
   return new Promise(resolve => setImmediate(resolve));
 }
 
+afterEach(jest.resetAllMocks);
+
 describe("test index function", () => {
   it("should return failure if createdMessage is undefined", async () => {
     const contextMock = {
@@ -120,9 +125,6 @@ describe("test index function", () => {
     expect(spy.mock.calls[0][0]).toEqual(
       `Fatal! No valid message found in bindings.`
     );
-
-    spy.mockReset();
-    spy.mockRestore();
   });
 
   it("should return failure if createdMessage is invalid (wrong fiscal code)", async () => {
@@ -131,7 +133,10 @@ describe("test index function", () => {
       id: "xyz" as NonEmptyString,
       kind: "INewMessageWithoutContent",
       senderServiceId: "",
-      senderUserId: "u123" as NonEmptyString
+      senderUserId: "u123" as NonEmptyString,
+      timeToLive: 3600 as TimeToLive,
+      status: MessageStatusEnum.ACCEPTED,
+      createdAt: Date.now() as NonNegativeNumber
     };
 
     const aMessageEvent: CreatedMessageEvent = {
@@ -167,9 +172,6 @@ describe("test index function", () => {
     expect(spy.mock.calls[0][0]).toEqual(
       `Fatal! No valid message found in bindings.`
     );
-
-    spy.mockReset();
-    spy.mockRestore();
   });
 
   /*
@@ -215,8 +217,6 @@ describe("test index function", () => {
 
     handleMessage = originalHandleMessage;
 
-    spy.mockReset();
-    spy.mockRestore();
   });
   */
 });
@@ -731,9 +731,6 @@ describe("test processResolve function", () => {
       }`
     );
     expect(contextMock.bindings.emailNotification).toEqual(undefined);
-
-    spy.mockReset();
-    spy.mockRestore();
   });
 
   it("should not enqueue notification on error (generic)", async () => {
@@ -766,9 +763,6 @@ describe("test processResolve function", () => {
       `Transient error, retrying|${retrievedMessageMock.fiscalCode}`
     );
     expect(contextMock.bindings.emailNotification).toEqual(undefined);
-
-    spy.mockReset();
-    spy.mockRestore();
   });
 });
 
@@ -804,8 +798,5 @@ describe("test processReject function", () => {
       }|${errorMock}`
     );
     expect(contextMock.bindings.emailNotification).toEqual(undefined);
-
-    spy.mockReset();
-    spy.mockRestore();
   });
 });
