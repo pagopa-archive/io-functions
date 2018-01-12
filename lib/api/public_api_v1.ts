@@ -51,7 +51,10 @@ export const specs = {
               }
             }
           },
-          "404": { description: "No message found for the provided ID." }
+          "404": {
+            description: "No message found for the provided ID.",
+            schema: { $ref: "#/definitions/ProblemJson" }
+          }
         }
       }
     },
@@ -110,7 +113,10 @@ export const specs = {
               }
             }
           },
-          "404": { description: "No message found." }
+          "404": {
+            description: "No message found.",
+            schema: { $ref: "#/definitions/ProblemJson" }
+          }
         },
         parameters: [{ $ref: "#/parameters/PaginationRequest" }]
       },
@@ -181,7 +187,10 @@ export const specs = {
               "application/json": { email: "foobar@example.com", version: 1 }
             }
           },
-          "404": { description: "No user found for the provided fiscal code." }
+          "404": {
+            description: "No user found for the provided fiscal code.",
+            schema: { $ref: "#/definitions/ProblemJson" }
+          }
         }
       },
       parameters: [{ $ref: "#/parameters/FiscalCode" }],

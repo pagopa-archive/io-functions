@@ -45,6 +45,8 @@ paths:
                 email: QUEUED
         '404':
           description: No message found for the provided ID.
+          schema:
+            $ref: "#/definitions/ProblemJson"
   "/messages/{fiscal_code}":
     parameters:
     - $ref: "#/parameters/FiscalCode"
@@ -95,6 +97,8 @@ paths:
               next: https://example.com/next
         '404':
           description: No message found.
+          schema:
+            $ref: "#/definitions/ProblemJson"
       parameters:
       - $ref: "#/parameters/PaginationRequest"
     post:
@@ -157,6 +161,8 @@ paths:
               version: 1
         '404':
           description: No user found for the provided fiscal code.
+          schema:
+            $ref: "#/definitions/ProblemJson"
     parameters:
     - $ref: "#/parameters/FiscalCode"
     post:
