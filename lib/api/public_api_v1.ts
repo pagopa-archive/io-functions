@@ -199,8 +199,14 @@ export const specs = {
               "application/json": { email: "foobar@example.com", version: 0 }
             }
           },
-          "400": { description: "Invalid payload." },
-          "500": { description: "Profile cannot be updated." }
+          "400": {
+            description: "Invalid payload.",
+            schema: { $ref: "#/definitions/ProblemJson" }
+          },
+          "500": {
+            description: "Profile cannot be updated.",
+            schema: { $ref: "#/definitions/ProblemJson" }
+          }
         },
         description:
           "Create or update the preferences for the user identified by the provided fiscal code.",
