@@ -238,7 +238,7 @@ The data model is composed of the following core entities:
 |[Profile](https://github.com/teamdigitale/digital-citizenship-functions/blob/master/lib/models/profile.ts)|Represents the profile of a citizen (i.e. his preferences)|
 |[Message](https://github.com/teamdigitale/digital-citizenship-functions/blob/master/lib/models/message.ts)|Represents a message sent to a citizen by a service owned by an Organization|
 |[Notification](https://github.com/teamdigitale/digital-citizenship-functions/blob/master/lib/models/notification.ts)|Represents a notification to the citizen, triggered by a Message|
-|[Organization](https://github.com/teamdigitale/digital-citizenship-functions/blob/master/lib/models/organization.ts)|Represents the Organization that sends the messages or access citizen's profiles|
+|[Service](https://github.com/teamdigitale/digital-citizenship-functions/blob/master/lib/models/service.ts)|Represents the Service, owned by an Organization, that sends the messages or access citizen's profiles|
 
 The data model defines also several non-core entities used to describe events
 happening inside the application:

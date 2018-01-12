@@ -7,22 +7,39 @@ abstract class DocumentDbModel
 abstract class DocumentDbVersionedModel
 
 class Message {
-  +UUID id
-  +UUID organizationId
-  +FiscalCode fiscalCode
+  +id uuid
+  +senderServiceId uuid
+  +senderUserId uuid
+  +fiscalCode string
+  +subject string
+  +content string
 }
 
 class Notification {
-  +UUID id
-  +UUID messageId
+  +id uuid
+  +messageId uuid
+  +fiscalCode string
 }
 
-class Organization {
-  +UUID id
+class EmailNotification {
+  +id uuid
+  +notificationId uuid
+  +fiscalCode string
+  +fromAddress string
+  +toAddress string
+  +status string
+}
+
+class Service {
+  +id uuid
+  +organizationName string
+  +organizationDepartment string
+  +serviceName string
 }
 
 class Profile {
-  +FiscalCode fiscalCode
+  +fiscalCode string
+  +Email string
 }
 
 DocumentDbModel <|-- DocumentDbVersionedModel
@@ -31,11 +48,13 @@ DocumentDbModel <|-- Message
 
 DocumentDbModel <|-- Notification
 
-DocumentDbVersionedModel <|-- Organization
+EmailNotification <--o Notification
+
+DocumentDbVersionedModel <|-- Service
 
 DocumentDbVersionedModel <|-- Profile
 
-Organization "1" o-left- "many" Message
+Service "1" o-left- "many" Message
 Message "1" o-left- "?" Notification
 
 @enduml
