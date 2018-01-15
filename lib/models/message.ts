@@ -27,7 +27,7 @@ import { NonNegativeNumber } from "../utils/numbers";
 
 const MESSAGE_BLOB_STORAGE_SUFFIX = ".json";
 
-const MessageBaseR = t.interface(
+const MessageBase = t.interface(
   {
     // the fiscal code of the recipient
     fiscalCode: FiscalCode,
@@ -47,18 +47,8 @@ const MessageBaseR = t.interface(
     // timestamp: the message was accepted by the system
     createdAt: NonNegativeNumber
   },
-  "MessageBaseR"
+  "MessageBase"
 );
-
-const MessageBaseO = t.partial({
-  // timestamp: the message failed to trigger any notification
-  failedAt: NonNegativeNumber,
-
-  // timestamp: the message has been re-scheduled
-  throttledAt: NonNegativeNumber
-});
-
-const MessageBase = t.intersection([MessageBaseR, MessageBaseO]);
 
 /**
  * The attributes common to all types of Message
