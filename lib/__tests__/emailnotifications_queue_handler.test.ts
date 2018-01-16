@@ -10,8 +10,19 @@ process.env.CUSTOMCONNSTR_COSMOSDB_KEY = "anyCosmosDbKey";
 process.env.COSMOSDB_NAME = "anyDbName";
 // tslint:disable-next-line:no-object-mutation
 process.env.CUSTOMCONNSTR_SENDGRID_KEY = "anySendgridKey";
+// tslint:disable-next-line:no-object-mutation
+process.env.QueueStorageConnection = "anyConnectionString";
+
+jest.mock("applicationinsights");
+jest.mock("azure-storage");
+
+jest.mock("../utils/azure_queues");
+jest.mock("../models/notification");
+
+jest.mock("nodemailer-sendgrid-transport");
 
 import * as NodeMailer from "nodemailer";
+import * as winston from "winston";
 
 import MockTransport = require("nodemailer-mock-transport");
 
@@ -24,26 +35,49 @@ import { FiscalCode } from "../api/definitions/FiscalCode";
 import { NotificationChannelStatusEnum } from "../api/definitions/NotificationChannelStatus";
 
 import {
+  EMAIL_NOTIFICATION_QUEUE_NAME,
   generateDocumentHtml,
   handleNotification,
-  ProcessingError,
-  ProcessingResult,
-  processReject,
+  index,
   processResolve,
   sendMail
 } from "../emailnotifications_queue_handler";
 
-import * as winston from "winston";
+import { retryMessageEnqueue } from "../utils/azure_queues";
+
 import { MessageBodyMarkdown } from "../api/definitions/MessageBodyMarkdown";
 import { MessageSubject } from "../api/definitions/MessageSubject";
 import { CreatedMessageEventSenderMetadata } from "../models/created_message_sender_metadata";
 import {
   Notification,
-  NotificationAddressSourceEnum
+  NotificationAddressSourceEnum,
+  NotificationModel
 } from "../models/notification";
+import { isTransient, PermanentError, TransientError } from "../utils/errors";
+
 import { NotificationEvent } from "../models/notification_event";
 
+import * as functionConfig from "../../EmailNotificationsQueueHandler/function.json";
+
+function flushPromises(): Promise<void> {
+  return new Promise(resolve => setImmediate(resolve));
+}
+
 const aFiscalCode = "FRLFRC74E04B157I" as FiscalCode;
+
+const aNotificationEvent: NotificationEvent = {
+  messageContent: {
+    markdown: "test".repeat(80) as MessageBodyMarkdown,
+    subject: "t".repeat(30) as MessageSubject
+  },
+  messageId: "1" as NonEmptyString,
+  notificationId: "2" as NonEmptyString,
+  senderMetadata: {
+    departmentName: "dept" as NonEmptyString,
+    organizationName: "org" as NonEmptyString,
+    serviceName: "service" as NonEmptyString
+  }
+};
 
 const aNotification: Notification = {
   emailNotification: {
@@ -117,7 +151,9 @@ describe("handleNotification", () => {
       "A_MESSAGE_ID"
     );
     expect(isLeft(result)).toBeTruthy();
-    expect(result.value).toBe(ProcessingError.TRANSIENT);
+    if (isLeft(result)) {
+      expect(isTransient(result.value)).toBeTruthy();
+    }
   });
 
   it("should return a transient error when the notification does not exist", async () => {
@@ -136,7 +172,9 @@ describe("handleNotification", () => {
     );
 
     expect(isLeft(result)).toBeTruthy();
-    expect(result.value).toBe(ProcessingError.TRANSIENT);
+    if (isLeft(result)) {
+      expect(isTransient(result.value)).toBeTruthy();
+    }
   });
 
   it("should return a permanent error when the notification does not contain the email channel", async () => {
@@ -155,7 +193,9 @@ describe("handleNotification", () => {
     );
 
     expect(isLeft(result)).toBeTruthy();
-    expect(result.value).toBe(ProcessingError.PERMANENT);
+    if (isLeft(result)) {
+      expect(isTransient(result.value)).toBeFalsy();
+    }
   });
 
   it("should send an email notification", async () => {
@@ -235,7 +275,7 @@ describe("handleNotification", () => {
     });
 
     expect(isRight(result)).toBeTruthy();
-    expect(result.value).toBe(ProcessingResult.OK);
+    expect(result.value).toBeDefined();
   });
 
   it("should send an email notification with the text version of the message", async () => {
@@ -283,7 +323,7 @@ This is a message from the future!`.replace(/[ \n]+/g, "|")
     );
 
     expect(isRight(result)).toBeTruthy();
-    expect(result.value).toBe(ProcessingResult.OK);
+    expect(result.value).toBeDefined();
   });
 
   it("should send an email notification with the default subject", async () => {
@@ -318,7 +358,7 @@ This is a message from the future!`.replace(/[ \n]+/g, "|")
     );
 
     expect(isRight(result)).toBeTruthy();
-    expect(result.value).toBe(ProcessingResult.OK);
+    expect(result.value).toBeDefined();
   });
 
   it("should send an email notification with the provided subject", async () => {
@@ -352,7 +392,7 @@ This is a message from the future!`.replace(/[ \n]+/g, "|")
     expect(mockTransport.sentMail[0].data.subject).toBe("A custom subject");
 
     expect(isRight(result)).toBeTruthy();
-    expect(result.value).toBe(ProcessingResult.OK);
+    expect(result.value).toBeDefined();
   });
 
   it("should respond with a transient error when email delivery fails", async () => {
@@ -398,7 +438,9 @@ This is a message from the future!`.replace(/[ \n]+/g, "|")
     expect(notificationModelMock.update).not.toHaveBeenCalled();
 
     expect(isLeft(result)).toBeTruthy();
-    expect(result.value).toBe(ProcessingError.TRANSIENT);
+    if (isLeft(result)) {
+      expect(isTransient(result.value)).toBeTruthy();
+    }
   });
 
   it("should respond with a transient error when notification update fails", async () => {
@@ -445,10 +487,12 @@ This is a message from the future!`.replace(/[ \n]+/g, "|")
     });
 
     expect(isLeft(result)).toBeTruthy();
-    expect(result.value).toBe(ProcessingError.TRANSIENT);
+    if (isLeft(result)) {
+      expect(isTransient(result.value)).toBeTruthy();
+    }
   });
 });
-describe("test processResolve function", () => {
+describe("processResolve", () => {
   it("should call context.done on success", async () => {
     const result = right({} as any);
 
@@ -462,8 +506,8 @@ describe("test processResolve function", () => {
     expect(contextMock.done).toHaveBeenCalledTimes(1);
     expect(contextMock.done.mock.calls[0][0]).toBe(undefined);
   });
-  it("should call context.done Transient on transient error", async () => {
-    const result = left(ProcessingError.TRANSIENT);
+  it("should retry on transient error", async () => {
+    const result = left(TransientError("err"));
 
     const contextMock = {
       bindings: {},
@@ -472,11 +516,10 @@ describe("test processResolve function", () => {
 
     processResolve(result as any, contextMock as any);
 
-    expect(contextMock.done).toHaveBeenCalledTimes(1);
-    expect(contextMock.done.mock.calls[0][0]).toBe("Transient");
+    expect(retryMessageEnqueue).toHaveBeenCalledTimes(1);
   });
   it("should call context.done on permanent error", async () => {
-    const result = left(ProcessingError.PERMANENT);
+    const result = left(PermanentError("err"));
 
     const contextMock = {
       bindings: {},
@@ -489,48 +532,7 @@ describe("test processResolve function", () => {
     expect(contextMock.done.mock.calls[0][0]).toBe(undefined);
   });
 });
-describe("test processReject function", () => {
-  it("should call context.done on error", async () => {
-    const errorMock = {
-      isRight: () => true
-    };
-
-    const contextMock = {
-      bindings: {},
-      done: jest.fn()
-    };
-
-    const emailNotificationMock: NotificationEvent = {
-      messageContent: {
-        markdown: "test".repeat(80) as MessageBodyMarkdown
-      },
-      messageId: "xxx" as NonEmptyString,
-      notificationId: "yyy" as NonEmptyString,
-      senderMetadata: {
-        departmentName: "aaa" as NonEmptyString,
-        organizationName: "agid" as NonEmptyString,
-        serviceName: "ccc" as NonEmptyString
-      }
-    };
-
-    const spy = jest.spyOn(winston, "error");
-
-    processReject(errorMock as any, contextMock as any, emailNotificationMock);
-
-    expect(spy.mock.calls[0][0]).toEqual(
-      `Error while processing event, retrying` +
-        `|${emailNotificationMock.messageId}|${
-          emailNotificationMock.notificationId
-        }|${errorMock}`
-    );
-    expect(contextMock.done).toHaveBeenCalledTimes(1);
-    expect(contextMock.done.mock.calls[0][0]).toEqual(errorMock);
-
-    spy.mockReset();
-    spy.mockRestore();
-  });
-});
-describe("generate html document", () => {
+describe("generateHtmlDocument", () => {
   it("should convert markdown to the right html", async () => {
     const subject = "This is the subject" as MessageSubject;
     const markdown = `
@@ -565,5 +567,56 @@ Lorem ipsum
     expect(result.indexOf("<h6>This is an H6</h6>")).toBeGreaterThan(0);
     expect(result.indexOf("<ul>\n<li>Red</li>")).toBeGreaterThan(0);
     expect(result.indexOf("<ol>\n<li>Bird</li>")).toBeGreaterThan(0);
+  });
+});
+
+describe("emailnotificationQueueHandlerIndex", () => {
+  it("should fail on invalid message payload", async () => {
+    const contextMock = {
+      bindings: {
+        notificationEvent: {}
+      },
+      done: jest.fn(),
+      log: jest.fn()
+    };
+    const winstonErrorSpy = jest.spyOn(winston, "error");
+    index(contextMock as any);
+    await flushPromises();
+    expect(contextMock.done).toHaveBeenCalledTimes(1);
+    expect(winstonErrorSpy).toHaveBeenCalledTimes(1);
+    expect(winstonErrorSpy).toHaveBeenCalledWith(
+      expect.stringMatching("No valid email notification found in bindings")
+    );
+    jest.resetAllMocks();
+  });
+  it("should proceed on valid message payload", async () => {
+    const contextMock = {
+      bindings: {
+        notificationEvent: aNotificationEvent
+      },
+      done: jest.fn(),
+      log: jest.fn()
+    };
+    (NotificationModel as any).mockImplementation(() => ({
+      find: jest.fn(() => right(some(aNotification))),
+      update: jest.fn(() => right(some(aNotification)))
+    }));
+    const nodemailerSpy = jest
+      .spyOn(NodeMailer, "createTransport")
+      .mockReturnValue({
+        sendMail: jest.fn((_, cb) => cb(null, "ok"))
+      });
+    index(contextMock as any);
+    await flushPromises();
+    expect(nodemailerSpy).toHaveBeenCalledTimes(1);
+    expect(contextMock.done).toHaveBeenCalledTimes(1);
+    jest.resetAllMocks();
+  });
+});
+
+describe("emailNotificationQueueHandler", () => {
+  it("should set EMAIL_NOTIFICATION_QUEUE_NAME = queueName in functions.json trigger", async () => {
+    const queueName = (functionConfig as any).bindings[0].queueName;
+    expect(queueName).toEqual(EMAIL_NOTIFICATION_QUEUE_NAME);
   });
 });

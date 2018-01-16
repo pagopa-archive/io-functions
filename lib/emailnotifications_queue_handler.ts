@@ -1,4 +1,3 @@
-import { ReadableReporter } from "./utils/validation_reporters";
 /*
  * This function will process events triggered by newly created messages.
  * For each new input message, the delivery preferences associated to the
@@ -21,6 +20,7 @@ import * as documentDbUtils from "./utils/documentdb";
 import { Either, isLeft, left, right } from "fp-ts/lib/Either";
 import { isNone, Some } from "fp-ts/lib/Option";
 import { getRequiredStringEnv } from "./utils/env";
+import { ReadableReporter } from "./utils/validation_reporters";
 
 import { IContext } from "azure-functions-types";
 
@@ -41,6 +41,16 @@ import { markdownToHtml } from "./utils/markdown";
 
 import { MessageSubject } from "./api/definitions/MessageSubject";
 import defaultEmailTemplate from "./templates/html/default";
+import {
+  isTransient,
+  PermanentError,
+  RuntimeError,
+  TransientError
+} from "./utils/errors";
+
+import { retryMessageEnqueue } from "./utils/azure_queues";
+
+import { createQueueService } from "azure-storage";
 
 // Whether we're in a production environment
 const isProduction = process.env.NODE_ENV === "production";
@@ -57,6 +67,9 @@ const notificationsCollectionUrl = documentDbUtils.getCollectionUri(
   documentDbDatabaseUrl,
   "notifications"
 );
+
+export const EMAIL_NOTIFICATION_QUEUE_NAME = "emailnotifications";
+const queueConnectionString = getRequiredStringEnv("QueueStorageConnection");
 
 //
 // setup NodeMailer
@@ -89,21 +102,6 @@ const ContextWithBindings = t.interface({
 });
 
 type ContextWithBindings = t.TypeOf<typeof ContextWithBindings> & IContext;
-
-export const enum ProcessingResult {
-  OK
-}
-
-/**
- * Bad things that can happen while we process the message
- */
-export const enum ProcessingError {
-  // a transient error, e.g. database is not available
-  TRANSIENT,
-
-  // a permanent error, e.g. missing email data from the notification
-  PERMANENT
-}
 
 /**
  * Generates the HTML for the email from the Markdown content and the subject
@@ -186,7 +184,7 @@ export async function handleNotification(
   notificationId: string,
   messageContent: MessageContent,
   senderMetadata: CreatedMessageEventSenderMetadata
-): Promise<Either<ProcessingError, ProcessingResult>> {
+): Promise<Either<RuntimeError, NodeMailer.SentMessageInfo>> {
   // fetch the notification
   const errorOrMaybeNotification = await notificationModel.find(
     notificationId,
@@ -196,22 +194,24 @@ export async function handleNotification(
   if (isLeft(errorOrMaybeNotification)) {
     const error = errorOrMaybeNotification.value;
     // we got an error while fetching the notification
-    winston.warn(
-      `Error while fetching the notification|notification=${notificationId}|message=${messageId}|error=${
-        error.code
-      }`
+    return left(
+      TransientError(
+        `Error while fetching the notification|notification=${notificationId}|message=${messageId}|error=${
+          error.code
+        }`
+      )
     );
-    return left(ProcessingError.TRANSIENT);
   }
 
   const maybeNotification = errorOrMaybeNotification.value;
 
   if (isNone(maybeNotification)) {
     // it may happen that the object is not yet visible to this function due to latency?
-    winston.warn(
-      `Notification not found|notification=${notificationId}|message=${messageId}`
+    return left(
+      TransientError(
+        `Notification not found|notification=${notificationId}|message=${messageId}`
+      )
     );
-    return left(ProcessingError.TRANSIENT);
   }
 
   // we have the notification
@@ -221,10 +221,11 @@ export async function handleNotification(
   if (!emailNotification) {
     // for some reason the notification is missing the email channel attributes
     // we will never be able to send an email for this notification
-    winston.warn(
-      `The notification does not have email info|notification=${notificationId}|message=${messageId}`
+    return left(
+      PermanentError(
+        `The notification does not have email info|notification=${notificationId}|message=${messageId}`
+      )
     );
-    return left(ProcessingError.PERMANENT);
   }
 
   // use the provided subject if present, or else use the default subject line
@@ -282,12 +283,13 @@ export async function handleNotification(
       }
     });
     const error = sendResult.value;
-    winston.warn(
-      `Error while sending email|notification=${notificationId}|message=${messageId}|error=${
-        error.message
-      }`
+    return left(
+      TransientError(
+        `Error while sending email|notification=${notificationId}|message=${messageId}|error=${
+          error.message
+        }`
+      )
     );
-    return left(ProcessingError.TRANSIENT);
   }
 
   // track the event of successful delivery
@@ -311,130 +313,146 @@ export async function handleNotification(
 
   if (isLeft(updateResult)) {
     // we got an error while updating the notification status
-    // TODO: this will re-send the email, check whether sendgrid supports idempotent calls (dedup on notificationId)
+    // TODO: this will re-send the email, check whether the mailing provider
+    // supports idempotent calls (dedup on notificationId)
     const error = updateResult.value;
-    winston.warn(
-      `Error while updating the notification|notification=${notificationId}|message=${messageId}|error=${
-        error.code
-      }`
+    return left(
+      TransientError(
+        `Error while updating the notification|notification=${notificationId}|message=${messageId}|error=${
+          error.code
+        }`
+      )
     );
-    return left(ProcessingError.TRANSIENT);
   }
 
   // success!
   winston.debug(
-    `Email notification succeeded|notification=${notificationId}|message=${messageId}`
+    `EmailNotificationsHandlerIndex|Email notification succeeded|notification=${notificationId}|message=${messageId}`
   );
-  return right(ProcessingResult.OK);
+  return right(sendResult);
 }
 
 export function processResolve(
-  result: Either<ProcessingError, ProcessingResult>,
-  context: ContextWithBindings
+  errorOrResult: Either<RuntimeError, NodeMailer.SentMessageInfo>,
+  context: IContext
 ): void {
-  if (isLeft(result)) {
-    // if handler returned an error, decide what to do
-    switch (result.value) {
-      case ProcessingError.TRANSIENT: {
-        // transient error, we trigger a retry
-        context.done("Transient");
-        break;
-      }
-      case ProcessingError.PERMANENT: {
-        // permanent error, we're done
-        context.done();
-        break;
-      }
+  if (isLeft(errorOrResult)) {
+    if (isTransient(errorOrResult.value)) {
+      winston.warn(
+        `EmailNotificationQueueHandler|Transient error|${
+          errorOrResult.value.message
+        }`
+      );
+      // transient error, we trigger a retry
+      const queueService = createQueueService(queueConnectionString);
+      return retryMessageEnqueue(
+        queueService,
+        EMAIL_NOTIFICATION_QUEUE_NAME,
+        context
+      );
+    } else {
+      winston.warn(
+        `EmailNotificationQueueHandler|Permanent error|${
+          errorOrResult.value.message
+        }`
+      );
     }
-    return;
   }
-
-  // success!
+  // TODO: update message status (succes_at / failed_at)
+  // in case of permanent error or success we are done
   context.done();
-}
-
-export function processReject(
-  error: Either<ProcessingError, ProcessingResult>,
-  context: ContextWithBindings,
-  emailNotificationEvent: NotificationEvent
-): void {
-  // the promise failed
-  winston.error(
-    `Error while processing event, retrying` +
-      `|${emailNotificationEvent.messageId}|${
-        emailNotificationEvent.notificationId
-      }|${error}`
-  );
-  // in case of error, we return a failure to trigger a retry (up to the configured max retries)
-  // TODO: schedule next retry with exponential backoff, see #150597257
-  context.done(error);
 }
 
 /**
  * Function handler
  */
 export function index(context: ContextWithBindings): void {
-  const logLevel = isProduction ? "info" : "debug";
-  configureAzureContextTransport(context, winston, logLevel);
-  winston.debug(`STARTED|${context.invocationId}`);
+  try {
+    const logLevel = isProduction ? "info" : "debug";
+    configureAzureContextTransport(context, winston, logLevel);
+    winston.debug(`STARTED|${context.invocationId}`);
 
-  // Setup ApplicationInsights
-  const appInsightsClient = new ApplicationInsights.TelemetryClient();
+    // Setup ApplicationInsights
+    const appInsightsClient = new ApplicationInsights.TelemetryClient();
 
-  const emailNotificationEvent = context.bindings.notificationEvent;
+    // since this function gets triggered by a queued message that gets
+    // deserialized from a json object, we must first check that what we
+    // got is what we expect.
+    const validation = t.validate(
+      context.bindings.notificationEvent,
+      NotificationEvent
+    );
+    if (isLeft(validation)) {
+      winston.error(
+        `EmailNotificationsHandlerIndex|Fatal! No valid email notification found in bindings.`
+      );
+      winston.debug(
+        `EmailNotificationsHandlerIndex|validationError|${ReadableReporter.report(
+          validation
+        ).join("\n")}`
+      );
+      return context.done();
+    }
 
-  // since this function gets triggered by a queued message that gets
-  // deserialized from a json object, we must first check that what we
-  // got is what we expect.
-  if (!NotificationEvent.is(emailNotificationEvent)) {
-    winston.error(`Fatal! No valid email notification found in bindings.`);
+    const emailNotificationEvent = validation.value;
 
-    const validation = t.validate(emailNotificationEvent, NotificationEvent);
+    // it is an IEmailNotificationEvent
     winston.debug(
-      `EmailNotificationsHandlerIndex|validationError|${ReadableReporter.report(
-        validation
-      ).join("\n")}`
+      `EmailNotificationsHandlerIndex|Dequeued email notification|${
+        emailNotificationEvent.notificationId
+      }`
     );
 
+    // setup required models
+    const documentClient = new DocumentDBClient(cosmosDbUri, {
+      masterKey: cosmosDbKey
+    });
+    const notificationModel = new NotificationModel(
+      documentClient,
+      notificationsCollectionUrl
+    );
+
+    const mailerTransporter = NodeMailer.createTransport(
+      sendGridTransport({
+        auth: {
+          api_key: sendgridKey
+        }
+      })
+    );
+
+    handleNotification(
+      mailerTransporter,
+      appInsightsClient,
+      notificationModel,
+      emailNotificationEvent.messageId,
+      emailNotificationEvent.notificationId,
+      emailNotificationEvent.messageContent,
+      emailNotificationEvent.senderMetadata
+    )
+      .then(errorOrResult => {
+        processResolve(errorOrResult, context);
+      })
+      .catch(error => {
+        // Some unexpected exception occurred inside the promise.
+        // We consider this event as a permanent unrecoverable error.
+        // TODO: update message status (failed_at)
+        winston.error(
+          `EmailNotificationQueueHandler|Error while processing event` +
+            `|${emailNotificationEvent.messageId}|${
+              emailNotificationEvent.notificationId
+            }|${error}`
+        );
+        context.done();
+      });
+  } catch (error) {
+    // Avoid poison queue in case of unexpected errors
+    // occurred outside handleNotification (shouldn't happen)
+    // TODO: update message status (failed_at)
+    winston.error(
+      `EmailNotificationQueueHandler|Exception caught|${error.message}|${
+        error.stack
+      }`
+    );
     context.done();
-    return;
   }
-  // it is an IEmailNotificationEvent
-  winston.debug(
-    `Dequeued email notification|${emailNotificationEvent.notificationId}`
-  );
-
-  // setup required models
-  const documentClient = new DocumentDBClient(cosmosDbUri, {
-    masterKey: cosmosDbKey
-  });
-  const notificationModel = new NotificationModel(
-    documentClient,
-    notificationsCollectionUrl
-  );
-
-  const mailerTransporter = NodeMailer.createTransport(
-    sendGridTransport({
-      auth: {
-        api_key: sendgridKey
-      }
-    })
-  );
-
-  handleNotification(
-    mailerTransporter,
-    appInsightsClient,
-    notificationModel,
-    emailNotificationEvent.messageId,
-    emailNotificationEvent.notificationId,
-    emailNotificationEvent.messageContent,
-    emailNotificationEvent.senderMetadata
-  ).then(
-    (result: Either<ProcessingError, ProcessingResult>) => {
-      processResolve(result, context);
-    },
-    (error: Either<ProcessingError, ProcessingResult>) => {
-      processReject(error, context, emailNotificationEvent);
-    }
-  );
 }
