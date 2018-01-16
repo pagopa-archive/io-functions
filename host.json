@@ -6,6 +6,13 @@
     "maxConcurrentRequests": 50,
     "dynamicThrottlesEnabled": false
   },
+  "queues": {
+    "maxPollingInterval": 10000,
+    "visibilityTimeout" : "00:00:30",
+    "batchSize": 16,
+    "maxDequeueCount": 22,
+    "newBatchThreshold": 8
+  },
   "functions": [
     "PublicApiV1",
     "Openapi",
