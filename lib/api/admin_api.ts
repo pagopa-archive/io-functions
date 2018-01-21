@@ -497,6 +497,25 @@ export const specs = {
         "authorized_recipients"
       ]
     },
+    ServicePublic: {
+      title: "Service (public)",
+      description: "A Service tied to an user's subscription.",
+      type: "object",
+      properties: {
+        service_id: { $ref: "#/definitions/ServiceId" },
+        service_name: { $ref: "#/definitions/ServiceName" },
+        organization_name: { $ref: "#/definitions/OrganizationName" },
+        department_name: { $ref: "#/definitions/DepartmentName" },
+        version: { type: "integer" },
+        id: { type: "string" }
+      },
+      required: [
+        "service_id",
+        "service_name",
+        "organization_name",
+        "department_name"
+      ]
+    },
     ServiceId: {
       type: "string",
       description:
