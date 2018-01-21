@@ -33,6 +33,7 @@ import * as express from "express";
 import { secureExpressApp } from "./utils/express";
 
 import { createBlobService } from "azure-storage";
+import { GetService } from "./controllers/services";
 
 // Whether we're in a production environment
 const isProduction = process.env.NODE_ENV === "production";
@@ -94,6 +95,8 @@ const appInsightsClient = new ApplicationInsights.TelemetryClient();
 const debugHandler = GetDebug(serviceModel);
 app.get("/api/v1/debug", debugHandler);
 app.post("/api/v1/debug", debugHandler);
+
+app.get("/api/v1/services/:serviceid", GetService(serviceModel));
 
 app.get("/api/v1/profiles/:fiscalcode", GetProfile(serviceModel, profileModel));
 app.post(
