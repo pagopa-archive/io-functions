@@ -14,6 +14,40 @@ export const specs = {
   schemes: ["https"],
   security: [{ SubscriptionKey: [] }],
   paths: {
+    "/services/{service_id}": {
+      parameters: [
+        {
+          name: "service_id",
+          in: "path",
+          type: "string",
+          required: true,
+          description: "The ID of an existing Service."
+        }
+      ],
+      get: {
+        operationId: "getService",
+        summary: "Get Service",
+        description:
+          "A previously created service with the provided service ID is returned.",
+        responses: {
+          "200": {
+            description: "Service found.",
+            schema: { $ref: "#/definitions/ServicePublic" },
+            examples: {
+              "application/json": {
+                department_name: "dept",
+                organization_name: "org",
+                service_id: "2b3e728c1a5d1efa035c",
+                service_name: "service",
+                version: 1
+              }
+            }
+          },
+          "404": { description: "No service found for the provided ID." }
+        },
+        parameters: []
+      }
+    },
     "/messages/{fiscal_code}/{id}": {
       parameters: [
         { $ref: "#/parameters/FiscalCode" },
@@ -473,6 +507,24 @@ export const specs = {
         "department_name",
         "authorized_cidrs",
         "authorized_recipients"
+      ]
+    },
+    ServicePublic: {
+      title: "Service (public)",
+      description: "A Service associated to an user's subscription.",
+      type: "object",
+      properties: {
+        service_id: { $ref: "#/definitions/ServiceId" },
+        service_name: { $ref: "#/definitions/ServiceName" },
+        organization_name: { $ref: "#/definitions/OrganizationName" },
+        department_name: { $ref: "#/definitions/DepartmentName" },
+        version: { type: "integer" }
+      },
+      required: [
+        "service_id",
+        "service_name",
+        "organization_name",
+        "department_name"
       ]
     },
     ServiceId: {

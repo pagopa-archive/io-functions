@@ -241,6 +241,26 @@ Service:
   - department_name
   - authorized_cidrs
   - authorized_recipients
+ServicePublic:
+  title: Service (public)
+  description: A Service associated to an user's subscription.
+  type: object
+  properties:
+    service_id:
+      $ref: "#/ServiceId"
+    service_name:
+      $ref: "#/ServiceName"
+    organization_name:
+      $ref: "#/OrganizationName"
+    department_name:
+      $ref: "#/DepartmentName"
+    version:
+      type: integer
+  required:
+  - service_id
+  - service_name
+  - organization_name
+  - department_name
 ServiceId:
   type: string
   description: The ID of the Service. Equals the subscriptionId of a registered
