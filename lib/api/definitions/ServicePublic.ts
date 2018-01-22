@@ -13,7 +13,7 @@ import { OrganizationName } from "./OrganizationName";
 import { DepartmentName } from "./DepartmentName";
 
 /**
- * A Service tied to an user's subscription.
+ * A Service associated to an user's subscription.
  */
 
 import * as t from "io-ts";
@@ -32,9 +32,7 @@ const ServicePublicR = t.interface({
 
 // optional attributes
 const ServicePublicO = t.partial({
-  version: t.number,
-
-  id: t.string
+  version: t.number
 });
 
 export const ServicePublic = strictInterfaceWithOptionals(

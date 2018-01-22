@@ -499,15 +499,14 @@ export const specs = {
     },
     ServicePublic: {
       title: "Service (public)",
-      description: "A Service tied to an user's subscription.",
+      description: "A Service associated to an user's subscription.",
       type: "object",
       properties: {
         service_id: { $ref: "#/definitions/ServiceId" },
         service_name: { $ref: "#/definitions/ServiceName" },
         organization_name: { $ref: "#/definitions/OrganizationName" },
         department_name: { $ref: "#/definitions/DepartmentName" },
-        version: { type: "integer" },
-        id: { type: "string" }
+        version: { type: "integer" }
       },
       required: [
         "service_id",

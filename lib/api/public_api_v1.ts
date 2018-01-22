@@ -35,7 +35,6 @@ export const specs = {
             schema: { $ref: "#/definitions/ServicePublic" },
             examples: {
               "application/json": {
-                id: "2b3e728c1a5d1efa035c-0000000000000001",
                 department_name: "dept",
                 organization_name: "org",
                 service_id: "2b3e728c1a5d1efa035c",
@@ -512,15 +511,14 @@ export const specs = {
     },
     ServicePublic: {
       title: "Service (public)",
-      description: "A Service tied to an user's subscription.",
+      description: "A Service associated to an user's subscription.",
       type: "object",
       properties: {
         service_id: { $ref: "#/definitions/ServiceId" },
         service_name: { $ref: "#/definitions/ServiceName" },
         organization_name: { $ref: "#/definitions/OrganizationName" },
         department_name: { $ref: "#/definitions/DepartmentName" },
-        version: { type: "integer" },
-        id: { type: "string" }
+        version: { type: "integer" }
       },
       required: [
         "service_id",

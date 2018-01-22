@@ -243,7 +243,7 @@ Service:
   - authorized_recipients
 ServicePublic:
   title: Service (public)
-  description: A Service tied to an user's subscription.
+  description: A Service associated to an user's subscription.
   type: object
   properties:
     service_id:
@@ -256,8 +256,6 @@ ServicePublic:
       $ref: "#/DepartmentName"
     version:
       type: integer
-    id:
-      type: string
   required:
   - service_id
   - service_name

@@ -67,7 +67,6 @@ function retrievedServiceToPublic(
 ): ApiService {
   return {
     department_name: retrievedService.departmentName,
-    id: retrievedService.id,
     organization_name: retrievedService.organizationName,
     service_id: retrievedService.serviceId,
     service_name: retrievedService.serviceName,
@@ -114,7 +113,7 @@ export function GetService(serviceModel: ServiceModel): express.RequestHandler {
     serviceModel
   );
   const middlewaresWrap = withRequestMiddlewares(
-    AzureApiAuthMiddleware(new Set([UserGroup.ApiServiceRead])),
+    AzureApiAuthMiddleware(new Set([UserGroup.ApiPublicServiceRead])),
     ClientIpMiddleware,
     azureUserAttributesMiddleware,
     requiredServiceIdMiddleware

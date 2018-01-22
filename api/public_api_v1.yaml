@@ -27,7 +27,6 @@ paths:
             "$ref": "#/definitions/ServicePublic"
           examples:
             application/json:
-              id: 2b3e728c1a5d1efa035c-0000000000000001
               department_name: dept
               organization_name: org
               service_id: 2b3e728c1a5d1efa035c

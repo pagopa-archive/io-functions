@@ -38,6 +38,9 @@ export enum UserGroup {
   // services: create and update services
   ApiServiceWrite = "ApiServiceWrite",
 
+  // services: read services attributes (public API)
+  ApiPublicServiceRead = "ApiPublicServiceRead",
+
   // messages: read sent message
   ApiMessageRead = "ApiMessageRead",
   // messages: send messages
