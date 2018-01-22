@@ -16,6 +16,7 @@ import { Option } from "fp-ts/lib/Option";
 import { EmailAddress } from "../api/definitions/EmailAddress";
 import { FiscalCode } from "../api/definitions/FiscalCode";
 import { IsInboxEnabled } from "../api/definitions/IsInboxEnabled";
+import { PreferredLanguages } from "../api/definitions/PreferredLanguages";
 import { fiscalCodeToModelId } from "../utils/conversions";
 import { NonNegativeNumber } from "../utils/numbers";
 import { NonEmptyString } from "../utils/strings";
@@ -35,7 +36,11 @@ export const Profile = t.intersection([
     email: EmailAddress,
 
     // whether to store the content of messages sent to this citizen
-    isInboxEnabled: IsInboxEnabled
+    isInboxEnabled: IsInboxEnabled,
+
+    // array of user's preferred languages in ISO-3166-1-2 format
+    // https://it.wikipedia.org/wiki/ISO_3166-2
+    preferredLanguages: PreferredLanguages
   })
 ]);
 

@@ -60,6 +60,7 @@ function toExtendedProfile(profile: RetrievedProfile): ExtendedProfile {
   return {
     email: profile.email,
     is_inbox_enabled: profile.isInboxEnabled,
+    preferred_languages: profile.preferredLanguages,
     version: profile.version
   };
 }
@@ -192,7 +193,8 @@ async function createNewProfileFromPayload(
   const profile: Profile = {
     email: profileModelPayload.email,
     fiscalCode,
-    isInboxEnabled: profileModelPayload.is_inbox_enabled
+    isInboxEnabled: profileModelPayload.is_inbox_enabled,
+    preferredLanguages: profileModelPayload.preferred_languages
   };
   const errorOrProfile = await profileModel.create(profile, profile.fiscalCode);
   const errorOrProfileAsPublicExtendedProfile = errorOrProfile.map(
@@ -224,7 +226,8 @@ async function updateExistingProfileFromPayload(
       return {
         ...p,
         email: profileModelPayload.email,
-        isInboxEnabled: profileModelPayload.is_inbox_enabled
+        isInboxEnabled: profileModelPayload.is_inbox_enabled,
+        preferredLanguages: profileModelPayload.preferred_languages
       };
     }
   );
