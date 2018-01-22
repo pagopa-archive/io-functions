@@ -66,7 +66,6 @@ const aRetrievedService: RetrievedService = {
 
 const aSeralizedService: ApiService = {
   ...aServicePayload,
-  id: "123" as NonEmptyString,
   version: 1 as NonNegativeNumber
 };
 
