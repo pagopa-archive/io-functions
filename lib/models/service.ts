@@ -148,11 +148,6 @@ export class ServiceModel extends DocumentDbModelVersioned<
   NewService,
   RetrievedService
 > {
-  // tslint:disable-next-line:readonly-keyword
-  protected dbClient: DocumentDb.DocumentClient;
-  // tslint:disable-next-line:readonly-keyword
-  protected collectionUri: DocumentDbUtils.IDocumentDbCollectionUri;
-
   /**
    * Creates a new Service model
    *
@@ -163,19 +158,14 @@ export class ServiceModel extends DocumentDbModelVersioned<
     dbClient: DocumentDb.DocumentClient,
     collectionUrl: DocumentDbUtils.IDocumentDbCollectionUri
   ) {
-    super();
-    // tslint:disable-next-line:no-object-mutation
-    this.toRetrieved = toRetrieved;
-    // tslint:disable-next-line:no-object-mutation
-    this.getModelId = getModelId;
-    // tslint:disable-next-line:no-object-mutation
-    this.versionateModel = updateModelId;
-    // tslint:disable-next-line:no-object-mutation
-    this.toBaseType = toBaseType;
-    // tslint:disable-next-line:no-object-mutation
-    this.dbClient = dbClient;
-    // tslint:disable-next-line:no-object-mutation
-    this.collectionUri = collectionUrl;
+    super(
+      dbClient,
+      collectionUrl,
+      toBaseType,
+      toRetrieved,
+      getModelId,
+      updateModelId
+    );
   }
 
   public findOneByServiceId(

@@ -21,26 +21,17 @@ export abstract class DocumentDbModel<
   TN extends T & DocumentDb.NewDocument,
   TR extends T & DocumentDb.RetrievedDocument
 > {
-  // instance of a DocumentDB client
-  // tslint:disable-next-line:readonly-keyword
-  protected dbClient: DocumentDb.DocumentClient;
-
-  // the URI of the collection associated to this model
-  // tslint:disable-next-line:readonly-keyword
-  protected collectionUri: DocumentDbUtils.IDocumentDbCollectionUri;
-
-  /**
-   * An helper that converts a retrieved document to the base document type
-   */
-  // tslint:disable-next-line:readonly-keyword
-  protected toBaseType: (o: TR) => T;
-
-  /**
-   * An helper that converts the result of a query (a plain DocumentDB document
-   * to the retrieved type).
-   */
-  // tslint:disable-next-line:readonly-keyword
-  protected toRetrieved: (result: DocumentDb.RetrievedDocument) => TR;
+  constructor(
+    // instance of a DocumentDB client
+    protected readonly dbClient: DocumentDb.DocumentClient,
+    // the URI of the collection associated to this model
+    protected readonly collectionUri: DocumentDbUtils.IDocumentDbCollectionUri,
+    // An helper that converts a retrieved document to the base document type
+    protected readonly toBaseType: (o: TR) => T,
+    // An helper that converts the result of a query (a plain DocumentDB document
+    // to the retrieved type).
+    protected readonly toRetrieved: (result: DocumentDb.RetrievedDocument) => TR
+  ) {}
 
   /**
    * Creates a new document in the data store.
