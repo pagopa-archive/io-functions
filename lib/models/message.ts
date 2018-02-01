@@ -194,13 +194,6 @@ export class MessageModel extends DocumentDbModel<
   NewMessage,
   RetrievedMessage
 > {
-  // tslint:disable-next-line:readonly-keyword
-  protected dbClient: DocumentDb.DocumentClient;
-  // tslint:disable-next-line:readonly-keyword
-  protected collectionUri: DocumentDbUtils.IDocumentDbCollectionUri;
-  // tslint:disable-next-line:readonly-keyword
-  protected containerName: NonEmptyString;
-
   /**
    * Creates a new Message model
    *
@@ -211,19 +204,9 @@ export class MessageModel extends DocumentDbModel<
   constructor(
     dbClient: DocumentDb.DocumentClient,
     collectionUrl: DocumentDbUtils.IDocumentDbCollectionUri,
-    containerName: NonEmptyString
+    protected readonly containerName: NonEmptyString
   ) {
-    super();
-    // tslint:disable-next-line:no-object-mutation
-    this.toBaseType = toBaseType;
-    // tslint:disable-next-line:no-object-mutation
-    this.toRetrieved = toRetrieved;
-    // tslint:disable-next-line:no-object-mutation
-    this.dbClient = dbClient;
-    // tslint:disable-next-line:no-object-mutation
-    this.collectionUri = collectionUrl;
-    // tslint:disable-next-line:no-object-mutation
-    this.containerName = containerName;
+    super(dbClient, collectionUrl, toBaseType, toRetrieved);
   }
 
   /**
