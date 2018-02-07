@@ -95,6 +95,7 @@ import { withoutUndefinedValues } from "../utils/types";
 
 import { isLeft } from "fp-ts/lib/Either";
 import { isNone } from "fp-ts/lib/Option";
+import { CreatedMessageWithContent } from "../api/definitions/CreatedMessageWithContent";
 
 /**
  * Input and output bindings for this function
@@ -495,7 +496,7 @@ export function GetMessageHandler(
       );
     }
 
-    const message = withoutUndefinedValues({
+    const message: CreatedMessageWithContent = withoutUndefinedValues({
       content: maybeContentOrError.value.toUndefined(),
       ...retrievedMessageToPublic(retrievedMessage)
     });

@@ -274,7 +274,7 @@ ServicePublic:
   - service_id
   - service_name
   - organization_name
-  - department_name  
+  - department_name
 ServiceId:
   type: string
   description: The ID of the Service. Equals the subscriptionId of a registered
