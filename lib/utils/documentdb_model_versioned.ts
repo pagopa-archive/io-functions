@@ -56,15 +56,25 @@ export abstract class DocumentDbModelVersioned<
   TN extends T & DocumentDb.NewDocument & VersionedModel,
   TR extends T & DocumentDb.RetrievedDocument & VersionedModel
 > extends DocumentDbModel<T, TN, TR> {
-  // tslint:disable-next-line:readonly-keyword
-  protected getModelId: (o: T) => ModelId;
-
-  // tslint:disable-next-line:readonly-keyword
-  protected versionateModel: (
-    o: T,
-    id: NonEmptyString,
-    version: NonNegativeNumber
-  ) => TN;
+  constructor(
+    // instance of a DocumentDB client
+    dbClient: DocumentDb.DocumentClient,
+    // the URI of the collection associated to this model
+    collectionUri: DocumentDbUtils.IDocumentDbCollectionUri,
+    // An helper that converts a retrieved document to the base document type
+    toBaseType: (o: TR) => T,
+    // An helper that converts the result of a query (a plain DocumentDB document
+    // to the retrieved type).
+    toRetrieved: (result: DocumentDb.RetrievedDocument) => TR,
+    protected readonly getModelId: (o: T) => ModelId,
+    protected readonly versionateModel: (
+      o: T,
+      id: NonEmptyString,
+      version: NonNegativeNumber
+    ) => TN
+  ) {
+    super(dbClient, collectionUri, toBaseType, toRetrieved);
+  }
 
   public async create(
     document: T,

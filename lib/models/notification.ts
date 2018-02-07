@@ -124,11 +124,6 @@ export class NotificationModel extends DocumentDbModel<
   NewNotification,
   RetrievedNotification
 > {
-  // tslint:disable-next-line:readonly-keyword
-  protected dbClient: DocumentDb.DocumentClient;
-  // tslint:disable-next-line:readonly-keyword
-  protected collectionUri: DocumentDbUtils.IDocumentDbCollectionUri;
-
   /**
    * Creates a new Notification model
    *
@@ -139,15 +134,7 @@ export class NotificationModel extends DocumentDbModel<
     dbClient: DocumentDb.DocumentClient,
     collectionUrl: DocumentDbUtils.IDocumentDbCollectionUri
   ) {
-    super();
-    // tslint:disable-next-line:no-object-mutation
-    this.toBaseType = toBaseType;
-    // tslint:disable-next-line:no-object-mutation
-    this.toRetrieved = toRetrieved;
-    // tslint:disable-next-line:no-object-mutation
-    this.dbClient = dbClient;
-    // tslint:disable-next-line:no-object-mutation
-    this.collectionUri = collectionUrl;
+    super(dbClient, collectionUrl, toBaseType, toRetrieved);
   }
 
   /**

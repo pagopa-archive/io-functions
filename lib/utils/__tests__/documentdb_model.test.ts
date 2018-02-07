@@ -32,21 +32,22 @@ class MyModel extends DocumentDbModel<
     dbClient: DocumentDb.DocumentClient,
     collectionUrl: DocumentDbUtils.IDocumentDbCollectionUri
   ) {
-    super();
-    this.toBaseType = o => {
-      return {
-        test: o.test
-      };
-    };
-    this.toRetrieved = result => {
-      return {
-        ...result,
-        kind: "IRetrievedMyDocument",
-        test: result.test
-      };
-    };
-    this.dbClient = dbClient;
-    this.collectionUri = collectionUrl;
+    super(
+      dbClient,
+      collectionUrl,
+      o => {
+        return {
+          test: o.test
+        };
+      },
+      result => {
+        return {
+          ...result,
+          kind: "IRetrievedMyDocument",
+          test: result.test
+        };
+      }
+    );
   }
 }
 
