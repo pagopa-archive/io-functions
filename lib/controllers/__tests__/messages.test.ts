@@ -14,7 +14,7 @@ import { none, some } from "fp-ts/lib/Option";
 
 import { ModelId } from "../../utils/documentdb_model_versioned";
 
-import { CreatedMessage } from "../../api/definitions/CreatedMessage";
+import { CreatedMessageWithoutContent } from "../../api/definitions/CreatedMessageWithoutContent";
 import { EmailAddress } from "../../api/definitions/EmailAddress";
 import { FiscalCode } from "../../api/definitions/FiscalCode";
 import { MessageBodyMarkdown } from "../../api/definitions/MessageBodyMarkdown";
@@ -111,7 +111,7 @@ const aRetrievedMessageWithoutContent: RetrievedMessageWithoutContent = {
   kind: "IRetrievedMessageWithoutContent"
 };
 
-const aPublicExtendedMessage: CreatedMessage = {
+const aPublicExtendedMessage: CreatedMessageWithoutContent = {
   fiscal_code: aNewMessageWithoutContent.fiscalCode,
   id: "A_MESSAGE_ID",
   sender_service_id: aNewMessageWithoutContent.senderServiceId

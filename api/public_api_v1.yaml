@@ -52,7 +52,7 @@ paths:
         '200':
           description: Message found.
           schema:
-            $ref: "#/definitions/MessageResponse"
+            $ref: "#/definitions/MessageResponseWithContent"
           examples:
             application/json:
               message:

@@ -1,5 +1,4 @@
 ProblemJson:
-  title: Problem Type
   type: object
   properties:
     type:
@@ -32,7 +31,6 @@ ProblemJson:
         An absolute URI that identifies the specific occurrence of the problem.
         It may or may not yield further information if dereferenced.
 MessageContent:
-  title: MessageContent
   type: object
   properties:
     subject:
@@ -42,7 +40,6 @@ MessageContent:
   required:
   - markdown
 NewMessage:
-  title: NewMessage
   type: object
   properties:
     time_to_live:
@@ -60,13 +57,11 @@ NotificationChannelStatus:
   - SENT_TO_CHANNEL
   example: SENT_TO_CHANNEL
 NotificationStatus:
-  title: NotificationStatus
   type: object
   properties:
     email:
       $ref: "#/NotificationChannelStatus"
-CreatedMessage:
-  title: CreatedMessage
+CreatedMessageWithContent:
   type: object
   properties:
     id:
@@ -82,11 +77,34 @@ CreatedMessage:
   required:
   - fiscal_code
   - sender_service_id
-MessageResponse:
+CreatedMessageWithoutContent:
+  type: object
+  properties:
+    id:
+      type: string
+    fiscal_code:
+      $ref: "#/FiscalCode"
+    time_to_live:
+      $ref: "#/TimeToLive"
+    sender_service_id:
+      type: string
+  required:
+  - fiscal_code
+  - sender_service_id
+MessageResponseWithContent:
   type: object
   properties:
     message:
-      $ref: "#/CreatedMessage"
+      $ref: "#/CreatedMessageWithContent"
+    notification:
+      $ref: "#/NotificationStatus"
+  required:
+  - message
+MessageResponseWithoutContent:
+  type: object
+  properties:
+    message:
+      $ref: "#/CreatedMessageWithoutContent"
     notification:
       $ref: "#/NotificationStatus"
   required:
@@ -121,7 +139,6 @@ MessageBodyMarkdown:
     Remember: this has to be a long text.
 PaginationResponse:
   type: object
-  title: pagination
   description: Pagination response parameters.
   properties:
     page_size:
@@ -136,7 +153,6 @@ PaginationResponse:
       format: uri
       example: https://example.com/?p=0XXX2
 LimitedProfile:
-  title: A citizen's profile
   description: Describes the citizen's profile, mostly interesting for preferences
     attributes.
   type: object
@@ -144,7 +160,6 @@ LimitedProfile:
     preferred_languages:
       $ref: "#/PreferredLanguages"
 ExtendedProfile:
-  title: A citizen's profile
   description: Describes the citizen's profile, mostly interesting for preferences
     attributes.
   type: object
@@ -160,8 +175,8 @@ ExtendedProfile:
 IsInboxEnabled:
   type: boolean
   default: false
-  description: True if the recipient of a message wants to store its content
-    for later retrieval.
+  description: True if the recipient of a message wants to store its content for
+    later retrieval.
 TimeToLive:
   type: integer
   default: 3600
@@ -210,7 +225,6 @@ PreferredLanguages:
     and the ISO 3166-1 2 letter country code; e.g., 'en_US' specifies the language
     English and country US.
 Service:
-  title: Service
   description: A Service tied to an user's subscription.
   type: object
   properties:
@@ -225,7 +239,7 @@ Service:
     authorized_cidrs:
       type: array
       items:
-        "$ref": "#/CIDR"
+        $ref: "#/CIDR"
     authorized_recipients:
       type: array
       items:
@@ -260,7 +274,7 @@ ServicePublic:
   - service_id
   - service_name
   - organization_name
-  - department_name
+  - department_name  
 ServiceId:
   type: string
   description: The ID of the Service. Equals the subscriptionId of a registered
@@ -268,21 +282,19 @@ ServiceId:
   minLength: 1
 ServiceName:
   type: string
-  description: The name of the service. Will be added to the content of sent
-    messages.
+  description: The name of the service. Will be added to the content of sent messages.
   minLength: 1
 OrganizationName:
   type: string
-  description: The organizazione that runs the service. Will be added to the
-    content of sent messages to identify the sender.
+  description: The organizazione that runs the service. Will be added to the content
+    of sent messages to identify the sender.
   minLength: 1
 DepartmentName:
   type: string
-  description: The departmenet inside the organization that runs the service.
-    Will be added to the content of sent messages.
+  description: The departmenet inside the organization that runs the service. Will
+    be added to the content of sent messages.
   minLength: 1
 CIDR:
   type: string
-  title: CIDR
   description: Describes a single IP or a range of IPs.
   pattern: "([0-9]{1,3}\\.){3}[0-9]{1,3}(\\/([0-9]|[1-2][0-9]|3[0-2]))?"

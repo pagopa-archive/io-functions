@@ -9,7 +9,6 @@
 
 import { FiscalCode } from "./FiscalCode";
 import { TimeToLive } from "./TimeToLive";
-import { MessageContent } from "./MessageContent";
 
 /**
  *
@@ -19,25 +18,25 @@ import * as t from "io-ts";
 import { strictInterfaceWithOptionals } from "../../utils/types";
 
 // required attributes
-const CreatedMessageR = t.interface({
+const CreatedMessageWithoutContentR = t.interface({
   fiscal_code: FiscalCode,
 
   sender_service_id: t.string
 });
 
 // optional attributes
-const CreatedMessageO = t.partial({
+const CreatedMessageWithoutContentO = t.partial({
   id: t.string,
 
-  time_to_live: TimeToLive,
-
-  content: MessageContent
+  time_to_live: TimeToLive
 });
 
-export const CreatedMessage = strictInterfaceWithOptionals(
-  CreatedMessageR.props,
-  CreatedMessageO.props,
-  "CreatedMessage"
+export const CreatedMessageWithoutContent = strictInterfaceWithOptionals(
+  CreatedMessageWithoutContentR.props,
+  CreatedMessageWithoutContentO.props,
+  "CreatedMessageWithoutContent"
 );
 
-export type CreatedMessage = t.TypeOf<typeof CreatedMessage>;
+export type CreatedMessageWithoutContent = t.TypeOf<
+  typeof CreatedMessageWithoutContent
+>;

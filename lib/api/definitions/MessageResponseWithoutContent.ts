@@ -7,7 +7,7 @@
 // tslint:disable:no-any
 // tslint:disable:object-literal-sort-keys
 
-import { CreatedMessage } from "./CreatedMessage";
+import { CreatedMessageWithoutContent } from "./CreatedMessageWithoutContent";
 import { NotificationStatus } from "./NotificationStatus";
 
 /**
@@ -18,19 +18,21 @@ import * as t from "io-ts";
 import { strictInterfaceWithOptionals } from "../../utils/types";
 
 // required attributes
-const MessageResponseR = t.interface({
-  message: CreatedMessage
+const MessageResponseWithoutContentR = t.interface({
+  message: CreatedMessageWithoutContent
 });
 
 // optional attributes
-const MessageResponseO = t.partial({
+const MessageResponseWithoutContentO = t.partial({
   notification: NotificationStatus
 });
 
-export const MessageResponse = strictInterfaceWithOptionals(
-  MessageResponseR.props,
-  MessageResponseO.props,
-  "MessageResponse"
+export const MessageResponseWithoutContent = strictInterfaceWithOptionals(
+  MessageResponseWithoutContentR.props,
+  MessageResponseWithoutContentO.props,
+  "MessageResponseWithoutContent"
 );
 
-export type MessageResponse = t.TypeOf<typeof MessageResponse>;
+export type MessageResponseWithoutContent = t.TypeOf<
+  typeof MessageResponseWithoutContent
+>;

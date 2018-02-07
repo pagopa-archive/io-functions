@@ -16,10 +16,10 @@ import {
 
 import { IContext } from "azure-function-express";
 
-import { CreatedMessage } from "../api/definitions/CreatedMessage";
+import { CreatedMessageWithoutContent } from "../api/definitions/CreatedMessageWithoutContent";
 import { FiscalCode } from "../api/definitions/FiscalCode";
 import { MessageContent } from "../api/definitions/MessageContent";
-import { MessageResponse } from "../api/definitions/MessageResponse";
+import { MessageResponseWithContent } from "../api/definitions/MessageResponseWithContent";
 import { NewMessage as ApiNewMessage } from "../api/definitions/NewMessage";
 
 import { CreatedMessageEvent } from "./../models/created_message_event";
@@ -125,7 +125,7 @@ export const MessagePayloadMiddleware: IRequestMiddleware<
  */
 function retrievedMessageToPublic(
   retrievedMessage: RetrievedMessage
-): CreatedMessage {
+): CreatedMessageWithoutContent {
   return {
     fiscal_code: retrievedMessage.fiscalCode,
     id: retrievedMessage.id,
@@ -172,7 +172,7 @@ type IGetMessageHandler = (
   fiscalCode: FiscalCode,
   messageId: string
 ) => Promise<
-  | IResponseSuccessJson<MessageResponse>
+  | IResponseSuccessJson<MessageResponseWithContent>
   | IResponseErrorNotFound
   | IResponseErrorQuery
   | IResponseErrorValidation
@@ -194,7 +194,7 @@ type IGetMessagesHandler = (
   attrs: IAzureUserAttributes,
   fiscalCode: FiscalCode
 ) => Promise<
-  | IResponseSuccessJsonIterator<CreatedMessage>
+  | IResponseSuccessJsonIterator<CreatedMessageWithoutContent>
   | IResponseErrorValidation
   | IResponseErrorQuery
 >;
@@ -495,12 +495,12 @@ export function GetMessageHandler(
       );
     }
 
-    const message: CreatedMessage = withoutUndefinedValues({
+    const message = withoutUndefinedValues({
       content: maybeContentOrError.value.toUndefined(),
       ...retrievedMessageToPublic(retrievedMessage)
     });
 
-    const messageStatus: MessageResponse = {
+    const messageStatus: MessageResponseWithContent = {
       message,
       notification: maybeNotificationStatus.isSome()
         ? maybeNotificationStatus.toUndefined()
