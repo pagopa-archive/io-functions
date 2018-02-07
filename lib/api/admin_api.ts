@@ -276,7 +276,6 @@ export const specs = {
   },
   definitions: {
     ProblemJson: {
-      title: "Problem Type",
       type: "object",
       properties: {
         type: {
@@ -308,7 +307,6 @@ export const specs = {
       }
     },
     MessageContent: {
-      title: "MessageContent",
       type: "object",
       properties: {
         subject: { $ref: "#/definitions/MessageSubject" },
@@ -317,7 +315,6 @@ export const specs = {
       required: ["markdown"]
     },
     NewMessage: {
-      title: "NewMessage",
       type: "object",
       properties: {
         time_to_live: { $ref: "#/definitions/TimeToLive" },
@@ -332,12 +329,10 @@ export const specs = {
       example: "SENT_TO_CHANNEL"
     },
     NotificationStatus: {
-      title: "NotificationStatus",
       type: "object",
       properties: { email: { $ref: "#/definitions/NotificationChannelStatus" } }
     },
-    CreatedMessage: {
-      title: "CreatedMessage",
+    CreatedMessageWithContent: {
       type: "object",
       properties: {
         id: { type: "string" },
@@ -348,10 +343,28 @@ export const specs = {
       },
       required: ["fiscal_code", "sender_service_id"]
     },
-    MessageResponse: {
+    CreatedMessageWithoutContent: {
       type: "object",
       properties: {
-        message: { $ref: "#/definitions/CreatedMessage" },
+        id: { type: "string" },
+        fiscal_code: { $ref: "#/definitions/FiscalCode" },
+        time_to_live: { $ref: "#/definitions/TimeToLive" },
+        sender_service_id: { type: "string" }
+      },
+      required: ["fiscal_code", "sender_service_id"]
+    },
+    MessageResponseWithContent: {
+      type: "object",
+      properties: {
+        message: { $ref: "#/definitions/CreatedMessageWithContent" },
+        notification: { $ref: "#/definitions/NotificationStatus" }
+      },
+      required: ["message"]
+    },
+    MessageResponseWithoutContent: {
+      type: "object",
+      properties: {
+        message: { $ref: "#/definitions/CreatedMessageWithoutContent" },
         notification: { $ref: "#/definitions/NotificationStatus" }
       },
       required: ["message"]
@@ -382,7 +395,6 @@ export const specs = {
     },
     PaginationResponse: {
       type: "object",
-      title: "pagination",
       description: "Pagination response parameters.",
       properties: {
         page_size: {
@@ -401,7 +413,6 @@ export const specs = {
       }
     },
     LimitedProfile: {
-      title: "A citizen's profile",
       description:
         "Describes the citizen's profile, mostly interesting for preferences attributes.",
       type: "object",
@@ -410,7 +421,6 @@ export const specs = {
       }
     },
     ExtendedProfile: {
-      title: "A citizen's profile",
       description:
         "Describes the citizen's profile, mostly interesting for preferences attributes.",
       type: "object",
@@ -469,7 +479,6 @@ export const specs = {
         "Indicates the User's preferred written or spoken languages in order of preference. Generally used for selecting a localized User interface. Valid values are concatenation of the ISO 639-1 two letter language code, an underscore, and the ISO 3166-1 2 letter country code; e.g., 'en_US' specifies the language English and country US."
     },
     Service: {
-      title: "Service",
       description: "A Service tied to an user's subscription.",
       type: "object",
       properties: {
@@ -541,7 +550,6 @@ export const specs = {
     },
     CIDR: {
       type: "string",
-      title: "CIDR",
       description: "Describes a single IP or a range of IPs.",
       pattern: "([0-9]{1,3}\\.){3}[0-9]{1,3}(\\/([0-9]|[1-2][0-9]|3[0-2]))?"
     }

@@ -1,6 +1,6 @@
 swagger: '2.0'
 info:
-  version: 0.0.1
+  version: 0.0.2
   title: Digital Citizenship API
   description: Digital Citizenship API.
 basePath: "/api/v1"
@@ -52,7 +52,7 @@ paths:
         '200':
           description: Message found.
           schema:
-            $ref: "#/definitions/MessageResponse"
+            $ref: "#/definitions/MessageResponseWithContent"
           examples:
             application/json:
               message:
