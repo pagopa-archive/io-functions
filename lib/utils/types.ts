@@ -6,7 +6,7 @@ import { Set as SerializableSet } from "json-set-map";
 /**
  * An io-ts Type tagged with T
  */
-export type Tagged<T, S, A> = t.Type<S, A & T>;
+export type Tagged<T, S extends t.mixed, A> = t.Type<S, A & T>;
 
 /**
  * Tags an io-ts type with an interface T
@@ -38,12 +38,12 @@ export const enumType = <E>(e: {}, name: string): t.Type<any, E> => {
 /**
  * Creates an io-ts Type from a ReadonlySet
  */
-export const readonlySetType = <S, E>(
-  o: t.Type<S, E>,
+export const readonlySetType = <E>(
+  o: t.Type<t.mixed, E>,
   name: string
-): t.Type<any, ReadonlySet<E>> => {
+): t.Type<t.mixed, ReadonlySet<E>> => {
   const arrayType = t.readonlyArray(o, name);
-  return new t.Type<any, ReadonlySet<E>>(
+  return new t.Type<t.mixed, ReadonlySet<E>>(
     name,
     (s): s is ReadonlySet<E> => s instanceof Set && arrayType.is(Array.from(s)),
     (s, c) => {
@@ -112,7 +112,7 @@ export function strictInterfaceWithOptionals<
   required: R,
   optional: O,
   name: string
-): t.Type<{}, t.InterfaceOf<R> & t.PartialOf<O>> {
+): t.Type<t.mixed, t.InterfaceOf<R> & t.PartialOf<O>> {
   const loose = t.intersection([t.interface(required), t.partial(optional)]);
   const props = Object.assign({}, required, optional);
   return new t.Type(
