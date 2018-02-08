@@ -93,7 +93,7 @@ paths:
                 items:
                   type: array
                   items:
-                    $ref: "#/definitions/CreatedMessage"
+                    $ref: "#/definitions/CreatedMessageWithoutContent"
             - $ref: "#/definitions/PaginationResponse"
           examples:
             application/json:
