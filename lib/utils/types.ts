@@ -113,17 +113,18 @@ export function strictInterfaceWithOptionals<
 >(
   required: R,
   optional: O,
-  name?: string
+  name: string
 ): t.Type<
-  { [K in keyof R]: t.TypeOf<R[K]> } & { [K in keyof O]?: t.TypeOf<O[K]> },
-  { [K in keyof R]: t.OutputOf<R[K]> } & { [K in keyof O]?: t.OutputOf<O[K]> }
+  t.TypeOfProps<R> & t.TypeOfPartialProps<O>,
+  t.OutputOfProps<R> & t.OutputOfPartialProps<O>
 > {
   const loose = t.intersection([t.interface(required), t.partial(optional)]);
   const props = Object.assign({}, required, optional);
   return new t.Type(
-    name || `StrictInterfaceWithOptionals(${loose.name})`,
+    name,
     (m): m is t.TypeOfProps<R> & t.TypeOfPartialProps<O> =>
       loose.is(m) &&
+      // check if all object properties belong to the strict interface
       Object.getOwnPropertyNames(m).every(k => props.hasOwnProperty(k)),
     (m, c) =>
       loose.validate(m, c).chain(o => {

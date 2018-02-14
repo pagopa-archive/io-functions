@@ -2,7 +2,7 @@ import * as requestIp from "request-ip";
 import * as winston from "winston";
 
 import { right } from "fp-ts/lib/Either";
-import { fromEither, Option } from "fp-ts/lib/Option";
+import { fromEither as OptionFromEither, Option } from "fp-ts/lib/Option";
 import { IRequestMiddleware } from "../request_middleware";
 import { IPString } from "../strings";
 
@@ -24,6 +24,8 @@ export const ClientIpMiddleware: IRequestMiddleware<
   return new Promise(resolve => {
     const clientIp = requestIp.getClientIp(request);
     winston.debug(`Handling request for client IP|${clientIp}`);
-    resolve(right<never, ClientIp>(fromEither(IPString.decode(clientIp))));
+    resolve(
+      right<never, ClientIp>(OptionFromEither(IPString.decode(clientIp)))
+    );
   });
 };
