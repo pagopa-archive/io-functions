@@ -4,7 +4,7 @@ import { ResponseSuccessJson } from "../response";
 import { IPString } from "../strings";
 import { Tuple2 } from "../tuples";
 
-import { fromEither } from "fp-ts/lib/Option";
+import { fromEither as OptionFromEither } from "fp-ts/lib/Option";
 import { checkSourceIpForHandler } from "../source_ip_check";
 
 describe("checkSourceIpForHandler", () => {
@@ -27,7 +27,7 @@ describe("checkSourceIpForHandler", () => {
 
   it("should let the request pass if no CIDRs have been set", async () => {
     const result = await checkedHandler(
-      fromEither(IPString.decode("127.0.0.1")),
+      OptionFromEither(IPString.decode("127.0.0.1")),
       toAuthorizedCIDRs([])
     );
     expect(result.kind).toEqual("IResponseSuccessJson");
@@ -35,7 +35,7 @@ describe("checkSourceIpForHandler", () => {
 
   it("should let the request pass if IP matches CIDRs", async () => {
     const result = await checkedHandler(
-      fromEither(IPString.decode("192.168.1.1")),
+      OptionFromEither(IPString.decode("192.168.1.1")),
       toAuthorizedCIDRs(["192.168.1.0/24"])
     );
     expect(result.kind).toEqual("IResponseSuccessJson");
@@ -43,7 +43,7 @@ describe("checkSourceIpForHandler", () => {
 
   it("should let the request pass if IP matches IPs", async () => {
     const result = await checkedHandler(
-      fromEither(IPString.decode("192.168.10.10")),
+      OptionFromEither(IPString.decode("192.168.10.10")),
       toAuthorizedCIDRs(["192.168.10.10"])
     );
     expect(result.kind).toEqual("IResponseSuccessJson");
@@ -51,7 +51,7 @@ describe("checkSourceIpForHandler", () => {
 
   it("should reject the request if IP does not match CIDRs", async () => {
     const result = await checkedHandler(
-      fromEither(IPString.decode("10.0.1.1")),
+      OptionFromEither(IPString.decode("10.0.1.1")),
       toAuthorizedCIDRs(["192.168.1.0/24"])
     );
     expect(result.kind).toEqual("IResponseErrorForbiddenNotAuthorized");
