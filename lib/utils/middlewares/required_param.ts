@@ -12,11 +12,11 @@ import { ResponseErrorFromValidationErrors } from "../response";
  */
 export function RequiredParamMiddleware<S, A>(
   name: string,
-  type: t.Type<S, A>
+  type: t.Type<A, S>
 ): IRequestMiddleware<"IResponseErrorValidation", A> {
   return request =>
     new Promise(resolve => {
-      const validation = t.validate(request.params[name], type);
+      const validation = type.decode(request.params[name]);
       const result = validation.mapLeft(
         ResponseErrorFromValidationErrors(type)
       );

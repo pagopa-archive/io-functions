@@ -18,12 +18,12 @@ enum aValidEnum {
 describe("enumType", () => {
   it("should validate with valid enum values", () => {
     const aValidEnumType = enumType<aValidEnum>(aValidEnum, "aValidEnum");
-    const validation = t.validate("fooValue", aValidEnumType);
+    const validation = aValidEnumType.decode("fooValue");
     expect(isRight(validation)).toBeTruthy();
   });
   it("should not validate invalid enum values", () => {
     const aValidEnumType = enumType<aValidEnum>(aValidEnum, "aValidEnum");
-    const validation = t.validate("booValue", aValidEnumType);
+    const validation = aValidEnumType.decode("booValue");
     expect(isRight(validation)).toBeFalsy();
   });
 });
@@ -36,7 +36,7 @@ describe("readonlySetType", () => {
     const fixtures: ReadonlyArray<any> = [[], ["a"], new Set("x")];
 
     fixtures.forEach(f => {
-      const v = t.validate(f, aSetOfStrings);
+      const v = aSetOfStrings.decode(f);
       expect(v.isRight()).toBeTruthy();
     });
   });
@@ -78,7 +78,7 @@ describe("strictInterfaceWithOptionals", () => {
       },
       "aName"
     );
-    const validation = t.validate({ required: true, x: true }, aType);
+    const validation = aType.decode({ required: true, x: true });
     const errors = ReadableReporter.report(validation).join(";");
     expect(isLeft(validation)).toBeTruthy();
     expect(errors).toEqual("value.x: unknow property");

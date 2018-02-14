@@ -1,5 +1,4 @@
 // tslint:disable:no-any
-import * as t from "io-ts";
 
 import * as request from "superagent";
 import * as mockSuperagent from "superagent-mock";
@@ -37,17 +36,12 @@ const anEmailPayload = {
   To: [{ Email: "bar@example.com", Name: "bar" }]
 };
 
-const someCreds = t
-  .validate(
-    {
-      Secret: "secret",
-      Username: "username"
-    },
-    SmtpAuthInfo
-  )
-  .fold(() => {
-    throw new Error("Invalid SMTP credentials");
-  }, t.identity);
+const someCreds = SmtpAuthInfo.decode({
+  Secret: "secret",
+  Username: "username"
+}).getOrElseL(() => {
+  throw new Error("Invalid SMTP credentials");
+});
 
 const aResponsePayload = {
   Code: "0",

@@ -1,6 +1,4 @@
-import * as t from "io-ts";
-
-import { isNone } from "fp-ts/lib/Option";
+import { isLeft } from "fp-ts/lib/Either";
 import { NonEmptyString } from "./strings";
 
 /**
@@ -9,9 +7,9 @@ import { NonEmptyString } from "./strings";
  * Throws an Error otherwise.
  */
 export function getRequiredStringEnv(k: string): NonEmptyString {
-  const maybeValue = t.validate(process.env[k], NonEmptyString).toOption();
+  const maybeValue = NonEmptyString.decode(process.env[k]);
 
-  if (isNone(maybeValue)) {
+  if (isLeft(maybeValue)) {
     throw new Error(`${k} must be defined and non-empty`);
   }
 

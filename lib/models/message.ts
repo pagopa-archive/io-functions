@@ -338,10 +338,7 @@ export class MessageModel extends DocumentDbModel<
     const contentAsText = maybeContentAsText.value;
 
     // deserialize text into JSON
-    const contentOrError = t.validate(
-      JSON.parse(contentAsText),
-      MessageContent
-    );
+    const contentOrError = MessageContent.decode(JSON.parse(contentAsText));
 
     if (isLeft(contentOrError)) {
       const errors: string = ReadableReporter.report(contentOrError).join(", ");

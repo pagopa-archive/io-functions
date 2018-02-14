@@ -91,7 +91,7 @@ export function GetServiceHandler(
     >(
       error => ResponseErrorQuery("Error while retrieving the service", error),
       maybeService =>
-        maybeService.fold<
+        maybeService.foldL<
           IResponseErrorNotFound | IResponseSuccessJson<ApiService>
         >(
           () =>

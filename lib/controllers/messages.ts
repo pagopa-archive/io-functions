@@ -1,9 +1,6 @@
 /*
 * Implements the API handlers for the Message resource.
 */
-
-import * as t from "io-ts";
-
 import * as express from "express";
 import * as winston from "winston";
 
@@ -114,7 +111,7 @@ export const MessagePayloadMiddleware: IRequestMiddleware<
   ApiNewMessage
 > = request =>
   new Promise(resolve => {
-    const validation = t.validate(request.body, ApiNewMessage);
+    const validation = ApiNewMessage.decode(request.body);
     const result = validation.mapLeft(
       ResponseErrorFromValidationErrors(ApiNewMessage)
     );

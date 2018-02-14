@@ -2,11 +2,6 @@
 
 import { toAuthorizedCIDRs } from "../../models/service";
 
-import * as winston from "winston";
-winston.configure({
-  level: "debug"
-});
-
 import { response as MockResponse } from "jest-mock-express";
 
 import { isLeft, isRight, left, right } from "fp-ts/lib/Either";

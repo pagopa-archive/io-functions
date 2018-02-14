@@ -2275,9 +2275,15 @@ forwarded@~0.1.2:
   version "0.1.2"
   resolved "https://registry.yarnpkg.com/forwarded/-/forwarded-0.1.2.tgz#98c23dab1175657b8c0573e8ceccd91b0ff18c84"
 
+<<<<<<< Updated upstream
 fp-ts@^0.6.3, fp-ts@^0.6.4:
   version "0.6.6"
   resolved "https://registry.yarnpkg.com/fp-ts/-/fp-ts-0.6.6.tgz#5b5c0c4c3c6ce58da60621eaaa15a650458d09ec"
+=======
+fp-ts@^1.0.0:
+  version "1.0.1"
+  resolved "https://registry.yarnpkg.com/fp-ts/-/fp-ts-1.0.1.tgz#4d0fc9ab24c6c6cd0381e5eefc684a6eb8321b41"
+>>>>>>> Stashed changes
 
 fragment-cache@^0.2.1:
   version "0.2.1"
@@ -2962,11 +2968,11 @@ invert-kv@^1.0.0:
   version "1.0.0"
   resolved "https://registry.yarnpkg.com/invert-kv/-/invert-kv-1.0.0.tgz#104a8e4aaca6d3d8cd157a8ef8bfab2d7a3ffdb6"
 
-io-ts@^0.9.8:
-  version "0.9.8"
-  resolved "https://registry.yarnpkg.com/io-ts/-/io-ts-0.9.8.tgz#3a904d326a0ced92364e853c9bdd788d9ab1554d"
+io-ts@^1.0.0:
+  version "1.0.1"
+  resolved "https://registry.yarnpkg.com/io-ts/-/io-ts-1.0.1.tgz#461f690eca47787e7bd7c170d162304de1653ef1"
   dependencies:
-    fp-ts "^0.6.4"
+    fp-ts "^1.0.0"
 
 ip@^1.0.2:
   version "1.1.5"

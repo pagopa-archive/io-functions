@@ -362,14 +362,14 @@ export function queryOneDocument<T>(
                 );
               }
             })
-            .getOrElse(() => {
+            .getOrElseL(() =>
               resolve(
                 right<
                   DocumentDb.QueryError,
                   Option<T & DocumentDb.RetrievedDocument>
                 >(none as Option<T & DocumentDb.RetrievedDocument>)
-              );
-            });
+              )
+            );
         })
         .mapLeft(error => {
           // it's an error
@@ -413,7 +413,7 @@ export function mapResultIterator<A, B>(
                     );
                   }
                 })
-                .getOrElse(() =>
+                .getOrElseL(() =>
                   resolve(
                     right<DocumentDb.QueryError, Option<ReadonlyArray<B>>>(none)
                   )

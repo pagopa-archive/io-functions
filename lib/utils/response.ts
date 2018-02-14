@@ -194,7 +194,7 @@ export function ResponseErrorValidation(
  * Returns a response describing a validation error.
  */
 export function ResponseErrorFromValidationErrors<S, A>(
-  type: t.Type<S, A>
+  type: t.Type<A, S>
 ): (errors: ReadonlyArray<t.ValidationError>) => IResponseErrorValidation {
   return errors => {
     const detail = errorsToReadableMessages(errors).join("\n");
