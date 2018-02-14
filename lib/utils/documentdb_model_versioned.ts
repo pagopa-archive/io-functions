@@ -4,7 +4,7 @@ import { DocumentDbModel } from "./documentdb_model";
 
 import * as t from "io-ts";
 
-import { isNone, none, Option, some, Some } from "fp-ts/lib/Option";
+import { isNone, none, Option, some } from "fp-ts/lib/Option";
 
 import { tag } from "./types";
 
@@ -81,9 +81,7 @@ export abstract class DocumentDbModelVersioned<
     partitionKey: string
   ): Promise<Either<DocumentDb.QueryError, TR>> {
     // the first version of a profile is 0
-    const initialVersion = (t.validate(0, NonNegativeNumber).toOption() as Some<
-      NonNegativeNumber
-    >).value;
+    const initialVersion = 0 as NonNegativeNumber;
     // the ID of each document version is composed of the document ID and its version
     // this makes it possible to detect conflicting updates (concurrent creation of
     // profiles with the same profile ID and version)
@@ -131,12 +129,8 @@ export abstract class DocumentDbModelVersioned<
     const updatedObject = f(currentObject);
 
     const modelId = this.getModelId(updatedObject);
-    const nextVersion = (t
-      .validate(
-        (currentRetrievedDocument.version as number) + 1,
-        NonNegativeNumber
-      )
-      .toOption() as Some<NonNegativeNumber>).value;
+    const nextVersion = (Number(currentRetrievedDocument.version) +
+      1) as NonNegativeNumber;
     const versionedModelId = generateVersionedModelId(modelId, nextVersion);
 
     const newDocument = this.versionateModel(

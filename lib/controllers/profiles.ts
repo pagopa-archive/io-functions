@@ -1,9 +1,6 @@
 /*
  * Implements the API handlers for the Profile resource.
  */
-
-import * as t from "io-ts";
-
 import * as express from "express";
 
 import { isLeft, isRight } from "fp-ts/lib/Either";
@@ -177,7 +174,7 @@ export const ProfilePayloadMiddleware: IRequestMiddleware<
   ExtendedProfile
 > = request =>
   new Promise(resolve => {
-    const validation = t.validate(request.body, ExtendedProfile);
+    const validation = ExtendedProfile.decode(request.body);
     const result = validation.mapLeft(
       ResponseErrorFromValidationErrors(ExtendedProfile)
     );

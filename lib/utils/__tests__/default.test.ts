@@ -11,20 +11,20 @@ const defaultObject = t.partial({
 
 describe("withDefault (single value)", () => {
   it("should evaluate to the valid value", () => {
-    const r = t.validate("hello", defaultString);
+    const r = defaultString.decode("hello");
     expect(isRight(r));
     expect(r.value).toEqual("hello");
   });
 
   it("should evaluate to the default value", () => {
-    const r = t.validate(undefined, defaultString);
+    const r = defaultString.decode(undefined);
     expect(isRight(r));
     expect(r.value).toEqual("DEFAULT");
   });
 
   it("should evaluate to the default value", () => {
     // tslint:disable-next-line:no-null-keyword
-    const r = t.validate(null, defaultString);
+    const r = defaultString.decode(null);
     expect(isRight(r));
     expect(r.value).toEqual("DEFAULT");
   });
@@ -32,20 +32,20 @@ describe("withDefault (single value)", () => {
 
 describe("withDefault (composed partial)", () => {
   it("should evaluate to the valid value", () => {
-    const r = t.validate({ k: "hello" }, defaultObject);
+    const r = defaultObject.decode({ k: "hello" });
     expect(isRight(r));
     expect(r.value).toEqual({ k: "hello" });
   });
 
   it("should evaluate to the default value", () => {
-    const r = t.validate({}, defaultObject);
+    const r = defaultObject.decode({});
     expect(isRight(r));
     expect(r.value).toEqual({ k: "DEFAULT" });
   });
 
   it("should evaluate to the default value", () => {
     // tslint:disable-next-line:no-null-keyword
-    const r = t.validate({ k: undefined }, defaultObject);
+    const r = defaultObject.decode({ k: undefined });
     expect(isRight(r));
     expect(r.value).toEqual({ k: "DEFAULT" });
   });

@@ -1,9 +1,6 @@
 /*
  * Implements the API handlers for the Services resource.
  */
-
-import * as t from "io-ts";
-
 import * as express from "express";
 
 import {
@@ -141,7 +138,7 @@ export const ServicePayloadMiddleware: IRequestMiddleware<
   ApiService
 > = request =>
   new Promise(resolve => {
-    const validation = t.validate(request.body, ApiService);
+    const validation = ApiService.decode(request.body);
     const result = validation.mapLeft(
       ResponseErrorFromValidationErrors(ApiService)
     );

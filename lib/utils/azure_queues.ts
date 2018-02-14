@@ -98,7 +98,7 @@ export function retryMessageEnqueue(
         }
       );
     })
-    .getOrElse(() => {
+    .getOrElseL(() => {
       winston.info(
         `Maximum number of retries reached|retries=${numberOfRetries}|${
           queueMessage.id

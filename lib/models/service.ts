@@ -105,10 +105,10 @@ export function toAuthorizedCIDRs(
 }
 
 function toRetrieved(result: DocumentDb.RetrievedDocument): RetrievedService {
-  const validation = t.validate(result, RetrievedService);
-  return validation.fold(_ => {
+  const validation = RetrievedService.decode(result);
+  return validation.getOrElseL(_ => {
     throw new Error(PathReporter.report(validation).join("\n"));
-  }, t.identity);
+  });
 }
 
 function getModelId(o: Service): ModelId {

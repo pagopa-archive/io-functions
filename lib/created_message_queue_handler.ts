@@ -297,9 +297,8 @@ export function index(context: ContextWithBindings): void {
     // since this function gets triggered by a queued message that gets
     // deserialized from a json object, we must first check that what we
     // got is what we expect.
-    const validation = t.validate(
-      context.bindings.createdMessage,
-      CreatedMessageEvent
+    const validation = CreatedMessageEvent.decode(
+      context.bindings.createdMessage
     );
     if (isLeft(validation)) {
       winston.error(

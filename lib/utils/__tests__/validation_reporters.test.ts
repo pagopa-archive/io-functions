@@ -57,7 +57,7 @@ describe("ReadableReporter", () => {
     ];
 
     fixtures.forEach(({ o, vt, e }) => {
-      const validation = t.validate(o, vt);
+      const validation = vt.decode(o);
 
       const res = ReadableReporter.report(validation);
 
@@ -73,7 +73,7 @@ describe("ReadableReporter", () => {
       {},
       "aType"
     );
-    const validation = t.validate({ foo: true, x: true }, aType);
+    const validation = aType.decode({ foo: true, x: true });
     const res = ReadableReporter.report(validation);
     expect(res).toEqual(["value.x: unknow property"]);
   });

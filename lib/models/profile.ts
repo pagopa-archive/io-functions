@@ -76,9 +76,9 @@ export const RetrievedProfile = tag<IRetrievedProfileTag>()(
 export type RetrievedProfile = t.TypeOf<typeof RetrievedProfile>;
 
 function toRetrieved(result: DocumentDb.RetrievedDocument): RetrievedProfile {
-  return t.validate(result, RetrievedProfile).fold(_ => {
+  return RetrievedProfile.decode(result).getOrElseL(_ => {
     throw new Error("Fatal, result is not a valid RetrievedProfile");
-  }, t.identity);
+  });
 }
 
 function getModelId(o: Profile): ModelId {

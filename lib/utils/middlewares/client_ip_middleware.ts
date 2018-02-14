@@ -1,15 +1,12 @@
-import * as t from "io-ts";
+import * as requestIp from "request-ip";
+import * as winston from "winston";
 
 import { right } from "fp-ts/lib/Either";
-import { Option } from "fp-ts/lib/Option";
-import * as requestIp from "request-ip";
+import { fromEither, Option } from "fp-ts/lib/Option";
+import { IRequestMiddleware } from "../request_middleware";
 import { IPString } from "../strings";
 
-import { IRequestMiddleware } from "../request_middleware";
-
 export type ClientIp = Option<IPString>;
-
-import * as winston from "winston";
 
 /**
  * A middleware that extracts the client IP from the request.
@@ -24,9 +21,9 @@ export const ClientIpMiddleware: IRequestMiddleware<
   never,
   ClientIp
 > = request => {
-  const clientIp = requestIp.getClientIp(request);
-  winston.debug(`Handling request for client IP|${clientIp}`);
-  return Promise.resolve(
-    right<never, ClientIp>(t.validate(clientIp, IPString).toOption())
-  );
+  return new Promise(resolve => {
+    const clientIp = requestIp.getClientIp(request);
+    winston.debug(`Handling request for client IP|${clientIp}`);
+    resolve(right<never, ClientIp>(fromEither(IPString.decode(clientIp))));
+  });
 };

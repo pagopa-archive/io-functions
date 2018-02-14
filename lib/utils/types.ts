@@ -6,12 +6,12 @@ import { Set as SerializableSet } from "json-set-map";
 /**
  * An io-ts Type tagged with T
  */
-export type Tagged<T, S extends t.mixed, A> = t.Type<S, A & T>;
+export type Tagged<T, S extends t.mixed, A> = t.Type<A & T, S>;
 
 /**
  * Tags an io-ts type with an interface T
  */
-export const tag = <T>() => <S, A>(type: t.Type<S, A>): Tagged<T, S, A> =>
+export const tag = <T>() => <S, A>(type: t.Type<A, S>): Tagged<T, S, A> =>
   type as any;
 
 const getObjectValues = <T extends object>(obj: T): ReadonlyArray<string> =>
@@ -39,11 +39,11 @@ export const enumType = <E>(e: {}, name: string): t.Type<any, E> => {
  * Creates an io-ts Type from a ReadonlySet
  */
 export const readonlySetType = <E>(
-  o: t.Type<t.mixed, E>,
+  o: t.Type<E, t.mixed>,
   name: string
-): t.Type<t.mixed, ReadonlySet<E>> => {
+): t.Type<ReadonlySet<E>, t.mixed> => {
   const arrayType = t.readonlyArray(o, name);
-  return new t.Type<t.mixed, ReadonlySet<E>>(
+  return new t.Type<ReadonlySet<E>, t.mixed>(
     name,
     (s): s is ReadonlySet<E> => s instanceof Set && arrayType.is(Array.from(s)),
     (s, c) => {
@@ -102,6 +102,8 @@ export function withoutUndefinedValues<T, K extends keyof T>(obj: T): T {
  *  Return a new type that validates successfully only
  *  when the instance (object) contains no unknow properties.
  *
+ *  See https://github.com/gcanti/io-ts/issues/106
+ *
  *  @\required  required properties
  *  @optional   optional object properties
  */
@@ -111,17 +113,20 @@ export function strictInterfaceWithOptionals<
 >(
   required: R,
   optional: O,
-  name: string
-): t.Type<t.mixed, t.InterfaceOf<R> & t.PartialOf<O>> {
+  name?: string
+): t.Type<
+  { [K in keyof R]: t.TypeOf<R[K]> } & { [K in keyof O]?: t.TypeOf<O[K]> },
+  { [K in keyof R]: t.OutputOf<R[K]> } & { [K in keyof O]?: t.OutputOf<O[K]> }
+> {
   const loose = t.intersection([t.interface(required), t.partial(optional)]);
   const props = Object.assign({}, required, optional);
   return new t.Type(
-    name,
-    (v): v is t.InterfaceOf<R> & t.PartialOf<O> =>
-      loose.is(v) &&
-      Object.getOwnPropertyNames(v).every(k => props.hasOwnProperty(k)),
-    (s, c) =>
-      loose.validate(s, c).chain(o => {
+    name || `StrictInterfaceWithOptionals(${loose.name})`,
+    (m): m is t.TypeOfProps<R> & t.TypeOfPartialProps<O> =>
+      loose.is(m) &&
+      Object.getOwnPropertyNames(m).every(k => props.hasOwnProperty(k)),
+    (m, c) =>
+      loose.validate(m, c).chain(o => {
         const errors: t.Errors = Object.getOwnPropertyNames(o)
           .map(
             key =>
@@ -132,6 +137,6 @@ export function strictInterfaceWithOptionals<
           .filter((e): e is t.ValidationError => e !== undefined);
         return errors.length ? t.failures(errors) : t.success(o);
       }),
-    loose.serialize
+    loose.encode
   );
 }

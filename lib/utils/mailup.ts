@@ -159,7 +159,7 @@ function toMailupAddresses(
 ): ReadonlyArray<Address> {
   return addresses.map((address: NodemailerAddress) => {
     return {
-      Email: t.validate(address.address, EmailString).fold(() => {
+      Email: EmailString.decode(address.address).getOrElseL(() => {
         // this never happens as nodemailer has already parsed
         // the email address (so it's a valid one)
         throw new Error(
@@ -167,7 +167,7 @@ function toMailupAddresses(
             address.address
           }'.`
         );
-      }, t.identity),
+      }),
       Name: address.name || address.address
     };
   });
@@ -268,7 +268,7 @@ export function MailUpTransport(
           .toUndefined()
       };
 
-      const errorOrEmail = t.validate(emailPayload, EmailPayload);
+      const errorOrEmail = EmailPayload.decode(emailPayload);
 
       if (isLeft(errorOrEmail)) {
         const errors = ReadableReporter.report(errorOrEmail).join("; ");

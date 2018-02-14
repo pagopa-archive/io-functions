@@ -35,8 +35,8 @@ export function ContextMiddleware<T>(): IRequestMiddleware<
   IContext<T>
 > {
   return request =>
-    new Promise(resolve =>
-      getAppContext<T>(request).fold(
+    new Promise(resolve => {
+      getAppContext<T>(request).foldL(
         () =>
           resolve(
             left<IResponseErrorInternal, IContext<T>>(
@@ -44,6 +44,6 @@ export function ContextMiddleware<T>(): IRequestMiddleware<
             )
           ),
         context => resolve(right<IResponseErrorInternal, IContext<T>>(context))
-      )
-    );
+      );
+    });
 }

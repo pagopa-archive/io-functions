@@ -18,7 +18,7 @@ import { DocumentClient as DocumentDBClient } from "documentdb";
 import * as documentDbUtils from "./utils/documentdb";
 
 import { Either, isLeft, left, right } from "fp-ts/lib/Either";
-import { isNone, Some } from "fp-ts/lib/Option";
+import { isNone } from "fp-ts/lib/Option";
 import { getRequiredStringEnv } from "./utils/env";
 import { ReadableReporter } from "./utils/validation_reporters";
 
@@ -232,9 +232,7 @@ export async function handleNotification(
   // TODO: generate the default subject from the service/client metadata
   const subject = messageContent.subject
     ? messageContent.subject
-    : (t
-        .validate("A new notification for you.", MessageSubject)
-        .toOption() as Some<MessageSubject>).value;
+    : ("A new notification for you." as MessageSubject);
 
   const documentHtml = await generateDocumentHtml(
     subject,
@@ -378,9 +376,8 @@ export function index(context: ContextWithBindings): void {
     // since this function gets triggered by a queued message that gets
     // deserialized from a json object, we must first check that what we
     // got is what we expect.
-    const validation = t.validate(
-      context.bindings.notificationEvent,
-      NotificationEvent
+    const validation = NotificationEvent.decode(
+      context.bindings.notificationEvent
     );
     if (isLeft(validation)) {
       winston.error(
