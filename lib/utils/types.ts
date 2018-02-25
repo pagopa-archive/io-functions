@@ -1,4 +1,3 @@
-// tslint:disable:no-any
 import * as t from "io-ts";
 
 import { Set as SerializableSet } from "json-set-map";
@@ -12,28 +11,26 @@ export type Tagged<T, S extends t.mixed, A> = t.Type<A & T, S>;
  * Tags an io-ts type with an interface T
  */
 export const tag = <T>() => <S, A>(type: t.Type<A, S>): Tagged<T, S, A> =>
+  // tslint:disable-next-line:no-any
   type as any;
 
-const getObjectValues = <T extends object>(obj: T): ReadonlyArray<string> =>
-  Object.keys(obj).reduce<ReadonlyArray<string>>(
-    (acc, key) => [...acc, (obj as any)[key]],
-    []
+/**
+ * Returns an object where the keys are the values
+ * of the object passed as input and all values are undefined
+ */
+const getObjectValues = (e: object) =>
+  Object.keys(e).reduce(
+    // tslint:disable-next-line:no-any
+    (o, k) => ({ ...o, [(e as any)[k]]: undefined }),
+    {} as { readonly [k: string]: undefined }
   );
 
 /**
  * Creates an io-ts Type from an enum
  */
-export const enumType = <E>(e: {}, name: string): t.Type<any, E> => {
-  const values = getObjectValues(e);
-  const isE: (v: any) => boolean = v =>
-    typeof v === "string" && values.indexOf(v) >= 0;
-  return new t.Type<any, E>(
-    name,
-    (v): v is E => isE(v),
-    (v, c) => (isE(v) ? t.success(v) : t.failure(v, c)),
-    t.identity
-  );
-};
+export const enumType = <E>(e: object, name: string): t.Type<E> =>
+  // tslint:disable-next-line:no-any
+  t.keyof(getObjectValues(e), name) as any;
 
 /**
  * Creates an io-ts Type from a ReadonlySet
