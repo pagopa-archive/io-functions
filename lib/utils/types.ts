@@ -15,18 +15,22 @@ export const tag = <T>() => <S, A>(type: t.Type<A, S>): Tagged<T, S, A> =>
   type as any;
 
 /**
- * Creates an io-ts Type from an enum
+ * Returns an object where the keys are the values
+ * of the object passed as input and all values are undefined
  */
-export const enumType = <E>(e: object, name: string): t.Type<E> => {
-  // get object values as keys
-  const keys = Object.keys(e).reduce(
+const getObjectValues = (e: object) =>
+  Object.keys(e).reduce(
     // tslint:disable-next-line:no-any
     (o, k) => ({ ...o, [(e as any)[k]]: undefined }),
     {} as { readonly [k: string]: undefined }
   );
+
+/**
+ * Creates an io-ts Type from an enum
+ */
+export const enumType = <E>(e: object, name: string): t.Type<E> =>
   // tslint:disable-next-line:no-any
-  return t.keyof(keys, name) as any;
-};
+  t.keyof(getObjectValues(e), name) as any;
 
 /**
  * Creates an io-ts Type from a ReadonlySet
