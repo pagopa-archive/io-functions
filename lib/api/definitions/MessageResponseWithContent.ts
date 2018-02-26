@@ -8,7 +8,7 @@
 // tslint:disable:object-literal-sort-keys
 
 import { CreatedMessageWithContent } from "./CreatedMessageWithContent";
-import { NotificationStatus } from "./NotificationStatus";
+import { MessageResponseNotificationStatus } from "./MessageResponseNotificationStatus";
 
 /**
  *
@@ -24,7 +24,7 @@ const MessageResponseWithContentR = t.interface({
 
 // optional attributes
 const MessageResponseWithContentO = t.partial({
-  notification: NotificationStatus
+  notification: MessageResponseNotificationStatus
 });
 
 export const MessageResponseWithContent = strictInterfaceWithOptionals(

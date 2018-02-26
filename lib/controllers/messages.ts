@@ -2,6 +2,7 @@
 * Implements the API handlers for the Message resource.
 */
 import * as express from "express";
+import * as t from "io-ts";
 import * as winston from "winston";
 
 import * as ApplicationInsights from "applicationinsights";
@@ -90,9 +91,12 @@ import {
 
 import { withoutUndefinedValues } from "../utils/types";
 
-import { isLeft } from "fp-ts/lib/Either";
-import { isNone } from "fp-ts/lib/Option";
+import { Either, isLeft, isRight, left, right } from "fp-ts/lib/Either";
+import { fromEither, isNone } from "fp-ts/lib/Option";
 import { CreatedMessageWithContent } from "../api/definitions/CreatedMessageWithContent";
+import { NotificationChannelEnum } from "../api/definitions/NotificationChannel";
+import { NotificationChannelStatusValueEnum } from "../api/definitions/NotificationChannelStatusValue";
+import { NotificationStatusModel } from "../models/notification_status";
 
 /**
  * Input and output bindings for this function
@@ -196,6 +200,75 @@ type IGetMessagesHandler = (
   | IResponseErrorValidation
   | IResponseErrorQuery
 >;
+
+type NotificationStatusHolder = {
+  readonly [channel in NotificationChannelEnum]?: NotificationChannelStatusValueEnum
+};
+
+/**
+ * Retrieve all notifications statuses (all channels) for a message.
+ *
+ * It makes one query to get the notification object associated
+ * to a message, then another query for each notification found
+ * to retrieve the notification status for that channel.
+ *
+ * @returns an object with channels as keys and statuses for values
+ *          ie. { email: "SENT_TO_CHANNEL" }
+ */
+async function getMessageNotificationStatuses(
+  notificationModel: NotificationModel,
+  notificationStatusModel: NotificationStatusModel,
+  retrievedMessage: RetrievedMessage
+): Promise<Either<Error, Promise<NotificationStatusHolder>>> {
+  const errorOrMaybeNotification = await notificationModel.findNotificationForMessage(
+    retrievedMessage.id
+  );
+  if (isRight(errorOrMaybeNotification)) {
+    // It may happen that the notification object is not yet created in the database
+    // due to some latency, so it's better to not fail here but return an empty object
+    const maybeNotification = errorOrMaybeNotification.value;
+    if (isNone(maybeNotification)) {
+      winston.info(
+        `getMessageNotificationStatuses|Notification not found|messageId=${
+          retrievedMessage.id
+        }`
+      );
+      return right(Promise.resolve({}));
+    }
+    const notification = maybeNotification.value;
+    // Get NotificationStatus looping on all notification channels
+    return right(
+      Object.keys(NotificationChannelEnum).reduce(
+        async (
+          statusesP: Promise<NotificationStatusHolder>,
+          channelIdx: string
+        ): Promise<NotificationStatusHolder> => {
+          const channel =
+            NotificationChannelEnum[channelIdx as NotificationChannelEnum];
+          const errorOrMaybeStatus = await notificationStatusModel.findOneNotificationStatusByNotificationChannel(
+            notification.id,
+            channel
+          );
+          const statusObj = fromEither(errorOrMaybeStatus)
+            .chain(t.identity)
+            .toUndefined();
+          const statuses = await statusesP;
+          return statusObj
+            ? { ...statuses, [channel.toLowerCase()]: statusObj.status }
+            : statuses;
+        },
+        Promise.resolve({})
+      )
+    );
+  } else {
+    winston.error(
+      `getMessageNotificationStatuses|Query error|${
+        errorOrMaybeNotification.value.body
+      }`
+    );
+    return left(new Error(`Error querying for NotificationStatus`));
+  }
+}
 
 /**
  * Returns a type safe CreateMessage handler.
@@ -407,6 +480,7 @@ export function CreateMessage(
 export function GetMessageHandler(
   messageModel: MessageModel,
   notificationModel: NotificationModel,
+  notificationStatusModel: NotificationStatusModel,
   blobService: BlobService
 ): IGetMessageHandler {
   return async (userAuth, _, userAttributes, fiscalCode, messageId) => {
@@ -456,26 +530,6 @@ export function GetMessageHandler(
       return ResponseErrorForbiddenNotAuthorized;
     }
 
-    const errorOrMaybeNotification = await notificationModel.findNotificationForMessage(
-      retrievedMessage.id
-    );
-
-    if (isLeft(errorOrMaybeNotification)) {
-      // query failed
-      return ResponseErrorQuery(
-        "Error while retrieving the notification status",
-        errorOrMaybeNotification.value
-      );
-    }
-
-    const maybeNotification = errorOrMaybeNotification.value;
-
-    const maybeNotificationStatus = maybeNotification.map(n => {
-      return {
-        email: n.emailNotification ? n.emailNotification.status : undefined
-      };
-    });
-
     const maybeContentOrError = await messageModel.getStoredContent(
       blobService,
       retrievedMessage.id,
@@ -498,11 +552,25 @@ export function GetMessageHandler(
       ...retrievedMessageToPublic(retrievedMessage)
     });
 
+    const errorOrNotificationStatuses = await getMessageNotificationStatuses(
+      notificationModel,
+      notificationStatusModel,
+      retrievedMessage
+    );
+
+    if (isLeft(errorOrNotificationStatuses)) {
+      return ResponseErrorInternal(
+        `Error retrieving NotificationStatus: ${
+          errorOrNotificationStatuses.value.name
+        }|${errorOrNotificationStatuses.value.message}`
+      );
+    }
+
+    const notificationStatuses = await errorOrNotificationStatuses.value;
+
     const messageStatus: MessageResponseWithContent = {
       message,
-      notification: maybeNotificationStatus.isSome()
-        ? maybeNotificationStatus.toUndefined()
-        : undefined
+      notification: notificationStatuses
     };
 
     return ResponseSuccessJson(messageStatus);
@@ -516,11 +584,13 @@ export function GetMessage(
   serviceModel: ServiceModel,
   messageModel: MessageModel,
   notificationModel: NotificationModel,
+  notificationStatusModel: NotificationStatusModel,
   blobService: BlobService
 ): express.RequestHandler {
   const handler = GetMessageHandler(
     messageModel,
     notificationModel,
+    notificationStatusModel,
     blobService
   );
   const middlewaresWrap = withRequestMiddlewares(

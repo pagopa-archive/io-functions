@@ -44,6 +44,5 @@ function success(): ReadonlyArray<string> {
  * readable messages.
  */
 export const ReadableReporter: Reporter<ReadonlyArray<string>> = {
-  // tslint:disable-next-line:no-any
   report: validation => validation.fold(errorsToReadableMessages, success)
 };

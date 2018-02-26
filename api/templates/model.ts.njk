@@ -129,6 +129,13 @@ export type {{ definitionName }} = t.TypeOf<typeof {{ definitionName }}>;
     {% set typedef %}EmailString{% endset %}
     {{ macro.exportConst(definition.default, definitionName, typedef, quote=true) }}
 
+  {% elif definition.format == "date-time" %}
+
+    import { DateFromString } from "../../utils/types";
+
+    {% set typedef %}DateFromString{% endset %}
+    {{ macro.exportConst(definition.default, definitionName, typedef, quote=true) }}
+
   {% elif definition["x-extensible-enum"] %}
 
     import { enumType } from "../../utils/types";

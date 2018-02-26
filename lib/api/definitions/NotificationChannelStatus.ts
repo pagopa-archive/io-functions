@@ -7,24 +7,35 @@
 // tslint:disable:no-any
 // tslint:disable:object-literal-sort-keys
 
+import { NotificationChannel } from "./NotificationChannel";
+import { NotificationChannelStatusValue } from "./NotificationChannelStatusValue";
+import { Timestamp } from "./Timestamp";
+
 /**
  *
  */
 
-import { enumType } from "../../utils/types";
-
-export enum NotificationChannelStatusEnum {
-  "QUEUED" = "QUEUED",
-
-  "SENT_TO_CHANNEL" = "SENT_TO_CHANNEL"
-}
-
 import * as t from "io-ts";
+import { strictInterfaceWithOptionals } from "../../utils/types";
+
+// required attributes
+const NotificationChannelStatusR = t.interface({
+  channel: NotificationChannel,
+
+  status: NotificationChannelStatusValue,
+
+  updateAt: Timestamp
+});
+
+// optional attributes
+const NotificationChannelStatusO = t.partial({});
+
+export const NotificationChannelStatus = strictInterfaceWithOptionals(
+  NotificationChannelStatusR.props,
+  NotificationChannelStatusO.props,
+  "NotificationChannelStatus"
+);
 
 export type NotificationChannelStatus = t.TypeOf<
   typeof NotificationChannelStatus
 >;
-
-export const NotificationChannelStatus = enumType<
-  NotificationChannelStatusEnum
->(NotificationChannelStatusEnum, "NotificationChannelStatus");

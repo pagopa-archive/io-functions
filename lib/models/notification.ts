@@ -3,7 +3,7 @@
  * a Message. A notification can be sent on multiple channels, based on the
  * User's preference.
  */
-import { enumType } from "../utils/types";
+import { enumType, pick } from "../utils/types";
 
 import * as DocumentDb from "documentdb";
 import * as t from "io-ts";
@@ -13,13 +13,13 @@ import { tag } from "../utils/types";
 import * as DocumentDbUtils from "../utils/documentdb";
 import { DocumentDbModel } from "../utils/documentdb_model";
 
-import { Option } from "fp-ts/lib/Option";
-
 import { EmailAddress } from "../api/definitions/EmailAddress";
 import { FiscalCode } from "../api/definitions/FiscalCode";
-import { NotificationChannelStatus } from "../api/definitions/NotificationChannelStatus";
 
 import { Either } from "fp-ts/lib/Either";
+import { Option } from "fp-ts/lib/Option";
+import { ulid } from "ulid";
+import { NotificationChannelEnum } from "../api/definitions/NotificationChannel";
 import { NonEmptyString } from "../utils/strings";
 
 /**
@@ -39,42 +39,60 @@ export const NotificationAddressSource = enumType<
 export type NotificationAddressSource = NotificationAddressSourceEnum;
 
 /**
- * Attributes for the email channel
+ * Base interface for Notification objects
  */
+export const NotificationBase = t.interface({
+  fiscalCode: FiscalCode,
+  messageId: NonEmptyString
+});
+
+// Email Notification
+
 export const NotificationChannelEmail = t.intersection([
   t.interface({
     addressSource: NotificationAddressSource,
-    status: NotificationChannelStatus,
     toAddress: EmailAddress
   }),
   t.partial({
     fromAddress: EmailAddress
   })
 ]);
-
 export type NotificationChannelEmail = t.TypeOf<
   typeof NotificationChannelEmail
 >;
 
-/**
- * Base interface for Notification objects
- */
+export const EmailNotification = t.interface({
+  ...NotificationBase.props,
+  channels: t.interface({
+    [NotificationChannelEnum.EMAIL]: NotificationChannelEmail
+  })
+});
+export type EmailNotification = t.TypeOf<typeof EmailNotification>;
+
+// All notification channels possible metadata.
+// We have only email at the moment, add other channels here when implemented
+
+export const NotificationChannelMeta = t.intersection([
+  NotificationChannelEmail
+]);
+export type NotificationChannelMeta = t.TypeOf<typeof NotificationChannelMeta>;
+
+// Generic Notification object
+// We have only email at the moment, add other channels here when implemented
+
 export const Notification = t.intersection([
+  NotificationBase,
   t.interface({
-    fiscalCode: FiscalCode,
-    messageId: NonEmptyString
-  }),
-  t.partial({
-    emailNotification: NotificationChannelEmail
+    channels: t.partial({
+      [NotificationChannelEnum.EMAIL]: NotificationChannelEmail
+    })
   })
 ]);
-
 export type Notification = t.TypeOf<typeof Notification>;
 
 /**
  * Interface for new Notification objects
  */
-
 interface INewNotificationTag {
   readonly kind: "INewNotification";
 }
@@ -84,6 +102,23 @@ export const NewNotification = tag<INewNotificationTag>()(
 );
 
 export type NewNotification = t.TypeOf<typeof NewNotification>;
+
+/**
+ * Factory method to make NewNotifcation objects
+ */
+export function makeNotification(
+  fiscalCode: FiscalCode,
+  messageId: NonEmptyString
+): NewNotification {
+  return {
+    channels: {},
+    fiscalCode,
+    // tslint:disable-next-line:no-useless-cast
+    id: ulid() as NonEmptyString,
+    kind: "INewNotification",
+    messageId
+  };
+}
 
 /**
  * Interface for retrieved Notification objects
@@ -100,11 +135,7 @@ export const RetrievedNotification = tag<IRetrievedNotificationTag>()(
 export type RetrievedNotification = t.TypeOf<typeof RetrievedNotification>;
 
 function toBaseType(o: RetrievedNotification): Notification {
-  return {
-    emailNotification: o.emailNotification,
-    fiscalCode: o.fiscalCode,
-    messageId: o.messageId
-  };
+  return pick(["fiscalCode", "messageId", "channels"], o);
 }
 
 function toRetrieved(
@@ -138,7 +169,7 @@ export class NotificationModel extends DocumentDbModel<
   }
 
   /**
-   * Returns all the Notifications for the provided message
+   * Returns the Notification object associated to the provided message.
    *
    * @param messageId The Id of the message
    */

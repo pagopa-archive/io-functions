@@ -11,7 +11,7 @@ import { tag } from "./types";
 import { NonNegativeNumber } from "./numbers";
 import { NonEmptyString } from "./strings";
 
-import { Either, isLeft, right } from "fp-ts/lib/Either";
+import { Either, isLeft, left, right } from "fp-ts/lib/Either";
 
 interface IModelIdTag {
   readonly kind: "IModelIdTag";
@@ -105,6 +105,45 @@ export abstract class DocumentDbModelVersioned<
     return super.create(newDocument, partitionKey);
   }
 
+  public async upsert<V, K extends keyof TR>(
+    document: T,
+    modelIdField: K,
+    modelIdValue: V,
+    partitionKeyField: string,
+    partitionKeyValue: string
+  ): Promise<Either<DocumentDb.QueryError, TR>> {
+    const errorOrMaybeCurrent = await this.findLastVersionByModelId(
+      modelIdField,
+      modelIdValue,
+      partitionKeyField,
+      partitionKeyValue
+    );
+
+    if (isLeft(errorOrMaybeCurrent)) {
+      return left(errorOrMaybeCurrent.value);
+    }
+
+    const maybeCurrent = errorOrMaybeCurrent.value;
+
+    const nextVersion = maybeCurrent
+      .map(
+        currentRetrievedDocument =>
+          (Number(currentRetrievedDocument.version) + 1) as NonNegativeNumber
+      )
+      .getOrElse(0 as NonNegativeNumber);
+
+    const modelId = this.getModelId(document);
+    const versionedModelId = generateVersionedModelId(modelId, nextVersion);
+
+    const newDocument = this.versionateModel(
+      document,
+      versionedModelId,
+      nextVersion
+    );
+
+    return super.create(newDocument, partitionKeyValue);
+  }
+
   public async update(
     objectId: string,
     partitionKey: string,
@@ -140,14 +179,24 @@ export abstract class DocumentDbModelVersioned<
     );
 
     const createdDocument = await super.create(newDocument, partitionKey);
-
     return createdDocument.map(some);
   }
 
-  protected async findLastVersionByModelId<V>(
-    collectionName: string,
-    modelIdField: string,
-    modelIdValue: V
+  /**
+   *  Find the last version of a document.
+   *
+   *  Pass the partitionKey field / values if it differs from the modelId
+   *  to avoid multi-partition queries.
+   */
+  protected async findLastVersionByModelId<
+    V,
+    K1 extends keyof TR,
+    K2 extends keyof TR
+  >(
+    modelIdField: K1,
+    modelIdValue: V,
+    partitionKeyField?: K2,
+    partitionKeyValue?: string
   ): Promise<Either<DocumentDb.QueryError, Option<TR>>> {
     const errorOrMaybeDocument = await DocumentDbUtils.queryOneDocument(
       this.dbClient,
@@ -157,9 +206,16 @@ export abstract class DocumentDbModelVersioned<
           {
             name: "@modelId",
             value: modelIdValue
+          },
+          {
+            name: "@partitionKey",
+            value: partitionKeyValue
           }
         ],
-        query: `SELECT * FROM ${collectionName} m WHERE (m.${modelIdField} = @modelId) ORDER BY m.version DESC`
+        // do not use ${collectionName} here as it may contain special character
+        query: `SELECT * FROM m WHERE (m.${modelIdField} = @modelId ${
+          partitionKeyField ? `AND m.${partitionKeyField} = @partitionKey` : ``
+        }) ORDER BY m.version DESC`
       }
     );
 

@@ -6,7 +6,7 @@
 export const specs = {
   swagger: "2.0",
   info: {
-    version: "0.0.1",
+    version: "0.0.2",
     title: "Digital Citizenship API",
     description: "Digital Citizenship API."
   },
@@ -67,7 +67,7 @@ export const specs = {
         responses: {
           "200": {
             description: "Message found.",
-            schema: { $ref: "#/definitions/MessageResponse" },
+            schema: { $ref: "#/definitions/MessageResponseWithContent" },
             examples: {
               "application/json": {
                 message: {
@@ -109,7 +109,9 @@ export const specs = {
                   properties: {
                     items: {
                       type: "array",
-                      items: { $ref: "#/definitions/CreatedMessage" }
+                      items: {
+                        $ref: "#/definitions/CreatedMessageWithoutContent"
+                      }
                     }
                   }
                 },
@@ -288,7 +290,6 @@ export const specs = {
   },
   definitions: {
     ProblemJson: {
-      title: "Problem Type",
       type: "object",
       properties: {
         type: {
@@ -319,8 +320,26 @@ export const specs = {
         }
       }
     },
+    NotificationChannel: {
+      type: "string",
+      "x-extensible-enum": ["EMAIL"],
+      example: "EMAIL"
+    },
+    NotificationChannelStatusValue: {
+      type: "string",
+      "x-extensible-enum": ["QUEUED", "SENT_TO_CHANNEL", "EXPIRED", "FAILED"],
+      example: "SENT_TO_CHANNEL"
+    },
+    NotificationChannelStatus: {
+      type: "object",
+      properties: {
+        channel: { $ref: "#/definitions/NotificationChannel" },
+        status: { $ref: "#/definitions/NotificationChannelStatusValue" },
+        updateAt: { $ref: "#/definitions/Timestamp" }
+      },
+      required: ["channel", "status", "updateAt"]
+    },
     MessageContent: {
-      title: "MessageContent",
       type: "object",
       properties: {
         subject: { $ref: "#/definitions/MessageSubject" },
@@ -329,7 +348,6 @@ export const specs = {
       required: ["markdown"]
     },
     NewMessage: {
-      title: "NewMessage",
       type: "object",
       properties: {
         time_to_live: { $ref: "#/definitions/TimeToLive" },
@@ -338,18 +356,19 @@ export const specs = {
       },
       required: ["content"]
     },
-    NotificationChannelStatus: {
+    MessageStatusValue: {
       type: "string",
-      "x-extensible-enum": ["QUEUED", "SENT_TO_CHANNEL"],
-      example: "SENT_TO_CHANNEL"
+      "x-extensible-enum": ["PROCESSING", "ACCEPTED", "FAILED"],
+      example: "ACCEPTED"
     },
-    NotificationStatus: {
-      title: "NotificationStatus",
+    MessageStatus: {
       type: "object",
-      properties: { email: { $ref: "#/definitions/NotificationChannelStatus" } }
+      properties: {
+        status: { $ref: "#/definitions/MessageStatusValue" },
+        updateAt: { $ref: "#/definitions/Timestamp" }
+      }
     },
-    CreatedMessage: {
-      title: "CreatedMessage",
+    CreatedMessageWithContent: {
       type: "object",
       properties: {
         id: { type: "string" },
@@ -360,11 +379,39 @@ export const specs = {
       },
       required: ["fiscal_code", "sender_service_id"]
     },
-    MessageResponse: {
+    CreatedMessageWithoutContent: {
       type: "object",
       properties: {
-        message: { $ref: "#/definitions/CreatedMessage" },
-        notification: { $ref: "#/definitions/NotificationStatus" }
+        id: { type: "string" },
+        fiscal_code: { $ref: "#/definitions/FiscalCode" },
+        time_to_live: { $ref: "#/definitions/TimeToLive" },
+        sender_service_id: { type: "string" }
+      },
+      required: ["fiscal_code", "sender_service_id"]
+    },
+    MessageResponseNotificationStatus: {
+      type: "object",
+      properties: {
+        email: { $ref: "#/definitions/NotificationChannelStatusValue" }
+      }
+    },
+    MessageResponseWithContent: {
+      type: "object",
+      properties: {
+        message: { $ref: "#/definitions/CreatedMessageWithContent" },
+        notification: {
+          $ref: "#/definitions/MessageResponseNotificationStatus"
+        }
+      },
+      required: ["message"]
+    },
+    MessageResponseWithoutContent: {
+      type: "object",
+      properties: {
+        message: { $ref: "#/definitions/CreatedMessageWithoutContent" },
+        notification: {
+          $ref: "#/definitions/MessageResponseNotificationStatus"
+        }
       },
       required: ["message"]
     },
@@ -394,7 +441,6 @@ export const specs = {
     },
     PaginationResponse: {
       type: "object",
-      title: "pagination",
       description: "Pagination response parameters.",
       properties: {
         page_size: {
@@ -413,7 +459,6 @@ export const specs = {
       }
     },
     LimitedProfile: {
-      title: "A citizen's profile",
       description:
         "Describes the citizen's profile, mostly interesting for preferences attributes.",
       type: "object",
@@ -422,7 +467,6 @@ export const specs = {
       }
     },
     ExtendedProfile: {
-      title: "A citizen's profile",
       description:
         "Describes the citizen's profile, mostly interesting for preferences attributes.",
       type: "object",
@@ -481,7 +525,6 @@ export const specs = {
         "Indicates the User's preferred written or spoken languages in order of preference. Generally used for selecting a localized User interface. Valid values are concatenation of the ISO 639-1 two letter language code, an underscore, and the ISO 3166-1 2 letter country code; e.g., 'en_US' specifies the language English and country US."
     },
     Service: {
-      title: "Service",
       description: "A Service tied to an user's subscription.",
       type: "object",
       properties: {
@@ -553,9 +596,13 @@ export const specs = {
     },
     CIDR: {
       type: "string",
-      title: "CIDR",
       description: "Describes a single IP or a range of IPs.",
       pattern: "([0-9]{1,3}\\.){3}[0-9]{1,3}(\\/([0-9]|[1-2][0-9]|3[0-2]))?"
+    },
+    Timestamp: {
+      type: "string",
+      format: "date-time",
+      description: "A date-time field in ISO-8601 format"
     }
   },
   responses: {},
