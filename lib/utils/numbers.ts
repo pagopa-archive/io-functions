@@ -23,7 +23,6 @@ export const WithinRangeNumber = <
 >(
   l: L,
   h: H
-  // tslint:disable-next-line:no-any
 ): Tagged<T, number, number> =>
   tag<T>()(
     t.refinement(t.number, s => s >= l && s < h, `number >= ${l} and < ${h}`)
