@@ -301,15 +301,15 @@ export async function handleNotification(
   // see https://nodemailer.com/usage/#sending-mail
   // see #150597597
 
-  const notificationStatus = await updateNotificationStatus(
+  const errorOrNotificationStatus = await updateNotificationStatus(
     NotificationChannelStatusValueEnum.SENT_TO_CHANNEL
   );
 
-  if (isLeft(notificationStatus)) {
+  if (isLeft(errorOrNotificationStatus)) {
     // Here we got an error while updating the notification status
     // TODO: this will re-send the email, check whether the mailing provider
     // supports idempotent calls (dedup on notificationId)
-    const error = notificationStatus.value;
+    const error = errorOrNotificationStatus.value;
     return left(
       TransientError(
         `Error while updating the notification status|notification=${notificationId}|message=${messageId}|error=${

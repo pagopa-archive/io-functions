@@ -243,7 +243,7 @@ export async function handleMessage(
     // TODO: when we'll add other channels do not exit here (just log the error)
     return left(
       PermanentError(
-        `Fiscal code has no associated email address and no default email addresses was provided|${
+        `Fiscal code has no associated email address and no default email address was provided|${
           newMessageWithoutContent.fiscalCode
         }`
       )

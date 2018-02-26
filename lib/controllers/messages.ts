@@ -209,10 +209,10 @@ type NotificationStatusHolder = {
  * Retrieve all notifications statuses (all channels) for a message.
  *
  * It makes one query to get the notification object associated
- * to a message, then another query for each notification found
- * to retrieve the notification status for that channel.
+ * to a message, then another query for each channel
+ * to retrieve the relative notification status.
  *
- * @returns an object with channels as keys and statuses for values
+ * @returns an object with channels as keys and statuses as values
  *          ie. { email: "SENT_TO_CHANNEL" }
  */
 async function getMessageNotificationStatuses(
