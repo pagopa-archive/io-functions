@@ -178,44 +178,88 @@ describe("UpsertProfile", () => {
       expect(response.value).toEqual(aPublicExtendedProfile);
     }
   });
-});
 
-it("should update an existing profile", async () => {
-  // tslint:disable-next-line:no-let
-  let updatedProfile: any;
+  it("should update an existing profile (no conflict)", async () => {
+    // tslint:disable-next-line:no-let
+    let updatedProfile: any;
 
-  const profileModelMock = {
-    create: jest.fn(),
-    findOneProfileByFiscalCode: jest.fn(() => {
-      return Promise.resolve(right(some(aRetrievedProfile)));
-    }),
-    update: jest.fn((_, __, f) => {
-      updatedProfile = f(aRetrievedProfile);
-      return Promise.resolve(right(some(aRetrievedProfile)));
-    })
-  };
+    const profileModelMock = {
+      create: jest.fn(),
+      findOneProfileByFiscalCode: jest.fn(() => {
+        return Promise.resolve(right(some(aRetrievedProfile)));
+      }),
+      update: jest.fn((_, __, f) => {
+        updatedProfile = f(aRetrievedProfile);
+        return Promise.resolve(
+          right(
+            some({
+              ...aRetrievedProfile,
+              version: ((aRetrievedProfile.version as number) +
+                1) as NonNegativeNumber
+            })
+          )
+        );
+      })
+    };
 
-  const upsertProfileHandler = UpsertProfileHandler(profileModelMock as any);
+    const upsertProfileHandler = UpsertProfileHandler(profileModelMock as any);
 
-  const profilePayloadMock = {
-    email: "y@example.com" as EmailString
-  };
+    const profilePayloadMock = {
+      email: "y@example.com" as EmailString,
+      version: aRetrievedProfile.version
+    };
 
-  const response = await upsertProfileHandler(
-    anAzureAuthorization,
-    undefined as any, // not used
-    undefined as any, // not used
-    aFiscalCode,
-    profilePayloadMock
-  );
-  expect(profileModelMock.findOneProfileByFiscalCode).toHaveBeenCalledWith(
-    aRetrievedProfile.fiscalCode
-  );
-  expect(profileModelMock.create).not.toHaveBeenCalled();
-  expect(profileModelMock.update).toHaveBeenCalledTimes(1);
-  expect(updatedProfile.email).toBe("y@example.com");
-  expect(response.kind).toBe("IResponseSuccessJson");
-  if (response.kind === "IResponseSuccessJson") {
-    expect(response.value).toEqual(aPublicExtendedProfile);
-  }
+    const response = await upsertProfileHandler(
+      anAzureAuthorization,
+      undefined as any, // not used
+      undefined as any, // not used
+      aFiscalCode,
+      profilePayloadMock
+    );
+    expect(profileModelMock.findOneProfileByFiscalCode).toHaveBeenCalledWith(
+      aRetrievedProfile.fiscalCode
+    );
+    expect(profileModelMock.create).not.toHaveBeenCalled();
+    expect(profileModelMock.update).toHaveBeenCalledTimes(1);
+    expect(updatedProfile.email).toBe("y@example.com");
+    expect(response.kind).toBe("IResponseSuccessJson");
+    if (response.kind === "IResponseSuccessJson") {
+      expect(response.value).toEqual({
+        ...aPublicExtendedProfile,
+        version: ((aRetrievedProfile.version as number) +
+          1) as NonNegativeNumber
+      });
+    }
+  });
+
+  it("should update an existing profile (conflict)", async () => {
+    const profileModelMock = {
+      create: jest.fn(),
+      findOneProfileByFiscalCode: jest.fn(() => {
+        return Promise.resolve(right(some(aRetrievedProfile)));
+      }),
+      update: jest.fn()
+    };
+
+    const upsertProfileHandler = UpsertProfileHandler(profileModelMock as any);
+
+    const profilePayloadMock = {
+      email: "y@example.com" as EmailString,
+      version: 0 as NonNegativeNumber
+    };
+
+    const response = await upsertProfileHandler(
+      anAzureAuthorization,
+      undefined as any, // not used
+      undefined as any, // not used
+      aFiscalCode,
+      profilePayloadMock
+    );
+    expect(profileModelMock.findOneProfileByFiscalCode).toHaveBeenCalledWith(
+      aRetrievedProfile.fiscalCode
+    );
+    expect(profileModelMock.create).not.toHaveBeenCalled();
+    expect(profileModelMock.update).not.toHaveBeenCalled();
+    expect(response.kind).toBe("IResponseErrorConflict");
+  });
 });

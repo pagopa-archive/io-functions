@@ -13,6 +13,7 @@ import { errorsToReadableMessages } from "./validation_reporters";
 const HTTP_STATUS_400 = 400 as HttpStatusCode;
 const HTTP_STATUS_403 = 403 as HttpStatusCode;
 const HTTP_STATUS_404 = 404 as HttpStatusCode;
+const HTTP_STATUS_409 = 409 as HttpStatusCode;
 const HTTP_STATUS_500 = 500 as HttpStatusCode;
 
 /**
@@ -334,6 +335,24 @@ export function ResponseErrorQuery(
       detail
     ),
     kind: "IResponseErrorQuery"
+  };
+}
+
+/**
+ * Interface for a response describing a conflict error (409).
+ */
+export interface IResponseErrorConflict
+  extends IResponse<"IResponseErrorConflict"> {}
+
+/**
+ * Returns a response describing an conflict error (409).
+ *
+ * @param detail The error message
+ */
+export function ResponseErrorConflict(detail: string): IResponseErrorConflict {
+  return {
+    ...ResponseErrorGeneric(HTTP_STATUS_409, "Conflict", detail),
+    kind: "IResponseErrorConflict"
   };
 }
 
