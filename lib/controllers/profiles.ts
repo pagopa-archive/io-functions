@@ -33,11 +33,13 @@ import {
 } from "../utils/request_middleware";
 
 import {
+  IResponseErrorConflict,
   IResponseErrorInternal,
   IResponseErrorNotFound,
   IResponseErrorQuery,
   IResponseErrorValidation,
   IResponseSuccessJson,
+  ResponseErrorConflict,
   ResponseErrorFromValidationErrors,
   ResponseErrorInternal,
   ResponseErrorNotFound,
@@ -101,6 +103,7 @@ type IUpsertProfileHandler = (
   | IResponseErrorValidation
   | IResponseErrorQuery
   | IResponseErrorInternal
+  | IResponseErrorConflict
 >;
 
 /**
@@ -275,10 +278,17 @@ export function UpsertProfileHandler(
           profileModelPayload
         );
       } else {
+        const existingProfile = maybeProfile.value;
+        // verify that the client asked to update the latest version
+        if (profileModelPayload.version !== existingProfile.version) {
+          return ResponseErrorConflict(
+            `Version ${profileModelPayload.version} is not the latest version.`
+          );
+        }
         // update existing profile
         return updateExistingProfileFromPayload(
           profileModel,
-          maybeProfile.value,
+          existingProfile,
           profileModelPayload
         );
       }
