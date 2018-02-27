@@ -201,9 +201,14 @@ type IGetMessagesHandler = (
   | IResponseErrorQuery
 >;
 
-type NotificationStatusHolder = {
-  readonly [channel in NotificationChannelEnum]?: NotificationChannelStatusValueEnum
-};
+/**
+ * Convenience structure to hold notification channels
+ * and the status of the relative notification
+ * ie. { email: "SENT_TO_CHANNEL" }
+ */
+type NotificationStatusHolder = Partial<
+  Record<NotificationChannelEnum, NotificationChannelStatusValueEnum>
+>;
 
 /**
  * Retrieve all notifications statuses (all channels) for a message.
@@ -236,30 +241,6 @@ async function getMessageNotificationStatuses(
       return right({});
     }
     const notification = maybeNotification.value;
-    // Get NotificationStatus looping on all notification channels
-    /*
-    const channelStatuses = channelKeys.reduce(
-      async (
-        statusesP: Promise<NotificationStatusHolder>,
-        channelIdx: string
-      ): Promise<NotificationStatusHolder> => {
-        const channel =
-          NotificationChannelEnum[channelIdx as NotificationChannelEnum];
-        const errorOrMaybeStatus = await notificationStatusModel.findOneNotificationStatusByNotificationChannel(
-          notification.id,
-          channel
-        );
-        const statusObj = fromEither(errorOrMaybeStatus)
-          .chain(t.identity)
-          .toUndefined();
-        const statuses = await statusesP;
-        return statusObj
-          ? { ...statuses, [channel.toLowerCase()]: statusObj.status }
-          : statuses;
-      },
-      Promise.resolve({})
-    );
-    */
 
     // returns the status of a channel
     const getChannelStatus = async (channel: NotificationChannelEnum) => {

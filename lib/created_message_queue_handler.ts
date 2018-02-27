@@ -33,7 +33,7 @@ import { getRequiredStringEnv } from "./utils/env";
 import { CreatedMessageEvent } from "./models/created_message_event";
 import { MessageModel, NewMessageWithoutContent } from "./models/message";
 import {
-  makeNotification,
+  createNewNotification,
   NewNotification,
   NotificationAddressSourceEnum,
   NotificationChannelEmail,
@@ -157,7 +157,7 @@ function tryGetEmailNotification(
 async function saveNotification(
   notificationModel: NotificationModel,
   notification: NewNotification
-): Promise<Either<RuntimeError, RetrievedNotification>> {
+): Promise<Either<TransientError, RetrievedNotification>> {
   return (await notificationModel.create(
     notification,
     notification.messageId
@@ -250,7 +250,7 @@ export async function handleMessage(
     );
   }
 
-  const newNotification = makeNotification(
+  const newNotification = createNewNotification(
     newMessageWithoutContent.fiscalCode,
     newMessageWithoutContent.id
   );
@@ -270,10 +270,10 @@ export function processResolve(
   senderMetadata: CreatedMessageEventSenderMetadata
 ): void {
   if (isLeft(errorOrNotification)) {
-    if (isTransient(errorOrNotification.value)) {
-      const transientError = errorOrNotification.value;
+    const error = errorOrNotification.value;
+    if (isTransient(error)) {
       winston.error(
-        `CreatedMessageQueueHandler|Transient error|${transientError.message}`
+        `CreatedMessageQueueHandler|Transient error|${error.message}`
       );
       // schedule a retry in case of transient errors
       // retry function is async and calls context.done() by itself
@@ -283,9 +283,8 @@ export function processResolve(
     } else {
       // the message processing failed with an unrecoverable error
       // TODO: update message status (FAILED)
-      const permanentError = errorOrNotification.value;
       winston.error(
-        `CreatedMessageQueueHandler|Permanent error|${permanentError.message}`
+        `CreatedMessageQueueHandler|Permanent error|${error.message}`
       );
       return context.done();
     }

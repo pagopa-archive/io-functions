@@ -106,7 +106,7 @@ export type NewNotification = t.TypeOf<typeof NewNotification>;
 /**
  * Factory method to make NewNotification objects
  */
-export function makeNotification(
+export function createNewNotification(
   fiscalCode: FiscalCode,
   messageId: NonEmptyString
 ): NewNotification {
