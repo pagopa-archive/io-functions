@@ -219,7 +219,7 @@ async function getMessageNotificationStatuses(
   notificationModel: NotificationModel,
   notificationStatusModel: NotificationStatusModel,
   retrievedMessage: RetrievedMessage
-): Promise<Either<Error, Promise<NotificationStatusHolder>>> {
+): Promise<Either<Error, NotificationStatusHolder>> {
   const errorOrMaybeNotification = await notificationModel.findNotificationForMessage(
     retrievedMessage.id
   );
@@ -233,33 +233,64 @@ async function getMessageNotificationStatuses(
           retrievedMessage.id
         }`
       );
-      return right(Promise.resolve({}));
+      return right({});
     }
     const notification = maybeNotification.value;
     // Get NotificationStatus looping on all notification channels
-    return right(
-      Object.keys(NotificationChannelEnum).reduce(
-        async (
-          statusesP: Promise<NotificationStatusHolder>,
-          channelIdx: string
-        ): Promise<NotificationStatusHolder> => {
-          const channel =
-            NotificationChannelEnum[channelIdx as NotificationChannelEnum];
-          const errorOrMaybeStatus = await notificationStatusModel.findOneNotificationStatusByNotificationChannel(
-            notification.id,
-            channel
-          );
-          const statusObj = fromEither(errorOrMaybeStatus)
-            .chain(t.identity)
-            .toUndefined();
-          const statuses = await statusesP;
-          return statusObj
-            ? { ...statuses, [channel.toLowerCase()]: statusObj.status }
-            : statuses;
-        },
-        Promise.resolve({})
-      )
+    /*
+    const channelStatuses = channelKeys.reduce(
+      async (
+        statusesP: Promise<NotificationStatusHolder>,
+        channelIdx: string
+      ): Promise<NotificationStatusHolder> => {
+        const channel =
+          NotificationChannelEnum[channelIdx as NotificationChannelEnum];
+        const errorOrMaybeStatus = await notificationStatusModel.findOneNotificationStatusByNotificationChannel(
+          notification.id,
+          channel
+        );
+        const statusObj = fromEither(errorOrMaybeStatus)
+          .chain(t.identity)
+          .toUndefined();
+        const statuses = await statusesP;
+        return statusObj
+          ? { ...statuses, [channel.toLowerCase()]: statusObj.status }
+          : statuses;
+      },
+      Promise.resolve({})
     );
+    */
+
+    // returns the status of a channel
+    const getChannelStatus = async (channel: NotificationChannelEnum) => {
+      const errorOrMaybeStatus = await notificationStatusModel.findOneNotificationStatusByNotificationChannel(
+        notification.id,
+        channel
+      );
+      return fromEither(errorOrMaybeStatus)
+        .chain(t.identity)
+        .map(o => o.status)
+        .toUndefined();
+    };
+
+    // collect the statuses of all channels
+    const channelStatusesPromises = Object.keys(NotificationChannelEnum)
+      .map(k => NotificationChannelEnum[k as NotificationChannelEnum])
+      .map(channel => ({
+        channel,
+        status: getChannelStatus(channel)
+      }));
+    const channelStatuses = await Promise.all(channelStatusesPromises);
+
+    // reduce the statuses in one response
+    const response = channelStatuses.reduce<NotificationStatusHolder>(
+      (a, s) => ({
+        ...a,
+        [s.channel.toLowerCase()]: s.status
+      }),
+      {}
+    );
+    return right(response);
   } else {
     winston.error(
       `getMessageNotificationStatuses|Query error|${
