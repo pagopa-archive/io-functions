@@ -92,7 +92,7 @@ import {
 import { withoutUndefinedValues } from "../utils/types";
 
 import { Either, isLeft, isRight, left, right } from "fp-ts/lib/Either";
-import { fromEither, isNone } from "fp-ts/lib/Option";
+import { fromEither, isNone, none, Option, some } from "fp-ts/lib/Option";
 import { CreatedMessageWithContent } from "../api/definitions/CreatedMessageWithContent";
 import { NotificationChannelEnum } from "../api/definitions/NotificationChannel";
 import { NotificationChannelStatusValueEnum } from "../api/definitions/NotificationChannelStatusValue";
@@ -224,7 +224,7 @@ async function getMessageNotificationStatuses(
   notificationModel: NotificationModel,
   notificationStatusModel: NotificationStatusModel,
   retrievedMessage: RetrievedMessage
-): Promise<Either<Error, NotificationStatusHolder>> {
+): Promise<Either<Error, Option<NotificationStatusHolder>>> {
   const errorOrMaybeNotification = await notificationModel.findNotificationForMessage(
     retrievedMessage.id
   );
@@ -238,7 +238,7 @@ async function getMessageNotificationStatuses(
           retrievedMessage.id
         }`
       );
-      return right({});
+      return right(none);
     }
     const notification = maybeNotification.value;
 
@@ -257,21 +257,24 @@ async function getMessageNotificationStatuses(
     // collect the statuses of all channels
     const channelStatusesPromises = Object.keys(NotificationChannelEnum)
       .map(k => NotificationChannelEnum[k as NotificationChannelEnum])
-      .map(channel => ({
+      .map(async channel => ({
         channel,
-        status: getChannelStatus(channel)
+        status: await getChannelStatus(channel)
       }));
     const channelStatuses = await Promise.all(channelStatusesPromises);
 
     // reduce the statuses in one response
     const response = channelStatuses.reduce<NotificationStatusHolder>(
-      (a, s) => ({
-        ...a,
-        [s.channel.toLowerCase()]: s.status
-      }),
+      (a, s) =>
+        s.status
+          ? {
+              ...a,
+              [s.channel.toLowerCase()]: s.status
+            }
+          : a,
       {}
     );
-    return right(response);
+    return right(some(response));
   } else {
     winston.error(
       `getMessageNotificationStatuses|Query error|${
@@ -578,11 +581,11 @@ export function GetMessageHandler(
       );
     }
 
-    const notificationStatuses = await errorOrNotificationStatuses.value;
+    const notificationStatuses = errorOrNotificationStatuses.value;
 
     const messageStatus: MessageResponseWithContent = {
       message,
-      notification: notificationStatuses
+      notification: notificationStatuses.toUndefined()
     };
 
     return ResponseSuccessJson(messageStatus);
