@@ -134,6 +134,7 @@ export const RetrievedNotification = tag<IRetrievedNotificationTag>()(
 
 export type RetrievedNotification = t.TypeOf<typeof RetrievedNotification>;
 
+/* istanbul ignore next */
 function toBaseType(o: RetrievedNotification): Notification {
   return pick(["fiscalCode", "messageId", "channels"], o);
 }
@@ -173,6 +174,7 @@ export class NotificationModel extends DocumentDbModel<
    *
    * @param messageId The Id of the message
    */
+  /* istanbul ignore next */
   public findNotificationForMessage(
     messageId: string
   ): Promise<Either<DocumentDb.QueryError, Option<RetrievedNotification>>> {
