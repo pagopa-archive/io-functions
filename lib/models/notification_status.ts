@@ -10,7 +10,7 @@ import {
   VersionedModel
 } from "../utils/documentdb_model_versioned";
 
-import { Either, left } from "fp-ts/lib/Either";
+import { Either } from "fp-ts/lib/Either";
 import { Option } from "fp-ts/lib/Option";
 import {
   NotificationChannel,
@@ -25,7 +25,6 @@ import { notificationStatusIdToModelId } from "../utils/conversions";
 import { RuntimeError, TransientError } from "../utils/errors";
 import { NonNegativeNumber } from "../utils/numbers";
 import { NonEmptyString } from "../utils/strings";
-import { ReadableReporter } from "../utils/validation_reporters";
 
 export const NOTIFICATION_STATUS_COLLECTION_NAME = "notification-status";
 export const NOTIFICATION_STATUS_MODEL_ID_FIELD = "statusId";

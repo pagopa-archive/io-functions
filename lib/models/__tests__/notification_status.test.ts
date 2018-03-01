@@ -47,7 +47,7 @@ const aSerializedRetrievedNotificationStatus = {
   _self: "_self",
   _ts: 1,
   ...aSerializedNotificationStatus,
-  id: (aNotificationStatusId + "-" + "0".repeat(16)) as NonEmptyString,
+  id: `${aNotificationStatusId}-${"0".repeat(16)}` as NonEmptyString,
   kind: "IRetrievedNotificationStatus",
   version: 0 as NonNegativeNumber
 };
