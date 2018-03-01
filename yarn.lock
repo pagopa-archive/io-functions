@@ -505,7 +505,7 @@ azure-functions-types@^0.1.1:
   version "0.1.1"
   resolved "https://registry.yarnpkg.com/azure-functions-types/-/azure-functions-types-0.1.1.tgz#a244ad28192be94258e4cad9dfe73f50e412470b"
 
-azure-storage@^2.5.0:
+azure-storage@^2.8.0:
   version "2.8.0"
   resolved "https://registry.yarnpkg.com/azure-storage/-/azure-storage-2.8.0.tgz#3ad0d90f475ff9209d6565af3e0ec9c5641304a4"
   dependencies:
