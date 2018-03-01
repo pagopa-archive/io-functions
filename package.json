@@ -108,7 +108,6 @@
     ],
     "testMatch": [
       "**/__tests__/*.ts"
-    ],
-    "mapCoverage": true
+    ]
   }
 }

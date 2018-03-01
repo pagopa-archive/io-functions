@@ -10,6 +10,16 @@ const defaultObject = t.partial({
 });
 
 describe("withDefault (single value)", () => {
+  it("should return true with a valid value", () => {
+    const r = defaultString.is("hello");
+    expect(r).toBeTruthy();
+  });
+
+  it("should return false with an invalid value", () => {
+    const r = defaultString.is(1);
+    expect(r).toBeFalsy();
+  });
+
   it("should evaluate to the valid value", () => {
     const r = defaultString.decode("hello");
     expect(isRight(r));
