@@ -306,6 +306,25 @@ export const specs = {
         }
       }
     },
+    NotificationChannel: {
+      type: "string",
+      "x-extensible-enum": ["EMAIL"],
+      example: "EMAIL"
+    },
+    NotificationChannelStatusValue: {
+      type: "string",
+      "x-extensible-enum": ["QUEUED", "SENT_TO_CHANNEL", "EXPIRED", "FAILED"],
+      example: "SENT_TO_CHANNEL"
+    },
+    NotificationChannelStatus: {
+      type: "object",
+      properties: {
+        channel: { $ref: "#/definitions/NotificationChannel" },
+        status: { $ref: "#/definitions/NotificationChannelStatusValue" },
+        updateAt: { $ref: "#/definitions/Timestamp" }
+      },
+      required: ["channel", "status", "updateAt"]
+    },
     MessageContent: {
       type: "object",
       properties: {
@@ -323,14 +342,17 @@ export const specs = {
       },
       required: ["content"]
     },
-    NotificationChannelStatus: {
+    MessageStatusValue: {
       type: "string",
-      "x-extensible-enum": ["QUEUED", "SENT_TO_CHANNEL"],
-      example: "SENT_TO_CHANNEL"
+      "x-extensible-enum": ["PROCESSING", "ACCEPTED", "FAILED"],
+      example: "ACCEPTED"
     },
-    NotificationStatus: {
+    MessageStatus: {
       type: "object",
-      properties: { email: { $ref: "#/definitions/NotificationChannelStatus" } }
+      properties: {
+        status: { $ref: "#/definitions/MessageStatusValue" },
+        updateAt: { $ref: "#/definitions/Timestamp" }
+      }
     },
     CreatedMessageWithContent: {
       type: "object",
@@ -353,11 +375,19 @@ export const specs = {
       },
       required: ["fiscal_code", "sender_service_id"]
     },
+    MessageResponseNotificationStatus: {
+      type: "object",
+      properties: {
+        email: { $ref: "#/definitions/NotificationChannelStatusValue" }
+      }
+    },
     MessageResponseWithContent: {
       type: "object",
       properties: {
         message: { $ref: "#/definitions/CreatedMessageWithContent" },
-        notification: { $ref: "#/definitions/NotificationStatus" }
+        notification: {
+          $ref: "#/definitions/MessageResponseNotificationStatus"
+        }
       },
       required: ["message"]
     },
@@ -365,7 +395,9 @@ export const specs = {
       type: "object",
       properties: {
         message: { $ref: "#/definitions/CreatedMessageWithoutContent" },
-        notification: { $ref: "#/definitions/NotificationStatus" }
+        notification: {
+          $ref: "#/definitions/MessageResponseNotificationStatus"
+        }
       },
       required: ["message"]
     },
@@ -552,6 +584,11 @@ export const specs = {
       type: "string",
       description: "Describes a single IP or a range of IPs.",
       pattern: "([0-9]{1,3}\\.){3}[0-9]{1,3}(\\/([0-9]|[1-2][0-9]|3[0-2]))?"
+    },
+    Timestamp: {
+      type: "string",
+      format: "date-time",
+      description: "A date-time field in ISO-8601 format"
     }
   },
   responses: {},

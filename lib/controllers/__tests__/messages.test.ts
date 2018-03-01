@@ -15,7 +15,6 @@ import { FiscalCode } from "../../api/definitions/FiscalCode";
 import { MessageBodyMarkdown } from "../../api/definitions/MessageBodyMarkdown";
 import { MessageSubject } from "../../api/definitions/MessageSubject";
 import { NewMessage as ApiNewMessage } from "../../api/definitions/NewMessage";
-import { NotificationChannelStatusEnum } from "../../api/definitions/NotificationChannelStatus";
 
 import {
   IAzureApiAuthorization,
@@ -24,6 +23,9 @@ import {
 import { IAzureUserAttributes } from "../../utils/middlewares/azure_user_attributes";
 import { EmailString, NonEmptyString } from "../../utils/strings";
 
+import { MessageResponseWithoutContent } from "../../api/definitions/MessageResponseWithoutContent";
+import { NotificationChannelEnum } from "../../api/definitions/NotificationChannel";
+import { NotificationChannelStatusValueEnum } from "../../api/definitions/NotificationChannelStatusValue";
 import {
   NewMessage,
   NewMessageWithContent,
@@ -34,6 +36,11 @@ import {
   NotificationAddressSourceEnum,
   RetrievedNotification
 } from "../../models/notification";
+import {
+  makeStatusId,
+  RetrievedNotificationStatus
+} from "../../models/notification_status";
+import { NonNegativeNumber } from "../../utils/numbers";
 import {
   CreateMessage,
   CreateMessageHandler,
@@ -111,6 +118,47 @@ const aPublicExtendedMessage: CreatedMessageWithoutContent = {
   id: "A_MESSAGE_ID",
   sender_service_id: aNewMessageWithoutContent.senderServiceId
 };
+
+const aPublicExtendedMessageResponse: MessageResponseWithoutContent = {
+  message: aPublicExtendedMessage,
+  notification: {
+    email: NotificationChannelStatusValueEnum.SENT_TO_CHANNEL
+  }
+};
+
+function getNotificationModelMock(
+  aRetrievedNotification: any = { data: "data" }
+): any {
+  return {
+    findNotificationForMessage: jest.fn(() =>
+      Promise.resolve(right(some(aRetrievedNotification)))
+    )
+  };
+}
+
+const aRetrievedNotificationStatus: RetrievedNotificationStatus = {
+  _self: "xyz",
+  _ts: "xyz",
+  channel: NotificationChannelEnum.EMAIL,
+  id: "1" as NonEmptyString,
+  kind: "IRetrievedNotificationStatus",
+  messageId: "1" as NonEmptyString,
+  notificationId: "1" as NonEmptyString,
+  status: NotificationChannelStatusValueEnum.SENT_TO_CHANNEL,
+  statusId: makeStatusId("1" as NonEmptyString, NotificationChannelEnum.EMAIL),
+  updateAt: new Date(),
+  version: 1 as NonNegativeNumber
+};
+
+function getNotificationStatusModelMock(
+  retrievedNotificationStatus: any = right(some(aRetrievedNotificationStatus))
+): any {
+  return {
+    findOneNotificationStatusByNotificationChannel: jest.fn(() =>
+      Promise.resolve(retrievedNotificationStatus)
+    )
+  };
+}
 
 describe("CreateMessageHandler", () => {
   it("should not authorize sending messages to unauthorized recipients", async () => {
@@ -633,13 +681,10 @@ describe("GetMessageHandler", () => {
       getStoredContent: jest.fn(() => right(none))
     };
 
-    const mockNotificationModel = {
-      findNotificationForMessage: jest.fn(() => right(none))
-    };
-
     const getMessageHandler = GetMessageHandler(
       mockMessageModel as any,
-      mockNotificationModel as any,
+      getNotificationModelMock(),
+      getNotificationStatusModelMock(),
       {} as any
     );
 
@@ -660,9 +705,7 @@ describe("GetMessageHandler", () => {
 
     expect(result.kind).toBe("IResponseSuccessJson");
     if (result.kind === "IResponseSuccessJson") {
-      expect(result.value).toEqual({
-        message: aPublicExtendedMessage
-      });
+      expect(result.value).toEqual(aPublicExtendedMessageResponse);
     }
   });
 
@@ -674,13 +717,10 @@ describe("GetMessageHandler", () => {
       getStoredContent: jest.fn(() => left(new Error()))
     };
 
-    const mockNotificationModel = {
-      findNotificationForMessage: jest.fn(() => right(none))
-    };
-
     const getMessageHandler = GetMessageHandler(
       mockMessageModel as any,
-      mockNotificationModel as any,
+      getNotificationModelMock(),
+      getNotificationStatusModelMock(),
       {} as any
     );
 
@@ -710,13 +750,10 @@ describe("GetMessageHandler", () => {
       getStoredContent: jest.fn(() => right(none))
     };
 
-    const mockNotificationModel = {
-      findNotificationForMessage: jest.fn(() => right(none))
-    };
-
     const getMessageHandler = GetMessageHandler(
       mockMessageModel as any,
-      mockNotificationModel as any,
+      getNotificationModelMock(),
+      getNotificationStatusModelMock(),
       {} as any
     );
 
@@ -737,9 +774,7 @@ describe("GetMessageHandler", () => {
 
     expect(result.kind).toBe("IResponseSuccessJson");
     if (result.kind === "IResponseSuccessJson") {
-      expect(result.value).toEqual({
-        message: aPublicExtendedMessage
-      });
+      expect(result.value).toEqual(aPublicExtendedMessageResponse);
     }
   });
 
@@ -756,6 +791,7 @@ describe("GetMessageHandler", () => {
 
     const getMessageHandler = GetMessageHandler(
       mockMessageModel as any,
+      {} as any,
       {} as any,
       {} as any
     );
@@ -786,6 +822,7 @@ describe("GetMessageHandler", () => {
     const getMessageHandler = GetMessageHandler(
       mockMessageModel as any,
       {} as any,
+      {} as any,
       {} as any
     );
 
@@ -806,10 +843,11 @@ describe("GetMessageHandler", () => {
     const aRetrievedNotification: RetrievedNotification = {
       _self: "xyz",
       _ts: "xyz",
-      emailNotification: {
-        addressSource: NotificationAddressSourceEnum.PROFILE_ADDRESS,
-        status: NotificationChannelStatusEnum.SENT_TO_CHANNEL,
-        toAddress: "x@example.com" as EmailString
+      channels: {
+        [NotificationChannelEnum.EMAIL]: {
+          addressSource: NotificationAddressSourceEnum.PROFILE_ADDRESS,
+          toAddress: "x@example.com" as EmailString
+        }
       },
       fiscalCode: aFiscalCode,
       id: "A_NOTIFICATION_ID" as NonEmptyString,
@@ -824,15 +862,10 @@ describe("GetMessageHandler", () => {
       getStoredContent: jest.fn(() => right(none))
     };
 
-    const mockNotificationModel = {
-      findNotificationForMessage: jest.fn(() =>
-        right(some(aRetrievedNotification))
-      )
-    };
-
     const getMessageHandler = GetMessageHandler(
       mockMessageModel as any,
-      mockNotificationModel as any,
+      getNotificationModelMock(aRetrievedNotification),
+      getNotificationStatusModelMock(),
       {} as any
     );
 
@@ -853,12 +886,7 @@ describe("GetMessageHandler", () => {
 
     expect(result.kind).toBe("IResponseSuccessJson");
     if (result.kind === "IResponseSuccessJson") {
-      expect(result.value).toEqual({
-        message: aPublicExtendedMessage,
-        notification: {
-          email: "SENT_TO_CHANNEL"
-        }
-      });
+      expect(result.value).toEqual(aPublicExtendedMessageResponse);
     }
   });
 });

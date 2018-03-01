@@ -7,7 +7,6 @@
 
 import * as t from "io-ts";
 
-import { ulid } from "ulid";
 import * as winston from "winston";
 
 import { IContext } from "azure-functions-types";
@@ -28,13 +27,13 @@ import {
 
 import { MessageContent } from "./api/definitions/MessageContent";
 import { NewMessageDefaultAddresses } from "./api/definitions/NewMessageDefaultAddresses";
-import { NotificationChannelStatusEnum } from "./api/definitions/NotificationChannelStatus";
 
 import { getRequiredStringEnv } from "./utils/env";
 
 import { CreatedMessageEvent } from "./models/created_message_event";
 import { MessageModel, NewMessageWithoutContent } from "./models/message";
 import {
+  createNewNotification,
   NewNotification,
   NotificationAddressSourceEnum,
   NotificationChannelEmail,
@@ -44,8 +43,7 @@ import {
 import { NotificationEvent } from "./models/notification_event";
 import { ProfileModel, RetrievedProfile } from "./models/profile";
 
-import { Either, isLeft, isRight, left, right } from "fp-ts/lib/Either";
-import { NonEmptyString } from "./utils/strings";
+import { Either, isLeft, left } from "fp-ts/lib/Either";
 import { Tuple2 } from "./utils/tuples";
 import { ReadableReporter } from "./utils/validation_reporters";
 
@@ -57,6 +55,8 @@ import {
   TransientError
 } from "./utils/errors";
 
+import { EmailAddress } from "./api/definitions/EmailAddress";
+import { NotificationChannelEnum } from "./api/definitions/NotificationChannel";
 import { CreatedMessageEventSenderMetadata } from "./models/created_message_sender_metadata";
 
 // Whether we're in a production environment
@@ -98,7 +98,6 @@ const ContextWithBindings = t.interface({
     createdMessage: CreatedMessageEvent,
 
     // output bindings
-    // tslint:disable-next-line:readonly-keyword
     emailNotification: NotificationEvent
   })
 });
@@ -112,23 +111,63 @@ type ContextWithBindings = t.TypeOf<typeof ContextWithBindings> & IContext;
  * @param maybeProfile      the recipient's profile (or none)
  * @param defaultAddresses  default addresses (one per channel)
  */
-function getEmailNotification(
+function tryGetDestinationEmail(
   maybeProfile: Option<RetrievedProfile>,
   defaultAddresses: Option<NewMessageDefaultAddresses>
-): Option<NotificationChannelEmail> {
+): Option<Tuple2<EmailAddress, NotificationAddressSourceEnum>> {
   const maybeProfileEmail = maybeProfile
     .chain(profile => fromNullable(profile.email))
     .map(email => Tuple2(email, NotificationAddressSourceEnum.PROFILE_ADDRESS));
   const maybeDefaultEmail = defaultAddresses
     .chain(addresses => fromNullable(addresses.email))
     .map(email => Tuple2(email, NotificationAddressSourceEnum.DEFAULT_ADDRESS));
-  const maybeEmail = maybeProfileEmail.alt(maybeDefaultEmail);
-  return maybeEmail.map(({ e1: toAddress, e2: addressSource }) => {
+  return maybeProfileEmail.alt(maybeDefaultEmail);
+}
+
+/**
+ * Attempt to resolve an email notification.
+ *
+ * @param maybeProfile the user's profile we try to get an email address from
+ * @param defaultAddresses the email address provided as input to the message APIs
+ * @returns none when both maybeProfile.email and defaultAddresses are empty
+ */
+function tryGetEmailNotification(
+  maybeProfile: Option<RetrievedProfile>,
+  defaultAddresses: Option<NewMessageDefaultAddresses>
+): Option<NotificationChannelEmail> {
+  const maybeDestinationEmail = tryGetDestinationEmail(
+    maybeProfile,
+    defaultAddresses
+  );
+  // Now that we have a valid destination email address, we create an EmailNotification
+  return maybeDestinationEmail.map(({ e1: toAddress, e2: addressSource }) => {
     return {
       addressSource,
-      status: NotificationChannelStatusEnum.QUEUED,
       toAddress
     };
+  });
+}
+
+/**
+ * Save a notification object to the database.
+ *
+ * @param notificationModel notification model used to interact with database
+ * @param notifications     array of notification objects
+ */
+async function saveNotification(
+  notificationModel: NotificationModel,
+  notification: NewNotification
+): Promise<Either<TransientError, RetrievedNotification>> {
+  return (await notificationModel.create(
+    notification,
+    notification.messageId
+  )).mapLeft(() => {
+    winston.debug(
+      `saveNotification|Error|Cannot save notification to database|${JSON.stringify(
+        notification
+      )})`
+    );
+    return TransientError("Cannot save notification to database");
   });
 }
 
@@ -136,10 +175,9 @@ function getEmailNotification(
  * Handles the retrieved message by looking up the associated profile and
  * creating a Notification record that has all the channels configured.
  *
- * TODO: emit to all channels (push notification, sms, etc...)
- *
- * Returns left(TransientError) in case of recoverable errors.
- * Returns left(Error) in case of permanent errors.
+ * @returns an array of Notifications in case of success
+ *          a TransientError in case of recoverable errors
+ *          a PermanentError in case of unrecoverable error
  */
 export async function handleMessage(
   profileModel: ProfileModel,
@@ -158,7 +196,7 @@ export async function handleMessage(
 
   if (isLeft(errorOrMaybeProfile)) {
     // The query has failed.
-    // It's critical to trigger a retry here
+    // It's *critical* to trigger a retry here
     // otherwise no message content will be saved
     return left(TransientError("Cannot get user's profile"));
   }
@@ -195,49 +233,34 @@ export async function handleMessage(
     }
   }
 
-  // attempt to resolve an email notification
-  const maybeEmailNotification = getEmailNotification(
+  // Try to get email notification metadata from user's profile
+  const maybeNotificationChannelEmail = tryGetEmailNotification(
     maybeProfile,
     defaultAddresses
   );
 
-  // check whether there's at least a channel we can send the notification to
-  if (isNone(maybeEmailNotification)) {
-    // no channels to notify the user
+  if (isNone(maybeNotificationChannelEmail)) {
+    // TODO: when we'll add other channels do not exit here (just log the error)
     return left(
       PermanentError(
-        `Fiscal code has no associated email address and no default addresses was provided|${
+        `Fiscal code has no associated email address and no default email address was provided|${
           newMessageWithoutContent.fiscalCode
         }`
       )
     );
   }
 
-  // create a new Notification object with the configured notification channels
-  // only some of the channels may be configured, for the channel that have not
-  // generated a notification, we set the field to undefined
-  const notification: NewNotification = {
-    // if we have an emailNotification, we initialize its status
-    emailNotification: maybeEmailNotification.toUndefined(),
-    fiscalCode: newMessageWithoutContent.fiscalCode,
-    // tslint:disable-next-line:no-useless-cast
-    id: ulid() as NonEmptyString,
-    kind: "INewNotification",
-    messageId: newMessageWithoutContent.id
-  };
-
-  // save the Notification
-  const result = await notificationModel.create(
-    notification,
-    notification.messageId
+  const newNotification = createNewNotification(
+    newMessageWithoutContent.fiscalCode,
+    newMessageWithoutContent.id
   );
 
-  if (isLeft(result)) {
-    return left(TransientError("Cannot save notification to database"));
-  }
-
-  // save succeeded, return the saved Notification
-  return right(result.value);
+  return saveNotification(notificationModel, {
+    ...newNotification,
+    channels: {
+      [NotificationChannelEnum.EMAIL]: maybeNotificationChannelEmail.toUndefined()
+    }
+  });
 }
 
 export function processResolve(
@@ -246,39 +269,45 @@ export function processResolve(
   messageContent: MessageContent,
   senderMetadata: CreatedMessageEventSenderMetadata
 ): void {
-  if (isRight(errorOrNotification)) {
-    const notification = errorOrNotification.value;
-    // TODO: handle all notification channels
-    // the notification object has been created with an email channel
-    // we output a notification event to the email channel queue
-    if (notification.emailNotification) {
-      // tslint:disable-next-line:no-object-mutation
-      context.bindings.emailNotification = {
-        messageContent,
-        messageId: notification.messageId,
-        notificationId: notification.id,
-        senderMetadata
-      };
+  if (isLeft(errorOrNotification)) {
+    const error = errorOrNotification.value;
+    if (isTransient(error)) {
+      winston.error(
+        `CreatedMessageQueueHandler|Transient error|${error.message}`
+      );
+      // schedule a retry in case of transient errors
+      // retry function is async and calls context.done() by itself
+      // TODO: update message status (PROCESSING)
+      const queueService = createQueueService(queueConnectionString);
+      return retryMessageEnqueue(queueService, MESSAGE_QUEUE_NAME, context);
+    } else {
+      // the message processing failed with an unrecoverable error
+      // TODO: update message status (FAILED)
+      winston.error(
+        `CreatedMessageQueueHandler|Permanent error|${error.message}`
+      );
+      return context.done();
     }
-    // TODO: update message status (queued_at)
-  } else if (isTransient(errorOrNotification.value)) {
-    const transientError = errorOrNotification.value;
-    winston.error(
-      `CreatedMessageQueueHandler|Transient error|${transientError.message}`
-    );
-    // schedule a retry in case of transient errors
-    // retry function is async and calls context.done() by itself
-    const queueService = createQueueService(queueConnectionString);
-    return retryMessageEnqueue(queueService, MESSAGE_QUEUE_NAME, context);
-  } else {
-    // the processing failed with an unrecoverable error
-    // TODO: update message status (failed_at)
-    const permanentError = errorOrNotification.value;
-    winston.error(
-      `CreatedMessageQueueHandler|Permanent error|${permanentError.message}`
-    );
   }
-  return context.done();
+
+  const notification = errorOrNotification.value;
+
+  const emailNotification: NotificationEvent = {
+    messageContent,
+    messageId: notification.messageId,
+    notificationId: notification.id,
+    senderMetadata
+  };
+
+  const bindings = {
+    emailNotification
+  };
+
+  winston.debug(
+    `CreatedMessageQueueHandler|binding|${JSON.stringify(bindings)}`
+  );
+  // TODO: update message status (ACCEPTED)
+  context.done(undefined, bindings);
 }
 
 /**
@@ -291,7 +320,9 @@ export function index(context: ContextWithBindings): void {
     configureAzureContextTransport(context, winston, logLevel);
 
     winston.debug(
-      `CreatedMessageQueueHandler|queueMessage|${context.bindings}`
+      `CreatedMessageQueueHandler|queueMessage|${JSON.stringify(
+        context.bindings
+      )}`
     );
 
     // since this function gets triggered by a queued message that gets

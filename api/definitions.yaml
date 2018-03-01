@@ -30,6 +30,32 @@ ProblemJson:
       description: |-
         An absolute URI that identifies the specific occurrence of the problem.
         It may or may not yield further information if dereferenced.
+NotificationChannel:
+  type: string
+  x-extensible-enum:
+    - EMAIL
+  example: EMAIL
+NotificationChannelStatusValue:
+  type: string
+  x-extensible-enum:
+    - QUEUED
+    - SENT_TO_CHANNEL
+    - EXPIRED
+    - FAILED
+  example: SENT_TO_CHANNEL
+NotificationChannelStatus:
+  type: object
+  properties:
+    channel:
+      $ref: "#/NotificationChannel"
+    status:
+      $ref: "#/NotificationChannelStatusValue"
+    updateAt:
+      $ref: "#/Timestamp"
+  required:
+    - channel
+    - status
+    - updateAt
 MessageContent:
   type: object
   properties:
@@ -38,7 +64,7 @@ MessageContent:
     markdown:
       $ref: "#/MessageBodyMarkdown"
   required:
-  - markdown
+    - markdown
 NewMessage:
   type: object
   properties:
@@ -49,18 +75,21 @@ NewMessage:
     default_addresses:
       $ref: "#/NewMessageDefaultAddresses"
   required:
-  - content
-NotificationChannelStatus:
+    - content
+MessageStatusValue:
   type: string
   x-extensible-enum:
-  - QUEUED
-  - SENT_TO_CHANNEL
-  example: SENT_TO_CHANNEL
-NotificationStatus:
+    - PROCESSING
+    - ACCEPTED
+    - FAILED
+  example: ACCEPTED
+MessageStatus:
   type: object
   properties:
-    email:
-      $ref: "#/NotificationChannelStatus"
+    status:
+      $ref: "#/MessageStatusValue"
+    updateAt:
+      $ref: "#/Timestamp"
 CreatedMessageWithContent:
   type: object
   properties:
@@ -75,8 +104,8 @@ CreatedMessageWithContent:
     sender_service_id:
       type: string
   required:
-  - fiscal_code
-  - sender_service_id
+    - fiscal_code
+    - sender_service_id
 CreatedMessageWithoutContent:
   type: object
   properties:
@@ -89,26 +118,31 @@ CreatedMessageWithoutContent:
     sender_service_id:
       type: string
   required:
-  - fiscal_code
-  - sender_service_id
+    - fiscal_code
+    - sender_service_id
+MessageResponseNotificationStatus:
+  type: object
+  properties:
+    email:
+      $ref: "#/NotificationChannelStatusValue"
 MessageResponseWithContent:
   type: object
   properties:
     message:
       $ref: "#/CreatedMessageWithContent"
     notification:
-      $ref: "#/NotificationStatus"
+      $ref: "#/MessageResponseNotificationStatus"
   required:
-  - message
+    - message
 MessageResponseWithoutContent:
   type: object
   properties:
     message:
       $ref: "#/CreatedMessageWithoutContent"
     notification:
-      $ref: "#/NotificationStatus"
+      $ref: "#/MessageResponseNotificationStatus"
   required:
-  - message
+    - message
 FiscalCode:
   type: string
   description: User's fiscal code.
@@ -209,11 +243,11 @@ EmailAddress:
 PreferredLanguage:
   type: string
   x-extensible-enum:
-  - it_IT
-  - en_GB
-  - es_ES
-  - de_DE
-  - fr_FR
+    - it_IT
+    - en_GB
+    - es_ES
+    - de_DE
+    - fr_FR
   example: it_IT
 PreferredLanguages:
   type: array
@@ -249,12 +283,12 @@ Service:
     id:
       type: string
   required:
-  - service_id
-  - service_name
-  - organization_name
-  - department_name
-  - authorized_cidrs
-  - authorized_recipients
+    - service_id
+    - service_name
+    - organization_name
+    - department_name
+    - authorized_cidrs
+    - authorized_recipients
 ServicePublic:
   title: Service (public)
   description: A Service associated to an user's subscription.
@@ -271,10 +305,10 @@ ServicePublic:
     version:
       type: integer
   required:
-  - service_id
-  - service_name
-  - organization_name
-  - department_name
+    - service_id
+    - service_name
+    - organization_name
+    - department_name
 ServiceId:
   type: string
   description: The ID of the Service. Equals the subscriptionId of a registered
@@ -298,3 +332,7 @@ CIDR:
   type: string
   description: Describes a single IP or a range of IPs.
   pattern: "([0-9]{1,3}\\.){3}[0-9]{1,3}(\\/([0-9]|[1-2][0-9]|3[0-2]))?"
+Timestamp:
+  type: string
+  format: date-time
+  description: A date-time field in ISO-8601 format

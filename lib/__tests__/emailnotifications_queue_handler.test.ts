@@ -17,7 +17,6 @@ jest.mock("applicationinsights");
 jest.mock("azure-storage");
 
 jest.mock("../utils/azure_queues");
-jest.mock("../models/notification");
 
 jest.mock("nodemailer-sendgrid-transport");
 
@@ -32,7 +31,6 @@ import { isLeft, isRight, left, right } from "fp-ts/lib/Either";
 import { EmailString, NonEmptyString } from "../utils/strings";
 
 import { FiscalCode } from "../api/definitions/FiscalCode";
-import { NotificationChannelStatusEnum } from "../api/definitions/NotificationChannelStatus";
 
 import {
   EMAIL_NOTIFICATION_QUEUE_NAME,
@@ -58,6 +56,20 @@ import { isTransient, PermanentError, TransientError } from "../utils/errors";
 import { NotificationEvent } from "../models/notification_event";
 
 import * as functionConfig from "../../EmailNotificationsQueueHandler/function.json";
+import { NotificationChannelEnum } from "../api/definitions/NotificationChannel";
+import { NotificationChannelStatusValueEnum } from "../api/definitions/NotificationChannelStatusValue";
+import {
+  makeStatusId,
+  NotificationStatusModel,
+  RetrievedNotificationStatus
+} from "../models/notification_status";
+import { NonNegativeNumber } from "../utils/numbers";
+
+// jest.mock("../models/notification");
+
+afterEach(() => {
+  jest.resetAllMocks();
+});
 
 function flushPromises(): Promise<void> {
   return new Promise(resolve => setImmediate(resolve));
@@ -70,8 +82,8 @@ const aNotificationEvent: NotificationEvent = {
     markdown: "test".repeat(80) as MessageBodyMarkdown,
     subject: "t".repeat(30) as MessageSubject
   },
-  messageId: "1" as NonEmptyString,
-  notificationId: "2" as NonEmptyString,
+  messageId: "A_MESSAGE_ID" as NonEmptyString,
+  notificationId: "A_NOTIFICATION_ID" as NonEmptyString,
   senderMetadata: {
     departmentName: "dept" as NonEmptyString,
     organizationName: "org" as NonEmptyString,
@@ -80,10 +92,11 @@ const aNotificationEvent: NotificationEvent = {
 };
 
 const aNotification: Notification = {
-  emailNotification: {
-    addressSource: NotificationAddressSourceEnum.DEFAULT_ADDRESS,
-    status: NotificationChannelStatusEnum.QUEUED,
-    toAddress: "pinco@pallino.com" as EmailString
+  channels: {
+    [NotificationChannelEnum.EMAIL]: {
+      addressSource: NotificationAddressSourceEnum.DEFAULT_ADDRESS,
+      toAddress: "pinco@pallino.com" as EmailString
+    }
   },
   fiscalCode: aFiscalCode,
   messageId: "A_MESSAGE_ID" as NonEmptyString
@@ -94,6 +107,29 @@ const aSenderMetadata: CreatedMessageEventSenderMetadata = {
   organizationName: "agid" as NonEmptyString,
   serviceName: "Test" as NonEmptyString
 };
+
+const aRetrievedNotificationStatus: RetrievedNotificationStatus = {
+  _self: "xyz",
+  _ts: "xyz",
+  channel: NotificationChannelEnum.EMAIL,
+  id: "1" as NonEmptyString,
+  kind: "IRetrievedNotificationStatus",
+  messageId: "A_MESSAGE_ID" as NonEmptyString,
+  notificationId: "A_NOTIFICATION_ID" as NonEmptyString,
+  status: NotificationChannelStatusValueEnum.SENT_TO_CHANNEL,
+  statusId: makeStatusId(
+    "A_NOTIFICATION_ID" as NonEmptyString,
+    NotificationChannelEnum.EMAIL
+  ),
+  updateAt: new Date(),
+  version: 1 as NonNegativeNumber
+};
+
+function getUpdateNotificationStatusMock(
+  retrievedNotificationStatus: any = right(some(aRetrievedNotificationStatus))
+): any {
+  return jest.fn(() => Promise.resolve(retrievedNotificationStatus));
+}
 
 describe("sendMail", () => {
   it("should call sendMail on the Transporter and return the result", async () => {
@@ -140,10 +176,8 @@ describe("handleNotification", () => {
       {} as any,
       {} as any,
       notificationModelMock as any,
-      "A_MESSAGE_ID",
-      "A_NOTIFICATION_ID",
-      {} as any,
-      {} as any
+      getUpdateNotificationStatusMock(),
+      aNotificationEvent
     );
 
     expect(notificationModelMock.find).toHaveBeenCalledWith(
@@ -165,10 +199,8 @@ describe("handleNotification", () => {
       {} as any,
       {} as any,
       notificationModelMock as any,
-      "A_MESSAGE_ID",
-      "A_NOTIFICATION_ID",
-      {} as any,
-      {} as any
+      getUpdateNotificationStatusMock(),
+      aNotificationEvent
     );
 
     expect(isLeft(result)).toBeTruthy();
@@ -186,10 +218,8 @@ describe("handleNotification", () => {
       {} as any,
       {} as any,
       notificationModelMock as any,
-      "A_MESSAGE_ID",
-      "A_NOTIFICATION_ID",
-      {} as any,
-      {} as any
+      getUpdateNotificationStatusMock(),
+      aNotificationEvent
     );
 
     expect(isLeft(result)).toBeTruthy();
@@ -207,22 +237,25 @@ describe("handleNotification", () => {
     const mockTransporter = NodeMailer.createTransport(mockTransport);
 
     const aMessageContent = {
-      markdown: "# Hello world!"
+      markdown: "# Hello world!" as MessageBodyMarkdown
     };
 
     const notificationModelMock = {
-      find: jest.fn(() => right(some(aNotification))),
-      update: jest.fn(() => right(some(aNotification)))
+      find: jest.fn(() => Promise.resolve(right(some(aNotification)))),
+      update: jest.fn(() => Promise.resolve(right(some(aNotification))))
     };
 
+    const notificationStatusModelMock = getUpdateNotificationStatusMock();
     const result = await handleNotification(
       mockTransporter,
       mockAppinsights as any,
       notificationModelMock as any,
-      "A_MESSAGE_ID",
-      "A_NOTIFICATION_ID",
-      aMessageContent as any,
-      aSenderMetadata
+      notificationStatusModelMock,
+      {
+        ...aNotificationEvent,
+        messageContent: aMessageContent,
+        senderMetadata: aSenderMetadata
+      }
     );
 
     expect(mockTransport.sentMail.length).toBe(1);
@@ -260,19 +293,10 @@ describe("handleNotification", () => {
       }
     });
 
-    expect(notificationModelMock.update.mock.calls[0][0]).toBe(
-      "A_NOTIFICATION_ID"
+    expect(notificationStatusModelMock).toHaveBeenCalledTimes(1);
+    expect(notificationStatusModelMock).toHaveBeenCalledWith(
+      NotificationChannelStatusValueEnum.SENT_TO_CHANNEL
     );
-    expect(notificationModelMock.update.mock.calls[0][1]).toBe("A_MESSAGE_ID");
-    expect(
-      notificationModelMock.update.mock.calls[0][2]({
-        emailNotification: {}
-      })
-    ).toEqual({
-      emailNotification: {
-        status: NotificationChannelStatusEnum.SENT_TO_CHANNEL
-      }
-    });
 
     expect(isRight(result)).toBeTruthy();
     expect(result.value).toBeDefined();
@@ -291,7 +315,7 @@ describe("handleNotification", () => {
 # Hello world!
 
 This is a *message* from the future!
-`
+` as MessageBodyMarkdown
     };
 
     const notificationModelMock = {
@@ -303,10 +327,12 @@ This is a *message* from the future!
       mockTransporter,
       mockAppinsights as any,
       notificationModelMock as any,
-      "A_MESSAGE_ID",
-      "A_NOTIFICATION_ID",
-      aMessageContent as any,
-      aSenderMetadata
+      getUpdateNotificationStatusMock(),
+      {
+        ...aNotificationEvent,
+        messageContent: aMessageContent,
+        senderMetadata: aSenderMetadata
+      }
     );
 
     expect(
@@ -335,7 +361,7 @@ This is a message from the future!`.replace(/[ \n]+/g, "|")
     const mockTransporter = NodeMailer.createTransport(mockTransport);
 
     const aMessageContent = {
-      markdown: "# Hello world!"
+      markdown: "# Hello world!" as MessageBodyMarkdown
     };
 
     const notificationModelMock = {
@@ -347,10 +373,8 @@ This is a message from the future!`.replace(/[ \n]+/g, "|")
       mockTransporter,
       mockAppinsights as any,
       notificationModelMock as any,
-      "A_MESSAGE_ID",
-      "A_NOTIFICATION_ID",
-      aMessageContent as any,
-      {} as any
+      getUpdateNotificationStatusMock(),
+      { ...aNotificationEvent, messageContent: aMessageContent }
     );
 
     expect(mockTransport.sentMail[0].data.subject).toBe(
@@ -370,8 +394,8 @@ This is a message from the future!`.replace(/[ \n]+/g, "|")
     const mockTransporter = NodeMailer.createTransport(mockTransport);
 
     const aMessageContent = {
-      markdown: "# Hello world!",
-      subject: "A custom subject"
+      markdown: "# Hello world!" as MessageBodyMarkdown,
+      subject: "A custom subject" as MessageSubject
     };
 
     const notificationModelMock = {
@@ -383,10 +407,8 @@ This is a message from the future!`.replace(/[ \n]+/g, "|")
       mockTransporter,
       mockAppinsights as any,
       notificationModelMock as any,
-      "A_MESSAGE_ID",
-      "A_NOTIFICATION_ID",
-      aMessageContent as any,
-      {} as any
+      getUpdateNotificationStatusMock(),
+      { ...aNotificationEvent, messageContent: aMessageContent }
     );
 
     expect(mockTransport.sentMail[0].data.subject).toBe("A custom subject");
@@ -406,7 +428,7 @@ This is a message from the future!`.replace(/[ \n]+/g, "|")
     const mockTransporter = NodeMailer.createTransport(mockTransport as any);
 
     const aMessageContent = {
-      markdown: "# Hello world!"
+      markdown: "# Hello world!" as MessageBodyMarkdown
     };
 
     const notificationModelMock = {
@@ -418,10 +440,8 @@ This is a message from the future!`.replace(/[ \n]+/g, "|")
       mockTransporter,
       mockAppinsights as any,
       notificationModelMock as any,
-      "A_MESSAGE_ID",
-      "A_NOTIFICATION_ID",
-      aMessageContent as any,
-      {} as any
+      getUpdateNotificationStatusMock(),
+      { ...aNotificationEvent, messageContent: aMessageContent }
     );
 
     expect(mockAppinsights.trackEvent).toHaveBeenCalledWith({
@@ -443,7 +463,7 @@ This is a message from the future!`.replace(/[ \n]+/g, "|")
     }
   });
 
-  it("should respond with a transient error when notification update fails", async () => {
+  it("should respond with a transient error when notification status update fails", async () => {
     const mockAppinsights = {
       trackEvent: jest.fn()
     };
@@ -452,39 +472,26 @@ This is a message from the future!`.replace(/[ \n]+/g, "|")
     const mockTransporter = NodeMailer.createTransport(mockTransport);
 
     const aMessageContent = {
-      markdown: "# Hello world!"
+      markdown: "# Hello world!" as MessageBodyMarkdown
     };
 
     const notificationModelMock = {
-      find: jest.fn(() => right(some(aNotification))),
-      update: jest.fn(() => left("error"))
+      find: jest.fn(() => right(some(aNotification)))
     };
 
+    const notificationStatusModelMock = getUpdateNotificationStatusMock(
+      left(none)
+    );
     const result = await handleNotification(
       mockTransporter,
       mockAppinsights as any,
       notificationModelMock as any,
-      "A_MESSAGE_ID",
-      "A_NOTIFICATION_ID",
-      aMessageContent as any,
-      {} as any
+      notificationStatusModelMock,
+      { ...aNotificationEvent, messageContent: aMessageContent }
     );
 
     expect(mockTransport.sentMail.length).toBe(1);
-
-    expect(notificationModelMock.update.mock.calls[0][0]).toBe(
-      "A_NOTIFICATION_ID"
-    );
-    expect(notificationModelMock.update.mock.calls[0][1]).toBe("A_MESSAGE_ID");
-    expect(
-      notificationModelMock.update.mock.calls[0][2]({
-        emailNotification: {}
-      })
-    ).toEqual({
-      emailNotification: {
-        status: NotificationChannelStatusEnum.SENT_TO_CHANNEL
-      }
-    });
+    expect(notificationStatusModelMock).toHaveBeenCalledTimes(1);
 
     expect(isLeft(result)).toBeTruthy();
     if (isLeft(result)) {
@@ -587,8 +594,8 @@ describe("emailnotificationQueueHandlerIndex", () => {
     expect(winstonErrorSpy).toHaveBeenCalledWith(
       expect.stringMatching("No valid email notification found in bindings")
     );
-    jest.resetAllMocks();
   });
+
   it("should proceed on valid message payload", async () => {
     const contextMock = {
       bindings: {
@@ -597,20 +604,30 @@ describe("emailnotificationQueueHandlerIndex", () => {
       done: jest.fn(),
       log: jest.fn()
     };
-    (NotificationModel as any).mockImplementation(() => ({
-      find: jest.fn(() => right(some(aNotification))),
-      update: jest.fn(() => right(some(aNotification)))
-    }));
+
+    const notificationModelSpy = jest
+      .spyOn(NotificationModel.prototype, "find")
+      .mockImplementation(jest.fn(() => right(some(aNotification))));
+
+    const notificationStatusModelSpy = jest
+      .spyOn(NotificationStatusModel.prototype, "upsert")
+      .mockImplementation(
+        jest.fn(() => Promise.resolve(aRetrievedNotificationStatus))
+      );
+
     const nodemailerSpy = jest
       .spyOn(NodeMailer, "createTransport")
       .mockReturnValue({
         sendMail: jest.fn((_, cb) => cb(null, "ok"))
       });
+
     index(contextMock as any);
     await flushPromises();
+
+    expect(notificationStatusModelSpy).toHaveBeenCalledTimes(1);
+    expect(notificationModelSpy).toHaveBeenCalledTimes(1);
     expect(nodemailerSpy).toHaveBeenCalledTimes(1);
     expect(contextMock.done).toHaveBeenCalledTimes(1);
-    jest.resetAllMocks();
   });
 });
 

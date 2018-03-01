@@ -3,6 +3,22 @@ import * as t from "io-ts";
 import { Set as SerializableSet } from "json-set-map";
 
 /**
+ * Returns a subset of the input objects fields.
+ *
+ * @param obj the input object
+ * @param props an array of keys to preserve
+ */
+export const pick = <T, K extends keyof T>(
+  props: ReadonlyArray<K>,
+  obj: T
+): Pick<T, K> =>
+  props.reduce(
+    (result: Pick<T, K>, key: K) =>
+      Object.assign({}, result, { [key]: obj[key] }),
+    {} as Pick<T, K>
+  );
+
+/**
  * An io-ts Type tagged with T
  */
 export type Tagged<T, S extends t.mixed, A> = t.Type<A & T, S>;
@@ -22,7 +38,7 @@ const getObjectValues = (e: object) =>
   Object.keys(e).reduce(
     // tslint:disable-next-line:no-any
     (o, k) => ({ ...o, [(e as any)[k]]: undefined }),
-    {} as { readonly [k: string]: undefined }
+    {} as Record<string, undefined>
   );
 
 /**
@@ -138,3 +154,15 @@ export function strictInterfaceWithOptionals<
     loose.encode
   );
 }
+
+export const DateFromString = new t.Type<Date, string>(
+  "DateFromString",
+  (v): v is Date => v instanceof Date,
+  (v, c) =>
+    t.string.validate(v, c).chain(s => {
+      const d = new Date(s);
+      return isNaN(d.getTime()) ? t.failure(s, c) : t.success(d);
+    }),
+  a => a.toISOString()
+);
+export type DateFromString = t.TypeOf<typeof DateFromString>;

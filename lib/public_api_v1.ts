@@ -34,6 +34,10 @@ import { secureExpressApp } from "./utils/express";
 
 import { createBlobService } from "azure-storage";
 import { GetService } from "./controllers/services";
+import {
+  NOTIFICATION_STATUS_COLLECTION_NAME,
+  NotificationStatusModel
+} from "./models/notification_status";
 
 // Whether we're in a production environment
 const isProduction = process.env.NODE_ENV === "production";
@@ -66,6 +70,10 @@ const notificationsCollectionUrl = documentDbUtils.getCollectionUri(
   documentDbDatabaseUrl,
   "notifications"
 );
+const notificationsStatusCollectionUrl = documentDbUtils.getCollectionUri(
+  documentDbDatabaseUrl,
+  NOTIFICATION_STATUS_COLLECTION_NAME
+);
 
 const documentClient = new DocumentDBClient(cosmosDbUri, {
   masterKey: cosmosDbKey
@@ -81,6 +89,11 @@ const serviceModel = new ServiceModel(documentClient, servicesCollectionUrl);
 const notificationModel = new NotificationModel(
   documentClient,
   notificationsCollectionUrl
+);
+
+const notificationStatusModel = new NotificationStatusModel(
+  documentClient,
+  notificationsStatusCollectionUrl
 );
 
 const storageConnectionString = getRequiredStringEnv("QueueStorageConnection");
@@ -106,8 +119,15 @@ app.post(
 
 app.get(
   "/api/v1/messages/:fiscalcode/:id",
-  GetMessage(serviceModel, messageModel, notificationModel, blobService)
+  GetMessage(
+    serviceModel,
+    messageModel,
+    notificationModel,
+    notificationStatusModel,
+    blobService
+  )
 );
+
 app.get(
   "/api/v1/messages/:fiscalcode",
   GetMessages(serviceModel, messageModel)

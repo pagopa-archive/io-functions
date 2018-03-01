@@ -8,7 +8,7 @@ import * as t from "io-ts";
 export function withDefault<T extends t.Any>(
   type: T,
   defaultValue: t.TypeOf<T>
-): t.Type<any, t.TypeOf<T>> {
+): t.Type<t.TypeOf<T>, any> {
   return new t.Type(
     type.name,
     (v: any): v is T => type.is(v),

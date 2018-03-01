@@ -171,6 +171,6 @@ export class ServiceModel extends DocumentDbModelVersioned<
   public findOneByServiceId(
     serviceId: NonEmptyString
   ): Promise<Either<DocumentDb.QueryError, Option<RetrievedService>>> {
-    return super.findLastVersionByModelId("services", "serviceId", serviceId);
+    return super.findLastVersionByModelId("serviceId", serviceId);
   }
 }

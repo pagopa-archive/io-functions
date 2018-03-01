@@ -27,12 +27,11 @@ import * as functionConfig from "../../CreatedMessageQueueHandler/function.json"
 import { none, some } from "fp-ts/lib/Option";
 import { FiscalCode } from "../api/definitions/FiscalCode";
 import { MessageBodyMarkdown } from "../api/definitions/MessageBodyMarkdown";
-import { NotificationChannelStatusEnum } from "../api/definitions/NotificationChannelStatus";
 
 import {
+  EmailNotification,
   NewNotification,
-  NotificationAddressSourceEnum,
-  NotificationChannelEmail
+  NotificationAddressSourceEnum
 } from "../models/notification";
 import { RetrievedProfile } from "../models/profile";
 
@@ -44,15 +43,24 @@ import { EmailString, NonEmptyString } from "../utils/strings";
 
 jest.mock("azure-storage");
 jest.mock("../utils/azure_queues");
+import { NotificationChannelEnum } from "../api/definitions/NotificationChannel";
+import { NotificationEvent } from "../models/notification_event";
 import { retryMessageEnqueue } from "../utils/azure_queues";
 
 const aCorrectFiscalCode = "FRLFRC74E04B157I" as FiscalCode;
 const aWrongFiscalCode = "FRLFRC74E04B157" as FiscalCode;
 const anEmail = "x@example.com" as EmailString;
-const anEmailNotification: NotificationChannelEmail = {
-  addressSource: NotificationAddressSourceEnum.PROFILE_ADDRESS,
-  status: NotificationChannelStatusEnum.QUEUED,
-  toAddress: anEmail
+
+const anEmailNotification: EmailNotification = {
+  channels: {
+    [NotificationChannelEnum.EMAIL]: {
+      addressSource: NotificationAddressSourceEnum.PROFILE_ADDRESS,
+      fromAddress: anEmail,
+      toAddress: anEmail
+    }
+  },
+  fiscalCode: aCorrectFiscalCode,
+  messageId: "m123" as NonEmptyString
 };
 
 const aMessage: NewMessageWithoutContent = {
@@ -96,20 +104,24 @@ const aRetrievedProfileWithoutEmail: RetrievedProfile = {
   version: 1 as NonNegativeNumber
 };
 
-const aCreatedNotificationWithEmail: NewNotification = {
-  emailNotification: anEmailNotification,
+const aCreatedNotificationWithoutEmail = {
   fiscalCode: aCorrectFiscalCode,
   id: "123" as NonEmptyString,
   kind: "INewNotification",
   messageId: "123" as NonEmptyString
 };
 
-const aCreatedNotificationWithoutEmail: NewNotification = {
-  emailNotification: undefined,
-  fiscalCode: aCorrectFiscalCode,
-  id: "123" as NonEmptyString,
-  kind: "INewNotification",
-  messageId: "123" as NonEmptyString
+const aCreatedNotificationWithEmail: NewNotification = {
+  ...aCreatedNotificationWithoutEmail,
+  ...anEmailNotification,
+  kind: "INewNotification"
+};
+
+const anEmailNotificationEvent: NotificationEvent = {
+  messageContent: aMessageEvent.messageContent,
+  messageId: aCreatedNotificationWithEmail.messageId,
+  notificationId: aCreatedNotificationWithEmail.id,
+  senderMetadata: aMessageEvent.senderMetadata
 };
 
 const aBlobService = {};
@@ -165,7 +177,7 @@ describe("createdMessageQueueIndex", () => {
     await flushPromises();
 
     expect(contextMock.done).toHaveBeenCalledTimes(1);
-    expect(contextMock.bindings.emailNotification).toBeUndefined();
+    expect(contextMock.done).toHaveBeenCalledWith();
     expect(spy).toHaveBeenCalledTimes(1);
 
     spy.mockReset();
@@ -308,10 +320,14 @@ describe("handleMessage", () => {
       );
       expect(isRight(response)).toBeTruthy();
       if (isRight(response)) {
-        expect(response.value.emailNotification).not.toBeUndefined();
-        if (response.value.emailNotification !== undefined) {
-          expect(response.value.emailNotification.toAddress).toBe(anEmail);
-          expect(response.value.emailNotification.addressSource).toBe(
+        expect(response.value).not.toBeUndefined();
+        expect(response.value.channels.EMAIL).not.toBeUndefined();
+        if (
+          response.value !== undefined &&
+          response.value.channels.EMAIL !== undefined
+        ) {
+          expect(response.value.channels.EMAIL.toAddress).toBe(anEmail);
+          expect(response.value.channels.EMAIL.addressSource).toBe(
             NotificationAddressSourceEnum.PROFILE_ADDRESS
           );
         }
@@ -363,10 +379,14 @@ describe("handleMessage", () => {
       );
       expect(isRight(response)).toBeTruthy();
       if (isRight(response)) {
-        expect(response.value.emailNotification).not.toBeUndefined();
-        if (response.value.emailNotification !== undefined) {
-          expect(response.value.emailNotification.toAddress).toBe(anEmail);
-          expect(response.value.emailNotification.addressSource).toBe(
+        expect(response.value).not.toBeUndefined();
+        expect(response.value.channels.EMAIL).not.toBeUndefined();
+        if (
+          response.value !== undefined &&
+          response.value.channels.EMAIL !== undefined
+        ) {
+          expect(response.value.channels.EMAIL.toAddress).toBe(anEmail);
+          expect(response.value.channels.EMAIL.addressSource).toBe(
             NotificationAddressSourceEnum.DEFAULT_ADDRESS
           );
         }
@@ -411,10 +431,14 @@ describe("handleMessage", () => {
       );
       expect(isRight(response)).toBeTruthy();
       if (isRight(response)) {
-        expect(response.value.emailNotification).not.toBeUndefined();
-        if (response.value.emailNotification !== undefined) {
-          expect(response.value.emailNotification.toAddress).toBe(anEmail);
-          expect(response.value.emailNotification.addressSource).toBe(
+        expect(response.value).not.toBeUndefined();
+        expect(response.value.channels.EMAIL).not.toBeUndefined();
+        if (
+          response.value !== undefined &&
+          response.value.channels.EMAIL !== undefined
+        ) {
+          expect(response.value.channels.EMAIL.toAddress).toBe(anEmail);
+          expect(response.value.channels.EMAIL.addressSource).toBe(
             NotificationAddressSourceEnum.DEFAULT_ADDRESS
           );
         }
@@ -485,10 +509,14 @@ describe("handleMessage", () => {
 
     expect(isRight(response)).toBeTruthy();
     if (isRight(response)) {
-      expect(response.value.emailNotification).not.toBeUndefined();
-      if (response.value.emailNotification !== undefined) {
-        expect(response.value.emailNotification.toAddress).toBe(anEmail);
-        expect(response.value.emailNotification.addressSource).toBe(
+      expect(response.value).not.toBeUndefined();
+      expect(response.value.channels.EMAIL).not.toBeUndefined();
+      if (
+        response.value !== undefined &&
+        response.value.channels.EMAIL !== undefined
+      ) {
+        expect(response.value.channels.EMAIL.toAddress).toBe(anEmail);
+        expect(response.value.channels.EMAIL.addressSource).toBe(
           NotificationAddressSourceEnum.PROFILE_ADDRESS
         );
       }
@@ -609,55 +637,19 @@ describe("processResolve", () => {
       done: jest.fn()
     };
 
-    const retrievedMessageMock = {
-      fiscalCode: aCorrectFiscalCode
-    };
-
     processResolve(
       errorOrNotification as any,
       contextMock as any,
-      retrievedMessageMock as any,
-      {} as any
+      aMessageEvent.messageContent,
+      aMessageEvent.senderMetadata
     );
 
     expect(contextMock.done).toHaveBeenCalledTimes(1);
-    expect(contextMock.bindings).not.toBeUndefined();
-    const emailNotification = (contextMock.bindings as any).emailNotification;
-    expect(emailNotification).not.toBeUndefined();
-    if (emailNotification !== undefined) {
-      expect(emailNotification.messageId).toEqual(
-        aCreatedNotificationWithEmail.messageId
-      );
-      expect(emailNotification.notificationId).toEqual(
-        aCreatedNotificationWithEmail.id
-      );
-    }
+    expect(contextMock.done).toHaveBeenCalledWith(undefined, {
+      emailNotification: anEmailNotificationEvent
+    });
   });
 
-  it("should not enqueue notification to the email queue if no email is present", async () => {
-    const errorOrNotification = right(aCreatedNotificationWithoutEmail);
-
-    const contextMock = {
-      bindings: {
-        emailNotification: undefined
-      },
-      done: jest.fn()
-    };
-
-    const retrievedMessageMock = {
-      fiscalCode: aCorrectFiscalCode
-    };
-
-    processResolve(
-      errorOrNotification as any,
-      contextMock as any,
-      retrievedMessageMock as any,
-      {} as any
-    );
-
-    expect(contextMock.done).toHaveBeenCalledTimes(1);
-    expect(contextMock.bindings.emailNotification).toEqual(undefined);
-  });
   it("should retry on transient error", async () => {
     const errorOrNotification = left(TransientError("err"));
 

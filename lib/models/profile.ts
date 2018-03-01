@@ -143,6 +143,6 @@ export class ProfileModel extends DocumentDbModelVersioned<
   public findOneProfileByFiscalCode(
     fiscalCode: FiscalCode
   ): Promise<Either<DocumentDb.QueryError, Option<RetrievedProfile>>> {
-    return super.findLastVersionByModelId("profiles", "fiscalCode", fiscalCode);
+    return super.findLastVersionByModelId("fiscalCode", fiscalCode);
   }
 }
