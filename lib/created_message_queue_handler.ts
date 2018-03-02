@@ -58,6 +58,7 @@ import {
 import { EmailAddress } from "./api/definitions/EmailAddress";
 import { NotificationChannelEnum } from "./api/definitions/NotificationChannel";
 import { CreatedMessageEventSenderMetadata } from "./models/created_message_sender_metadata";
+import { ulidGenerator } from "./utils/strings";
 
 // Whether we're in a production environment
 const isProduction = process.env.NODE_ENV === "production";
@@ -251,6 +252,7 @@ export async function handleMessage(
   }
 
   const newNotification = createNewNotification(
+    ulidGenerator,
     newMessageWithoutContent.fiscalCode,
     newMessageWithoutContent.id
   );
@@ -266,6 +268,7 @@ export async function handleMessage(
 export function processResolve(
   errorOrNotification: Either<RuntimeError, RetrievedNotification>,
   context: ContextWithBindings,
+  message: NewMessageWithoutContent,
   messageContent: MessageContent,
   senderMetadata: CreatedMessageEventSenderMetadata
 ): void {
@@ -293,8 +296,11 @@ export function processResolve(
   const notification = errorOrNotification.value;
 
   const emailNotification: NotificationEvent = {
-    messageContent,
-    messageId: notification.messageId,
+    message: {
+      ...message,
+      content: messageContent,
+      kind: "INewMessageWithContent"
+    },
     notificationId: notification.id,
     senderMetadata
   };
@@ -393,6 +399,7 @@ export function index(context: ContextWithBindings): void {
         return processResolve(
           errorOrNotification,
           context,
+          newMessageWithoutContent,
           messageContent,
           senderMetadata
         );

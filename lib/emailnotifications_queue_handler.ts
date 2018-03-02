@@ -51,6 +51,7 @@ import { retryMessageEnqueue } from "./utils/azure_queues";
 import { createQueueService } from "azure-storage";
 import { NotificationChannelEnum } from "./api/definitions/NotificationChannel";
 import { NotificationChannelStatusValueEnum } from "./api/definitions/NotificationChannelStatusValue";
+import { ExpiredMessage } from "./models/message";
 import {
   getNotificationStatusUpdater,
   NOTIFICATION_STATUS_COLLECTION_NAME,
@@ -171,20 +172,15 @@ export async function handleNotification(
   mailerTransporter: NodeMailer.Transporter,
   appInsightsClient: ApplicationInsights.TelemetryClient,
   notificationModel: NotificationModel,
-  updateNotificationStatus: NotificationStatusUpdater,
+  notificationStatusUpdater: NotificationStatusUpdater,
   emailNotificationEvent: NotificationEvent
 ): Promise<Either<RuntimeError, NodeMailer.SentMessageInfo>> {
-  const {
-    messageId,
-    notificationId,
-    messageContent,
-    senderMetadata
-  } = emailNotificationEvent;
+  const { message, notificationId, senderMetadata } = emailNotificationEvent;
 
   // fetch the notification
   const errorOrMaybeNotification = await notificationModel.find(
     notificationId,
-    messageId
+    message.id
   );
 
   if (isLeft(errorOrMaybeNotification)) {
@@ -192,9 +188,9 @@ export async function handleNotification(
     // we got an error while fetching the notification
     return left(
       TransientError(
-        `Error while fetching the notification|notification=${notificationId}|message=${messageId}|error=${
-          error.code
-        }`
+        `Error while fetching the notification|notification=${notificationId}|message=${
+          message.id
+        }|error=${error.code}`
       )
     );
   }
@@ -206,7 +202,9 @@ export async function handleNotification(
     // as the notification object is retrieved from database (?)
     return left(
       TransientError(
-        `Notification not found|notification=${notificationId}|message=${messageId}`
+        `Notification not found|notification=${notificationId}|message=${
+          message.id
+        }`
       )
     );
   }
@@ -219,7 +217,9 @@ export async function handleNotification(
     const error = ReadableReporter.report(errorOrEmailNotification).join("; ");
     return left(
       PermanentError(
-        `Wrong format for email notification|notification=${notificationId}|message=${messageId}|${error}`
+        `Wrong format for email notification|notification=${notificationId}|message=${
+          message.id
+        }|${error}`
       )
     );
   }
@@ -228,13 +228,13 @@ export async function handleNotification(
 
   // use the provided subject if present, or else use the default subject line
   // TODO: generate the default subject from the service/client metadata
-  const subject = messageContent.subject
-    ? messageContent.subject
+  const subject = message.content.subject
+    ? message.content.subject
     : ("A new notification for you." as MessageSubject);
 
   const documentHtml = await generateDocumentHtml(
     subject,
-    messageContent.markdown,
+    message.content.markdown,
     senderMetadata
   );
 
@@ -247,11 +247,11 @@ export async function handleNotification(
   const sendResult = await sendMail(mailerTransporter, {
     from: "no-reply@italia.it",
     headers: {
-      "X-Italia-Messages-MessageId": messageId,
+      "X-Italia-Messages-MessageId": message.id,
       "X-Italia-Messages-NotificationId": notificationId
     },
     html: documentHtml,
-    messageId,
+    messageId: message.id,
     subject,
     text: bodyText,
     to: emailNotification.toAddress
@@ -263,7 +263,7 @@ export async function handleNotification(
   const eventName = "notification.email.delivery";
   const eventContent = {
     addressSource: emailNotification.addressSource,
-    messageId,
+    messageId: message.id,
     notificationId,
     transport: "sendgrid"
   };
@@ -280,9 +280,9 @@ export async function handleNotification(
     const error = sendResult.value;
     return left(
       TransientError(
-        `Error while sending email|notification=${notificationId}|message=${messageId}|error=${
-          error.message
-        }`
+        `Error while sending email|notification=${notificationId}|message=${
+          message.id
+        }|error=${error.message}`
       )
     );
   }
@@ -301,7 +301,7 @@ export async function handleNotification(
   // see https://nodemailer.com/usage/#sending-mail
   // see #150597597
 
-  const errorOrNotificationStatus = await updateNotificationStatus(
+  const errorOrNotificationStatus = await notificationStatusUpdater(
     NotificationChannelStatusValueEnum.SENT_TO_CHANNEL
   );
 
@@ -312,16 +312,18 @@ export async function handleNotification(
     const error = errorOrNotificationStatus.value;
     return left(
       TransientError(
-        `Error while updating the notification status|notification=${notificationId}|message=${messageId}|error=${
-          error.message
-        }`
+        `Error while updating the notification status|notification=${notificationId}|message=${
+          message.id
+        }|error=${error.message}`
       )
     );
   }
 
   // success!
   winston.debug(
-    `EmailNotificationsHandlerIndex|Email notification succeeded|notification=${notificationId}|message=${messageId}`
+    `EmailNotificationsHandlerIndex|Email notification succeeded|notification=${notificationId}|message=${
+      message.id
+    }`
   );
   return right(sendResult);
 }
@@ -396,6 +398,20 @@ export function index(context: ContextWithBindings): void {
       }`
     );
 
+    if (ExpiredMessage.is(emailNotificationEvent.message)) {
+      winston.error(
+        `EmailNotificationsHandlerIndex|Message is expired, stop processing.|${
+          emailNotificationEvent.message.id
+        }`
+      );
+      winston.debug(
+        `EmailNotificationsHandlerIndex|Message is expired|${JSON.stringify(
+          emailNotificationEvent
+        )}`
+      );
+      return context.done();
+    }
+
     // setup required models
     const documentClient = new DocumentDBClient(cosmosDbUri, {
       masterKey: cosmosDbKey
@@ -411,10 +427,10 @@ export function index(context: ContextWithBindings): void {
       notificationStatusCollectionUrl
     );
 
-    const updateNotificationStatus = getNotificationStatusUpdater(
+    const notificationStatusUpdater = getNotificationStatusUpdater(
       notificationStatusModel,
       NotificationChannelEnum.EMAIL,
-      emailNotificationEvent.messageId,
+      emailNotificationEvent.message.id,
       emailNotificationEvent.notificationId
     );
 
@@ -430,7 +446,7 @@ export function index(context: ContextWithBindings): void {
       mailerTransporter,
       appInsightsClient,
       notificationModel,
-      updateNotificationStatus,
+      notificationStatusUpdater,
       emailNotificationEvent
     )
       .then(errorOrResult => {
@@ -442,7 +458,7 @@ export function index(context: ContextWithBindings): void {
         // TODO: update notification status (failed)
         winston.error(
           `EmailNotificationQueueHandler|Error while processing event` +
-            `|${emailNotificationEvent.messageId}|${
+            `|${emailNotificationEvent.message.id}|${
               emailNotificationEvent.notificationId
             }|${error}`
         );

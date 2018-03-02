@@ -44,6 +44,7 @@ import { EmailString, NonEmptyString } from "../utils/strings";
 jest.mock("azure-storage");
 jest.mock("../utils/azure_queues");
 import { NotificationChannelEnum } from "../api/definitions/NotificationChannel";
+import { TimeToLive } from "../api/definitions/TimeToLive";
 import { NotificationEvent } from "../models/notification_event";
 import { retryMessageEnqueue } from "../utils/azure_queues";
 
@@ -64,11 +65,13 @@ const anEmailNotification: EmailNotification = {
 };
 
 const aMessage: NewMessageWithoutContent = {
+  createdAt: new Date(),
   fiscalCode: aWrongFiscalCode,
   id: "xyz" as NonEmptyString,
   kind: "INewMessageWithoutContent",
   senderServiceId: "",
-  senderUserId: "u123" as NonEmptyString
+  senderUserId: "u123" as NonEmptyString,
+  timeToLive: 3600 as TimeToLive
 };
 
 const aMessageBodyMarkdown = "test".repeat(80) as MessageBodyMarkdown;
@@ -118,8 +121,11 @@ const aCreatedNotificationWithEmail: NewNotification = {
 };
 
 const anEmailNotificationEvent: NotificationEvent = {
-  messageContent: aMessageEvent.messageContent,
-  messageId: aCreatedNotificationWithEmail.messageId,
+  message: {
+    ...aMessage,
+    content: { markdown: aMessageBodyMarkdown },
+    kind: "INewMessageWithContent"
+  },
   notificationId: aCreatedNotificationWithEmail.id,
   senderMetadata: aMessageEvent.senderMetadata
 };
@@ -640,6 +646,7 @@ describe("processResolve", () => {
     processResolve(
       errorOrNotification as any,
       contextMock as any,
+      aMessage,
       aMessageEvent.messageContent,
       aMessageEvent.senderMetadata
     );
@@ -671,6 +678,7 @@ describe("processResolve", () => {
       errorOrNotification as any,
       contextMock as any,
       retrievedMessageMock as any,
+      {} as any,
       {} as any
     );
 
@@ -703,6 +711,7 @@ describe("processResolve", () => {
       errorOrNotification as any,
       contextMock as any,
       retrievedMessageMock as any,
+      {} as any,
       {} as any
     );
 

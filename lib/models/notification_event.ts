@@ -2,9 +2,8 @@ import * as t from "io-ts";
 
 import { NonEmptyString } from "../utils/strings";
 
-import { MessageContent } from "../api/definitions/MessageContent";
-
 import { CreatedMessageEventSenderMetadata } from "./created_message_sender_metadata";
+import { NewMessageWithContent } from "./message";
 
 /**
  * Payload of a notification event.
@@ -13,8 +12,7 @@ import { CreatedMessageEventSenderMetadata } from "./created_message_sender_meta
  * have been configured for that notification.
  */
 export const NotificationEvent = t.interface({
-  messageContent: MessageContent,
-  messageId: NonEmptyString,
+  message: NewMessageWithContent,
   notificationId: NonEmptyString,
   senderMetadata: CreatedMessageEventSenderMetadata
 });

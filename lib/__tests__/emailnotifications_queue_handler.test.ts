@@ -56,14 +56,17 @@ import { isTransient, PermanentError, TransientError } from "../utils/errors";
 import { NotificationEvent } from "../models/notification_event";
 
 import * as functionConfig from "../../EmailNotificationsQueueHandler/function.json";
+import { MessageContent } from "../api/definitions/MessageContent";
 import { NotificationChannelEnum } from "../api/definitions/NotificationChannel";
 import { NotificationChannelStatusValueEnum } from "../api/definitions/NotificationChannelStatusValue";
+import { TimeToLive } from "../api/definitions/TimeToLive";
 import {
   makeStatusId,
   NotificationStatusModel,
   RetrievedNotificationStatus
 } from "../models/notification_status";
 import { NonNegativeNumber } from "../utils/numbers";
+import { ReadableReporter } from "../utils/validation_reporters";
 
 // jest.mock("../models/notification");
 
@@ -77,18 +80,61 @@ function flushPromises(): Promise<void> {
 
 const aFiscalCode = "FRLFRC74E04B157I" as FiscalCode;
 
-const aNotificationEvent: NotificationEvent = {
-  messageContent: {
-    markdown: "test".repeat(80) as MessageBodyMarkdown,
-    subject: "t".repeat(30) as MessageSubject
+const aMessageId = "A_MESSAGE_ID" as NonEmptyString;
+
+const aMessage = {
+  createdAt: new Date().toISOString(),
+  fiscalCode: aFiscalCode,
+  id: aMessageId,
+  kind: "INewMessageWithoutContent",
+  senderServiceId: "",
+  senderUserId: "u123" as NonEmptyString,
+  timeToLive: 3600 as TimeToLive
+};
+
+const aMessageBodyMarkdown = "test".repeat(80) as MessageBodyMarkdown;
+const aMessageBodySubject = "t".repeat(30) as MessageSubject;
+
+const aNotificationId = "A_NOTIFICATION_ID" as NonEmptyString;
+
+const aSenderMetadata: CreatedMessageEventSenderMetadata = {
+  departmentName: "dept" as NonEmptyString,
+  organizationName: "org" as NonEmptyString,
+  serviceName: "service" as NonEmptyString
+};
+
+const aNotificationEvent = {
+  message: {
+    ...aMessage,
+    content: {
+      markdown: aMessageBodyMarkdown,
+      subject: aMessageBodySubject
+    },
+    kind: "INewMessageWithContent"
   },
-  messageId: "A_MESSAGE_ID" as NonEmptyString,
-  notificationId: "A_NOTIFICATION_ID" as NonEmptyString,
-  senderMetadata: {
-    departmentName: "dept" as NonEmptyString,
-    organizationName: "org" as NonEmptyString,
-    serviceName: "service" as NonEmptyString
+  notificationId: aNotificationId,
+  senderMetadata: aSenderMetadata
+};
+
+const getMockNotificationEvent = (
+  messageContent: MessageContent = {
+    markdown: aMessageBodyMarkdown,
+    subject: aMessageBodySubject
   }
+) => {
+  return NotificationEvent.decode(
+    Object.assign({}, aNotificationEvent, {
+      message: {
+        ...aNotificationEvent.message,
+        content: messageContent
+      }
+    })
+  ).getOrElseL(errs => {
+    throw new Error(
+      "Cannot deserialize NotificationEvent" +
+        ReadableReporter.report(left(errs)).join()
+    );
+  });
 };
 
 const aNotification: Notification = {
@@ -99,13 +145,7 @@ const aNotification: Notification = {
     }
   },
   fiscalCode: aFiscalCode,
-  messageId: "A_MESSAGE_ID" as NonEmptyString
-};
-
-const aSenderMetadata: CreatedMessageEventSenderMetadata = {
-  departmentName: "IT" as NonEmptyString,
-  organizationName: "agid" as NonEmptyString,
-  serviceName: "Test" as NonEmptyString
+  messageId: aMessageId
 };
 
 const aRetrievedNotificationStatus: RetrievedNotificationStatus = {
@@ -114,13 +154,10 @@ const aRetrievedNotificationStatus: RetrievedNotificationStatus = {
   channel: NotificationChannelEnum.EMAIL,
   id: "1" as NonEmptyString,
   kind: "IRetrievedNotificationStatus",
-  messageId: "A_MESSAGE_ID" as NonEmptyString,
-  notificationId: "A_NOTIFICATION_ID" as NonEmptyString,
+  messageId: aMessageId,
+  notificationId: aNotificationId,
   status: NotificationChannelStatusValueEnum.SENT_TO_CHANNEL,
-  statusId: makeStatusId(
-    "A_NOTIFICATION_ID" as NonEmptyString,
-    NotificationChannelEnum.EMAIL
-  ),
+  statusId: makeStatusId(aNotificationId, NotificationChannelEnum.EMAIL),
   updateAt: new Date(),
   version: 1 as NonNegativeNumber
 };
@@ -177,12 +214,12 @@ describe("handleNotification", () => {
       {} as any,
       notificationModelMock as any,
       getUpdateNotificationStatusMock(),
-      aNotificationEvent
+      getMockNotificationEvent()
     );
 
     expect(notificationModelMock.find).toHaveBeenCalledWith(
-      "A_NOTIFICATION_ID",
-      "A_MESSAGE_ID"
+      aNotificationId,
+      aMessageId
     );
     expect(isLeft(result)).toBeTruthy();
     if (isLeft(result)) {
@@ -200,7 +237,7 @@ describe("handleNotification", () => {
       {} as any,
       notificationModelMock as any,
       getUpdateNotificationStatusMock(),
-      aNotificationEvent
+      getMockNotificationEvent()
     );
 
     expect(isLeft(result)).toBeTruthy();
@@ -219,7 +256,7 @@ describe("handleNotification", () => {
       {} as any,
       notificationModelMock as any,
       getUpdateNotificationStatusMock(),
-      aNotificationEvent
+      getMockNotificationEvent()
     );
 
     expect(isLeft(result)).toBeTruthy();
@@ -237,7 +274,9 @@ describe("handleNotification", () => {
     const mockTransporter = NodeMailer.createTransport(mockTransport);
 
     const aMessageContent = {
-      markdown: "# Hello world!" as MessageBodyMarkdown
+      markdown: `# Hello world!
+        lorem ipsum
+      `.repeat(10) as MessageBodyMarkdown
     };
 
     const notificationModelMock = {
@@ -251,26 +290,20 @@ describe("handleNotification", () => {
       mockAppinsights as any,
       notificationModelMock as any,
       notificationStatusModelMock,
-      {
-        ...aNotificationEvent,
-        messageContent: aMessageContent,
-        senderMetadata: aSenderMetadata
-      }
+      getMockNotificationEvent(aMessageContent)
     );
 
     expect(mockTransport.sentMail.length).toBe(1);
     const sentMail = mockTransport.sentMail[0];
     expect(sentMail.data.from).toBe("no-reply@italia.it");
     expect(sentMail.data.to).toBe("pinco@pallino.com");
-    expect(sentMail.data.messageId).toBe("A_MESSAGE_ID");
+    expect(sentMail.data.messageId).toBe(aMessageId);
     expect(sentMail.data.subject).not.toBeUndefined();
     expect(sentMail.data.headers).not.toBeUndefined();
     if (sentMail.data.headers) {
       const headers = sentMail.data.headers as any;
-      expect(headers["X-Italia-Messages-MessageId"]).toBe("A_MESSAGE_ID");
-      expect(headers["X-Italia-Messages-NotificationId"]).toBe(
-        "A_NOTIFICATION_ID"
-      );
+      expect(headers["X-Italia-Messages-MessageId"]).toBe(aMessageId);
+      expect(headers["X-Italia-Messages-NotificationId"]).toBe(aNotificationId);
     }
     const emailBody = String(sentMail.data.html);
     expect(emailBody.indexOf("<h1>Hello world!</h1>")).toBeGreaterThan(0);
@@ -286,8 +319,8 @@ describe("handleNotification", () => {
       name: "notification.email.delivery",
       properties: {
         addressSource: NotificationAddressSourceEnum.DEFAULT_ADDRESS,
-        messageId: "A_MESSAGE_ID",
-        notificationId: "A_NOTIFICATION_ID",
+        messageId: aMessageId,
+        notificationId: aNotificationId,
         success: "true",
         transport: "sendgrid"
       }
@@ -315,6 +348,9 @@ describe("handleNotification", () => {
 # Hello world!
 
 This is a *message* from the future!
+This is a *message* from the future!
+This is a *message* from the future!
+This is a *message* from the future!
 ` as MessageBodyMarkdown
     };
 
@@ -328,23 +364,22 @@ This is a *message* from the future!
       mockAppinsights as any,
       notificationModelMock as any,
       getUpdateNotificationStatusMock(),
-      {
-        ...aNotificationEvent,
-        messageContent: aMessageContent,
-        senderMetadata: aSenderMetadata
-      }
+      getMockNotificationEvent(aMessageContent)
     );
 
     expect(
       String(mockTransport.sentMail[0].data.text).replace(/[ \n]+/g, "|")
     ).toBe(
-      `agid
-IT
-Test
+      `org
+dept
+service
 
 A new notification for you.
 
 HELLO WORLD!
+This is a message from the future!
+This is a message from the future!
+This is a message from the future!
 This is a message from the future!`.replace(/[ \n]+/g, "|")
     );
 
@@ -360,10 +395,6 @@ This is a message from the future!`.replace(/[ \n]+/g, "|")
     const mockTransport = MockTransport();
     const mockTransporter = NodeMailer.createTransport(mockTransport);
 
-    const aMessageContent = {
-      markdown: "# Hello world!" as MessageBodyMarkdown
-    };
-
     const notificationModelMock = {
       find: jest.fn(() => right(some(aNotification))),
       update: jest.fn(() => right(some(aNotification)))
@@ -374,7 +405,10 @@ This is a message from the future!`.replace(/[ \n]+/g, "|")
       mockAppinsights as any,
       notificationModelMock as any,
       getUpdateNotificationStatusMock(),
-      { ...aNotificationEvent, messageContent: aMessageContent }
+      getMockNotificationEvent({
+        markdown: aMessageBodyMarkdown,
+        subject: undefined
+      })
     );
 
     expect(mockTransport.sentMail[0].data.subject).toBe(
@@ -393,9 +427,11 @@ This is a message from the future!`.replace(/[ \n]+/g, "|")
     const mockTransport = MockTransport();
     const mockTransporter = NodeMailer.createTransport(mockTransport);
 
+    const customSubject = "A custom subject" as MessageSubject;
+
     const aMessageContent = {
-      markdown: "# Hello world!" as MessageBodyMarkdown,
-      subject: "A custom subject" as MessageSubject
+      markdown: aMessageBodyMarkdown,
+      subject: customSubject
     };
 
     const notificationModelMock = {
@@ -408,10 +444,10 @@ This is a message from the future!`.replace(/[ \n]+/g, "|")
       mockAppinsights as any,
       notificationModelMock as any,
       getUpdateNotificationStatusMock(),
-      { ...aNotificationEvent, messageContent: aMessageContent }
+      getMockNotificationEvent(aMessageContent)
     );
 
-    expect(mockTransport.sentMail[0].data.subject).toBe("A custom subject");
+    expect(mockTransport.sentMail[0].data.subject).toBe(customSubject);
 
     expect(isRight(result)).toBeTruthy();
     expect(result.value).toBeDefined();
@@ -427,10 +463,6 @@ This is a message from the future!`.replace(/[ \n]+/g, "|")
     };
     const mockTransporter = NodeMailer.createTransport(mockTransport as any);
 
-    const aMessageContent = {
-      markdown: "# Hello world!" as MessageBodyMarkdown
-    };
-
     const notificationModelMock = {
       find: jest.fn(() => right(some(aNotification))),
       update: jest.fn(() => right(some(aNotification)))
@@ -441,15 +473,15 @@ This is a message from the future!`.replace(/[ \n]+/g, "|")
       mockAppinsights as any,
       notificationModelMock as any,
       getUpdateNotificationStatusMock(),
-      { ...aNotificationEvent, messageContent: aMessageContent }
+      getMockNotificationEvent()
     );
 
     expect(mockAppinsights.trackEvent).toHaveBeenCalledWith({
       name: "notification.email.delivery",
       properties: {
         addressSource: NotificationAddressSourceEnum.DEFAULT_ADDRESS,
-        messageId: "A_MESSAGE_ID",
-        notificationId: "A_NOTIFICATION_ID",
+        messageId: aMessageId,
+        notificationId: aNotificationId,
         success: "false",
         transport: "sendgrid"
       }
@@ -471,10 +503,6 @@ This is a message from the future!`.replace(/[ \n]+/g, "|")
     const mockTransport = MockTransport();
     const mockTransporter = NodeMailer.createTransport(mockTransport);
 
-    const aMessageContent = {
-      markdown: "# Hello world!" as MessageBodyMarkdown
-    };
-
     const notificationModelMock = {
       find: jest.fn(() => right(some(aNotification)))
     };
@@ -482,12 +510,13 @@ This is a message from the future!`.replace(/[ \n]+/g, "|")
     const notificationStatusModelMock = getUpdateNotificationStatusMock(
       left(none)
     );
+
     const result = await handleNotification(
       mockTransporter,
       mockAppinsights as any,
       notificationModelMock as any,
       notificationStatusModelMock,
-      { ...aNotificationEvent, messageContent: aMessageContent }
+      getMockNotificationEvent()
     );
 
     expect(mockTransport.sentMail.length).toBe(1);

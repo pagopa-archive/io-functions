@@ -24,6 +24,7 @@ import {
 import { ModelId } from "../../utils/documentdb_model_versioned";
 
 jest.mock("../../utils/azure_storage");
+import { TimeToLive } from "../../api/definitions/TimeToLive";
 import * as azureStorageUtils from "../../utils/azure_storage";
 
 const MESSAGE_CONTAINER_NAME = "message-content" as NonEmptyString;
@@ -42,13 +43,27 @@ const aMessageContent: MessageContent = {
 
 const aFiscalCode = "FRLFRC74E04B157I" as FiscalCode;
 
-const aNewMessageWithContent: NewMessageWithContent = {
+const aSerializedNewMessageWithContent = {
   content: aMessageContent,
+  createdAt: new Date().toISOString(),
   fiscalCode: aFiscalCode,
   id: "A_MESSAGE_ID" as NonEmptyString,
-  kind: "INewMessageWithContent",
   senderServiceId: "agid" as ModelId,
-  senderUserId: "u123" as NonEmptyString
+  senderUserId: "u123" as NonEmptyString,
+  timeToLive: 3600 as TimeToLive
+};
+
+const aNewMessageWithContent: NewMessageWithContent = {
+  ...aSerializedNewMessageWithContent,
+  createdAt: new Date(),
+  kind: "INewMessageWithContent"
+};
+
+const aSerializedRetrievedMessageWithContent = {
+  ...aSerializedNewMessageWithContent,
+  _self: "xyz",
+  _ts: "xyz",
+  kind: "IRetrievedMessageWithContent"
 };
 
 const aRetrievedMessageWithContent: RetrievedMessageWithContent = {
@@ -62,7 +77,7 @@ describe("createMessage", () => {
   it("should create a new Message", async () => {
     const clientMock = {
       createDocument: jest.fn((_, __, ___, cb) =>
-        cb(undefined, aRetrievedMessageWithContent)
+        cb(undefined, aSerializedRetrievedMessageWithContent)
       )
     };
 
@@ -123,7 +138,7 @@ describe("find", () => {
   it("should return an existing message", async () => {
     const clientMock = {
       readDocument: jest.fn((_, __, cb) =>
-        cb(undefined, aRetrievedMessageWithContent)
+        cb(undefined, aSerializedRetrievedMessageWithContent)
       )
     };
 
@@ -233,7 +248,7 @@ describe("findMessageForRecipient", () => {
   it("should return the messages if the recipient matches", async () => {
     const clientMock = {
       readDocument: jest.fn((_, __, cb) =>
-        cb(undefined, aRetrievedMessageWithContent)
+        cb(undefined, aSerializedRetrievedMessageWithContent)
       )
     };
 
@@ -258,14 +273,17 @@ describe("findMessageForRecipient", () => {
     expect(isRight(result)).toBeTruthy();
     if (isRight(result)) {
       expect(result.value.isSome()).toBeTruthy();
-      expect(result.value.toUndefined()).toEqual(aRetrievedMessageWithContent);
+      expect(result.value.toUndefined()).toEqual({
+        ...aRetrievedMessageWithContent,
+        createdAt: expect.any(Date)
+      });
     }
   });
 
   it("should return an empty value if the recipient doesn't match", async () => {
     const clientMock = {
       readDocument: jest.fn((_, __, cb) =>
-        cb(undefined, aRetrievedMessageWithContent)
+        cb(undefined, aSerializedRetrievedMessageWithContent)
       )
     };
 
