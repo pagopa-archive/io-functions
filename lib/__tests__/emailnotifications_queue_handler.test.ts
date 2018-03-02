@@ -37,11 +37,8 @@ import {
   generateDocumentHtml,
   handleNotification,
   index,
-  processResolve,
   sendMail
 } from "../emailnotifications_queue_handler";
-
-import { retryMessageEnqueue } from "../utils/azure_queues";
 
 import { MessageBodyMarkdown } from "../api/definitions/MessageBodyMarkdown";
 import { MessageSubject } from "../api/definitions/MessageSubject";
@@ -51,7 +48,7 @@ import {
   NotificationAddressSourceEnum,
   NotificationModel
 } from "../models/notification";
-import { isTransient, PermanentError, TransientError } from "../utils/errors";
+import { isTransient } from "../utils/errors";
 
 import { NotificationEvent } from "../models/notification_event";
 
@@ -213,7 +210,6 @@ describe("handleNotification", () => {
       {} as any,
       {} as any,
       notificationModelMock as any,
-      getUpdateNotificationStatusMock(),
       getMockNotificationEvent()
     );
 
@@ -236,7 +232,6 @@ describe("handleNotification", () => {
       {} as any,
       {} as any,
       notificationModelMock as any,
-      getUpdateNotificationStatusMock(),
       getMockNotificationEvent()
     );
 
@@ -255,7 +250,6 @@ describe("handleNotification", () => {
       {} as any,
       {} as any,
       notificationModelMock as any,
-      getUpdateNotificationStatusMock(),
       getMockNotificationEvent()
     );
 
@@ -289,7 +283,6 @@ describe("handleNotification", () => {
       mockTransporter,
       mockAppinsights as any,
       notificationModelMock as any,
-      notificationStatusModelMock,
       getMockNotificationEvent(aMessageContent)
     );
 
@@ -363,7 +356,6 @@ This is a *message* from the future!
       mockTransporter,
       mockAppinsights as any,
       notificationModelMock as any,
-      getUpdateNotificationStatusMock(),
       getMockNotificationEvent(aMessageContent)
     );
 
@@ -404,7 +396,6 @@ This is a message from the future!`.replace(/[ \n]+/g, "|")
       mockTransporter,
       mockAppinsights as any,
       notificationModelMock as any,
-      getUpdateNotificationStatusMock(),
       getMockNotificationEvent({
         markdown: aMessageBodyMarkdown,
         subject: undefined
@@ -443,7 +434,6 @@ This is a message from the future!`.replace(/[ \n]+/g, "|")
       mockTransporter,
       mockAppinsights as any,
       notificationModelMock as any,
-      getUpdateNotificationStatusMock(),
       getMockNotificationEvent(aMessageContent)
     );
 
@@ -472,7 +462,6 @@ This is a message from the future!`.replace(/[ \n]+/g, "|")
       mockTransporter,
       mockAppinsights as any,
       notificationModelMock as any,
-      getUpdateNotificationStatusMock(),
       getMockNotificationEvent()
     );
 
@@ -515,7 +504,6 @@ This is a message from the future!`.replace(/[ \n]+/g, "|")
       mockTransporter,
       mockAppinsights as any,
       notificationModelMock as any,
-      notificationStatusModelMock,
       getMockNotificationEvent()
     );
 
@@ -528,46 +516,7 @@ This is a message from the future!`.replace(/[ \n]+/g, "|")
     }
   });
 });
-describe("processResolve", () => {
-  it("should call context.done on success", async () => {
-    const result = right({} as any);
 
-    const contextMock = {
-      bindings: {},
-      done: jest.fn()
-    };
-
-    processResolve(result as any, contextMock as any);
-
-    expect(contextMock.done).toHaveBeenCalledTimes(1);
-    expect(contextMock.done.mock.calls[0][0]).toBe(undefined);
-  });
-  it("should retry on transient error", async () => {
-    const result = left(TransientError("err"));
-
-    const contextMock = {
-      bindings: {},
-      done: jest.fn()
-    };
-
-    processResolve(result as any, contextMock as any);
-
-    expect(retryMessageEnqueue).toHaveBeenCalledTimes(1);
-  });
-  it("should call context.done on permanent error", async () => {
-    const result = left(PermanentError("err"));
-
-    const contextMock = {
-      bindings: {},
-      done: jest.fn()
-    };
-
-    processResolve(result as any, contextMock as any);
-
-    expect(contextMock.done).toHaveBeenCalledTimes(1);
-    expect(contextMock.done.mock.calls[0][0]).toBe(undefined);
-  });
-});
 describe("generateHtmlDocument", () => {
   it("should convert markdown to the right html", async () => {
     const subject = "This is the subject" as MessageSubject;

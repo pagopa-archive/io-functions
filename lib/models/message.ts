@@ -153,17 +153,18 @@ export type RetrievedMessageWithoutContent = t.TypeOf<
   typeof RetrievedMessageWithoutContent
 >;
 
-interface IExpiredMessageTag {
+interface INotExpiredMessageTag {
   readonly kind: "IExpiredMessage";
 }
 
-export const ExpiredMessage = tag<IExpiredMessageTag>()(
+export const NotExpiredMessage = tag<INotExpiredMessageTag>()(
   t.refinement(
     MessageBase,
-    message => Date.now() - message.createdAt.getTime() > message.timeToLive,
-    "ExpiredMessage"
+    message => Date.now() - message.createdAt.getTime() <= message.timeToLive,
+    "NotExpiredMessage"
   )
 );
+export type NotExpiredMessage = t.TypeOf<typeof NotExpiredMessage>;
 
 /**
  * A (previously saved) retrieved Message
