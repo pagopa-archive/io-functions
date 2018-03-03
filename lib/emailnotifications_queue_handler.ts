@@ -20,7 +20,7 @@ import * as documentDbUtils from "./utils/documentdb";
 import { Either, isLeft, left, right } from "fp-ts/lib/Either";
 import { isNone } from "fp-ts/lib/Option";
 import { getRequiredStringEnv } from "./utils/env";
-import { ReadableReporter } from "./utils/validation_reporters";
+import { readableReport, ReadableReporter } from "./utils/validation_reporters";
 
 import { IContext } from "azure-functions-types";
 
@@ -382,10 +382,12 @@ export function index(context: ContextWithBindings): void {
   );
   if (isLeft(errorOrNotificationEvent)) {
     winston.error(
-      `EmailNotificationsHandlerIndex|Validation error|${ReadableReporter.report(
-        errorOrNotificationEvent
-      ).join("\n")}`
+      `EmailNotificationsHandler|Fatal! No valid message found in bindings.|${readableReport(
+        errorOrNotificationEvent.value
+      )}`
     );
+    // we will never be able to recover from this, so don't trigger an error
+    // TODO: update notification status (failed)
     return context.done();
   }
   const emailNotificationEvent = errorOrNotificationEvent.value;

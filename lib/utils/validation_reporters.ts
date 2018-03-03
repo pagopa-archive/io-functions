@@ -39,6 +39,10 @@ function success(): ReadonlyArray<string> {
   return ["No errors!"];
 }
 
+export function readableReport(errors: ReadonlyArray<ValidationError>): string {
+  return errorsToReadableMessages(errors).join("\n");
+}
+
 /**
  * A validation error reporter that translates validation errors to more
  * readable messages.

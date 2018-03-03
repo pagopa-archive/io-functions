@@ -163,7 +163,10 @@ describe("find", () => {
     expect(isRight(result)).toBeTruthy();
     if (isRight(result)) {
       expect(result.value.isSome()).toBeTruthy();
-      expect(result.value.toUndefined()).toEqual(aRetrievedMessageWithContent);
+      expect(result.value.toUndefined()).toEqual({
+        ...aRetrievedMessageWithContent,
+        createdAt: expect.any(Date)
+      });
     }
   });
 

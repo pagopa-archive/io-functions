@@ -156,7 +156,7 @@ export type RetrievedMessageWithoutContent = t.TypeOf<
 export const NotExpiredMessage = t.refinement(
   MessageBase,
   message => Date.now() - message.createdAt.getTime() <= message.timeToLive,
-  "NotExpiredMessage"
+  "ValidNewMessageWithContent"
 );
 
 export type NotExpiredMessage = t.TypeOf<typeof NotExpiredMessage>;

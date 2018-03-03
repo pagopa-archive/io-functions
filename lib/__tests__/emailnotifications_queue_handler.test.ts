@@ -160,7 +160,7 @@ const aRetrievedNotificationStatus: RetrievedNotificationStatus = {
 };
 
 function getUpdateNotificationStatusMock(
-  retrievedNotificationStatus: any = right(some(aRetrievedNotificationStatus))
+  retrievedNotificationStatus: any = right(aRetrievedNotificationStatus)
 ): any {
   return jest.fn(() => Promise.resolve(retrievedNotificationStatus));
 }
@@ -569,9 +569,6 @@ describe("emailnotificationQueueHandlerIndex", () => {
     await flushPromises();
     expect(contextMock.done).toHaveBeenCalledTimes(1);
     expect(winstonErrorSpy).toHaveBeenCalledTimes(1);
-    expect(winstonErrorSpy).toHaveBeenCalledWith(
-      expect.stringMatching("No valid email notification found in bindings")
-    );
   });
 
   it("should proceed on valid message payload", async () => {
@@ -590,7 +587,7 @@ describe("emailnotificationQueueHandlerIndex", () => {
     const notificationStatusModelSpy = jest
       .spyOn(NotificationStatusModel.prototype, "upsert")
       .mockImplementation(
-        jest.fn(() => Promise.resolve(aRetrievedNotificationStatus))
+        jest.fn(() => Promise.resolve(right(aRetrievedNotificationStatus)))
       );
 
     const nodemailerSpy = jest
