@@ -35,6 +35,11 @@ import {
   UpdateServiceHandler
 } from "../services";
 
+afterEach(() => {
+  jest.resetAllMocks();
+  jest.restoreAllMocks();
+});
+
 const anAzureAuthorization: IAzureApiAuthorization = {
   groups: new Set([UserGroup.ApiServiceWrite]),
   kind: "IAzureApiAuthorization",
@@ -150,8 +155,6 @@ describe("GetService", () => {
       .mockReturnValueOnce(jest.fn());
     GetService({} as any);
     expect(withRequestMiddlewaresSpy).toHaveBeenCalledTimes(1);
-    jest.clearAllMocks();
-    jest.resetAllMocks();
   });
 });
 
@@ -212,8 +215,6 @@ describe("CreateService", () => {
       .mockReturnValueOnce(jest.fn());
     CreateService({} as any);
     expect(withRequestMiddlewaresSpy).toHaveBeenCalledTimes(1);
-    jest.clearAllMocks();
-    jest.resetAllMocks();
   });
 });
 
@@ -370,8 +371,6 @@ describe("UpdateService", () => {
       .mockReturnValueOnce(jest.fn());
     UpdateService({} as any);
     expect(withRequestMiddlewaresSpy).toHaveBeenCalledTimes(1);
-    jest.clearAllMocks();
-    jest.resetAllMocks();
   });
 });
 

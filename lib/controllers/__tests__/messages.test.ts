@@ -53,6 +53,7 @@ import {
 
 afterEach(() => {
   jest.resetAllMocks();
+  jest.restoreAllMocks();
 });
 
 interface IHeaders {

@@ -242,7 +242,7 @@ export async function handleMessage(
   return right(errorOrNotification.value);
 }
 
-async function processGenericError(error: Error): Promise<boolean> {
+export function processGenericError(error: Error): boolean {
   winston.error(`CreatedMessageQueueHandler|Unexpected error|${error.message}`);
   // TODO: update message status
   return true;
@@ -270,7 +270,7 @@ export function processRuntimeError(
   }
 }
 
-function processSuccess(
+export function processSuccess(
   notification: RetrievedNotification,
   message: NewMessageWithoutContent,
   messageContent: MessageContent,

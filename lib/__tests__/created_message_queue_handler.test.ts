@@ -17,7 +17,8 @@ import {
   handleMessage,
   index,
   MESSAGE_QUEUE_NAME,
-  processResolve
+  processRuntimeError,
+  processSuccess
 } from "../created_message_queue_handler";
 import { CreatedMessageEvent } from "../models/created_message_event";
 import { NewMessageWithoutContent } from "../models/message";
@@ -47,6 +48,11 @@ import { NotificationChannelEnum } from "../api/definitions/NotificationChannel"
 import { TimeToLive } from "../api/definitions/TimeToLive";
 import { NotificationEvent } from "../models/notification_event";
 import { retryMessageEnqueue } from "../utils/azure_queues";
+
+afterEach(() => {
+  jest.resetAllMocks();
+  jest.restoreAllMocks();
+});
 
 const aCorrectFiscalCode = "FRLFRC74E04B157I" as FiscalCode;
 const aWrongFiscalCode = "FRLFRC74E04B157" as FiscalCode;
@@ -161,9 +167,6 @@ describe("createdMessageQueueIndex", () => {
     expect(contextMock.done).toHaveBeenCalledTimes(1);
     expect(contextMock.bindings.emailNotification).toBeUndefined();
     expect(spy).toHaveBeenCalledTimes(1);
-
-    spy.mockReset();
-    spy.mockRestore();
   });
 
   it("should return failure if createdMessage is invalid (wrong fiscal code)", async () => {
@@ -185,9 +188,6 @@ describe("createdMessageQueueIndex", () => {
     expect(contextMock.done).toHaveBeenCalledTimes(1);
     expect(contextMock.done).toHaveBeenCalledWith();
     expect(spy).toHaveBeenCalledTimes(1);
-
-    spy.mockReset();
-    spy.mockRestore();
   });
 });
 
@@ -634,21 +634,21 @@ describe("handleMessage", () => {
   });
 });
 
-describe("processResolve", () => {
+describe("processSuccess", () => {
   it("should enqueue notification to the email queue if an email is present", async () => {
-    const errorOrNotification = right(aCreatedNotificationWithEmail);
+    const notification = aCreatedNotificationWithEmail;
 
     const contextMock = {
       bindings: {},
       done: jest.fn()
     };
 
-    processResolve(
-      errorOrNotification as any,
-      contextMock as any,
+    processSuccess(
+      notification as any,
       aMessage,
       aMessageEvent.messageContent,
-      aMessageEvent.senderMetadata
+      aMessageEvent.senderMetadata,
+      contextMock as any
     );
 
     expect(contextMock.done).toHaveBeenCalledTimes(1);
@@ -656,72 +656,23 @@ describe("processResolve", () => {
       emailNotification: anEmailNotificationEvent
     });
   });
+});
 
+describe("processRuntimeError", () => {
   it("should retry on transient error", async () => {
-    const errorOrNotification = left(TransientError("err"));
-
-    const contextMock = {
-      bindings: {
-        emailNotification: undefined
-      },
-      done: jest.fn(),
-      log: jest.fn()
-    };
-
-    const retrievedMessageMock = {
-      fiscalCode: aWrongFiscalCode
-    };
-
-    const spy = jest.spyOn(winston, "error");
-
-    processResolve(
-      errorOrNotification as any,
-      contextMock as any,
-      retrievedMessageMock as any,
-      {} as any,
-      {} as any
-    );
-
+    const error = TransientError("err");
+    const winstonSpy = jest.spyOn(winston, "warn");
+    processRuntimeError(error as any, {} as any);
     expect(retryMessageEnqueue).toHaveBeenCalledTimes(1);
-    expect(spy).toHaveBeenCalledTimes(1);
-    expect(contextMock.bindings.emailNotification).toEqual(undefined);
-
-    spy.mockReset();
-    spy.mockRestore();
-    jest.clearAllMocks();
+    expect(winstonSpy).toHaveBeenCalledTimes(1);
   });
+
   it("should fail in case of permament error", async () => {
-    const errorOrNotification = left(PermanentError("err"));
-
-    const contextMock = {
-      bindings: {
-        emailNotification: undefined
-      },
-      done: jest.fn(),
-      log: jest.fn()
-    };
-
-    const retrievedMessageMock = {
-      fiscalCode: aWrongFiscalCode
-    };
-
-    const spy = jest.spyOn(winston, "error");
-
-    processResolve(
-      errorOrNotification as any,
-      contextMock as any,
-      retrievedMessageMock as any,
-      {} as any,
-      {} as any
-    );
-
+    const error = PermanentError("err");
+    const winstonSpy = jest.spyOn(winston, "error");
+    processRuntimeError(error as any, {} as any);
     expect(retryMessageEnqueue).not.toHaveBeenCalled();
-    expect(contextMock.done).toHaveBeenCalledWith();
-    expect(spy).toHaveBeenCalledTimes(1);
-    expect(contextMock.bindings.emailNotification).toEqual(undefined);
-
-    spy.mockReset();
-    spy.mockRestore();
+    expect(winstonSpy).toHaveBeenCalledTimes(1);
   });
 });
 

@@ -27,6 +27,11 @@ import { ServicePublic as ApiService } from "../../api/definitions/ServicePublic
 
 import { GetService, GetServiceHandler } from "../services";
 
+afterEach(() => {
+  jest.resetAllMocks();
+  jest.restoreAllMocks();
+});
+
 const anAzureAuthorization: IAzureApiAuthorization = {
   groups: new Set([UserGroup.ApiServiceWrite]),
   kind: "IAzureApiAuthorization",
@@ -139,7 +144,5 @@ describe("GetService", () => {
       .mockReturnValueOnce(jest.fn());
     GetService({} as any);
     expect(withRequestMiddlewaresSpy).toHaveBeenCalledTimes(1);
-    jest.clearAllMocks();
-    jest.resetAllMocks();
   });
 });

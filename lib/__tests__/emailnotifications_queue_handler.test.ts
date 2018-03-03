@@ -69,6 +69,7 @@ import { ReadableReporter } from "../utils/validation_reporters";
 
 afterEach(() => {
   jest.resetAllMocks();
+  jest.restoreAllMocks();
 });
 
 function flushPromises(): Promise<void> {
@@ -278,7 +279,6 @@ describe("handleNotification", () => {
       update: jest.fn(() => Promise.resolve(right(some(aNotification))))
     };
 
-    const notificationStatusModelMock = getUpdateNotificationStatusMock();
     const result = await handleNotification(
       mockTransporter,
       mockAppinsights as any,
@@ -318,11 +318,6 @@ describe("handleNotification", () => {
         transport: "sendgrid"
       }
     });
-
-    expect(notificationStatusModelMock).toHaveBeenCalledTimes(1);
-    expect(notificationStatusModelMock).toHaveBeenCalledWith(
-      NotificationChannelStatusValueEnum.SENT_TO_CHANNEL
-    );
 
     expect(isRight(result)).toBeTruthy();
     expect(result.value).toBeDefined();
@@ -477,38 +472,6 @@ This is a message from the future!`.replace(/[ \n]+/g, "|")
     });
 
     expect(notificationModelMock.update).not.toHaveBeenCalled();
-
-    expect(isLeft(result)).toBeTruthy();
-    if (isLeft(result)) {
-      expect(isTransient(result.value)).toBeTruthy();
-    }
-  });
-
-  it("should respond with a transient error when notification status update fails", async () => {
-    const mockAppinsights = {
-      trackEvent: jest.fn()
-    };
-
-    const mockTransport = MockTransport();
-    const mockTransporter = NodeMailer.createTransport(mockTransport);
-
-    const notificationModelMock = {
-      find: jest.fn(() => right(some(aNotification)))
-    };
-
-    const notificationStatusModelMock = getUpdateNotificationStatusMock(
-      left(none)
-    );
-
-    const result = await handleNotification(
-      mockTransporter,
-      mockAppinsights as any,
-      notificationModelMock as any,
-      getMockNotificationEvent()
-    );
-
-    expect(mockTransport.sentMail.length).toBe(1);
-    expect(notificationStatusModelMock).toHaveBeenCalledTimes(1);
 
     expect(isLeft(result)).toBeTruthy();
     if (isLeft(result)) {
