@@ -65,7 +65,7 @@ describe("ReadableReporter", () => {
     });
   });
 
-  it("should report validation errors on unknow properties", () => {
+  it("should report validation errors on unknown properties", () => {
     const aType = strictInterfaceWithOptionals(
       {
         foo: t.boolean
@@ -75,6 +75,6 @@ describe("ReadableReporter", () => {
     );
     const validation = aType.decode({ foo: true, x: true });
     const res = ReadableReporter.report(validation);
-    expect(res).toEqual(["value.x: unknow property"]);
+    expect(res).toEqual(["value.x: unknown property"]);
   });
 });

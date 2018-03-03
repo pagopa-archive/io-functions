@@ -113,7 +113,7 @@ export function withoutUndefinedValues<T, K extends keyof T>(obj: T): T {
 
 /**
  *  Return a new type that validates successfully only
- *  when the instance (object) contains no unknow properties.
+ *  when the instance (object) contains no unknown properties.
  *
  *  See https://github.com/gcanti/io-ts/issues/106
  *
@@ -155,14 +155,19 @@ export function strictInterfaceWithOptionals<
   );
 }
 
+const isDate = (v: t.mixed): v is Date => v instanceof Date;
+
 export const DateFromString = new t.Type<Date, string>(
   "DateFromString",
-  (v): v is Date => v instanceof Date,
+  isDate,
   (v, c) =>
-    t.string.validate(v, c).chain(s => {
-      const d = new Date(s);
-      return isNaN(d.getTime()) ? t.failure(s, c) : t.success(d);
-    }),
+    isDate(v)
+      ? t.success(v)
+      : t.string.validate(v, c).chain(s => {
+          const d = new Date(s);
+          return isNaN(d.getTime()) ? t.failure(s, c) : t.success(d);
+        }),
   a => a.toISOString()
 );
+
 export type DateFromString = t.TypeOf<typeof DateFromString>;

@@ -1,6 +1,6 @@
 // tslint:disable:no-any
 
-import { isLeft, isRight, left } from "fp-ts/lib/Either";
+import { isLeft, isRight } from "fp-ts/lib/Either";
 import { isSome } from "fp-ts/lib/Option";
 
 import * as DocumentDb from "documentdb";
@@ -11,7 +11,7 @@ import { NonEmptyString } from "../../utils/strings";
 
 import { NotificationChannelEnum } from "../../api/definitions/NotificationChannel";
 import { NotificationChannelStatusValueEnum } from "../../api/definitions/NotificationChannelStatusValue";
-import { ReadableReporter } from "../../utils/validation_reporters";
+import { readableReport } from "../../utils/validation_reporters";
 import {
   NotificationStatus,
   NotificationStatusId,
@@ -39,7 +39,7 @@ const aSerializedNotificationStatus = {
 const aNotificationStatus = NotificationStatus.decode(
   aSerializedNotificationStatus
 ).getOrElseL(errs => {
-  const error = ReadableReporter.report(left(errs)).join();
+  const error = readableReport(errs);
   throw new Error("Fix NotificationStatus mock: " + error);
 });
 
@@ -55,7 +55,7 @@ const aSerializedRetrievedNotificationStatus = {
 const aRetrievedNotificationStatus = RetrievedNotificationStatus.decode(
   aSerializedRetrievedNotificationStatus
 ).getOrElseL(errs => {
-  const error = ReadableReporter.report(left(errs)).join();
+  const error = readableReport(errs);
   throw new Error("Fix NotificationStatus mock: " + error);
 });
 

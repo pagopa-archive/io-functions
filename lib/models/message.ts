@@ -1,7 +1,5 @@
 import * as t from "io-ts";
 
-import { ReadableReporter } from "./../utils/validation_reporters";
-
 import * as DocumentDb from "documentdb";
 
 import { tag } from "../utils/types";
@@ -20,6 +18,7 @@ import { FiscalCode } from "../api/definitions/FiscalCode";
 import { BlobService } from "azure-storage";
 import { getBlobAsText, upsertBlobFromObject } from "../utils/azure_storage";
 import { iteratorToArray } from "../utils/documentdb";
+import { readableReport } from "../utils/validation_reporters";
 
 const MESSAGE_BLOB_STORAGE_SUFFIX = ".json";
 
@@ -341,7 +340,7 @@ export class MessageModel extends DocumentDbModel<
     const contentOrError = MessageContent.decode(JSON.parse(contentAsText));
 
     if (isLeft(contentOrError)) {
-      const errors: string = ReadableReporter.report(contentOrError).join(", ");
+      const errors: string = readableReport(contentOrError.value);
       return left<Error, Option<MessageContent>>(
         new Error(`Cannot deserialize stored message content: ${errors}`)
       );

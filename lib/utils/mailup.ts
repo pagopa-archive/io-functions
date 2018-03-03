@@ -18,7 +18,7 @@ import { Address as NodemailerAddress } from "nodemailer/lib/addressparser";
 import * as winston from "winston";
 
 import { fromNullable, Option } from "fp-ts/lib/Option";
-import { ReadableReporter } from "./validation_reporters";
+import { readableReport } from "./validation_reporters";
 
 // request timeout in milliseconds
 const DEFAULT_REQUEST_TIMEOUT_MS = 10000;
@@ -271,7 +271,7 @@ export function MailUpTransport(
       const errorOrEmail = EmailPayload.decode(emailPayload);
 
       if (isLeft(errorOrEmail)) {
-        const errors = ReadableReporter.report(errorOrEmail).join("; ");
+        const errors = readableReport(errorOrEmail.value);
         winston.debug("MailUpTransport|errors", errors);
         return callback(
           new Error(`Invalid email payload: ${errors}`),

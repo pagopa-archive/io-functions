@@ -20,7 +20,7 @@ import * as documentDbUtils from "./utils/documentdb";
 import { Either, isLeft, left, right } from "fp-ts/lib/Either";
 import { isNone } from "fp-ts/lib/Option";
 import { getRequiredStringEnv } from "./utils/env";
-import { ReadableReporter } from "./utils/validation_reporters";
+import { readableReport } from "./utils/validation_reporters";
 
 import { IContext } from "azure-functions-types";
 
@@ -216,7 +216,7 @@ export async function handleNotification(
   );
 
   if (isLeft(errorOrEmailNotification)) {
-    const error = ReadableReporter.report(errorOrEmailNotification).join("; ");
+    const error = readableReport(errorOrEmailNotification.value);
     return left(
       PermanentError(
         `Wrong format for email notification|notification=${notificationId}|message=${messageId}|${error}`
@@ -380,9 +380,9 @@ export function index(context: ContextWithBindings): void {
         `EmailNotificationsHandlerIndex|Fatal! No valid email notification found in bindings.`
       );
       winston.debug(
-        `EmailNotificationsHandlerIndex|validationError|${ReadableReporter.report(
-          validation
-        ).join("\n")}`
+        `EmailNotificationsHandlerIndex|validationError|${readableReport(
+          validation.value
+        )}`
       );
       return context.done();
     }

@@ -58,6 +58,7 @@ import {
 import { EmailAddress } from "./api/definitions/EmailAddress";
 import { NotificationChannelEnum } from "./api/definitions/NotificationChannel";
 import { CreatedMessageEventSenderMetadata } from "./models/created_message_sender_metadata";
+import { ulidGenerator } from "./utils/strings";
 
 // Whether we're in a production environment
 const isProduction = process.env.NODE_ENV === "production";
@@ -251,6 +252,8 @@ export async function handleMessage(
   }
 
   const newNotification = createNewNotification(
+    ulidGenerator,
+
     newMessageWithoutContent.fiscalCode,
     newMessageWithoutContent.id
   );
