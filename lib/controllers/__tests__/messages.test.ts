@@ -23,9 +23,11 @@ import {
 import { IAzureUserAttributes } from "../../utils/middlewares/azure_user_attributes";
 import { EmailString, NonEmptyString } from "../../utils/strings";
 
+import { MessageContent } from "../../api/definitions/MessageContent";
 import { MessageResponseWithoutContent } from "../../api/definitions/MessageResponseWithoutContent";
 import { NotificationChannelEnum } from "../../api/definitions/NotificationChannel";
 import { NotificationChannelStatusValueEnum } from "../../api/definitions/NotificationChannelStatusValue";
+import { TimeToLive } from "../../api/definitions/TimeToLive";
 import {
   NewMessage,
   NewMessageWithContent,
@@ -48,6 +50,11 @@ import {
   GetMessagesHandler,
   MessagePayloadMiddleware
 } from "../messages";
+
+afterEach(() => {
+  jest.resetAllMocks();
+  jest.restoreAllMocks();
+});
 
 interface IHeaders {
   readonly [key: string]: string | undefined;
@@ -91,25 +98,29 @@ const aUserAuthenticationTrustedApplication: IAzureApiAuthorization = {
 const aMessagePayload: ApiNewMessage = {
   content: {
     markdown: aMessageBodyMarkdown
-  }
+  },
+  time_to_live: 3600 as TimeToLive
 };
 
 const aCustomSubject = "A custom subject" as MessageSubject;
 
 const aMessageId = "A_MESSAGE_ID" as NonEmptyString;
+const aDateString = "2018-03-01T18:33:39.703Z";
 
 const aNewMessageWithoutContent: NewMessageWithoutContent = {
+  createdAt: new Date(aDateString),
   fiscalCode: aFiscalCode,
   id: "A_MESSAGE_ID" as NonEmptyString,
   kind: "INewMessageWithoutContent",
   senderServiceId: "test" as ModelId,
-  senderUserId: "u123" as NonEmptyString
+  senderUserId: "u123" as NonEmptyString,
+  timeToLive: 3600 as TimeToLive
 };
 
 const aRetrievedMessageWithoutContent: RetrievedMessageWithoutContent = {
   ...aNewMessageWithoutContent,
   _self: "xyz",
-  _ts: "xyz",
+  _ts: 1,
   kind: "IRetrievedMessageWithoutContent"
 };
 
@@ -146,7 +157,7 @@ const aRetrievedNotificationStatus: RetrievedNotificationStatus = {
   notificationId: "1" as NonEmptyString,
   status: NotificationChannelStatusValueEnum.SENT_TO_CHANNEL,
   statusId: makeStatusId("1" as NonEmptyString, NotificationChannelEnum.EMAIL),
-  updateAt: new Date(),
+  updateAt: new Date(aDateString),
   version: 1 as NonNegativeNumber
 };
 
@@ -237,7 +248,7 @@ describe("CreateMessageHandler", () => {
 
     expect(mockContext.bindings).toEqual({
       createdMessage: {
-        message: aNewMessageWithoutContent,
+        message: { ...aNewMessageWithoutContent, createdAt: expect.any(Date) },
         messageContent: {
           markdown: aMessagePayload.content.markdown
         },
@@ -324,7 +335,7 @@ describe("CreateMessageHandler", () => {
 
     expect(mockContext.bindings).toEqual({
       createdMessage: {
-        message: aNewMessageWithoutContent,
+        message: { ...aNewMessageWithoutContent, createdAt: expect.any(Date) },
         messageContent: {
           markdown: aMessagePayload.content.markdown
         },
@@ -407,7 +418,7 @@ describe("CreateMessageHandler", () => {
 
     expect(mockContext.bindings).toEqual({
       createdMessage: {
-        message: aNewMessageWithoutContent,
+        message: { ...aNewMessageWithoutContent, createdAt: expect.any(Date) },
         messageContent: {
           markdown: aMessagePayload.content.markdown,
           subject: aCustomSubject
@@ -449,7 +460,9 @@ describe("CreateMessageHandler", () => {
     };
 
     const mockMessageModel = {
-      create: jest.fn(() => right(aRetrievedMessageWithoutContent))
+      create: jest.fn(() =>
+        Promise.resolve(right(aRetrievedMessageWithoutContent))
+      )
     };
 
     const createMessageHandler = CreateMessageHandler(
@@ -488,8 +501,9 @@ describe("CreateMessageHandler", () => {
     expect(mockMessageModel.create).toHaveBeenCalledTimes(1);
 
     const messageDocument = mockMessageModel.create.mock.calls[0][0];
-    expect(NewMessage.is(messageDocument)).toBeTruthy();
-    expect(NewMessageWithContent.is(messageDocument.content)).toBeFalsy();
+
+    expect(NewMessageWithoutContent.is(messageDocument)).toBeTruthy();
+    expect(MessageContent.is(messageDocument.content)).toBeFalsy();
 
     expect(mockMessageModel.create.mock.calls[0][1]).toEqual(aFiscalCode);
 
@@ -498,7 +512,7 @@ describe("CreateMessageHandler", () => {
         defaultAddresses: {
           email: "test@example.com" as EmailAddress
         },
-        message: aNewMessageWithoutContent,
+        message: { ...aNewMessageWithoutContent, createdAt: expect.any(Date) },
         messageContent: {
           markdown: messagePayload.content.markdown
         },

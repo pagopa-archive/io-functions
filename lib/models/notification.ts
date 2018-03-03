@@ -18,9 +18,8 @@ import { FiscalCode } from "../api/definitions/FiscalCode";
 
 import { Either } from "fp-ts/lib/Either";
 import { Option } from "fp-ts/lib/Option";
-import { ulid } from "ulid";
 import { NotificationChannelEnum } from "../api/definitions/NotificationChannel";
-import { NonEmptyString } from "../utils/strings";
+import { NonEmptyString, ObjectIdGenerator } from "../utils/strings";
 
 /**
  * All possible sources that can provide the address of the recipient.
@@ -107,6 +106,7 @@ export type NewNotification = t.TypeOf<typeof NewNotification>;
  * Factory method to make NewNotification objects
  */
 export function createNewNotification(
+  ulidGenerator: ObjectIdGenerator,
   fiscalCode: FiscalCode,
   messageId: NonEmptyString
 ): NewNotification {
@@ -114,7 +114,7 @@ export function createNewNotification(
     channels: {},
     fiscalCode,
     // tslint:disable-next-line:no-useless-cast
-    id: ulid() as NonEmptyString,
+    id: ulidGenerator(),
     kind: "INewNotification",
     messageId
   };

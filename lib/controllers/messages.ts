@@ -60,6 +60,7 @@ import {
   ResponseErrorInternal,
   ResponseErrorNotFound,
   ResponseErrorQuery,
+  ResponseErrorValidation,
   ResponseSuccessJson,
   ResponseSuccessJsonIterator,
   ResponseSuccessRedirectToResource
@@ -96,7 +97,9 @@ import { fromEither, isNone, none, Option, some } from "fp-ts/lib/Option";
 import { CreatedMessageWithContent } from "../api/definitions/CreatedMessageWithContent";
 import { NotificationChannelEnum } from "../api/definitions/NotificationChannel";
 import { NotificationChannelStatusValueEnum } from "../api/definitions/NotificationChannelStatusValue";
+import { TimeToLive } from "../api/definitions/TimeToLive";
 import { NotificationStatusModel } from "../models/notification_status";
+import { ReadableReporter } from "../utils/validation_reporters";
 
 /**
  * Input and output bindings for this function
@@ -211,6 +214,24 @@ type NotificationStatusHolder = Partial<
 >;
 
 /**
+ * Returns the status of a channel
+ */
+const getChannelStatus = async (
+  notificationStatusModel: NotificationStatusModel,
+  notificationId: NonEmptyString,
+  channel: NotificationChannelEnum
+) => {
+  const errorOrMaybeStatus = await notificationStatusModel.findOneNotificationStatusByNotificationChannel(
+    notificationId,
+    channel
+  );
+  return fromEither(errorOrMaybeStatus)
+    .chain(t.identity)
+    .map(o => o.status)
+    .toUndefined();
+};
+
+/**
  * Retrieve all notifications statuses (all channels) for a message.
  *
  * It makes one query to get the notification object associated
@@ -242,24 +263,16 @@ async function getMessageNotificationStatuses(
     }
     const notification = maybeNotification.value;
 
-    // returns the status of a channel
-    const getChannelStatus = async (channel: NotificationChannelEnum) => {
-      const errorOrMaybeStatus = await notificationStatusModel.findOneNotificationStatusByNotificationChannel(
-        notification.id,
-        channel
-      );
-      return fromEither(errorOrMaybeStatus)
-        .chain(t.identity)
-        .map(o => o.status)
-        .toUndefined();
-    };
-
     // collect the statuses of all channels
     const channelStatusesPromises = Object.keys(NotificationChannelEnum)
       .map(k => NotificationChannelEnum[k as NotificationChannelEnum])
       .map(async channel => ({
         channel,
-        status: await getChannelStatus(channel)
+        status: await getChannelStatus(
+          notificationStatusModel,
+          notification.id,
+          channel
+        )
       }));
     const channelStatuses = await Promise.all(channelStatusesPromises);
 
@@ -343,15 +356,27 @@ export function CreateMessageHandler(
       return ResponseErrorForbiddenNotAuthorizedForDefaultAddresses;
     }
 
+    const timeToLive = TimeToLive.decode(messagePayload.time_to_live);
+    if (isLeft(timeToLive)) {
+      return ResponseErrorValidation(
+        "Invalid message payload",
+        ReadableReporter.report(timeToLive).join()
+      );
+    }
+
     // create a new message from the payload
     // this object contains only the message metadata, the content of the
-    // message is handled separately (see below)
+    // message is handled separately (see below).
     const newMessageWithoutContent: NewMessageWithoutContent = {
+      createdAt: new Date(),
       fiscalCode,
       id: generateObjectId(),
       kind: "INewMessageWithoutContent",
       senderServiceId: userService.serviceId,
-      senderUserId: auth.userId
+      senderUserId: auth.userId,
+      // we assert that time_to_live is not undefined
+      // as it comes from a validated ApiNewMessage object
+      timeToLive: timeToLive.value
     };
 
     //

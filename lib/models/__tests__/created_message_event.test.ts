@@ -2,6 +2,7 @@
 
 import { CreatedMessageEvent } from "../created_message_event";
 
+import { isRight } from "fp-ts/lib/Either";
 import { MessageBodyMarkdown } from "../../api/definitions/MessageBodyMarkdown";
 
 const aMessageBodyMarkdown = "test".repeat(80) as MessageBodyMarkdown;
@@ -18,6 +19,7 @@ describe("", () => {
           _self:
             "dbs/LgNRAA==/colls/LgNRANj9nwA=/docs/LgNRANj9nwBgAAAAAAAAAA==/",
           _ts: 1505754168,
+          createdAt: new Date().toISOString(),
           fiscalCode: "FRLFRC73E04B157I",
           id: "01BTAZ2HS1PWDJERA510FDXYV4",
           kind: "RetrievedMessage",
@@ -35,7 +37,8 @@ describe("", () => {
       }
     ];
     payloads.forEach(payload => {
-      expect(CreatedMessageEvent.is(payload)).toBeTruthy();
+      const event = CreatedMessageEvent.decode(payload);
+      expect(isRight(event)).toBeTruthy();
     });
   });
 });

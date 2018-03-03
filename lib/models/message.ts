@@ -4,7 +4,7 @@ import { ReadableReporter } from "./../utils/validation_reporters";
 
 import * as DocumentDb from "documentdb";
 
-import { tag } from "../utils/types";
+import { pick, tag } from "../utils/types";
 
 import * as DocumentDbUtils from "../utils/documentdb";
 import { DocumentDbModel } from "../utils/documentdb_model";
@@ -18,21 +18,32 @@ import { MessageContent } from "../api/definitions/MessageContent";
 import { FiscalCode } from "../api/definitions/FiscalCode";
 
 import { BlobService } from "azure-storage";
+import { Timestamp } from "../api/definitions/Timestamp";
+import { TimeToLive } from "../api/definitions/TimeToLive";
 import { getBlobAsText, upsertBlobFromObject } from "../utils/azure_storage";
 import { iteratorToArray } from "../utils/documentdb";
 
 const MESSAGE_BLOB_STORAGE_SUFFIX = ".json";
 
-const MessageBase = t.interface({
-  // the fiscal code of the recipient
-  fiscalCode: FiscalCode,
+const MessageBase = t.interface(
+  {
+    // the fiscal code of the recipient
+    fiscalCode: FiscalCode,
 
-  // the identifier of the service of the sender
-  senderServiceId: t.string,
+    // the identifier of the service of the sender
+    senderServiceId: t.string,
 
-  // the userId of the sender (this is opaque and depends on the API gateway)
-  senderUserId: NonEmptyString
-});
+    // the userId of the sender (this is opaque and depends on the API gateway)
+    senderUserId: NonEmptyString,
+
+    // time to live in seconds
+    timeToLive: TimeToLive,
+
+    // timestamp: the message was accepted by the system
+    createdAt: Timestamp
+  },
+  "MessageBase"
+);
 
 /**
  * The attributes common to all types of Message
@@ -142,6 +153,14 @@ export type RetrievedMessageWithoutContent = t.TypeOf<
   typeof RetrievedMessageWithoutContent
 >;
 
+export const NotExpiredMessage = t.refinement(
+  MessageBase,
+  message => Date.now() - message.createdAt.getTime() <= message.timeToLive,
+  "ValidNewMessageWithContent"
+);
+
+export type NotExpiredMessage = t.TypeOf<typeof NotExpiredMessage>;
+
 /**
  * A (previously saved) retrieved Message
  */
@@ -154,32 +173,25 @@ export const RetrievedMessage = t.union([
 export type RetrievedMessage = t.TypeOf<typeof RetrievedMessage>;
 
 function toBaseType(o: RetrievedMessage): Message {
-  if (RetrievedMessageWithContent.is(o)) {
-    return {
-      content: o.content,
-      fiscalCode: o.fiscalCode,
-      senderServiceId: o.senderServiceId,
-      senderUserId: o.senderUserId
-    };
-  } else {
-    return {
-      fiscalCode: o.fiscalCode,
-      senderServiceId: o.senderServiceId,
-      senderUserId: o.senderUserId
-    };
-  }
+  const props: ReadonlyArray<keyof Message> = [
+    "fiscalCode",
+    "senderServiceId",
+    "senderUserId",
+    "timeToLive",
+    "createdAt"
+  ];
+  return RetrievedMessageWithContent.is(o)
+    ? pick(["content", ...props], o)
+    : pick(props, o);
 }
 
 function toRetrieved(result: DocumentDb.RetrievedDocument): RetrievedMessage {
-  if (RetrievedMessageWithContent.is(result)) {
-    return result;
-  }
-  if (RetrievedMessageWithoutContent.is(result)) {
-    return result;
-  }
-  throw new Error(
-    "retrieved result was neither a RetrievedMessageWithContent nor a RetrievedMessageWithoutContent"
-  );
+  return RetrievedMessage.decode(result).getOrElseL(errs => {
+    throw new Error(
+      "Retrieved result wasn't a RetrievedMessage" +
+        ReadableReporter.report(left(errs)).join("\n")
+    );
+  });
 }
 
 function blobIdFromMessageId(messageId: string): string {

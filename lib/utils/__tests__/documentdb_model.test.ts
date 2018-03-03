@@ -8,6 +8,11 @@ import { isLeft, isRight, left, right } from "fp-ts/lib/Either";
 
 import { DocumentDbModel } from "../documentdb_model";
 
+afterEach(() => {
+  jest.resetAllMocks();
+  jest.restoreAllMocks();
+});
+
 interface IMyDocument {
   readonly test: string;
 }
@@ -67,7 +72,6 @@ const aDocumentUri = DocumentDbUtils.getDocumentUri(
 
 describe("create", () => {
   it("should create a document", async () => {
-    jest.resetAllMocks();
     (DocumentDbUtils.createDocument as any).mockReturnValueOnce(
       Promise.resolve(right({}))
     );
@@ -92,7 +96,6 @@ describe("create", () => {
   });
 
   it("should return the query error", async () => {
-    jest.resetAllMocks();
     const model = new MyModel(aDbClient, aCollectionUri);
     (DocumentDbUtils.createDocument as any).mockReturnValueOnce(
       Promise.resolve(left("error"))
@@ -112,7 +115,6 @@ describe("create", () => {
   });
 
   it("should return the created document as retrieved type", async () => {
-    jest.resetAllMocks();
     const model = new MyModel(aDbClient, aCollectionUri);
     (DocumentDbUtils.createDocument as any).mockReturnValueOnce(
       Promise.resolve(
@@ -143,7 +145,6 @@ describe("create", () => {
 
 describe("find", () => {
   it("should retrieve an existing document", async () => {
-    jest.resetAllMocks();
     const model = new MyModel(aDbClient, aCollectionUri);
     (DocumentDbUtils.readDocument as any).mockReturnValueOnce(
       Promise.resolve(
@@ -175,7 +176,6 @@ describe("find", () => {
   });
 
   it("should return an empty option if the document does not exist", async () => {
-    jest.resetAllMocks();
     const model = new MyModel(aDbClient, aCollectionUri);
     (DocumentDbUtils.readDocument as any).mockReturnValueOnce(
       Promise.resolve(left({ code: 404, body: "Not found" }))
@@ -188,7 +188,6 @@ describe("find", () => {
   });
 
   it("should return the query error", async () => {
-    jest.resetAllMocks();
     const model = new MyModel(aDbClient, aCollectionUri);
     (DocumentDbUtils.readDocument as any).mockReturnValueOnce(
       Promise.resolve(left({ code: 500, body: "Error" }))
@@ -203,7 +202,6 @@ describe("find", () => {
 
 describe("update", () => {
   it("should update an existing document", async () => {
-    jest.resetAllMocks();
     const model = new MyModel(aDbClient, aCollectionUri);
     (DocumentDbUtils.readDocument as any).mockReturnValueOnce(
       Promise.resolve(
@@ -255,7 +253,6 @@ describe("update", () => {
   });
 
   it("should return an empty option if the document does not exist", async () => {
-    jest.resetAllMocks();
     const model = new MyModel(aDbClient, aCollectionUri);
     (DocumentDbUtils.readDocument as any).mockReturnValueOnce(
       Promise.resolve(left({ code: 404, body: "Not found" }))
@@ -269,7 +266,6 @@ describe("update", () => {
   });
 
   it("should return the query error of readDocument", async () => {
-    jest.resetAllMocks();
     const model = new MyModel(aDbClient, aCollectionUri);
     (DocumentDbUtils.readDocument as any).mockReturnValueOnce(
       Promise.resolve(left({ code: 500, body: "Error" }))
@@ -283,7 +279,6 @@ describe("update", () => {
   });
 
   it("should return the query error of replaceDocument", async () => {
-    jest.resetAllMocks();
     const model = new MyModel(aDbClient, aCollectionUri);
     (DocumentDbUtils.readDocument as any).mockReturnValueOnce(
       Promise.resolve(
@@ -307,7 +302,6 @@ describe("update", () => {
 
 describe("attach", () => {
   it("should return an attached media to an existing document", async () => {
-    jest.resetAllMocks();
     const aDocumentId = "mydocument";
     const aPartitionKey = "partitionKey";
     const anAttachment = {
