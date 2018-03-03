@@ -69,7 +69,7 @@ describe("definedValues", () => {
 });
 
 describe("strictInterfaceWithOptionals", () => {
-  it("should reject unknow properties", async () => {
+  it("should reject unknown properties", async () => {
     const aType = strictInterfaceWithOptionals(
       {
         required: t.boolean
@@ -83,7 +83,7 @@ describe("strictInterfaceWithOptionals", () => {
     expect(isLeft(validation)).toBeTruthy();
     if (isLeft(validation)) {
       const errors = readableReport(validation.value);
-      expect(errors).toEqual("value.x: unknow property");
+      expect(errors).toEqual("value.x: unknown property");
     }
   });
 });

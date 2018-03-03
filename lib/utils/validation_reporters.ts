@@ -15,7 +15,7 @@ function getContextPath(context: Context): string {
   const lastType = context[context.length - 1].type;
 
   if ("never" === lastType.name) {
-    return `${keysPath}: unknow property`;
+    return `${keysPath}: unknown property`;
   }
 
   return `${keysPath} is not a ${lastType.name}`;

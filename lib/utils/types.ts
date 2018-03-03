@@ -113,7 +113,7 @@ export function withoutUndefinedValues<T, K extends keyof T>(obj: T): T {
 
 /**
  *  Return a new type that validates successfully only
- *  when the instance (object) contains no unknow properties.
+ *  when the instance (object) contains no unknown properties.
  *
  *  See https://github.com/gcanti/io-ts/issues/106
  *
