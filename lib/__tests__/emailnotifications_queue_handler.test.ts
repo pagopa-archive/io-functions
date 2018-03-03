@@ -160,11 +160,11 @@ const aRetrievedNotificationStatus: RetrievedNotificationStatus = {
   version: 1 as NonNegativeNumber
 };
 
-function getUpdateNotificationStatusMock(
-  retrievedNotificationStatus: any = right(aRetrievedNotificationStatus)
-): any {
-  return jest.fn(() => Promise.resolve(retrievedNotificationStatus));
-}
+// function getUpdateNotificationStatusMock(
+//   retrievedNotificationStatus: any = right(aRetrievedNotificationStatus)
+// ): any {
+//   return jest.fn(() => Promise.resolve(retrievedNotificationStatus));
+// }
 
 describe("sendMail", () => {
   it("should call sendMail on the Transporter and return the result", async () => {
