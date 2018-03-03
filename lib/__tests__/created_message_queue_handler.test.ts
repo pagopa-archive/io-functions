@@ -47,6 +47,11 @@ import { NotificationChannelEnum } from "../api/definitions/NotificationChannel"
 import { NotificationEvent } from "../models/notification_event";
 import { retryMessageEnqueue } from "../utils/azure_queues";
 
+afterEach(() => {
+  jest.resetAllMocks();
+  jest.restoreAllMocks();
+});
+
 const aCorrectFiscalCode = "FRLFRC74E04B157I" as FiscalCode;
 const aWrongFiscalCode = "FRLFRC74E04B157" as FiscalCode;
 const anEmail = "x@example.com" as EmailString;
@@ -155,9 +160,6 @@ describe("createdMessageQueueIndex", () => {
     expect(contextMock.done).toHaveBeenCalledTimes(1);
     expect(contextMock.bindings.emailNotification).toBeUndefined();
     expect(spy).toHaveBeenCalledTimes(1);
-
-    spy.mockReset();
-    spy.mockRestore();
   });
 
   it("should return failure if createdMessage is invalid (wrong fiscal code)", async () => {
@@ -179,9 +181,6 @@ describe("createdMessageQueueIndex", () => {
     expect(contextMock.done).toHaveBeenCalledTimes(1);
     expect(contextMock.done).toHaveBeenCalledWith();
     expect(spy).toHaveBeenCalledTimes(1);
-
-    spy.mockReset();
-    spy.mockRestore();
   });
 });
 
@@ -677,10 +676,6 @@ describe("processResolve", () => {
     expect(retryMessageEnqueue).toHaveBeenCalledTimes(1);
     expect(spy).toHaveBeenCalledTimes(1);
     expect(contextMock.bindings.emailNotification).toEqual(undefined);
-
-    spy.mockReset();
-    spy.mockRestore();
-    jest.clearAllMocks();
   });
   it("should fail in case of permament error", async () => {
     const errorOrNotification = left(PermanentError("err"));
@@ -710,9 +705,6 @@ describe("processResolve", () => {
     expect(contextMock.done).toHaveBeenCalledWith();
     expect(spy).toHaveBeenCalledTimes(1);
     expect(contextMock.bindings.emailNotification).toEqual(undefined);
-
-    spy.mockReset();
-    spy.mockRestore();
   });
 });
 

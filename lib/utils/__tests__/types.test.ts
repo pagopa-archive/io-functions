@@ -7,7 +7,7 @@ import {
 } from "./../types";
 
 import { isLeft, isRight } from "fp-ts/lib/Either";
-import { ReadableReporter } from "../validation_reporters";
+import { readableReport } from "../validation_reporters";
 
 import { enumType, readonlySetType } from "../types";
 
@@ -80,9 +80,11 @@ describe("strictInterfaceWithOptionals", () => {
       "aName"
     );
     const validation = aType.decode({ required: true, x: true });
-    const errors = ReadableReporter.report(validation).join(";");
     expect(isLeft(validation)).toBeTruthy();
-    expect(errors).toEqual("value.x: unknow property");
+    if (isLeft(validation)) {
+      const errors = readableReport(validation.value);
+      expect(errors).toEqual("value.x: unknow property");
+    }
   });
 });
 

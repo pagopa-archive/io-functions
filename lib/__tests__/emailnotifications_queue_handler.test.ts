@@ -69,6 +69,7 @@ import { NonNegativeNumber } from "../utils/numbers";
 
 afterEach(() => {
   jest.resetAllMocks();
+  jest.restoreAllMocks();
 });
 
 function flushPromises(): Promise<void> {
