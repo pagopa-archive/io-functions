@@ -6719,10 +6719,6 @@ subarg@^1.0.0:
   dependencies:
     minimist "^1.1.0"
 
-superagent-mock@^3.6.0:
-  version "3.7.0"
-  resolved "https://registry.yarnpkg.com/superagent-mock/-/superagent-mock-3.7.0.tgz#d424909e2dbb0bd0e5ab213ef8df91e3cbbcd613"
-
 superagent@^3.8.2:
   version "3.8.2"
   resolved "https://registry.yarnpkg.com/superagent/-/superagent-3.8.2.tgz#e4a11b9d047f7d3efeb3bbe536d9ec0021d16403"
