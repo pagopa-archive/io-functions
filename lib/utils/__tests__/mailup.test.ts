@@ -1,16 +1,40 @@
 // tslint:disable:no-any
 
-import * as request from "superagent";
-import * as mockSuperagent from "superagent-mock";
-
 import Mail = require("nodemailer/lib/mailer");
 
 import * as nodemailer from "nodemailer";
-import {
-  MailUpTransport,
-  SEND_TRANSACTIONAL_MAIL_ENDPOINT,
-  SmtpAuthInfo
-} from "../mailup";
+
+jest.mock("superagent");
+import * as request from "superagent";
+
+import { MailUpTransport, SmtpAuthInfo } from "../mailup";
+
+interface IResponse {
+  readonly body: {
+    readonly Code: string;
+    readonly Message: string;
+    readonly Status: string;
+  };
+  readonly error?: string;
+  readonly status: number;
+  readonly text?: string;
+}
+
+// get superagent mock instance
+const superagent = request("method", "url");
+
+const setMockResponse = (response: IResponse) => {
+  (superagent as any).__setResponse(response);
+};
+const setResponseSpy = (responseSpy: (() => void)) => {
+  (superagent as any).__setResponseSpy(responseSpy);
+};
+const setRequestSpy = (requestSpy: (() => void)) => {
+  (superagent as any).__setRequestSpy(requestSpy);
+};
+const resetSuperagentMocks = () => {
+  (superagent as any).__resetMocks();
+};
 
 // format required by nodemailer
 const anEmailMessage: Mail.Options = {
@@ -58,20 +82,15 @@ const aNodemailerTransporter = nodemailer.createTransport(
 describe("sendMail", () => {
   it("should get a success response from the API endpoint", async () => {
     const responseSpy = jest.fn();
+    setResponseSpy(responseSpy);
+
     const requestSpy = jest.fn();
-    const superagentMock = mockSuperagent(request, [
-      {
-        fixtures: (_: any, params: any) => {
-          requestSpy(params);
-          return aResponsePayload;
-        },
-        pattern: SEND_TRANSACTIONAL_MAIL_ENDPOINT,
-        post: (_: any, data: any) => {
-          responseSpy(data);
-          return { body: data };
-        }
-      }
-    ]);
+    setRequestSpy(requestSpy);
+
+    setMockResponse({
+      body: aResponsePayload,
+      status: 200
+    });
 
     const response = await aNodemailerTransporter.sendMail(anEmailMessage);
 
@@ -82,21 +101,10 @@ describe("sendMail", () => {
     expect(responseSpy).toHaveBeenCalledWith(aResponsePayload);
     expect(response).toEqual(aResponsePayload);
 
-    superagentMock.unset();
+    resetSuperagentMocks();
   });
 
   it("should fail on empty from address", async () => {
-    const superagentMock = mockSuperagent(request, [
-      {
-        fixtures: (_: any, __: any) => {
-          return aResponsePayload;
-        },
-        pattern: SEND_TRANSACTIONAL_MAIL_ENDPOINT,
-        post: (_: any, data: any) => {
-          return { body: data };
-        }
-      }
-    ]);
     expect.assertions(1);
     try {
       await aNodemailerTransporter.sendMail({
@@ -106,21 +114,9 @@ describe("sendMail", () => {
     } catch (e) {
       expect(e).toBeInstanceOf(Error);
     }
-    superagentMock.unset();
   });
 
   it("should fail on malformed email payload", async () => {
-    const superagentMock = mockSuperagent(request, [
-      {
-        fixtures: (_: any, __: any) => {
-          return aResponsePayload;
-        },
-        pattern: SEND_TRANSACTIONAL_MAIL_ENDPOINT,
-        post: (_: any, data: any) => {
-          return { body: data };
-        }
-      }
-    ]);
     expect.assertions(1);
     try {
       await aNodemailerTransporter.sendMail({
@@ -130,21 +126,9 @@ describe("sendMail", () => {
     } catch (e) {
       expect(e).toBeInstanceOf(Error);
     }
-    superagentMock.unset();
   });
 
   it("should fail on empty destination address", async () => {
-    const superagentMock = mockSuperagent(request, [
-      {
-        fixtures: (_: any, __: any) => {
-          return aResponsePayload;
-        },
-        pattern: SEND_TRANSACTIONAL_MAIL_ENDPOINT,
-        post: (_: any, data: any) => {
-          return { body: data };
-        }
-      }
-    ]);
     expect.assertions(1);
     try {
       await aNodemailerTransporter.sendMail({
@@ -154,27 +138,20 @@ describe("sendMail", () => {
     } catch (e) {
       expect(e).toBeInstanceOf(Error);
     }
-    superagentMock.unset();
   });
 
   it("should fail on API error", async () => {
-    const superagentMock = mockSuperagent(request, [
-      {
-        fixtures: (_: any, __: any) => {
-          return { error: "500" };
-        },
-        pattern: SEND_TRANSACTIONAL_MAIL_ENDPOINT,
-        post: (_: any, data: any) => {
-          return { body: data };
-        }
-      }
-    ]);
+    setMockResponse({
+      body: aResponsePayload,
+      error: "500",
+      status: 500
+    });
     expect.assertions(1);
     try {
       await aNodemailerTransporter.sendMail(anEmailMessage);
     } catch (e) {
       expect(e).toBeInstanceOf(Error);
     }
-    superagentMock.unset();
+    resetSuperagentMocks();
   });
 });
