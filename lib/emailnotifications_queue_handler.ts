@@ -448,7 +448,7 @@ export function index(context: ContextWithBindings): void {
         async notificationIsExpired => {
           if (notificationIsExpired) {
             await notificationStatusUpdater(
-              NotificationChannelStatusValueEnum.EXPIRED
+              NotificationChannelStatusValueEnum.FAILED
             );
           }
           context.done();
