@@ -16,7 +16,7 @@ import { IContext } from "azure-function-express";
 
 import { CreatedMessageWithoutContent } from "../api/definitions/CreatedMessageWithoutContent";
 import { FiscalCode } from "../api/definitions/FiscalCode";
-import { MessageContent } from "../api/definitions/MessageContent";
+
 import { MessageResponseWithContent } from "../api/definitions/MessageResponseWithContent";
 import { NewMessage as ApiNewMessage } from "../api/definitions/NewMessage";
 
@@ -60,6 +60,7 @@ import {
   ResponseErrorInternal,
   ResponseErrorNotFound,
   ResponseErrorQuery,
+  ResponseErrorValidation,
   ResponseSuccessJson,
   ResponseSuccessJsonIterator,
   ResponseSuccessRedirectToResource
@@ -85,6 +86,7 @@ import { BlobService } from "azure-storage";
 import {
   Message,
   MessageModel,
+  NewMessageWithContent,
   NewMessageWithoutContent,
   RetrievedMessage
 } from "../models/message";
@@ -96,7 +98,9 @@ import { fromEither, isNone, none, Option, some } from "fp-ts/lib/Option";
 import { CreatedMessageWithContent } from "../api/definitions/CreatedMessageWithContent";
 import { NotificationChannelEnum } from "../api/definitions/NotificationChannel";
 import { NotificationChannelStatusValueEnum } from "../api/definitions/NotificationChannelStatusValue";
+import { TimeToLive } from "../api/definitions/TimeToLive";
 import { NotificationStatusModel } from "../models/notification_status";
+import { readableReport } from "../utils/validation_reporters";
 
 /**
  * Input and output bindings for this function
@@ -211,6 +215,24 @@ type NotificationStatusHolder = Partial<
 >;
 
 /**
+ * Returns the status of a channel
+ */
+const getChannelStatus = async (
+  notificationStatusModel: NotificationStatusModel,
+  notificationId: NonEmptyString,
+  channel: NotificationChannelEnum
+) => {
+  const errorOrMaybeStatus = await notificationStatusModel.findOneNotificationStatusByNotificationChannel(
+    notificationId,
+    channel
+  );
+  return fromEither(errorOrMaybeStatus)
+    .chain(t.identity)
+    .map(o => o.status)
+    .toUndefined();
+};
+
+/**
  * Retrieve all notifications statuses (all channels) for a message.
  *
  * It makes one query to get the notification object associated
@@ -242,24 +264,16 @@ async function getMessageNotificationStatuses(
     }
     const notification = maybeNotification.value;
 
-    // returns the status of a channel
-    const getChannelStatus = async (channel: NotificationChannelEnum) => {
-      const errorOrMaybeStatus = await notificationStatusModel.findOneNotificationStatusByNotificationChannel(
-        notification.id,
-        channel
-      );
-      return fromEither(errorOrMaybeStatus)
-        .chain(t.identity)
-        .map(o => o.status)
-        .toUndefined();
-    };
-
     // collect the statuses of all channels
     const channelStatusesPromises = Object.keys(NotificationChannelEnum)
       .map(k => NotificationChannelEnum[k as NotificationChannelEnum])
       .map(async channel => ({
         channel,
-        status: await getChannelStatus(channel)
+        status: await getChannelStatus(
+          notificationStatusModel,
+          notification.id,
+          channel
+        )
       }));
     const channelStatuses = await Promise.all(channelStatusesPromises);
 
@@ -343,15 +357,25 @@ export function CreateMessageHandler(
       return ResponseErrorForbiddenNotAuthorizedForDefaultAddresses;
     }
 
+    const timeToLive = TimeToLive.decode(messagePayload.time_to_live);
+    if (isLeft(timeToLive)) {
+      return ResponseErrorValidation(
+        "Invalid message payload",
+        readableReport(timeToLive.value)
+      );
+    }
+
     // create a new message from the payload
     // this object contains only the message metadata, the content of the
-    // message is handled separately (see below)
+    // message is handled separately (see below).
     const newMessageWithoutContent: NewMessageWithoutContent = {
+      createdAt: new Date(),
       fiscalCode,
       id: generateObjectId(),
       kind: "INewMessageWithoutContent",
       senderServiceId: userService.serviceId,
-      senderUserId: auth.userId
+      senderUserId: auth.userId,
+      timeToLive: timeToLive.value
     };
 
     //
@@ -401,9 +425,13 @@ export function CreateMessageHandler(
     // emit created message event to the output queue
     //
 
-    const messageContent: MessageContent = {
-      markdown: messagePayload.content.markdown,
-      subject: messagePayload.content.subject
+    const newMessageWithContent: NewMessageWithContent = {
+      ...newMessageWithoutContent,
+      content: {
+        markdown: messagePayload.content.markdown,
+        subject: messagePayload.content.subject
+      },
+      kind: "INewMessageWithContent"
     };
 
     // prepare the created message event
@@ -411,8 +439,7 @@ export function CreateMessageHandler(
     // deserialized to null(s) when enqueued
     const createdMessageEvent: CreatedMessageEvent = withoutUndefinedValues({
       defaultAddresses: messagePayload.default_addresses,
-      message: newMessageWithoutContent,
-      messageContent,
+      message: newMessageWithContent,
       senderMetadata: {
         departmentName: userAttributes.service.departmentName,
         organizationName: userAttributes.service.organizationName,

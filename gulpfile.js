@@ -110,12 +110,7 @@ gulp.task("unit:test", () => {
       // for some unknow reason jest tests won't exit on win32 machine
       // when run through gulp (running the tests directly through the jest CLI just works)
       // that's the reason of the `forceExit` flag
-      .pipe(
-        run(
-          "jest --coverage --runInBand" +
-            (process.platform === "win32" ? " --forceExit" : "")
-        )
-      )
+      .pipe(run("jest --coverage --runInBand"))
   );
 });
 

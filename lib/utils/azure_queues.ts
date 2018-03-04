@@ -3,10 +3,16 @@
  */
 import * as winston from "winston";
 
-import { IContext } from "azure-functions-types";
 import { QueueService } from "azure-storage";
 
 import { Option, some } from "fp-ts/lib/Option";
+
+export interface IQueueMessage extends QueueService.QueueMessageResult {
+  readonly id: string;
+  readonly nextVisibleTime: string;
+  readonly popReceipt: string;
+  readonly queueTrigger: string;
+}
 
 // Any delay must be less than 7 days (< 604800 seconds)
 const MAX_BACKOFF_MS = 7 * 24 * 3600 * 1000;
@@ -35,31 +41,31 @@ export const getDelaySecForRetries = (
     .filter(nr => nr <= maxRetries)
     .map(nr => Math.ceil(minBackoff * Math.pow(2, nr) / 1000));
 
-export function queueMessageToString(context: IContext): string {
-  /* istanbul ignore next */
+/* istanbul ignore next */
+export function queueMessageToString(queueMessage: IQueueMessage): string {
   return [
-    "bindings = ",
-    JSON.stringify(context.bindings),
-    "; queueTrigger = ",
-    context.bindingData.queueTrigger,
+    "queueTrigger = ",
+    queueMessage.queueTrigger,
     "; expirationTime = ",
-    context.bindingData.expirationTime,
+    queueMessage.expirationTime,
     "; insertionTime = ",
-    context.bindingData.insertionTime,
+    queueMessage.insertionTime,
     "; nextVisibleTime = ",
-    context.bindingData.nextVisibleTime,
+    queueMessage.nextVisibleTime,
     "; id = ",
-    context.bindingData.id,
+    queueMessage.id,
     "; popReceipt = ",
-    context.bindingData.popReceipt,
+    queueMessage.popReceipt,
     "; dequeueCount = ",
-    context.bindingData.dequeueCount
+    queueMessage.dequeueCount
   ].join("");
 }
 
 /**
- * Schedule the re-processing of a message in the queue
- * after an incremental delay (visibilityTimeout).
+ * Update message visibilityTimeout with an incremental delay.
+ *
+ * You MUST call context.done(retryMsg) in the caller
+ * to schedule a retry (the re-processing of a message in the queue).
  *
  * Useful in case of transient errors. The message is enqueued with
  * a newly computed visibilityTimeout (proportional to dequeueCount)
@@ -67,45 +73,55 @@ export function queueMessageToString(context: IContext): string {
  * @param queueService  The Azure storage queue service
  * @param queueName     The Azure storage queue name
  * @param context       The Functions context with bindings
+ *
+ * @return              False if message is expired.
  */
-export function retryMessageEnqueue(
+export function updateMessageVisibilityTimeout<T extends IQueueMessage>(
   queueService: QueueService,
   queueName: string,
-  context: IContext
-): void {
-  const queueMessage = context.bindingData;
+  queueMessage: T
+): Promise<boolean> {
+  return new Promise(resolve => {
+    winston.debug(
+      `Retry to handle message ${queueMessageToString(queueMessage)}`
+    );
 
-  winston.debug(`Retry to handle message ${queueMessageToString(context)}`);
+    if (!queueMessage.dequeueCount) {
+      throw new Error(
+        "Fatal ! System error: message enqueued without dequeueCount"
+      );
+    }
 
-  // dequeueCount starts with one (not zero)
-  const numberOfRetries = queueMessage.dequeueCount;
+    // dequeueCount starts with one (not zero)
+    const numberOfRetries = queueMessage.dequeueCount;
 
-  getDelaySecForRetries(numberOfRetries)
-    .map(visibilityTimeoutSec => {
-      // update message visibilityTimeout
-      queueService.updateMessage(
-        queueName,
-        queueMessage.id,
-        queueMessage.popReceipt,
-        visibilityTimeoutSec,
-        err => {
-          context.done(
-            err ||
-              `Retrying with timeout|retry=${numberOfRetries}|timeout=${visibilityTimeoutSec}|queueMessageId=${
-                queueMessage.id
-              }`
-          );
-        }
-      );
-    })
-    .getOrElseL(() => {
-      winston.info(
-        `Maximum number of retries reached|retries=${numberOfRetries}|${
-          queueMessage.id
-        }`
-      );
-      context.done(
-        `Moving queueMessage=${queueMessage.id} to ${queueName}-poison`
-      );
-    });
+    return getDelaySecForRetries(numberOfRetries)
+      .map(visibilityTimeoutSec => {
+        // update message visibilityTimeout
+        queueService.updateMessage(
+          queueName,
+          queueMessage.id,
+          queueMessage.popReceipt,
+          visibilityTimeoutSec,
+          err => {
+            winston.info(
+              err.message ||
+                `Updated visibilityTimeout|retry=${numberOfRetries}|timeout=${visibilityTimeoutSec}|queueMessageId=${
+                  queueMessage.id
+                }`
+            );
+            // try to schedule a retry even in case updateMessage fails
+            resolve(true);
+          }
+        );
+      })
+      .getOrElseL(() => {
+        winston.info(
+          `Maximum number of retries reached|retries=${numberOfRetries}|${
+            queueMessage.id
+          }`
+        );
+        resolve(false);
+      });
+  });
 }
