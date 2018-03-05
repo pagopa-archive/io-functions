@@ -341,7 +341,7 @@ export function index(context: ContextWithBindings): void {
   }
   const createdMessageEvent = errorOrCreatedMessageEvent.value;
 
-  // it is an CreatedMessageEvent
+  // it is a CreatedMessageEvent
   const newMessageWithContent = createdMessageEvent.message;
   const defaultAddresses = fromNullable(createdMessageEvent.defaultAddresses);
   const senderMetadata = createdMessageEvent.senderMetadata;

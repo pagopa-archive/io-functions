@@ -56,7 +56,7 @@ import * as functionConfig from "../../EmailNotificationsQueueHandler/function.j
 import { MessageContent } from "../api/definitions/MessageContent";
 import { NotificationChannelEnum } from "../api/definitions/NotificationChannel";
 import { NotificationChannelStatusValueEnum } from "../api/definitions/NotificationChannelStatusValue";
-import { TimeToLive } from "../api/definitions/TimeToLive";
+import { TimeToLiveSeconds } from "../api/definitions/TimeToLiveSeconds";
 import {
   makeStatusId,
   NotificationStatusModel,
@@ -87,7 +87,7 @@ const aMessage = {
   kind: "INewMessageWithoutContent",
   senderServiceId: "",
   senderUserId: "u123" as NonEmptyString,
-  timeToLive: 3600 as TimeToLive
+  timeToLive: 3600 as TimeToLiveSeconds
 };
 
 const aMessageBodyMarkdown = "test".repeat(80) as MessageBodyMarkdown;

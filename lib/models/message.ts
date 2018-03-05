@@ -17,7 +17,7 @@ import { FiscalCode } from "../api/definitions/FiscalCode";
 
 import { BlobService } from "azure-storage";
 import { Timestamp } from "../api/definitions/Timestamp";
-import { TimeToLive } from "../api/definitions/TimeToLive";
+import { TimeToLiveSeconds } from "../api/definitions/TimeToLiveSeconds";
 import { getBlobAsText, upsertBlobFromObject } from "../utils/azure_storage";
 import { iteratorToArray } from "../utils/documentdb";
 import { readableReport } from "../utils/validation_reporters";
@@ -36,7 +36,7 @@ const MessageBase = t.interface(
     senderUserId: NonEmptyString,
 
     // time to live in seconds
-    timeToLive: TimeToLive,
+    timeToLiveSeconds: TimeToLiveSeconds,
 
     // timestamp: the message was accepted by the system
     createdAt: Timestamp
@@ -152,14 +152,15 @@ export type RetrievedMessageWithoutContent = t.TypeOf<
   typeof RetrievedMessageWithoutContent
 >;
 
-export const NotExpiredMessage = t.refinement(
+export const ActiveMessage = t.refinement(
   MessageBase,
   message =>
-    Date.now() - message.createdAt.getTime() <= message.timeToLive * 1000,
+    Date.now() - message.createdAt.getTime() <=
+    message.timeToLiveSeconds * 1000,
   "NotExpiredMessage"
 );
 
-export type NotExpiredMessage = t.TypeOf<typeof NotExpiredMessage>;
+export type NotExpiredMessage = t.TypeOf<typeof ActiveMessage>;
 
 /**
  * A (previously saved) retrieved Message
@@ -177,7 +178,7 @@ function toBaseType(o: RetrievedMessage): Message {
     "fiscalCode",
     "senderServiceId",
     "senderUserId",
-    "timeToLive",
+    "timeToLiveSeconds",
     "createdAt"
   ];
   return RetrievedMessageWithContent.is(o)

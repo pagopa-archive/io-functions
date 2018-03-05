@@ -44,7 +44,7 @@ import { EmailString, NonEmptyString } from "../utils/strings";
 jest.mock("azure-storage");
 jest.mock("../utils/azure_queues");
 import { NotificationChannelEnum } from "../api/definitions/NotificationChannel";
-import { TimeToLive } from "../api/definitions/TimeToLive";
+import { TimeToLiveSeconds } from "../api/definitions/TimeToLiveSeconds";
 import { NotificationEvent } from "../models/notification_event";
 import { updateMessageVisibilityTimeout } from "../utils/azure_queues";
 
@@ -81,7 +81,7 @@ const aMessage: NewMessageWithContent = {
   kind: "INewMessageWithContent",
   senderServiceId: "",
   senderUserId: "u123" as NonEmptyString,
-  timeToLive: 3600 as TimeToLive
+  timeToLiveSeconds: 3600 as TimeToLiveSeconds
 };
 
 const aMessageEvent: CreatedMessageEvent = {

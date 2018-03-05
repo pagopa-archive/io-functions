@@ -10,7 +10,7 @@ import { NotificationEvent } from "../notification_event";
 import { MessageContent } from "../../api/definitions/MessageContent";
 
 import { isRight } from "fp-ts/lib/Either";
-import { TimeToLive } from "../../api/definitions/TimeToLive";
+import { TimeToLiveSeconds } from "../../api/definitions/TimeToLiveSeconds";
 import { CreatedMessageEventSenderMetadata } from "../created_message_sender_metadata";
 
 const aMessageId = "A_MESSAGE_ID" as NonEmptyString;
@@ -30,7 +30,7 @@ const aMessage = {
   kind: "INewMessageWithoutContent",
   senderServiceId: "",
   senderUserId: "u123" as NonEmptyString,
-  timeToLive: 3600 as TimeToLive
+  timeToLive: 3600 as TimeToLiveSeconds
 };
 
 const aSenderMetadata: CreatedMessageEventSenderMetadata = {

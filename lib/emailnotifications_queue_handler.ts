@@ -118,7 +118,7 @@ const ContextWithBindings = t.interface({
 
 type ContextWithBindings = t.TypeOf<typeof ContextWithBindings> & IContext;
 
-type OutputBindings = undefined;
+type OutputBindings = never;
 
 /**
  * Generates the HTML for the email from the Markdown content and the subject

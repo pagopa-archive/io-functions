@@ -14,7 +14,9 @@ export interface IQueueMessage extends QueueService.QueueMessageResult {
   readonly queueTrigger: string;
 }
 
-// Any delay must be less than 7 days (< 604800 seconds)
+// Any delay must be less than 7 days (< 604800 seconds).
+// See the maximum value of the TimeToLiveSeconds field
+// in the OpenApi specs (api/definitions.yaml)
 const MAX_BACKOFF_MS = 7 * 24 * 3600 * 1000;
 const MIN_BACKOFF_MS = 285;
 

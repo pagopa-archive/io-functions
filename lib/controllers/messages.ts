@@ -60,7 +60,6 @@ import {
   ResponseErrorInternal,
   ResponseErrorNotFound,
   ResponseErrorQuery,
-  ResponseErrorValidation,
   ResponseSuccessJson,
   ResponseSuccessJsonIterator,
   ResponseSuccessRedirectToResource
@@ -95,12 +94,12 @@ import { withoutUndefinedValues } from "../utils/types";
 
 import { Either, isLeft, isRight, left, right } from "fp-ts/lib/Either";
 import { fromEither, isNone, none, Option, some } from "fp-ts/lib/Option";
+
 import { CreatedMessageWithContent } from "../api/definitions/CreatedMessageWithContent";
 import { NotificationChannelEnum } from "../api/definitions/NotificationChannel";
 import { NotificationChannelStatusValueEnum } from "../api/definitions/NotificationChannelStatusValue";
-import { TimeToLive } from "../api/definitions/TimeToLive";
+import { TimeToLiveSeconds } from "../api/definitions/TimeToLiveSeconds";
 import { NotificationStatusModel } from "../models/notification_status";
-import { readableReport } from "../utils/validation_reporters";
 
 /**
  * Input and output bindings for this function
@@ -111,19 +110,27 @@ interface IBindings {
   createdMessage?: CreatedMessageEvent;
 }
 
+const ApiNewMessageWithDefaults = t.intersection([
+  ApiNewMessage,
+  t.interface({ time_to_live: TimeToLiveSeconds })
+]);
+export type ApiNewMessageWithDefaults = t.TypeOf<
+  typeof ApiNewMessageWithDefaults
+>;
+
 /**
  * A request middleware that validates the Message payload.
  */
 export const MessagePayloadMiddleware: IRequestMiddleware<
   "IResponseErrorValidation",
-  ApiNewMessage
+  ApiNewMessageWithDefaults
 > = request =>
   new Promise(resolve => {
-    const validation = ApiNewMessage.decode(request.body);
-    const result = validation.mapLeft(
-      ResponseErrorFromValidationErrors(ApiNewMessage)
+    return resolve(
+      ApiNewMessageWithDefaults.decode(request.body)
+        .mapLeft(ResponseErrorFromValidationErrors(ApiNewMessageWithDefaults))
+        .map(t.identity)
     );
-    resolve(result);
   });
 
 /**
@@ -153,7 +160,7 @@ type ICreateMessageHandler = (
   clientIp: ClientIp,
   attrs: IAzureUserAttributes,
   fiscalCode: FiscalCode,
-  messagePayload: ApiNewMessage
+  messagePayload: ApiNewMessageWithDefaults
 ) => Promise<
   | IResponseSuccessRedirectToResource<Message, {}>
   | IResponseErrorQuery
@@ -217,11 +224,11 @@ type NotificationStatusHolder = Partial<
 /**
  * Returns the status of a channel
  */
-const getChannelStatus = async (
+async function getChannelStatus(
   notificationStatusModel: NotificationStatusModel,
   notificationId: NonEmptyString,
   channel: NotificationChannelEnum
-) => {
+): Promise<NotificationChannelStatusValueEnum | undefined> {
   const errorOrMaybeStatus = await notificationStatusModel.findOneNotificationStatusByNotificationChannel(
     notificationId,
     channel
@@ -230,7 +237,7 @@ const getChannelStatus = async (
     .chain(t.identity)
     .map(o => o.status)
     .toUndefined();
-};
+}
 
 /**
  * Retrieve all notifications statuses (all channels) for a message.
@@ -357,14 +364,6 @@ export function CreateMessageHandler(
       return ResponseErrorForbiddenNotAuthorizedForDefaultAddresses;
     }
 
-    const timeToLive = TimeToLive.decode(messagePayload.time_to_live);
-    if (isLeft(timeToLive)) {
-      return ResponseErrorValidation(
-        "Invalid message payload",
-        readableReport(timeToLive.value)
-      );
-    }
-
     // create a new message from the payload
     // this object contains only the message metadata, the content of the
     // message is handled separately (see below).
@@ -375,7 +374,7 @@ export function CreateMessageHandler(
       kind: "INewMessageWithoutContent",
       senderServiceId: userService.serviceId,
       senderUserId: auth.userId,
-      timeToLive: timeToLive.value
+      timeToLiveSeconds: messagePayload.time_to_live
     };
 
     //

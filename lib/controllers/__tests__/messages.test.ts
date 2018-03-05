@@ -14,7 +14,6 @@ import { EmailAddress } from "../../api/definitions/EmailAddress";
 import { FiscalCode } from "../../api/definitions/FiscalCode";
 import { MessageBodyMarkdown } from "../../api/definitions/MessageBodyMarkdown";
 import { MessageSubject } from "../../api/definitions/MessageSubject";
-import { NewMessage as ApiNewMessage } from "../../api/definitions/NewMessage";
 
 import {
   IAzureApiAuthorization,
@@ -27,7 +26,7 @@ import { MessageContent } from "../../api/definitions/MessageContent";
 import { MessageResponseWithoutContent } from "../../api/definitions/MessageResponseWithoutContent";
 import { NotificationChannelEnum } from "../../api/definitions/NotificationChannel";
 import { NotificationChannelStatusValueEnum } from "../../api/definitions/NotificationChannelStatusValue";
-import { TimeToLive } from "../../api/definitions/TimeToLive";
+import { TimeToLiveSeconds } from "../../api/definitions/TimeToLiveSeconds";
 import {
   NewMessage,
   NewMessageWithContent,
@@ -44,6 +43,7 @@ import {
 } from "../../models/notification_status";
 import { NonNegativeNumber } from "../../utils/numbers";
 import {
+  ApiNewMessageWithDefaults,
   CreateMessage,
   CreateMessageHandler,
   GetMessageHandler,
@@ -95,11 +95,11 @@ const aUserAuthenticationTrustedApplication: IAzureApiAuthorization = {
   userId: "u123" as NonEmptyString
 };
 
-const aMessagePayload: ApiNewMessage = {
+const aMessagePayload: ApiNewMessageWithDefaults = {
   content: {
     markdown: aMessageBodyMarkdown
   },
-  time_to_live: 3600 as TimeToLive
+  time_to_live: 3600 as TimeToLiveSeconds
 };
 
 const aCustomSubject = "A custom subject" as MessageSubject;
@@ -113,7 +113,7 @@ const aNewMessageWithoutContent: NewMessageWithoutContent = {
   kind: "INewMessageWithoutContent",
   senderServiceId: "test" as ModelId,
   senderUserId: "u123" as NonEmptyString,
-  timeToLive: 3600 as TimeToLive
+  timeToLiveSeconds: 3600 as TimeToLiveSeconds
 };
 
 const aRetrievedMessageWithoutContent: RetrievedMessageWithoutContent = {
@@ -487,7 +487,7 @@ describe("CreateMessageHandler", () => {
       log: jest.fn()
     };
 
-    const messagePayload: ApiNewMessage = {
+    const messagePayload: ApiNewMessageWithDefaults = {
       ...aMessagePayload,
       default_addresses: {
         email: "test@example.com" as EmailAddress
@@ -582,7 +582,7 @@ describe("CreateMessageHandler", () => {
       log: jest.fn()
     };
 
-    const messagePayload: ApiNewMessage = {
+    const messagePayload: ApiNewMessageWithDefaults = {
       ...aMessagePayload,
       default_addresses: {
         email: "test@example.com" as EmailAddress
@@ -979,6 +979,12 @@ describe("MessagePayloadMiddleware", () => {
         default_addresses: {
           email: "test@example.com"
         }
+      },
+      {
+        content: {
+          markdown: "test".repeat(100)
+        },
+        time_to_live: 4000
       }
     ];
     await Promise.all(
@@ -991,7 +997,7 @@ describe("MessagePayloadMiddleware", () => {
         expect(result.value).toEqual({
           ...f,
           default_addresses: f.default_addresses,
-          time_to_live: 3600
+          time_to_live: f.time_to_live || 3600
         });
       })
     );
