@@ -7038,6 +7038,12 @@ tslint-sonarts@^1.2.0:
   dependencies:
     immutable "^3.8.2"
 
+tslint-sonarts@^1.6.0:
+  version "1.6.0"
+  resolved "https://registry.yarnpkg.com/tslint-sonarts/-/tslint-sonarts-1.6.0.tgz#b21366029d83e2426d207174255bb2e09525e162"
+  dependencies:
+    immutable "^3.8.2"
+
 tslint@^5.8.0:
   version "5.9.1"
   resolved "https://registry.yarnpkg.com/tslint/-/tslint-5.9.1.tgz#1255f87a3ff57eb0b0e1f0e610a8b4748046c9ae"
