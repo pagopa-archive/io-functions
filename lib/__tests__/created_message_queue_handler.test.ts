@@ -19,6 +19,7 @@ import {
   processRuntimeError,
   processSuccess
 } from "../created_message_queue_handler";
+
 import { CreatedMessageEvent } from "../models/created_message_event";
 import { NewMessageWithContent } from "../models/message";
 
@@ -31,9 +32,10 @@ import { MessageBodyMarkdown } from "../api/definitions/MessageBodyMarkdown";
 import {
   EmailNotification,
   NewNotification,
-  NotificationAddressSourceEnum
+  NotificationAddressSourceEnum,
+  NotificationModel
 } from "../models/notification";
-import { RetrievedProfile } from "../models/profile";
+import { ProfileModel, RetrievedProfile } from "../models/profile";
 
 import { isLeft, isRight, left, right } from "fp-ts/lib/Either";
 import * as winston from "winston";
@@ -76,7 +78,7 @@ const aMessage: NewMessageWithContent = {
     markdown: aMessageBodyMarkdown
   },
   createdAt: new Date(),
-  fiscalCode: aWrongFiscalCode,
+  fiscalCode: aCorrectFiscalCode,
   id: "xyz" as NonEmptyString,
   kind: "INewMessageWithContent",
   senderServiceId: "",
@@ -142,10 +144,6 @@ const anAttachmentMeta = {
   media: "media.json"
 };
 
-function flushPromises<T>(): Promise<T> {
-  return new Promise(resolve => setImmediate(resolve));
-}
-
 describe("createdMessageQueueIndex", () => {
   it("should return failure if createdMessage is undefined", async () => {
     const contextMock = {
@@ -159,9 +157,7 @@ describe("createdMessageQueueIndex", () => {
 
     const spy = jest.spyOn(winston, "error");
 
-    index(contextMock as any);
-
-    await flushPromises();
+    await index(contextMock as any);
 
     expect(contextMock.done).toHaveBeenCalledTimes(1);
     expect(contextMock.bindings.emailNotification).toBeUndefined();
@@ -171,7 +167,10 @@ describe("createdMessageQueueIndex", () => {
   it("should return failure if createdMessage is invalid (wrong fiscal code)", async () => {
     const contextMock = {
       bindings: {
-        createdMessage: aMessageEvent,
+        createdMessage: {
+          aMessageEvent,
+          message: { ...aMessage, fiscalCode: aWrongFiscalCode }
+        },
         emailNotification: undefined
       },
       done: jest.fn(),
@@ -180,13 +179,44 @@ describe("createdMessageQueueIndex", () => {
 
     const spy = jest.spyOn(winston, "error");
 
-    index(contextMock as any);
-
-    await flushPromises();
+    await index(contextMock as any);
 
     expect(contextMock.done).toHaveBeenCalledTimes(1);
     expect(contextMock.done).toHaveBeenCalledWith();
     expect(spy).toHaveBeenCalledTimes(1);
+  });
+
+  it("should call context.done on success", async () => {
+    const contextMock = {
+      bindings: {
+        createdMessage: aMessageEvent,
+        emailNotification: undefined
+      },
+      done: jest.fn(),
+      log: jest.fn()
+    };
+
+    const notificationSpy = jest
+      .spyOn(NotificationModel.prototype, "create")
+      .mockImplementationOnce(() =>
+        Promise.resolve(right(aCreatedNotificationWithEmail))
+      );
+
+    const profileSpy = jest
+      .spyOn(ProfileModel.prototype, "findOneProfileByFiscalCode")
+      .mockImplementationOnce(() =>
+        Promise.resolve(right(some(aRetrievedProfileWithEmail)))
+      );
+
+    await index(contextMock as any);
+
+    expect(contextMock.done).toHaveBeenCalledTimes(1);
+    expect(contextMock.done).toHaveBeenCalledWith(undefined, {
+      emailNotification: anEmailNotificationEvent
+    });
+
+    expect(profileSpy).toHaveBeenCalledTimes(1);
+    expect(notificationSpy).toHaveBeenCalledTimes(1);
   });
 });
 
@@ -642,7 +672,7 @@ describe("processRuntimeError", () => {
   it("should retry on transient error", async () => {
     const error = TransientError("err");
     const winstonSpy = jest.spyOn(winston, "warn");
-    await processRuntimeError(error as any, {} as any);
+    await processRuntimeError({} as any, error as any, {} as any);
     expect(updateMessageVisibilityTimeout).toHaveBeenCalledTimes(1);
     expect(winstonSpy).toHaveBeenCalledTimes(1);
   });
@@ -650,7 +680,7 @@ describe("processRuntimeError", () => {
   it("should fail in case of permament error", async () => {
     const error = PermanentError("err");
     const winstonSpy = jest.spyOn(winston, "error");
-    await processRuntimeError(error as any, {} as any);
+    await processRuntimeError({} as any, error as any, {} as any);
     expect(updateMessageVisibilityTimeout).not.toHaveBeenCalled();
     expect(winstonSpy).toHaveBeenCalledTimes(1);
   });

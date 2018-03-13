@@ -72,10 +72,6 @@ afterEach(() => {
   jest.restoreAllMocks();
 });
 
-function flushPromises(): Promise<void> {
-  return new Promise(resolve => setImmediate(resolve));
-}
-
 const aFiscalCode = "FRLFRC74E04B157I" as FiscalCode;
 
 const aMessageId = "A_MESSAGE_ID" as NonEmptyString;
@@ -527,8 +523,7 @@ describe("emailnotificationQueueHandlerIndex", () => {
       log: jest.fn()
     };
     const winstonErrorSpy = jest.spyOn(winston, "error");
-    index(contextMock as any);
-    await flushPromises();
+    await index(contextMock as any);
     expect(contextMock.done).toHaveBeenCalledTimes(1);
     expect(winstonErrorSpy).toHaveBeenCalledTimes(1);
   });
@@ -558,8 +553,7 @@ describe("emailnotificationQueueHandlerIndex", () => {
         sendMail: jest.fn((_, cb) => cb(null, "ok"))
       });
 
-    index(contextMock as any);
-    await flushPromises();
+    await index(contextMock as any);
 
     expect(notificationStatusModelSpy).toHaveBeenCalledTimes(1);
     expect(notificationModelSpy).toHaveBeenCalledTimes(1);

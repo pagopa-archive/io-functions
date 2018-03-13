@@ -51,7 +51,7 @@ import {
   updateMessageVisibilityTimeout
 } from "./utils/azure_queues";
 
-import { createQueueService } from "azure-storage";
+import { createQueueService, QueueService } from "azure-storage";
 import { NotificationChannelEnum } from "./api/definitions/NotificationChannel";
 import { NotificationChannelStatusValueEnum } from "./api/definitions/NotificationChannelStatusValue";
 
@@ -316,7 +316,12 @@ async function processGenericError(
   await notificationStatusUpdater(NotificationChannelStatusValueEnum.FAILED);
 }
 
+/**
+ * Returns left(true) in case the caller must
+ * trigger a retry calling context.done(true)
+ */
 export async function processRuntimeError(
+  queueService: QueueService,
   error: RuntimeError,
   notificationStatusUpdater: NotificationStatusUpdater,
   queueMessage: IQueueMessage
@@ -326,7 +331,6 @@ export async function processRuntimeError(
       `EmailNotificationQueueHandler|Transient error|${error.message}`
     );
     // schedule a retry in case of transient errors
-    const queueService = createQueueService(queueConnectionString);
     // return a message to pass to context.done to trigger a retry
     return left(
       await updateMessageVisibilityTimeout(
@@ -348,7 +352,7 @@ export async function processRuntimeError(
 async function processSuccess(
   emailNotificationEvent: NotificationEvent,
   notificationStatusUpdater: NotificationStatusUpdater
-): Promise<Either<boolean, Option<OutputBindings>>> {
+): Promise<Either<never, Option<OutputBindings>>> {
   winston.debug(
     `EmailNotificationsHandler|Email notification succeeded|notification=${
       emailNotificationEvent.notificationId
@@ -364,7 +368,7 @@ async function processSuccess(
 /**
  * Function handler
  */
-export function index(context: ContextWithBindings): void {
+export async function index(context: ContextWithBindings): Promise<void> {
   const logLevel = isProduction ? "info" : "debug";
   configureAzureContextTransport(context, winston, logLevel);
 
@@ -416,6 +420,7 @@ export function index(context: ContextWithBindings): void {
   );
 
   const appInsightsClient = new ApplicationInsights.TelemetryClient();
+  const queueService = createQueueService(queueConnectionString);
 
   const mailerTransporter = NodeMailer.createTransport(
     sendGridTransport({
@@ -425,7 +430,7 @@ export function index(context: ContextWithBindings): void {
     })
   );
 
-  handleNotification(
+  return handleNotification(
     mailerTransporter,
     appInsightsClient,
     notificationModel,
@@ -435,6 +440,7 @@ export function index(context: ContextWithBindings): void {
       errorOrEmailNotificationEvt.fold(
         error =>
           processRuntimeError(
+            queueService,
             error,
             notificationStatusUpdater,
             context.bindingData
@@ -443,17 +449,19 @@ export function index(context: ContextWithBindings): void {
           processSuccess(emailNotificationEvt, notificationStatusUpdater)
       )
     )
-    .then(notificationIsExpiredOrBindings =>
-      notificationIsExpiredOrBindings.fold(
-        async notificationIsExpired => {
-          if (notificationIsExpired) {
-            await notificationStatusUpdater(
-              NotificationChannelStatusValueEnum.FAILED
-            );
+    .then(shouldTriggerARetryOrOutputBindings =>
+      shouldTriggerARetryOrOutputBindings.fold(
+        shouldTriggerARetry => {
+          if (shouldTriggerARetry) {
+            // triggers a retry
+            context.done(true);
+          } else {
+            // maximum number of retries reached, stop processing
+            context.done();
           }
-          context.done();
         },
-        bindings => Promise.resolve(context.done(undefined, bindings))
+        // success case (this handler returns no output bindings)
+        _ => context.done()
       )
     )
     .catch(async error => {

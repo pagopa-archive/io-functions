@@ -22,7 +22,8 @@ import { fromNullable, isNone, none, Option, some } from "fp-ts/lib/Option";
 import {
   BlobService,
   createBlobService,
-  createQueueService
+  createQueueService,
+  QueueService
 } from "azure-storage";
 
 import { NewMessageDefaultAddresses } from "./api/definitions/NewMessageDefaultAddresses";
@@ -248,19 +249,23 @@ export async function handleMessage(
 }
 
 export function processGenericError(error: Error): void {
-  // TODO: update message status
+  // TODO: update message status (FAILED)
   winston.error(`CreatedMessageQueueHandler|Unexpected error|${error.message}`);
 }
 
+/**
+ * Returns left(true) in case the caller must
+ * trigger a retry calling context.done(true)
+ */
 export async function processRuntimeError(
+  queueService: QueueService,
   error: RuntimeError,
   queueMessage: IQueueMessage
 ): Promise<Either<boolean, Option<OutputBindings>>> {
   if (isTransient(error)) {
     winston.warn(`CreatedMessageQueueHandler|Transient error|${error.message}`);
-    // schedule a retry in case of transient errors
-    const queueService = createQueueService(queueConnectionString);
-    // return a message to pass to context.done to trigger a retry
+    // in case of transient error returns a message
+    // to pass to context.done(null, bindings) to trigger a retry
     return left(
       await updateMessageVisibilityTimeout(
         queueService,
@@ -283,7 +288,7 @@ export function processSuccess(
   notification: RetrievedNotification,
   message: NewMessageWithContent,
   senderMetadata: CreatedMessageEventSenderMetadata
-): Either<boolean, Option<OutputBindings>> {
+): Either<never, Option<OutputBindings>> {
   const emailNotification: NotificationEvent = {
     message: {
       ...message,
@@ -312,7 +317,7 @@ export function processSuccess(
 /**
  * Handler that gets triggered on incoming event.
  */
-export function index(context: ContextWithBindings): void {
+export async function index(context: ContextWithBindings): Promise<void> {
   // redirect winston logs to Azure Functions log
   const logLevel = isProduction ? "info" : "debug";
   configureAzureContextTransport(context, winston, logLevel);
@@ -371,9 +376,10 @@ export function index(context: ContextWithBindings): void {
   );
 
   const blobService = createBlobService(storageConnectionString);
+  const queueService = createQueueService(queueConnectionString);
 
   // now we can trigger the notifications for the message
-  handleMessage(
+  return handleMessage(
     profileModel,
     messageModel,
     notificationModel,
@@ -383,20 +389,32 @@ export function index(context: ContextWithBindings): void {
   )
     .then(errorOrNotification =>
       errorOrNotification.fold(
-        error => processRuntimeError(error, context.bindingData),
+        error => processRuntimeError(queueService, error, context.bindingData),
         notification =>
           Promise.resolve(
             processSuccess(notification, newMessageWithContent, senderMetadata)
           )
       )
     )
-    .then(messageIsExpiredOrBindings =>
-      messageIsExpiredOrBindings.fold(
-        // TODO: update message status
-        _ => context.done(true),
-        bindings => context.done(undefined, bindings)
-      )
-    )
+    .then(shouldTriggerARetryOrOutputBindings => {
+      shouldTriggerARetryOrOutputBindings.fold(
+        shouldTriggerARetry => {
+          if (shouldTriggerARetry) {
+            // triggers a retry
+            context.done(true);
+          } else {
+            // maximum number of retries reached, stop processing
+            context.done();
+          }
+        },
+        outputBindings =>
+          outputBindings
+            // we have some bindings to output to the next handler
+            .map(bindings => context.done(undefined, bindings))
+            // no bindings, stop processing
+            .getOrElseL(() => context.done())
+      );
+    })
     .catch(error => {
       processGenericError(error);
       context.done();
