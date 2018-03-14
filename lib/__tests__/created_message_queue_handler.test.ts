@@ -12,14 +12,6 @@ process.env.MESSAGE_CONTAINER_NAME = "anyMessageContainerName";
 // tslint:disable-next-line:no-object-mutation
 process.env.QueueStorageConnection = "anyQueueStorageConnection";
 
-import {
-  handleMessage,
-  index,
-  MESSAGE_QUEUE_NAME,
-  processRuntimeError,
-  processSuccess
-} from "../created_message_queue_handler";
-
 import { CreatedMessageEvent } from "../models/created_message_event";
 import { NewMessageWithContent } from "../models/message";
 
@@ -48,8 +40,23 @@ import { TimeToLiveSeconds } from "../api/definitions/TimeToLiveSeconds";
 import { NotificationEvent } from "../models/notification_event";
 
 jest.mock("azure-storage");
+
+jest.mock("../models/notification_status", () => ({
+  NOTIFICATION_STATUS_COLLECTION_NAME: "foobar",
+  NotificationStatusModel: jest.fn(),
+  getNotificationStatusUpdater: () => (x: any) => Promise.resolve(x)
+}));
+
 jest.mock("../utils/azure_queues");
 import { updateMessageVisibilityTimeout } from "../utils/azure_queues";
+
+import {
+  handleMessage,
+  index,
+  MESSAGE_QUEUE_NAME,
+  processRuntimeError,
+  processSuccess
+} from "../created_message_queue_handler";
 
 afterEach(() => {
   jest.resetAllMocks();
@@ -677,7 +684,8 @@ describe("processSuccess", () => {
   it("should enqueue notification to the email queue if an email is present", async () => {
     const notification = aCreatedNotificationWithEmail;
 
-    const result = processSuccess(
+    const result = await processSuccess(
+      {} as any,
       notification as any,
       aMessage,
       aMessageEvent.senderMetadata

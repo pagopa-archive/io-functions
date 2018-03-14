@@ -411,13 +411,11 @@ export async function index(context: ContextWithBindings): Promise<void> {
       errorOrNotification.fold(
         error => processRuntimeError(queueService, error, context.bindingData),
         notification =>
-          Promise.resolve(
-            processSuccess(
-              notificationStatusModel,
-              notification,
-              newMessageWithContent,
-              senderMetadata
-            )
+          processSuccess(
+            notificationStatusModel,
+            notification,
+            newMessageWithContent,
+            senderMetadata
           )
       )
     )
@@ -428,7 +426,7 @@ export async function index(context: ContextWithBindings): Promise<void> {
           context.done(shouldTriggerARetry ? true : undefined);
         },
         outputBindings =>
-          // success ! lets see if we have some output bindings
+          // success ! lets see if we have some bindings to output
           outputBindings.foldL(
             () => context.done(),
             bindings => context.done(undefined, bindings)
