@@ -3,7 +3,7 @@ import * as t from "io-ts";
 import { NonEmptyString } from "../utils/strings";
 
 import { CreatedMessageEventSenderMetadata } from "./created_message_sender_metadata";
-import { ActiveMessage, NewMessageWithContent } from "./message";
+import { NewMessageWithContent } from "./message";
 
 /**
  * Payload of a notification event.
@@ -12,7 +12,7 @@ import { ActiveMessage, NewMessageWithContent } from "./message";
  * have been configured for that notification.
  */
 export const NotificationEvent = t.interface({
-  message: t.intersection([NewMessageWithContent, ActiveMessage]),
+  message: NewMessageWithContent,
   notificationId: NonEmptyString,
   senderMetadata: CreatedMessageEventSenderMetadata
 });

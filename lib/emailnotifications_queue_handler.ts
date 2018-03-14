@@ -55,6 +55,7 @@ import { createQueueService, QueueService } from "azure-storage";
 import { NotificationChannelEnum } from "./api/definitions/NotificationChannel";
 import { NotificationChannelStatusValueEnum } from "./api/definitions/NotificationChannelStatusValue";
 
+import { ActiveMessage } from "./models/message";
 import {
   getNotificationStatusUpdater,
   NOTIFICATION_STATUS_COLLECTION_NAME,
@@ -398,8 +399,6 @@ export async function index(context: ContextWithBindings): Promise<void> {
         errorOrNotificationEvent.value
       )}`
     );
-    // we will never be able to recover from this, so don't trigger an error
-    // TODO: update notification status (failed)
     return context.done();
   }
   const emailNotificationEvent = errorOrNotificationEvent.value;
@@ -410,6 +409,20 @@ export async function index(context: ContextWithBindings): Promise<void> {
     emailNotificationEvent.message.id,
     emailNotificationEvent.notificationId
   );
+
+  // Check if the message is not expired
+  const errorOrActiveMessage = ActiveMessage.decode(
+    emailNotificationEvent.message
+  );
+  if (isLeft(errorOrActiveMessage)) {
+    winston.error(
+      `EmailNotificationsHandler|Message is expired, skip processing.|${readableReport(
+        errorOrActiveMessage.value
+      )}`
+    );
+    await notificationStatusUpdater(NotificationChannelStatusValueEnum.EXPIRED);
+    return context.done();
+  }
 
   const notificationModel = new NotificationModel(
     documentClient,

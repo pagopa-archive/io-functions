@@ -59,7 +59,13 @@ import {
 
 import { EmailAddress } from "./api/definitions/EmailAddress";
 import { NotificationChannelEnum } from "./api/definitions/NotificationChannel";
+import { NotificationChannelStatusValueEnum } from "./api/definitions/NotificationChannelStatusValue";
 import { CreatedMessageEventSenderMetadata } from "./models/created_message_sender_metadata";
+import {
+  getNotificationStatusUpdater,
+  NOTIFICATION_STATUS_COLLECTION_NAME,
+  NotificationStatusModel
+} from "./models/notification_status";
 import { ulidGenerator } from "./utils/strings";
 
 // Whether we're in a production environment
@@ -82,6 +88,10 @@ const messagesCollectionUrl = documentDbUtils.getCollectionUri(
 const notificationsCollectionUrl = documentDbUtils.getCollectionUri(
   documentDbDatabaseUrl,
   "notifications"
+);
+const notificationStatusCollectionUrl = documentDbUtils.getCollectionUri(
+  documentDbDatabaseUrl,
+  NOTIFICATION_STATUS_COLLECTION_NAME
 );
 
 // must be equal to the queue name in function.json
@@ -280,11 +290,12 @@ export async function processRuntimeError(
   }
 }
 
-export function processSuccess(
+export async function processSuccess(
+  notificationStatusModel: NotificationStatusModel,
   notification: RetrievedNotification,
   message: NewMessageWithContent,
   senderMetadata: CreatedMessageEventSenderMetadata
-): Either<never, Option<OutputBindings>> {
+): Promise<Either<never, Option<OutputBindings>>> {
   const emailNotification: NotificationEvent = {
     message: {
       ...message,
@@ -303,6 +314,14 @@ export function processSuccess(
       emailNotification.notificationId
     }|message=${emailNotification.message.id}`
   );
+
+  const notificationStatusUpdater = getNotificationStatusUpdater(
+    notificationStatusModel,
+    NotificationChannelEnum.EMAIL,
+    emailNotification.message.id,
+    emailNotification.notificationId
+  );
+  await notificationStatusUpdater(NotificationChannelStatusValueEnum.QUEUED);
 
   // TODO: update message status (ACCEPTED)
 
@@ -371,6 +390,11 @@ export async function index(context: ContextWithBindings): Promise<void> {
     notificationsCollectionUrl
   );
 
+  const notificationStatusModel = new NotificationStatusModel(
+    documentClient,
+    notificationStatusCollectionUrl
+  );
+
   const blobService = createBlobService(storageConnectionString);
   const queueService = createQueueService(queueConnectionString);
 
@@ -388,7 +412,12 @@ export async function index(context: ContextWithBindings): Promise<void> {
         error => processRuntimeError(queueService, error, context.bindingData),
         notification =>
           Promise.resolve(
-            processSuccess(notification, newMessageWithContent, senderMetadata)
+            processSuccess(
+              notificationStatusModel,
+              notification,
+              newMessageWithContent,
+              senderMetadata
+            )
           )
       )
     )
