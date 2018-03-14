@@ -317,10 +317,6 @@ export async function processGenericError(
   await notificationStatusUpdater(NotificationChannelStatusValueEnum.FAILED);
 }
 
-/**
- * Returns left(true) in case the caller must
- * trigger a retry calling context.done(true)
- */
 export async function processRuntimeError(
   queueService: QueueService,
   notificationStatusUpdater: NotificationStatusUpdater,
@@ -366,7 +362,10 @@ export async function processSuccess(
 /**
  * Function handler
  */
-export async function index(context: ContextWithBindings): Promise<void> {
+export async function index(
+  context: ContextWithBindings
+): Promise<OutputBindings | Error | void> {
+  const stopProcessing = undefined;
   const logLevel = isProduction ? "info" : "debug";
   configureAzureContextTransport(context, winston, logLevel);
 
@@ -376,15 +375,6 @@ export async function index(context: ContextWithBindings): Promise<void> {
     `EmailNotificationsHandlerIndex|Dequeued email notification|${JSON.stringify(
       context.bindings
     )}`
-  );
-
-  const documentClient = new DocumentDBClient(cosmosDbUri, {
-    masterKey: cosmosDbKey
-  });
-
-  const notificationStatusModel = new NotificationStatusModel(
-    documentClient,
-    notificationStatusCollectionUrl
   );
 
   // since this function gets triggered by a queued message that gets
@@ -399,9 +389,18 @@ export async function index(context: ContextWithBindings): Promise<void> {
         errorOrNotificationEvent.value
       )}`
     );
-    return context.done();
+    return stopProcessing;
   }
   const emailNotificationEvent = errorOrNotificationEvent.value;
+
+  const documentClient = new DocumentDBClient(cosmosDbUri, {
+    masterKey: cosmosDbKey
+  });
+
+  const notificationStatusModel = new NotificationStatusModel(
+    documentClient,
+    notificationStatusCollectionUrl
+  );
 
   const notificationStatusUpdater = getNotificationStatusUpdater(
     notificationStatusModel,
@@ -421,56 +420,60 @@ export async function index(context: ContextWithBindings): Promise<void> {
       )}`
     );
     await notificationStatusUpdater(NotificationChannelStatusValueEnum.EXPIRED);
-    return context.done();
+    return stopProcessing;
   }
 
-  const notificationModel = new NotificationModel(
-    documentClient,
-    notificationsCollectionUrl
-  );
+  try {
+    const notificationModel = new NotificationModel(
+      documentClient,
+      notificationsCollectionUrl
+    );
 
-  const appInsightsClient = new ApplicationInsights.TelemetryClient();
-  const queueService = createQueueService(queueConnectionString);
+    const appInsightsClient = new ApplicationInsights.TelemetryClient();
+    const queueService = createQueueService(queueConnectionString);
 
-  const mailerTransporter = NodeMailer.createTransport(
-    sendGridTransport({
-      auth: {
-        api_key: sendgridKey
-      }
-    })
-  );
+    const mailerTransporter = NodeMailer.createTransport(
+      sendGridTransport({
+        auth: {
+          api_key: sendgridKey
+        }
+      })
+    );
 
-  return handleNotification(
-    mailerTransporter,
-    appInsightsClient,
-    notificationModel,
-    emailNotificationEvent
-  )
-    .then(errorOrEmailNotificationEvt =>
-      errorOrEmailNotificationEvt.fold(
-        error =>
-          processRuntimeError(
-            queueService,
-            notificationStatusUpdater,
-            error,
-            context.bindingData
-          ),
-        emailNotificationEvt =>
-          processSuccess(emailNotificationEvt, notificationStatusUpdater)
-      )
-    )
-    .then(shouldTriggerARetryOrOutputBindings => {
-      shouldTriggerARetryOrOutputBindings.fold(
-        shouldTriggerARetry => {
-          // handle transient or permanent error
-          context.done(shouldTriggerARetry ? true : undefined);
-        },
-        // success !
-        _ => context.done()
-      );
-    })
-    .catch(async error => {
-      await processGenericError(notificationStatusUpdater, error);
-      context.done();
-    });
+    const errorOrEmailNotificationEvt = await handleNotification(
+      mailerTransporter,
+      appInsightsClient,
+      notificationModel,
+      emailNotificationEvent
+    );
+
+    const shouldTriggerARetryOrOutputBindings = await errorOrEmailNotificationEvt.fold(
+      error =>
+        processRuntimeError(
+          queueService,
+          notificationStatusUpdater,
+          error,
+          context.bindingData
+        ),
+      emailNotificationEvt =>
+        processSuccess(emailNotificationEvt, notificationStatusUpdater)
+    );
+
+    return shouldTriggerARetryOrOutputBindings.fold(
+      shouldTriggerARetry => {
+        if (shouldTriggerARetry) {
+          throw TransientError("retry");
+        }
+        return stopProcessing;
+      },
+      // success !
+      _ => stopProcessing
+    );
+  } catch (error) {
+    if (isTransient(error)) {
+      throw error;
+    }
+    await processGenericError(notificationStatusUpdater, error);
+    return stopProcessing;
+  }
 }

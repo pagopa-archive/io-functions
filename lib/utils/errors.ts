@@ -33,5 +33,6 @@ export const PermanentError = RuntimeError(ErrorTypes.PermanentError);
 
 export type RuntimeError = TransientError | PermanentError;
 
-export const isTransient = (error: RuntimeError): error is TransientError =>
-  error.kind === ErrorTypes.TransientError;
+// tslint:disable-next-line:no-any
+export const isTransient = (error: any): error is TransientError =>
+  error.kind && error.kind === ErrorTypes.TransientError;

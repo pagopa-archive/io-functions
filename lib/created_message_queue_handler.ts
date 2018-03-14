@@ -332,8 +332,10 @@ export async function processSuccess(
 /**
  * Handler that gets triggered on incoming event.
  */
-export async function index(context: ContextWithBindings): Promise<void> {
-  // redirect winston logs to Azure Functions log
+export async function index(
+  context: ContextWithBindings
+): Promise<OutputBindings | Error | void> {
+  const stopProcessing = undefined;
   const logLevel = isProduction ? "info" : "debug";
   configureAzureContextTransport(context, winston, logLevel);
 
@@ -357,84 +359,88 @@ export async function index(context: ContextWithBindings): Promise<void> {
     );
     // we will never be able to recover from this, so don't trigger a retry
     // TODO: update message status (failed)
-    return context.done();
+    return stopProcessing;
   }
-  const createdMessageEvent = errorOrCreatedMessageEvent.value;
 
-  // it is a CreatedMessageEvent
-  const newMessageWithContent = createdMessageEvent.message;
-  const defaultAddresses = fromNullable(createdMessageEvent.defaultAddresses);
-  const senderMetadata = createdMessageEvent.senderMetadata;
+  try {
+    const createdMessageEvent = errorOrCreatedMessageEvent.value;
 
-  winston.info(
-    `CreatedMessageQueueHandler|A new message was created|${
-      newMessageWithContent.id
-    }|${newMessageWithContent.fiscalCode}`
-  );
+    // it is a CreatedMessageEvent
+    const newMessageWithContent = createdMessageEvent.message;
+    const defaultAddresses = fromNullable(createdMessageEvent.defaultAddresses);
+    const senderMetadata = createdMessageEvent.senderMetadata;
 
-  // setup required models
-  const documentClient = new DocumentDBClient(cosmosDbUri, {
-    masterKey: cosmosDbKey
-  });
+    winston.info(
+      `CreatedMessageQueueHandler|A new message was created|${
+        newMessageWithContent.id
+      }|${newMessageWithContent.fiscalCode}`
+    );
 
-  const profileModel = new ProfileModel(documentClient, profilesCollectionUrl);
-
-  const messageModel = new MessageModel(
-    documentClient,
-    messagesCollectionUrl,
-    messageContainerName
-  );
-
-  const notificationModel = new NotificationModel(
-    documentClient,
-    notificationsCollectionUrl
-  );
-
-  const notificationStatusModel = new NotificationStatusModel(
-    documentClient,
-    notificationStatusCollectionUrl
-  );
-
-  const blobService = createBlobService(storageConnectionString);
-  const queueService = createQueueService(queueConnectionString);
-
-  // now we can trigger the notifications for the message
-  return handleMessage(
-    profileModel,
-    messageModel,
-    notificationModel,
-    blobService,
-    newMessageWithContent,
-    defaultAddresses
-  )
-    .then(errorOrNotification =>
-      errorOrNotification.fold(
-        error => processRuntimeError(queueService, error, context.bindingData),
-        notification =>
-          processSuccess(
-            notificationStatusModel,
-            notification,
-            newMessageWithContent,
-            senderMetadata
-          )
-      )
-    )
-    .then(shouldTriggerARetryOrOutputBindings => {
-      shouldTriggerARetryOrOutputBindings.fold(
-        shouldTriggerARetry => {
-          // handle transient or permanent error
-          context.done(shouldTriggerARetry ? true : undefined);
-        },
-        outputBindings =>
-          // success ! lets see if we have some bindings to output
-          outputBindings.foldL(
-            () => context.done(),
-            bindings => context.done(undefined, bindings)
-          )
-      );
-    })
-    .catch(error => {
-      processGenericError(error);
-      context.done();
+    // setup required models
+    const documentClient = new DocumentDBClient(cosmosDbUri, {
+      masterKey: cosmosDbKey
     });
+
+    const profileModel = new ProfileModel(
+      documentClient,
+      profilesCollectionUrl
+    );
+
+    const messageModel = new MessageModel(
+      documentClient,
+      messagesCollectionUrl,
+      messageContainerName
+    );
+
+    const notificationModel = new NotificationModel(
+      documentClient,
+      notificationsCollectionUrl
+    );
+
+    const notificationStatusModel = new NotificationStatusModel(
+      documentClient,
+      notificationStatusCollectionUrl
+    );
+
+    const blobService = createBlobService(storageConnectionString);
+    const queueService = createQueueService(queueConnectionString);
+
+    // now we can trigger the notifications for the message
+    const errorOrNotification = await handleMessage(
+      profileModel,
+      messageModel,
+      notificationModel,
+      blobService,
+      newMessageWithContent,
+      defaultAddresses
+    );
+
+    const shouldTriggerARetryOrOutputBindings = await errorOrNotification.fold(
+      error => processRuntimeError(queueService, error, context.bindingData),
+      notification =>
+        processSuccess(
+          notificationStatusModel,
+          notification,
+          newMessageWithContent,
+          senderMetadata
+        )
+    );
+
+    return shouldTriggerARetryOrOutputBindings.fold(
+      shouldTriggerARetry => {
+        if (shouldTriggerARetry) {
+          throw TransientError("retry");
+        }
+        return stopProcessing;
+      },
+      // success ! lets see if we have some bindings to output
+      outputBindings => outputBindings.toUndefined()
+    );
+  } catch (error) {
+    if (isTransient(error)) {
+      throw error;
+    }
+    processGenericError(error);
+    return stopProcessing;
+  }
 }

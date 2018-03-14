@@ -525,12 +525,12 @@ describe("emailnotificationQueueHandlerIndex", () => {
       log: jest.fn()
     };
     const winstonErrorSpy = jest.spyOn(winston, "error");
-    await index(contextMock as any);
-    expect(contextMock.done).toHaveBeenCalledTimes(1);
+    const ret = await index(contextMock as any);
+    expect(ret).toEqual(undefined);
     expect(winstonErrorSpy).toHaveBeenCalledTimes(1);
   });
 
-  it("should exit in case the message is expired", async () => {
+  it("should stop processing in case the message is expired", async () => {
     const contextMock = {
       bindings: {
         notificationEvent: {
@@ -550,9 +550,9 @@ describe("emailnotificationQueueHandlerIndex", () => {
         sendMail: jest.fn((_, cb) => cb(null, "ok"))
       });
     const winstonErrorSpy = jest.spyOn(winston, "error");
-    await index(contextMock as any);
+    const ret = await index(contextMock as any);
+    expect(ret).toEqual(undefined);
     expect(nodemailerSpy).not.toHaveBeenCalled();
-    expect(contextMock.done).toHaveBeenCalledTimes(1);
     expect(winstonErrorSpy).toHaveBeenCalledTimes(1);
   });
 
@@ -581,12 +581,12 @@ describe("emailnotificationQueueHandlerIndex", () => {
         sendMail: jest.fn((_, cb) => cb(null, "ok"))
       });
 
-    await index(contextMock as any);
+    const ret = await index(contextMock as any);
 
     expect(notificationStatusModelSpy).toHaveBeenCalledTimes(1);
     expect(notificationModelSpy).toHaveBeenCalledTimes(1);
     expect(nodemailerSpy).toHaveBeenCalledTimes(1);
-    expect(contextMock.done).toHaveBeenCalledTimes(1);
+    expect(ret).toEqual(undefined);
   });
 });
 

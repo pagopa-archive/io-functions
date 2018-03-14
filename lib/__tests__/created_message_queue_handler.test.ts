@@ -165,14 +165,14 @@ describe("createdMessageQueueIndex", () => {
 
     const spy = jest.spyOn(winston, "error");
 
-    await index(contextMock as any);
+    const ret = await index(contextMock as any);
+    expect(ret).toEqual(undefined);
 
-    expect(contextMock.done).toHaveBeenCalledTimes(1);
     expect(contextMock.bindings.emailNotification).toBeUndefined();
     expect(spy).toHaveBeenCalledTimes(1);
   });
 
-  it("should return failure if createdMessage is invalid (wrong fiscal code)", async () => {
+  it("should stop processing if createdMessage is invalid (wrong fiscal code)", async () => {
     const contextMock = {
       bindings: {
         createdMessage: {
@@ -187,14 +187,12 @@ describe("createdMessageQueueIndex", () => {
 
     const spy = jest.spyOn(winston, "error");
 
-    await index(contextMock as any);
-
-    expect(contextMock.done).toHaveBeenCalledTimes(1);
-    expect(contextMock.done).toHaveBeenCalledWith();
+    const ret = await index(contextMock as any);
+    expect(ret).toEqual(undefined);
     expect(spy).toHaveBeenCalledTimes(1);
   });
 
-  it("should call context.done on success", async () => {
+  it("should output bindings on success", async () => {
     const contextMock = {
       bindings: {
         createdMessage: aMessageEvent,
@@ -216,10 +214,8 @@ describe("createdMessageQueueIndex", () => {
         Promise.resolve(right(some(aRetrievedProfileWithEmail)))
       );
 
-    await index(contextMock as any);
-
-    expect(contextMock.done).toHaveBeenCalledTimes(1);
-    expect(contextMock.done).toHaveBeenCalledWith(undefined, {
+    const ret = await index(contextMock as any);
+    expect(ret).toEqual({
       emailNotification: anEmailNotificationEvent
     });
 
@@ -244,13 +240,13 @@ describe("createdMessageQueueIndex", () => {
     (updateMessageVisibilityTimeout as jest.Mock).mockImplementationOnce(() =>
       Promise.resolve(true)
     );
-
-    await index(contextMock as any);
-
-    expect(contextMock.done).toHaveBeenCalledTimes(1);
-    expect(contextMock.done).toHaveBeenCalledWith(true);
-
-    expect(profileSpy).toHaveBeenCalledTimes(1);
+    expect.assertions(2);
+    try {
+      await index(contextMock as any);
+    } catch (e) {
+      expect(e.kind).toEqual("TransientError");
+      expect(profileSpy).toHaveBeenCalledTimes(1);
+    }
   });
 });
 
