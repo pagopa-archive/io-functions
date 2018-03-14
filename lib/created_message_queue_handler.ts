@@ -264,17 +264,13 @@ export async function processRuntimeError(
 ): Promise<Either<boolean, Option<OutputBindings>>> {
   if (isTransient(error)) {
     winston.warn(`CreatedMessageQueueHandler|Transient error|${error.message}`);
-    // in case of transient error returns a message
-    // to pass to context.done(null, bindings) to trigger a retry
-    return left(
-      await updateMessageVisibilityTimeout(
-        queueService,
-        MESSAGE_QUEUE_NAME,
-        queueMessage
-      )
+    const shouldTriggerARetry = await updateMessageVisibilityTimeout(
+      queueService,
+      MESSAGE_QUEUE_NAME,
+      queueMessage
     );
+    return left(shouldTriggerARetry);
   } else {
-    // the message processing failed with an unrecoverable error
     // TODO: update message status (FAILED)
     winston.error(
       `CreatedMessageQueueHandler|Permanent error|${error.message}`
@@ -340,7 +336,7 @@ export async function index(context: ContextWithBindings): Promise<void> {
         errorOrCreatedMessageEvent.value
       )}`
     );
-    // we will never be able to recover from this, so don't trigger an error
+    // we will never be able to recover from this, so don't trigger a retry
     // TODO: update message status (failed)
     return context.done();
   }
@@ -399,20 +395,15 @@ export async function index(context: ContextWithBindings): Promise<void> {
     .then(shouldTriggerARetryOrOutputBindings => {
       shouldTriggerARetryOrOutputBindings.fold(
         shouldTriggerARetry => {
-          if (shouldTriggerARetry) {
-            // triggers a retry
-            context.done(true);
-          } else {
-            // maximum number of retries reached, stop processing
-            context.done();
-          }
+          // handle transient or permanent error
+          context.done(shouldTriggerARetry ? true : undefined);
         },
         outputBindings =>
-          outputBindings
-            // we have some bindings to output to the next handler
-            .map(bindings => context.done(undefined, bindings))
-            // no bindings, stop processing
-            .getOrElseL(() => context.done())
+          // success ! lets see if we have some output bindings
+          outputBindings.foldL(
+            () => context.done(),
+            bindings => context.done(undefined, bindings)
+          )
       );
     })
     .catch(error => {

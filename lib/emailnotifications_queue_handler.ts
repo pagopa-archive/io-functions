@@ -322,23 +322,20 @@ async function processGenericError(
  */
 export async function processRuntimeError(
   queueService: QueueService,
-  error: RuntimeError,
   notificationStatusUpdater: NotificationStatusUpdater,
+  error: RuntimeError,
   queueMessage: IQueueMessage
 ): Promise<Either<boolean, Option<OutputBindings>>> {
   if (isTransient(error)) {
     winston.warn(
       `EmailNotificationQueueHandler|Transient error|${error.message}`
     );
-    // schedule a retry in case of transient errors
-    // return a message to pass to context.done to trigger a retry
-    return left(
-      await updateMessageVisibilityTimeout(
-        queueService,
-        EMAIL_NOTIFICATION_QUEUE_NAME,
-        queueMessage
-      )
+    const shouldTriggerARetry = await updateMessageVisibilityTimeout(
+      queueService,
+      EMAIL_NOTIFICATION_QUEUE_NAME,
+      queueMessage
     );
+    return left(shouldTriggerARetry);
   } else {
     winston.error(
       `EmailNotificationQueueHandler|Permanent error|${error.message}`
@@ -441,29 +438,24 @@ export async function index(context: ContextWithBindings): Promise<void> {
         error =>
           processRuntimeError(
             queueService,
-            error,
             notificationStatusUpdater,
+            error,
             context.bindingData
           ),
         emailNotificationEvt =>
           processSuccess(emailNotificationEvt, notificationStatusUpdater)
       )
     )
-    .then(shouldTriggerARetryOrOutputBindings =>
+    .then(shouldTriggerARetryOrOutputBindings => {
       shouldTriggerARetryOrOutputBindings.fold(
         shouldTriggerARetry => {
-          if (shouldTriggerARetry) {
-            // triggers a retry
-            context.done(true);
-          } else {
-            // maximum number of retries reached, stop processing
-            context.done();
-          }
+          // handle transient or permanent error
+          context.done(shouldTriggerARetry ? true : undefined);
         },
-        // success case (this handler returns no output bindings)
+        // success !
         _ => context.done()
-      )
-    )
+      );
+    })
     .catch(async error => {
       await processGenericError(error, notificationStatusUpdater);
       context.done();

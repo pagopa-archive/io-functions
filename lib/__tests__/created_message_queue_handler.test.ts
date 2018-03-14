@@ -43,11 +43,12 @@ import { isTransient, PermanentError, TransientError } from "../utils/errors";
 import { NonNegativeNumber } from "../utils/numbers";
 import { EmailString, NonEmptyString } from "../utils/strings";
 
-jest.mock("azure-storage");
-jest.mock("../utils/azure_queues");
 import { NotificationChannelEnum } from "../api/definitions/NotificationChannel";
 import { TimeToLiveSeconds } from "../api/definitions/TimeToLiveSeconds";
 import { NotificationEvent } from "../models/notification_event";
+
+jest.mock("azure-storage");
+jest.mock("../utils/azure_queues");
 import { updateMessageVisibilityTimeout } from "../utils/azure_queues";
 
 afterEach(() => {
@@ -217,6 +218,32 @@ describe("createdMessageQueueIndex", () => {
 
     expect(profileSpy).toHaveBeenCalledTimes(1);
     expect(notificationSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it("should trigger a retry in case of transient errors", async () => {
+    const contextMock = {
+      bindings: {
+        createdMessage: aMessageEvent,
+        emailNotification: undefined
+      },
+      done: jest.fn(),
+      log: jest.fn()
+    };
+
+    const profileSpy = jest
+      .spyOn(ProfileModel.prototype, "findOneProfileByFiscalCode")
+      .mockImplementationOnce(() => Promise.resolve(left(none)));
+
+    (updateMessageVisibilityTimeout as jest.Mock).mockImplementationOnce(() =>
+      Promise.resolve(true)
+    );
+
+    await index(contextMock as any);
+
+    expect(contextMock.done).toHaveBeenCalledTimes(1);
+    expect(contextMock.done).toHaveBeenCalledWith(true);
+
+    expect(profileSpy).toHaveBeenCalledTimes(1);
   });
 });
 
