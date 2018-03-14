@@ -307,9 +307,9 @@ export async function handleNotification(
   return right(emailNotificationEvent);
 }
 
-async function processGenericError(
-  error: Error,
-  notificationStatusUpdater: NotificationStatusUpdater
+export async function processGenericError(
+  notificationStatusUpdater: NotificationStatusUpdater,
+  error: Error
 ): Promise<void> {
   winston.error(
     `EmailNotificationQueueHandler|"Unexpected error|${error.message}`
@@ -347,7 +347,7 @@ export async function processRuntimeError(
   }
 }
 
-async function processSuccess(
+export async function processSuccess(
   emailNotificationEvent: NotificationEvent,
   notificationStatusUpdater: NotificationStatusUpdater
 ): Promise<Either<never, Option<OutputBindings>>> {
@@ -470,7 +470,7 @@ export async function index(context: ContextWithBindings): Promise<void> {
       );
     })
     .catch(async error => {
-      await processGenericError(error, notificationStatusUpdater);
+      await processGenericError(notificationStatusUpdater, error);
       context.done();
     });
 }

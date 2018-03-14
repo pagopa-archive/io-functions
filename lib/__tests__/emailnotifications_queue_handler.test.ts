@@ -15,17 +15,17 @@ process.env.QueueStorageConnection = "anyConnectionString";
 
 jest.mock("applicationinsights");
 jest.mock("azure-storage");
-
-jest.mock("../utils/azure_queues");
-
 jest.mock("nodemailer-sendgrid-transport");
+
+// updateMessageVisibilityTimeout
+jest.mock("../utils/azure_queues");
 
 import * as NodeMailer from "nodemailer";
 import * as winston from "winston";
 
 import MockTransport = require("nodemailer-mock-transport");
 
-import { none, some } from "fp-ts/lib/Option";
+import { isNone, none, some } from "fp-ts/lib/Option";
 
 import { isLeft, isRight, left, right } from "fp-ts/lib/Either";
 import { EmailString, NonEmptyString } from "../utils/strings";
@@ -37,6 +37,8 @@ import {
   generateDocumentHtml,
   handleNotification,
   index,
+  processGenericError,
+  processRuntimeError,
   sendMail
 } from "../emailnotifications_queue_handler";
 
@@ -48,7 +50,7 @@ import {
   NotificationAddressSourceEnum,
   NotificationModel
 } from "../models/notification";
-import { isTransient } from "../utils/errors";
+import { isTransient, PermanentError, TransientError } from "../utils/errors";
 
 import { NotificationEvent } from "../models/notification_event";
 
@@ -57,15 +59,15 @@ import { MessageContent } from "../api/definitions/MessageContent";
 import { NotificationChannelEnum } from "../api/definitions/NotificationChannel";
 import { NotificationChannelStatusValueEnum } from "../api/definitions/NotificationChannelStatusValue";
 import { TimeToLiveSeconds } from "../api/definitions/TimeToLiveSeconds";
+import { processSuccess } from "../emailnotifications_queue_handler";
 import {
   makeStatusId,
   NotificationStatusModel,
   RetrievedNotificationStatus
 } from "../models/notification_status";
+import { updateMessageVisibilityTimeout } from "../utils/azure_queues";
 import { NonNegativeNumber } from "../utils/numbers";
 import { readableReport } from "../utils/validation_reporters";
-
-// jest.mock("../models/notification");
 
 afterEach(() => {
   jest.resetAllMocks();
@@ -83,7 +85,7 @@ const aMessage = {
   kind: "INewMessageWithoutContent",
   senderServiceId: "",
   senderUserId: "u123" as NonEmptyString,
-  timeToLive: 3600 as TimeToLiveSeconds
+  timeToLiveSeconds: 3600 as TimeToLiveSeconds
 };
 
 const aMessageBodyMarkdown = "test".repeat(80) as MessageBodyMarkdown;
@@ -528,6 +530,32 @@ describe("emailnotificationQueueHandlerIndex", () => {
     expect(winstonErrorSpy).toHaveBeenCalledTimes(1);
   });
 
+  it("should exit in case the message is expired", async () => {
+    const contextMock = {
+      bindings: {
+        notificationEvent: {
+          ...aNotificationEvent,
+          message: {
+            ...aNotificationEvent.message,
+            createdAt: new Date("2012-12-12")
+          }
+        }
+      },
+      done: jest.fn(),
+      log: jest.fn()
+    };
+    const nodemailerSpy = jest
+      .spyOn(NodeMailer, "createTransport")
+      .mockReturnValue({
+        sendMail: jest.fn((_, cb) => cb(null, "ok"))
+      });
+    const winstonErrorSpy = jest.spyOn(winston, "error");
+    await index(contextMock as any);
+    expect(nodemailerSpy).not.toHaveBeenCalled();
+    expect(contextMock.done).toHaveBeenCalledTimes(1);
+    expect(winstonErrorSpy).toHaveBeenCalledTimes(1);
+  });
+
   it("should proceed on valid message payload", async () => {
     const contextMock = {
       bindings: {
@@ -559,6 +587,72 @@ describe("emailnotificationQueueHandlerIndex", () => {
     expect(notificationModelSpy).toHaveBeenCalledTimes(1);
     expect(nodemailerSpy).toHaveBeenCalledTimes(1);
     expect(contextMock.done).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("processSuccess", () => {
+  it("should update notification status to SENT_TO_CHANNEL", async () => {
+    const notificationStatusUpdaterMock = jest.fn();
+
+    const result = await processSuccess(
+      getMockNotificationEvent(),
+      notificationStatusUpdaterMock
+    );
+
+    expect(isRight(result)).toBeTruthy();
+    if (isRight(result)) {
+      expect(isNone(result.value)).toBeTruthy();
+    }
+
+    expect(notificationStatusUpdaterMock).toHaveBeenCalledWith(
+      NotificationChannelStatusValueEnum.SENT_TO_CHANNEL
+    );
+  });
+});
+
+describe("processRuntimeError", () => {
+  it("should retry on transient error", async () => {
+    const notificationStatusUpdaterMock = jest.fn();
+    const error = TransientError("err");
+    const winstonSpy = jest.spyOn(winston, "warn");
+    await processRuntimeError(
+      {} as any,
+      notificationStatusUpdaterMock,
+      error as any,
+      {} as any
+    );
+    expect(notificationStatusUpdaterMock).not.toHaveBeenCalled();
+    expect(updateMessageVisibilityTimeout).toHaveBeenCalledTimes(1);
+    expect(winstonSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it("should fail in case of permament error", async () => {
+    const notificationStatusUpdaterMock = jest.fn();
+    const error = PermanentError("err");
+    const winstonSpy = jest.spyOn(winston, "error");
+    await processRuntimeError(
+      {} as any,
+      notificationStatusUpdaterMock,
+      error as any,
+      {} as any
+    );
+    expect(notificationStatusUpdaterMock).toHaveBeenCalledWith(
+      NotificationChannelStatusValueEnum.FAILED
+    );
+    expect(updateMessageVisibilityTimeout).not.toHaveBeenCalled();
+    expect(winstonSpy).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("processGenericError", () => {
+  it("should update notification status to FAILED", async () => {
+    const notificationStatusUpdaterMock = jest.fn();
+    const winstonSpy = jest.spyOn(winston, "error");
+    await processGenericError(notificationStatusUpdaterMock, new Error());
+    expect(notificationStatusUpdaterMock).toHaveBeenCalledWith(
+      NotificationChannelStatusValueEnum.FAILED
+    );
+    expect(winstonSpy).toHaveBeenCalledTimes(1);
   });
 });
 
