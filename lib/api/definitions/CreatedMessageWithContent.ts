@@ -8,7 +8,7 @@
 // tslint:disable:object-literal-sort-keys
 
 import { FiscalCode } from "./FiscalCode";
-import { TimeToLive } from "./TimeToLive";
+import { TimeToLiveSeconds } from "./TimeToLiveSeconds";
 import { MessageContent } from "./MessageContent";
 
 /**
@@ -29,7 +29,7 @@ const CreatedMessageWithContentR = t.interface({
 const CreatedMessageWithContentO = t.partial({
   id: t.string,
 
-  time_to_live: TimeToLive,
+  time_to_live: TimeToLiveSeconds,
 
   content: MessageContent
 });

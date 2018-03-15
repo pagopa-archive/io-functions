@@ -336,7 +336,7 @@ export const specs = {
     NewMessage: {
       type: "object",
       properties: {
-        time_to_live: { $ref: "#/definitions/TimeToLive" },
+        time_to_live: { $ref: "#/definitions/TimeToLiveSeconds" },
         content: { $ref: "#/definitions/MessageContent" },
         default_addresses: { $ref: "#/definitions/NewMessageDefaultAddresses" }
       },
@@ -359,7 +359,7 @@ export const specs = {
       properties: {
         id: { type: "string" },
         fiscal_code: { $ref: "#/definitions/FiscalCode" },
-        time_to_live: { $ref: "#/definitions/TimeToLive" },
+        time_to_live: { $ref: "#/definitions/TimeToLiveSeconds" },
         content: { $ref: "#/definitions/MessageContent" },
         sender_service_id: { type: "string" }
       },
@@ -370,7 +370,7 @@ export const specs = {
       properties: {
         id: { type: "string" },
         fiscal_code: { $ref: "#/definitions/FiscalCode" },
-        time_to_live: { $ref: "#/definitions/TimeToLive" },
+        time_to_live: { $ref: "#/definitions/TimeToLiveSeconds" },
         sender_service_id: { type: "string" }
       },
       required: ["fiscal_code", "sender_service_id"]
@@ -469,11 +469,11 @@ export const specs = {
       description:
         "True if the recipient of a message wants to store its content for later retrieval."
     },
-    TimeToLive: {
+    TimeToLiveSeconds: {
       type: "integer",
       default: 3600,
       minimum: 3600,
-      maximum: 31536000,
+      maximum: 604800,
       description:
         "This parameter specifies for how long (in seconds) the system will try to deliver the message to the channels configured by the user.",
       example: 3600

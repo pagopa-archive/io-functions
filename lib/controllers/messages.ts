@@ -16,7 +16,7 @@ import { IContext } from "azure-function-express";
 
 import { CreatedMessageWithoutContent } from "../api/definitions/CreatedMessageWithoutContent";
 import { FiscalCode } from "../api/definitions/FiscalCode";
-import { MessageContent } from "../api/definitions/MessageContent";
+
 import { MessageResponseWithContent } from "../api/definitions/MessageResponseWithContent";
 import { NewMessage as ApiNewMessage } from "../api/definitions/NewMessage";
 
@@ -85,6 +85,7 @@ import { BlobService } from "azure-storage";
 import {
   Message,
   MessageModel,
+  NewMessageWithContent,
   NewMessageWithoutContent,
   RetrievedMessage
 } from "../models/message";
@@ -93,9 +94,11 @@ import { withoutUndefinedValues } from "../utils/types";
 
 import { Either, isLeft, isRight, left, right } from "fp-ts/lib/Either";
 import { fromEither, isNone, none, Option, some } from "fp-ts/lib/Option";
+
 import { CreatedMessageWithContent } from "../api/definitions/CreatedMessageWithContent";
 import { NotificationChannelEnum } from "../api/definitions/NotificationChannel";
 import { NotificationChannelStatusValueEnum } from "../api/definitions/NotificationChannelStatusValue";
+import { TimeToLiveSeconds } from "../api/definitions/TimeToLiveSeconds";
 import { NotificationStatusModel } from "../models/notification_status";
 
 /**
@@ -107,19 +110,27 @@ interface IBindings {
   createdMessage?: CreatedMessageEvent;
 }
 
+const ApiNewMessageWithDefaults = t.intersection([
+  ApiNewMessage,
+  t.interface({ time_to_live: TimeToLiveSeconds })
+]);
+export type ApiNewMessageWithDefaults = t.TypeOf<
+  typeof ApiNewMessageWithDefaults
+>;
+
 /**
  * A request middleware that validates the Message payload.
  */
 export const MessagePayloadMiddleware: IRequestMiddleware<
   "IResponseErrorValidation",
-  ApiNewMessage
+  ApiNewMessageWithDefaults
 > = request =>
   new Promise(resolve => {
-    const validation = ApiNewMessage.decode(request.body);
-    const result = validation.mapLeft(
-      ResponseErrorFromValidationErrors(ApiNewMessage)
+    return resolve(
+      ApiNewMessageWithDefaults.decode(request.body)
+        .mapLeft(ResponseErrorFromValidationErrors(ApiNewMessageWithDefaults))
+        .map(t.identity)
     );
-    resolve(result);
   });
 
 /**
@@ -149,7 +160,7 @@ type ICreateMessageHandler = (
   clientIp: ClientIp,
   attrs: IAzureUserAttributes,
   fiscalCode: FiscalCode,
-  messagePayload: ApiNewMessage
+  messagePayload: ApiNewMessageWithDefaults
 ) => Promise<
   | IResponseSuccessRedirectToResource<Message, {}>
   | IResponseErrorQuery
@@ -211,6 +222,24 @@ type NotificationStatusHolder = Partial<
 >;
 
 /**
+ * Returns the status of a channel
+ */
+async function getChannelStatus(
+  notificationStatusModel: NotificationStatusModel,
+  notificationId: NonEmptyString,
+  channel: NotificationChannelEnum
+): Promise<NotificationChannelStatusValueEnum | undefined> {
+  const errorOrMaybeStatus = await notificationStatusModel.findOneNotificationStatusByNotificationChannel(
+    notificationId,
+    channel
+  );
+  return fromEither(errorOrMaybeStatus)
+    .chain(t.identity)
+    .map(o => o.status)
+    .toUndefined();
+}
+
+/**
  * Retrieve all notifications statuses (all channels) for a message.
  *
  * It makes one query to get the notification object associated
@@ -242,24 +271,16 @@ async function getMessageNotificationStatuses(
     }
     const notification = maybeNotification.value;
 
-    // returns the status of a channel
-    const getChannelStatus = async (channel: NotificationChannelEnum) => {
-      const errorOrMaybeStatus = await notificationStatusModel.findOneNotificationStatusByNotificationChannel(
-        notification.id,
-        channel
-      );
-      return fromEither(errorOrMaybeStatus)
-        .chain(t.identity)
-        .map(o => o.status)
-        .toUndefined();
-    };
-
     // collect the statuses of all channels
     const channelStatusesPromises = Object.keys(NotificationChannelEnum)
       .map(k => NotificationChannelEnum[k as NotificationChannelEnum])
       .map(async channel => ({
         channel,
-        status: await getChannelStatus(channel)
+        status: await getChannelStatus(
+          notificationStatusModel,
+          notification.id,
+          channel
+        )
       }));
     const channelStatuses = await Promise.all(channelStatusesPromises);
 
@@ -345,13 +366,15 @@ export function CreateMessageHandler(
 
     // create a new message from the payload
     // this object contains only the message metadata, the content of the
-    // message is handled separately (see below)
+    // message is handled separately (see below).
     const newMessageWithoutContent: NewMessageWithoutContent = {
+      createdAt: new Date(),
       fiscalCode,
       id: generateObjectId(),
       kind: "INewMessageWithoutContent",
       senderServiceId: userService.serviceId,
-      senderUserId: auth.userId
+      senderUserId: auth.userId,
+      timeToLiveSeconds: messagePayload.time_to_live
     };
 
     //
@@ -401,9 +424,13 @@ export function CreateMessageHandler(
     // emit created message event to the output queue
     //
 
-    const messageContent: MessageContent = {
-      markdown: messagePayload.content.markdown,
-      subject: messagePayload.content.subject
+    const newMessageWithContent: NewMessageWithContent = {
+      ...newMessageWithoutContent,
+      content: {
+        markdown: messagePayload.content.markdown,
+        subject: messagePayload.content.subject
+      },
+      kind: "INewMessageWithContent"
     };
 
     // prepare the created message event
@@ -411,8 +438,7 @@ export function CreateMessageHandler(
     // deserialized to null(s) when enqueued
     const createdMessageEvent: CreatedMessageEvent = withoutUndefinedValues({
       defaultAddresses: messagePayload.default_addresses,
-      message: newMessageWithoutContent,
-      messageContent,
+      message: newMessageWithContent,
       senderMetadata: {
         departmentName: userAttributes.service.departmentName,
         organizationName: userAttributes.service.organizationName,

@@ -7,16 +7,14 @@
 
 import * as t from "io-ts";
 
-import { MessageContent } from "../api/definitions/MessageContent";
 import { NewMessageDefaultAddresses } from "../api/definitions/NewMessageDefaultAddresses";
 
-import { NewMessageWithoutContent } from "./message";
+import { NewMessageWithContent } from "./message";
 
 import { CreatedMessageEventSenderMetadata } from "./created_message_sender_metadata";
 
 const CreatedMessageEventR = t.interface({
-  message: NewMessageWithoutContent,
-  messageContent: MessageContent,
+  message: NewMessageWithContent,
   senderMetadata: CreatedMessageEventSenderMetadata
 });
 

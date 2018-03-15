@@ -1,5 +1,4 @@
 // tslint:disable:no-any
-import { MessageContent } from "../api/definitions/MessageContent";
 
 // set a dummy value for the env vars needed by the handler
 // tslint:disable-next-line:no-object-mutation
@@ -13,27 +12,22 @@ process.env.MESSAGE_CONTAINER_NAME = "anyMessageContainerName";
 // tslint:disable-next-line:no-object-mutation
 process.env.QueueStorageConnection = "anyQueueStorageConnection";
 
-import {
-  handleMessage,
-  index,
-  MESSAGE_QUEUE_NAME,
-  processResolve
-} from "../created_message_queue_handler";
 import { CreatedMessageEvent } from "../models/created_message_event";
-import { NewMessageWithoutContent } from "../models/message";
+import { NewMessageWithContent } from "../models/message";
 
 import * as functionConfig from "../../CreatedMessageQueueHandler/function.json";
 
-import { none, some } from "fp-ts/lib/Option";
+import { isSome, none, some } from "fp-ts/lib/Option";
 import { FiscalCode } from "../api/definitions/FiscalCode";
 import { MessageBodyMarkdown } from "../api/definitions/MessageBodyMarkdown";
 
 import {
   EmailNotification,
   NewNotification,
-  NotificationAddressSourceEnum
+  NotificationAddressSourceEnum,
+  NotificationModel
 } from "../models/notification";
-import { RetrievedProfile } from "../models/profile";
+import { ProfileModel, RetrievedProfile } from "../models/profile";
 
 import { isLeft, isRight, left, right } from "fp-ts/lib/Either";
 import * as winston from "winston";
@@ -41,11 +35,28 @@ import { isTransient, PermanentError, TransientError } from "../utils/errors";
 import { NonNegativeNumber } from "../utils/numbers";
 import { EmailString, NonEmptyString } from "../utils/strings";
 
-jest.mock("azure-storage");
-jest.mock("../utils/azure_queues");
 import { NotificationChannelEnum } from "../api/definitions/NotificationChannel";
+import { TimeToLiveSeconds } from "../api/definitions/TimeToLiveSeconds";
 import { NotificationEvent } from "../models/notification_event";
-import { retryMessageEnqueue } from "../utils/azure_queues";
+
+jest.mock("azure-storage");
+
+jest.mock("../models/notification_status", () => ({
+  NOTIFICATION_STATUS_COLLECTION_NAME: "foobar",
+  NotificationStatusModel: jest.fn(),
+  getNotificationStatusUpdater: () => (x: any) => Promise.resolve(x)
+}));
+
+jest.mock("../utils/azure_queues");
+import { updateMessageVisibilityTimeout } from "../utils/azure_queues";
+
+import {
+  handleMessage,
+  index,
+  MESSAGE_QUEUE_NAME,
+  processRuntimeError,
+  processSuccess
+} from "../created_message_queue_handler";
 
 afterEach(() => {
   jest.resetAllMocks();
@@ -68,21 +79,23 @@ const anEmailNotification: EmailNotification = {
   messageId: "m123" as NonEmptyString
 };
 
-const aMessage: NewMessageWithoutContent = {
-  fiscalCode: aWrongFiscalCode,
-  id: "xyz" as NonEmptyString,
-  kind: "INewMessageWithoutContent",
-  senderServiceId: "",
-  senderUserId: "u123" as NonEmptyString
-};
-
 const aMessageBodyMarkdown = "test".repeat(80) as MessageBodyMarkdown;
+
+const aMessage: NewMessageWithContent = {
+  content: {
+    markdown: aMessageBodyMarkdown
+  },
+  createdAt: new Date(),
+  fiscalCode: aCorrectFiscalCode,
+  id: "xyz" as NonEmptyString,
+  kind: "INewMessageWithContent",
+  senderServiceId: "",
+  senderUserId: "u123" as NonEmptyString,
+  timeToLiveSeconds: 3600 as TimeToLiveSeconds
+};
 
 const aMessageEvent: CreatedMessageEvent = {
   message: aMessage,
-  messageContent: {
-    markdown: aMessageBodyMarkdown
-  },
   senderMetadata: {
     departmentName: "IT" as NonEmptyString,
     organizationName: "agid" as NonEmptyString,
@@ -123,8 +136,11 @@ const aCreatedNotificationWithEmail: NewNotification = {
 };
 
 const anEmailNotificationEvent: NotificationEvent = {
-  messageContent: aMessageEvent.messageContent,
-  messageId: aCreatedNotificationWithEmail.messageId,
+  message: {
+    ...aMessage,
+    content: { markdown: aMessageBodyMarkdown },
+    kind: "INewMessageWithContent"
+  },
   notificationId: aCreatedNotificationWithEmail.id,
   senderMetadata: aMessageEvent.senderMetadata
 };
@@ -135,10 +151,6 @@ const anAttachmentMeta = {
   contentType: "application/json",
   media: "media.json"
 };
-
-function flushPromises<T>(): Promise<T> {
-  return new Promise(resolve => setImmediate(resolve));
-}
 
 describe("createdMessageQueueIndex", () => {
   it("should return failure if createdMessage is undefined", async () => {
@@ -153,16 +165,34 @@ describe("createdMessageQueueIndex", () => {
 
     const spy = jest.spyOn(winston, "error");
 
-    index(contextMock as any);
+    const ret = await index(contextMock as any);
+    expect(ret).toEqual(undefined);
 
-    await flushPromises();
-
-    expect(contextMock.done).toHaveBeenCalledTimes(1);
     expect(contextMock.bindings.emailNotification).toBeUndefined();
     expect(spy).toHaveBeenCalledTimes(1);
   });
 
-  it("should return failure if createdMessage is invalid (wrong fiscal code)", async () => {
+  it("should stop processing if createdMessage is invalid (wrong fiscal code)", async () => {
+    const contextMock = {
+      bindings: {
+        createdMessage: {
+          aMessageEvent,
+          message: { ...aMessage, fiscalCode: aWrongFiscalCode }
+        },
+        emailNotification: undefined
+      },
+      done: jest.fn(),
+      log: jest.fn()
+    };
+
+    const spy = jest.spyOn(winston, "error");
+
+    const ret = await index(contextMock as any);
+    expect(ret).toEqual(undefined);
+    expect(spy).toHaveBeenCalledTimes(1);
+  });
+
+  it("should output bindings on success", async () => {
     const contextMock = {
       bindings: {
         createdMessage: aMessageEvent,
@@ -172,15 +202,51 @@ describe("createdMessageQueueIndex", () => {
       log: jest.fn()
     };
 
-    const spy = jest.spyOn(winston, "error");
+    const notificationSpy = jest
+      .spyOn(NotificationModel.prototype, "create")
+      .mockImplementationOnce(() =>
+        Promise.resolve(right(aCreatedNotificationWithEmail))
+      );
 
-    index(contextMock as any);
+    const profileSpy = jest
+      .spyOn(ProfileModel.prototype, "findOneProfileByFiscalCode")
+      .mockImplementationOnce(() =>
+        Promise.resolve(right(some(aRetrievedProfileWithEmail)))
+      );
 
-    await flushPromises();
+    const ret = await index(contextMock as any);
+    expect(ret).toEqual({
+      emailNotification: anEmailNotificationEvent
+    });
 
-    expect(contextMock.done).toHaveBeenCalledTimes(1);
-    expect(contextMock.done).toHaveBeenCalledWith();
-    expect(spy).toHaveBeenCalledTimes(1);
+    expect(profileSpy).toHaveBeenCalledTimes(1);
+    expect(notificationSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it("should trigger a retry in case of transient errors", async () => {
+    const contextMock = {
+      bindings: {
+        createdMessage: aMessageEvent,
+        emailNotification: undefined
+      },
+      done: jest.fn(),
+      log: jest.fn()
+    };
+
+    const profileSpy = jest
+      .spyOn(ProfileModel.prototype, "findOneProfileByFiscalCode")
+      .mockImplementationOnce(() => Promise.resolve(left(none)));
+
+    (updateMessageVisibilityTimeout as jest.Mock).mockImplementationOnce(() =>
+      Promise.resolve(true)
+    );
+    expect.assertions(2);
+    try {
+      await index(contextMock as any);
+    } catch (e) {
+      expect(e.kind).toEqual("TransientError");
+      expect(profileSpy).toHaveBeenCalledTimes(1);
+    }
   });
 });
 
@@ -202,7 +268,6 @@ describe("handleMessage", () => {
       {} as any,
       {} as any,
       retrievedMessageMock as any,
-      {} as any,
       none
     );
     expect(profileModelMock.findOneProfileByFiscalCode).toHaveBeenCalledWith(
@@ -231,7 +296,6 @@ describe("handleMessage", () => {
       {} as any,
       {} as any,
       retrievedMessageMock as any,
-      {} as any,
       none
     );
 
@@ -270,7 +334,6 @@ describe("handleMessage", () => {
         notificationModelMock as any,
         {} as any,
         retrievedMessageMock as any,
-        {} as any,
         none
       );
 
@@ -310,7 +373,6 @@ describe("handleMessage", () => {
         notificationModelMock as any,
         {} as any,
         retrievedMessageMock as any,
-        {} as any,
         none
       );
 
@@ -367,7 +429,6 @@ describe("handleMessage", () => {
         notificationModelMock as any,
         {} as any,
         retrievedMessageMock as any,
-        {} as any,
         some({
           email: anEmail
         })
@@ -419,7 +480,6 @@ describe("handleMessage", () => {
         notificationModelMock as any,
         {} as any,
         retrievedMessageMock as any,
-        {} as any,
         some({
           email: anEmail
         })
@@ -476,17 +536,12 @@ describe("handleMessage", () => {
       })
     };
 
-    const messageContent: MessageContent = {
-      markdown: aMessageBodyMarkdown
-    };
-
     const response = await handleMessage(
       profileModelMock as any,
       messageModelMock as any,
       notificationModelMock as any,
       aBlobService as any,
       retrievedMessageMock as any,
-      messageContent,
       some({
         email: anEmail
       })
@@ -553,17 +608,12 @@ describe("handleMessage", () => {
       })
     };
 
-    const messageContent: MessageContent = {
-      markdown: aMessageBodyMarkdown
-    };
-
     const response = await handleMessage(
       profileModelMock as any,
       messageModelMock as any,
       notificationModelMock as any,
       aBlobService as any,
       retrievedMessageMock as any,
-      messageContent,
       some({
         email: anEmail
       })
@@ -613,7 +663,6 @@ describe("handleMessage", () => {
       notificationModelMock as any,
       {} as any,
       retrievedMessageMock as any,
-      {} as any,
       none
     );
 
@@ -627,84 +676,44 @@ describe("handleMessage", () => {
   });
 });
 
-describe("processResolve", () => {
+describe("processSuccess", () => {
   it("should enqueue notification to the email queue if an email is present", async () => {
-    const errorOrNotification = right(aCreatedNotificationWithEmail);
+    const notification = aCreatedNotificationWithEmail;
 
-    const contextMock = {
-      bindings: {},
-      done: jest.fn()
-    };
-
-    processResolve(
-      errorOrNotification as any,
-      contextMock as any,
-      aMessageEvent.messageContent,
+    const result = await processSuccess(
+      {} as any,
+      notification as any,
+      aMessage,
       aMessageEvent.senderMetadata
     );
 
-    expect(contextMock.done).toHaveBeenCalledTimes(1);
-    expect(contextMock.done).toHaveBeenCalledWith(undefined, {
-      emailNotification: anEmailNotificationEvent
-    });
+    expect(isRight(result)).toBeTruthy();
+    if (isRight(result)) {
+      expect(isSome(result.value)).toBeTruthy();
+      if (isSome(result.value)) {
+        expect(result.value.value).toEqual({
+          emailNotification: anEmailNotificationEvent
+        });
+      }
+    }
   });
+});
 
+describe("processRuntimeError", () => {
   it("should retry on transient error", async () => {
-    const errorOrNotification = left(TransientError("err"));
-
-    const contextMock = {
-      bindings: {
-        emailNotification: undefined
-      },
-      done: jest.fn(),
-      log: jest.fn()
-    };
-
-    const retrievedMessageMock = {
-      fiscalCode: aWrongFiscalCode
-    };
-
-    const spy = jest.spyOn(winston, "error");
-
-    processResolve(
-      errorOrNotification as any,
-      contextMock as any,
-      retrievedMessageMock as any,
-      {} as any
-    );
-
-    expect(retryMessageEnqueue).toHaveBeenCalledTimes(1);
-    expect(spy).toHaveBeenCalledTimes(1);
-    expect(contextMock.bindings.emailNotification).toEqual(undefined);
+    const error = TransientError("err");
+    const winstonSpy = jest.spyOn(winston, "warn");
+    await processRuntimeError({} as any, error as any, {} as any);
+    expect(updateMessageVisibilityTimeout).toHaveBeenCalledTimes(1);
+    expect(winstonSpy).toHaveBeenCalledTimes(1);
   });
+
   it("should fail in case of permament error", async () => {
-    const errorOrNotification = left(PermanentError("err"));
-
-    const contextMock = {
-      bindings: {
-        emailNotification: undefined
-      },
-      done: jest.fn(),
-      log: jest.fn()
-    };
-
-    const retrievedMessageMock = {
-      fiscalCode: aWrongFiscalCode
-    };
-
-    const spy = jest.spyOn(winston, "error");
-
-    processResolve(
-      errorOrNotification as any,
-      contextMock as any,
-      retrievedMessageMock as any,
-      {} as any
-    );
-
-    expect(retryMessageEnqueue).not.toHaveBeenCalled();
-    expect(contextMock.done).toHaveBeenCalledWith();
-    expect(spy).toHaveBeenCalledTimes(1);
-    expect(contextMock.bindings.emailNotification).toEqual(undefined);
+    const error = PermanentError("err");
+    const winstonSpy = jest.spyOn(winston, "error");
+    await processRuntimeError({} as any, error as any, {} as any);
+    expect(updateMessageVisibilityTimeout).not.toHaveBeenCalled();
+    expect(winstonSpy).toHaveBeenCalledTimes(1);
   });
 });
 

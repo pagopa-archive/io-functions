@@ -1,5 +1,5 @@
 import * as config from "../../../host.json";
-import { MAX_RETRIES, retryMessageEnqueue } from "../azure_queues";
+import { MAX_RETRIES, updateMessageVisibilityTimeout } from "../azure_queues";
 
 const aQueueService = {
   updateMessage: jest.fn((_, __, ___, ____, cb) => {
@@ -7,30 +7,16 @@ const aQueueService = {
   })
 };
 
-const aContext = {
-  bindingData: {
-    dequeueCount: 1,
-    id: "1",
-    popReceipt: "receipt"
-  },
-  bindings: {},
-  done: jest.fn(),
-  invocationId: "1",
-  log: jest.fn(),
-  warn: jest.fn()
+const aMessage = {
+  dequeueCount: 1,
+  id: "1",
+  popReceipt: "receipt"
 };
 
-const aContextWithManyRetries = {
-  bindingData: {
-    dequeueCount: 100000,
-    id: "1",
-    popReceipt: "receipt"
-  },
-  bindings: {},
-  done: jest.fn(),
-  invocationId: "1",
-  log: jest.fn(),
-  warn: jest.fn()
+const aMessageWithManyRetries = {
+  dequeueCount: 100000,
+  id: "1",
+  popReceipt: "receipt"
 };
 
 describe("azureQueues", () => {
@@ -44,25 +30,26 @@ describe("retry", () => {
   afterEach(() => jest.clearAllMocks());
 
   it("should call context.done() with an argument", async () => {
-    // tslint:disable-next-line:no-any
-    retryMessageEnqueue(aQueueService as any, "queueName", aContext as any);
-    expect(aQueueService.updateMessage).toHaveBeenCalledTimes(1);
-    expect(aContext.done).toHaveBeenCalledTimes(1);
-    expect(aContext.done).toHaveBeenCalledWith(expect.anything());
-  });
-
-  it("should not update the message timeout in case the maximum number of retries is reached", async () => {
-    retryMessageEnqueue(
+    const result = await updateMessageVisibilityTimeout(
       // tslint:disable-next-line:no-any
       aQueueService as any,
       "queueName",
       // tslint:disable-next-line:no-any
-      aContextWithManyRetries as any
+      aMessage as any
+    );
+    expect(aQueueService.updateMessage).toHaveBeenCalledTimes(1);
+    expect(result).toEqual(true);
+  });
+
+  it("should not update the message timeout in case the maximum number of retries is reached", async () => {
+    const result = await updateMessageVisibilityTimeout(
+      // tslint:disable-next-line:no-any
+      aQueueService as any,
+      "queueName",
+      // tslint:disable-next-line:no-any
+      aMessageWithManyRetries as any
     );
     expect(aQueueService.updateMessage).not.toHaveBeenCalled();
-    expect(aContextWithManyRetries.done).toHaveBeenCalledTimes(1);
-    expect(aContextWithManyRetries.done).toHaveBeenCalledWith(
-      expect.anything()
-    );
+    expect(result).toEqual(false);
   });
 });

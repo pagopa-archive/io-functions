@@ -17,8 +17,11 @@ import * as t from "io-ts";
 
 import { withDefault } from "../../utils/default";
 
-export type TimeToLive = t.TypeOf<typeof TimeToLiveBase>;
+export type TimeToLiveSeconds = t.TypeOf<typeof TimeToLiveSecondsBase>;
 
-const TimeToLiveBase = WithinRangeNumber(3600, 31536000);
+const TimeToLiveSecondsBase = WithinRangeNumber(3600, 604800);
 
-export const TimeToLive = withDefault(TimeToLiveBase, 3600 as TimeToLive);
+export const TimeToLiveSeconds = withDefault(
+  TimeToLiveSecondsBase,
+  3600 as TimeToLiveSeconds
+);

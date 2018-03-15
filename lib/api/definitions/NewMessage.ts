@@ -7,7 +7,7 @@
 // tslint:disable:no-any
 // tslint:disable:object-literal-sort-keys
 
-import { TimeToLive } from "./TimeToLive";
+import { TimeToLiveSeconds } from "./TimeToLiveSeconds";
 import { MessageContent } from "./MessageContent";
 import { NewMessageDefaultAddresses } from "./NewMessageDefaultAddresses";
 
@@ -25,7 +25,7 @@ const NewMessageR = t.interface({
 
 // optional attributes
 const NewMessageO = t.partial({
-  time_to_live: TimeToLive,
+  time_to_live: TimeToLiveSeconds,
 
   default_addresses: NewMessageDefaultAddresses
 });

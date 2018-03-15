@@ -69,7 +69,7 @@ NewMessage:
   type: object
   properties:
     time_to_live:
-      $ref: "#/TimeToLive"
+      $ref: "#/TimeToLiveSeconds"
     content:
       $ref: "#/MessageContent"
     default_addresses:
@@ -98,7 +98,7 @@ CreatedMessageWithContent:
     fiscal_code:
       $ref: "#/FiscalCode"
     time_to_live:
-      $ref: "#/TimeToLive"
+      $ref: "#/TimeToLiveSeconds"
     content:
       $ref: "#/MessageContent"
     sender_service_id:
@@ -114,7 +114,7 @@ CreatedMessageWithoutContent:
     fiscal_code:
       $ref: "#/FiscalCode"
     time_to_live:
-      $ref: "#/TimeToLive"
+      $ref: "#/TimeToLiveSeconds"
     sender_service_id:
       type: string
   required:
@@ -211,11 +211,11 @@ IsInboxEnabled:
   default: false
   description: True if the recipient of a message wants to store its content for
     later retrieval.
-TimeToLive:
+TimeToLiveSeconds:
   type: integer
   default: 3600
   minimum: 3600
-  maximum: 31536000
+  maximum: 604800
   description: This parameter specifies for how long (in seconds) the system will
     try to deliver the message to the channels configured by the user.
   example: 3600
