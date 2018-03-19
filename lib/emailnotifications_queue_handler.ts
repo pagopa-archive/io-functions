@@ -87,11 +87,36 @@ const notificationStatusCollectionUrl = documentDbUtils.getCollectionUri(
 export const EMAIL_NOTIFICATION_QUEUE_NAME = "emailnotifications";
 const queueConnectionString = getRequiredStringEnv("QueueStorageConnection");
 
+const documentClient = new DocumentDBClient(cosmosDbUri, {
+  masterKey: cosmosDbKey
+});
+
+const notificationStatusModel = new NotificationStatusModel(
+  documentClient,
+  notificationStatusCollectionUrl
+);
+
+const notificationModel = new NotificationModel(
+  documentClient,
+  notificationsCollectionUrl
+);
+
+const appInsightsClient = new ApplicationInsights.TelemetryClient();
+const queueService = createQueueService(queueConnectionString);
+
 //
 // setup NodeMailer
 //
 
 const sendgridKey = getRequiredStringEnv("CUSTOMCONNSTR_SENDGRID_KEY");
+
+const mailerTransporter = NodeMailer.createTransport(
+  sendGridTransport({
+    auth: {
+      api_key: sendgridKey
+    }
+  })
+);
 
 //
 // options used when converting an HTML message to pure text
@@ -175,15 +200,15 @@ export async function sendMail(
  * It will then send the email.
  */
 export async function handleNotification(
-  mailerTransporter: NodeMailer.Transporter,
-  appInsightsClient: ApplicationInsights.TelemetryClient,
-  notificationModel: NotificationModel,
+  lMailerTransporter: NodeMailer.Transporter,
+  lAppInsightsClient: ApplicationInsights.TelemetryClient,
+  lNotificationModel: NotificationModel,
   emailNotificationEvent: NotificationEvent
 ): Promise<Either<RuntimeError, NotificationEvent>> {
   const { message, notificationId, senderMetadata } = emailNotificationEvent;
 
   // fetch the notification
-  const errorOrMaybeNotification = await notificationModel.find(
+  const errorOrMaybeNotification = await lNotificationModel.find(
     notificationId,
     message.id
   );
@@ -249,7 +274,7 @@ export async function handleNotification(
   // trigger email delivery
   // TODO: make everything configurable via settings
   // see https://nodemailer.com/message/
-  const sendResult = await sendMail(mailerTransporter, {
+  const sendResult = await sendMail(lMailerTransporter, {
     from: "no-reply@italia.it",
     headers: {
       "X-Italia-Messages-MessageId": message.id,
@@ -275,7 +300,7 @@ export async function handleNotification(
 
   if (isLeft(sendResult)) {
     // track the event of failed delivery
-    appInsightsClient.trackEvent({
+    lAppInsightsClient.trackEvent({
       name: eventName,
       properties: {
         ...eventContent,
@@ -293,7 +318,7 @@ export async function handleNotification(
   }
 
   // track the event of successful delivery
-  appInsightsClient.trackEvent({
+  lAppInsightsClient.trackEvent({
     name: eventName,
     properties: {
       ...eventContent,
@@ -307,56 +332,54 @@ export async function handleNotification(
   return right(emailNotificationEvent);
 }
 
-export async function processGenericError(
-  notificationStatusUpdater: NotificationStatusUpdater,
-  error: Error
-): Promise<void> {
-  winston.error(
-    `EmailNotificationQueueHandler|"Unexpected error|${error.message}`
-  );
-  await notificationStatusUpdater(NotificationChannelStatusValueEnum.FAILED);
-}
-
 export async function processRuntimeError(
-  queueService: QueueService,
+  lQueueService: QueueService,
   notificationStatusUpdater: NotificationStatusUpdater,
-  error: RuntimeError,
-  queueMessage: IQueueMessage
+  queueMessage: IQueueMessage,
+  error: RuntimeError
 ): Promise<Either<boolean, Option<OutputBindings>>> {
   if (isTransient(error)) {
     winston.warn(
       `EmailNotificationQueueHandler|Transient error|${error.message}`
     );
     const shouldTriggerARetry = await updateMessageVisibilityTimeout(
-      queueService,
+      lQueueService,
       EMAIL_NOTIFICATION_QUEUE_NAME,
       queueMessage
     );
+    const errorOrNotificationStatus = await notificationStatusUpdater(
+      NotificationChannelStatusValueEnum.QUEUED
+    );
+    if (isLeft(errorOrNotificationStatus)) {
+      winston.warn(
+        `EmailNotificationQueueHandler|Transient error|${
+          errorOrNotificationStatus.value.message
+        }`
+      );
+    }
     return left(shouldTriggerARetry);
   } else {
     winston.error(
       `EmailNotificationQueueHandler|Permanent error|${error.message}`
     );
-    await notificationStatusUpdater(NotificationChannelStatusValueEnum.FAILED);
-    // return no bindings so message processing stops here
-    return right(none);
+    const errorOrNotificationStatus = await notificationStatusUpdater(
+      NotificationChannelStatusValueEnum.FAILED
+    );
+    if (isLeft(errorOrNotificationStatus)) {
+      // if we get an error updating the notification status
+      // we retry the whole procedure (it will log the error anyway)
+      const transientError = errorOrNotificationStatus.value;
+      return await processRuntimeError(
+        lQueueService,
+        notificationStatusUpdater,
+        queueMessage,
+        transientError
+      );
+    } else {
+      // return no bindings so message processing stops here
+      return right(none);
+    }
   }
-}
-
-export async function processSuccess(
-  emailNotificationEvent: NotificationEvent,
-  notificationStatusUpdater: NotificationStatusUpdater
-): Promise<Either<never, Option<OutputBindings>>> {
-  winston.debug(
-    `EmailNotificationsHandler|Email notification succeeded|notification=${
-      emailNotificationEvent.notificationId
-    }|message=${emailNotificationEvent.message.id}`
-  );
-  await notificationStatusUpdater(
-    NotificationChannelStatusValueEnum.SENT_TO_CHANNEL
-  );
-  // we do not need to output more binding as message processing stops here
-  return right(none);
 }
 
 /**
@@ -393,15 +416,6 @@ export async function index(
   }
   const emailNotificationEvent = errorOrNotificationEvent.value;
 
-  const documentClient = new DocumentDBClient(cosmosDbUri, {
-    masterKey: cosmosDbKey
-  });
-
-  const notificationStatusModel = new NotificationStatusModel(
-    documentClient,
-    notificationStatusCollectionUrl
-  );
-
   const notificationStatusUpdater = getNotificationStatusUpdater(
     notificationStatusModel,
     NotificationChannelEnum.EMAIL,
@@ -409,36 +423,23 @@ export async function index(
     emailNotificationEvent.notificationId
   );
 
-  // Check if the message is not expired
-  const errorOrActiveMessage = ActiveMessage.decode(
-    emailNotificationEvent.message
-  );
-  if (isLeft(errorOrActiveMessage)) {
-    winston.error(
-      `EmailNotificationsHandler|Message is expired, skip processing.|${readableReport(
-        errorOrActiveMessage.value
-      )}`
-    );
-    await notificationStatusUpdater(NotificationChannelStatusValueEnum.EXPIRED);
-    return stopProcessing;
-  }
-
   try {
-    const notificationModel = new NotificationModel(
-      documentClient,
-      notificationsCollectionUrl
+    // Check if the message is not expired
+    const errorOrActiveMessage = ActiveMessage.decode(
+      emailNotificationEvent.message
     );
-
-    const appInsightsClient = new ApplicationInsights.TelemetryClient();
-    const queueService = createQueueService(queueConnectionString);
-
-    const mailerTransporter = NodeMailer.createTransport(
-      sendGridTransport({
-        auth: {
-          api_key: sendgridKey
-        }
-      })
-    );
+    if (isLeft(errorOrActiveMessage)) {
+      const errorMsg = readableReport(errorOrActiveMessage.value);
+      const errorOrUpdateNotificationStatus = await notificationStatusUpdater(
+        NotificationChannelStatusValueEnum.EXPIRED
+      );
+      if (isLeft(errorOrUpdateNotificationStatus)) {
+        // retry in case we cannot save the notification status to the database
+        throw TransientError(errorOrUpdateNotificationStatus.value.message);
+      }
+      // if the message is expired no more processing is necessary
+      throw PermanentError(errorMsg);
+    }
 
     const errorOrEmailNotificationEvt = await handleNotification(
       mailerTransporter,
@@ -446,34 +447,38 @@ export async function index(
       notificationModel,
       emailNotificationEvent
     );
-
-    const shouldTriggerARetryOrOutputBindings = await errorOrEmailNotificationEvt.fold(
-      error =>
-        processRuntimeError(
-          queueService,
-          notificationStatusUpdater,
-          error,
-          context.bindingData
-        ),
-      emailNotificationEvt =>
-        processSuccess(emailNotificationEvt, notificationStatusUpdater)
-    );
-
-    return shouldTriggerARetryOrOutputBindings.fold(
-      shouldTriggerARetry => {
-        if (shouldTriggerARetry) {
-          throw TransientError("retry");
-        }
-        return stopProcessing;
-      },
-      // success !
-      _ => stopProcessing
-    );
-  } catch (error) {
-    if (isTransient(error)) {
-      throw error;
+    if (isLeft(errorOrEmailNotificationEvt)) {
+      // something went wrong sending the email
+      throw errorOrEmailNotificationEvt.value;
     }
-    await processGenericError(notificationStatusUpdater, error);
+
+    // try to save notification status to database
+    const errorOrUpdatedNotificationStatus = await notificationStatusUpdater(
+      NotificationChannelStatusValueEnum.SENT_TO_CHANNEL
+    );
+    if (isLeft(errorOrUpdatedNotificationStatus)) {
+      // this will trigger a retry as it's considered a transient error
+      throw errorOrUpdatedNotificationStatus.value;
+    }
+
+    winston.debug(
+      `EmailNotificationsHandler|Email notification succeeded|notification=${
+        emailNotificationEvent.notificationId
+      }|message=${emailNotificationEvent.message.id}`
+    );
+
+    return stopProcessing;
+    //
+  } catch (error) {
+    const shouldTriggerARetry = await processRuntimeError(
+      queueService,
+      notificationStatusUpdater,
+      context.bindingData,
+      error
+    );
+    if (shouldTriggerARetry) {
+      throw TransientError(`EmailNotificationsHandler|Retry|${error.message}`);
+    }
     return stopProcessing;
   }
 }

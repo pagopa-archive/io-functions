@@ -58,7 +58,7 @@ import {
   processRuntimeError,
   processSuccess
 } from "../created_message_queue_handler";
-import { processGenericError } from "../created_message_queue_handler";
+
 import { MessageStatusModel } from "../models/message_status";
 
 afterEach(() => {
@@ -714,8 +714,6 @@ describe("processSuccess", () => {
     const messageStatusUpdaterMock = jest.fn();
 
     const result = await processSuccess(
-      messageStatusUpdaterMock,
-      {} as any,
       notification as any,
       aMessage,
       aMessageEvent.senderMetadata
@@ -734,16 +732,6 @@ describe("processSuccess", () => {
         });
       }
     }
-  });
-});
-
-describe("processGenericError", () => {
-  it("should update message status to FAILED", async () => {
-    const messageStatusUpdaterMock = jest.fn();
-    await processGenericError(messageStatusUpdaterMock, new Error());
-    expect(messageStatusUpdaterMock).toHaveBeenCalledWith(
-      MessageStatusValueEnum.FAILED
-    );
   });
 });
 

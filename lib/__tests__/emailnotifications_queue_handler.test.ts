@@ -37,7 +37,6 @@ import {
   generateDocumentHtml,
   handleNotification,
   index,
-  processGenericError,
   processRuntimeError,
   sendMail
 } from "../emailnotifications_queue_handler";

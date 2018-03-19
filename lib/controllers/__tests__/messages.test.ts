@@ -197,7 +197,6 @@ describe("CreateMessageHandler", () => {
 
     const createMessageHandler = CreateMessageHandler(
       {} as any,
-      {} as any,
       mockMessageModel as any,
       {} as any
     );
@@ -237,7 +236,6 @@ describe("CreateMessageHandler", () => {
     const createMessageHandler = CreateMessageHandler(
       mockAppInsights as any,
       mockMessageModel as any,
-      getMessageStatusModelMock(),
       () => aMessageId
     );
 
@@ -319,7 +317,6 @@ describe("CreateMessageHandler", () => {
     const createMessageHandler = CreateMessageHandler(
       mockAppInsights as any,
       mockMessageModel as any,
-      getMessageStatusModelMock(),
       () => aMessageId
     );
 
@@ -411,7 +408,6 @@ describe("CreateMessageHandler", () => {
     const createMessageHandler = CreateMessageHandler(
       mockAppInsights as any,
       mockMessageModel as any,
-      getMessageStatusModelMock(),
       () => aMessageId
     );
 
@@ -502,7 +498,6 @@ describe("CreateMessageHandler", () => {
     const createMessageHandler = CreateMessageHandler(
       mockAppInsights as any,
       mockMessageModel as any,
-      getMessageStatusModelMock(),
       () => aMessageId
     );
 
@@ -598,7 +593,6 @@ describe("CreateMessageHandler", () => {
     const createMessageHandler = CreateMessageHandler(
       mockAppInsights as any,
       mockMessageModel as any,
-      getMessageStatusModelMock(),
       () => aMessageId
     );
 
@@ -648,7 +642,6 @@ describe("CreateMessageHandler", () => {
     const createMessageHandler = CreateMessageHandler(
       mockAppInsights as any,
       mockMessageModel as any,
-      getMessageStatusModelMock(),
       () => aMessageId
     );
 
@@ -688,7 +681,6 @@ describe("CreateMessageHandler", () => {
     const createMessageHandler = CreateMessageHandler(
       mockAppInsights as any,
       mockMessageModel as any,
-      getMessageStatusModelMock(),
       () => aMessageId
     );
 
@@ -1160,12 +1152,7 @@ describe("MessagePayloadMiddleware", () => {
 
 describe("CreateMessage", () => {
   it("should fail with 500 if context cannot be retrieved", async () => {
-    const createMessage = CreateMessage(
-      {} as any,
-      {} as any,
-      {} as any,
-      {} as any
-    );
+    const createMessage = CreateMessage({} as any, {} as any, {} as any);
     const mockResponse = MockResponse();
     const request = {
       app: {
@@ -1187,12 +1174,7 @@ describe("CreateMessage", () => {
     const headers: IHeaders = {
       "x-user-groups": ""
     };
-    const createMessage = CreateMessage(
-      {} as any,
-      {} as any,
-      {} as any,
-      {} as any
-    );
+    const createMessage = CreateMessage({} as any, {} as any, {} as any);
     const mockResponse = MockResponse();
     const request = {
       app: {
@@ -1217,12 +1199,7 @@ describe("CreateMessage", () => {
       "x-subscription-id": "someId",
       "x-user-groups": "ApiMessageWrite"
     };
-    const createMessage = CreateMessage(
-      {} as any,
-      {} as any,
-      {} as any,
-      {} as any
-    );
+    const createMessage = CreateMessage({} as any, {} as any, {} as any);
     const mockResponse = MockResponse();
     const request = {
       app: {
