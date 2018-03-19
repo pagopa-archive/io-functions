@@ -96,7 +96,10 @@ describe("createMessage", () => {
 
     expect(isRight(result)).toBeTruthy();
     if (isRight(result)) {
-      expect(result.value).toEqual(aRetrievedMessageWithContent);
+      expect(result.value).toEqual({
+        ...aRetrievedMessageWithContent,
+        createdAt: expect.any(Date)
+      });
     }
   });
 
