@@ -37,8 +37,14 @@ NotificationChannel:
   example: EMAIL
 NotificationChannelStatusValue:
   type: string
+    The status of a notification (one for each channel).
+    "SENT_TO_CHANNEL": the notification was succesfully sent to the channel (ie. email or push notification)
+    "THROTTLED": a temporary failure caused a retry during the notification processing;
+                 any notification associated with this channel will be delayed until the message expires
+    "EXPIRED": the message expired before the notification could be sent;
+               this means that the maximum message time to live was reached so no notification will be sent for this channel
+    "FAILED": a permanent failure caused the process to exit with an error, no notification for this channel will be sent for this message
   x-extensible-enum:
-    - QUEUED
     - SENT_TO_CHANNEL
     - THROTTLED
     - EXPIRED
