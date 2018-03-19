@@ -40,6 +40,7 @@ NotificationChannelStatusValue:
   x-extensible-enum:
     - QUEUED
     - SENT_TO_CHANNEL
+    - THROTTLED
     - EXPIRED
     - FAILED
   example: SENT_TO_CHANNEL
