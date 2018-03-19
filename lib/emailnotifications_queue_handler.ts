@@ -111,14 +111,6 @@ const queueService = createQueueService(queueConnectionString);
 
 const sendgridKey = getRequiredStringEnv("CUSTOMCONNSTR_SENDGRID_KEY");
 
-const mailerTransporter = NodeMailer.createTransport(
-  sendGridTransport({
-    auth: {
-      api_key: sendgridKey
-    }
-  })
-);
-
 //
 // options used when converting an HTML message to pure text
 // see https://www.npmjs.com/package/html-to-text#options
@@ -349,7 +341,7 @@ export async function processRuntimeError(
       queueMessage
     );
     const errorOrNotificationStatus = await notificationStatusUpdater(
-      NotificationChannelStatusValueEnum.QUEUED
+      NotificationChannelStatusValueEnum.THROTTLED
     );
     if (isLeft(errorOrNotificationStatus)) {
       winston.warn(
@@ -416,6 +408,14 @@ export async function index(
     return stopProcessing;
   }
   const emailNotificationEvent = errorOrNotificationEvent.value;
+
+  const mailerTransporter = NodeMailer.createTransport(
+    sendGridTransport({
+      auth: {
+        api_key: sendgridKey
+      }
+    })
+  );
 
   const notificationStatusUpdater = getNotificationStatusUpdater(
     notificationStatusModel,
