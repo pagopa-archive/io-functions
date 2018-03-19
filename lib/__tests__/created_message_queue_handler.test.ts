@@ -181,8 +181,9 @@ describe("createdMessageQueueIndex", () => {
         throw new Error("findOneProfileByFiscalCodeErr");
       });
 
-    const messageStatusSpy = jest.spyOn(MessageStatusModel.prototype, "upsert");
-
+    const messageStatusSpy = jest
+      .spyOn(MessageStatusModel.prototype, "upsert")
+      .mockReturnValue(Promise.resolve(right(none)));
     const ret = await index(contextMock as any);
     expect(ret).toEqual(undefined);
     expect(messageStatusSpy).toHaveBeenCalledWith(
@@ -231,6 +232,10 @@ describe("createdMessageQueueIndex", () => {
       .mockImplementationOnce(() =>
         Promise.resolve(right(aCreatedNotificationWithEmail))
       );
+
+    jest
+      .spyOn(MessageStatusModel.prototype, "upsert")
+      .mockReturnValue(Promise.resolve(right(none)));
 
     const profileSpy = jest
       .spyOn(ProfileModel.prototype, "findOneProfileByFiscalCode")
@@ -720,7 +725,7 @@ describe("processRuntimeError", () => {
     expect(winstonSpy).toHaveBeenCalledTimes(2);
   });
 
-  it.only("should retry on transient error", async () => {
+  it("should retry on transient error", async () => {
     const error = TransientError("err");
     const winstonSpy = jest.spyOn(winston, "warn");
     const messageStatusUpdaterMock = jest.fn().mockReturnValue(right(none));

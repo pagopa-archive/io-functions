@@ -288,15 +288,15 @@ export async function handleMessage(
 }
 
 /**
- * Returns left(true) in case the caller must
- * trigger a retry calling context.done(true)
+ * Returns true in case the caller must
+ * trigger a retry
  */
 export async function processRuntimeError(
   lQueueService: QueueService,
   messageStatusUpdater: MessageStatusUpdater,
   queueMessage: IQueueMessage,
   error: RuntimeError
-): Promise<Either<boolean, Option<OutputBindings>>> {
+): Promise<boolean> {
   if (isTransient(error)) {
     winston.warn(`CreatedMessageQueueHandler|Transient error|${error.message}`);
     const shouldTriggerARetry = await updateMessageVisibilityTimeout(
@@ -314,7 +314,7 @@ export async function processRuntimeError(
         }`
       );
     }
-    return left(shouldTriggerARetry);
+    return shouldTriggerARetry;
   } else {
     winston.error(
       `CreatedMessageQueueHandler|Permanent error|${error.message}`
@@ -333,8 +333,8 @@ export async function processRuntimeError(
         transientError
       );
     } else {
-      // return no bindings so message processing stops here
-      return right(none);
+      // message processing stops here
+      return false;
     }
   }
 }
