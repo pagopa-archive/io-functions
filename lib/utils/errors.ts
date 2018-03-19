@@ -40,11 +40,15 @@ export const UnknowError = RuntimeError(ErrorTypes.UnknowError);
  * Useful in try / catch blocks where the object caught is untyped.
  */
 // tslint:disable-next-line:no-any
-export const of = (error: any) =>
-  UnknowError(
-    error && error.message ? error.message : JSON.stringify(error),
-    error instanceof Error ? error : undefined
-  );
+export const of = (error: any): RuntimeError =>
+  error && ErrorTypes.hasOwnProperty(error.kind)
+    ? error
+    : UnknowError(
+        error instanceof Error && error.message
+          ? error.message
+          : JSON.stringify(error),
+        error instanceof Error ? error : undefined
+      );
 
 export type RuntimeError = TransientError | PermanentError | UnknowError;
 

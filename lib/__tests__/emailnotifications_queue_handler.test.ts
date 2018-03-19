@@ -543,16 +543,22 @@ describe("emailnotificationQueueHandlerIndex", () => {
       done: jest.fn(),
       log: jest.fn()
     };
-    const nodemailerSpy = jest
-      .spyOn(NodeMailer, "createTransport")
-      .mockReturnValue({
-        sendMail: jest.fn((_, cb) => cb(null, "ok"))
-      });
+    jest.spyOn(NodeMailer, "createTransport").mockReturnValue({
+      sendMail: jest.fn((_, cb) => cb(null, "ok"))
+    });
+
+    jest
+      .spyOn(NotificationStatusModel.prototype, "upsert")
+      .mockReturnValue(Promise.resolve(right(none)));
+
     const winstonErrorSpy = jest.spyOn(winston, "error");
-    const ret = await index(contextMock as any);
-    expect(ret).toEqual(undefined);
-    expect(nodemailerSpy).not.toHaveBeenCalled();
-    expect(winstonErrorSpy).toHaveBeenCalledTimes(1);
+    expect.assertions(2);
+    try {
+      await index(contextMock as any);
+    } catch (err) {
+      expect(err.kind).toEqual("TransientError");
+      expect(winstonErrorSpy).toHaveBeenCalledTimes(1);
+    }
   });
 
   it("should proceed on valid message payload", async () => {
@@ -591,29 +597,35 @@ describe("emailnotificationQueueHandlerIndex", () => {
 
 describe("processRuntimeError", () => {
   it("should retry on transient error", async () => {
-    const notificationStatusUpdaterMock = jest.fn();
+    const notificationStatusUpdaterMock = jest
+      .fn()
+      .mockReturnValue(Promise.resolve(right(none)));
     const error = TransientError("err");
     const winstonSpy = jest.spyOn(winston, "warn");
     await processRuntimeError(
       {} as any,
       notificationStatusUpdaterMock,
-      error as any,
-      {} as any
+      {} as any,
+      error as any
     );
-    expect(notificationStatusUpdaterMock).not.toHaveBeenCalled();
+    expect(notificationStatusUpdaterMock).toHaveBeenCalledWith(
+      NotificationChannelStatusValueEnum.THROTTLED
+    );
     expect(updateMessageVisibilityTimeout).toHaveBeenCalledTimes(1);
     expect(winstonSpy).toHaveBeenCalledTimes(1);
   });
 
   it("should fail in case of permament error", async () => {
-    const notificationStatusUpdaterMock = jest.fn();
+    const notificationStatusUpdaterMock = jest
+      .fn()
+      .mockReturnValue(Promise.resolve(right(none)));
     const error = PermanentError("err");
     const winstonSpy = jest.spyOn(winston, "error");
     await processRuntimeError(
       {} as any,
       notificationStatusUpdaterMock,
-      error as any,
-      {} as any
+      {} as any,
+      error as any
     );
     expect(notificationStatusUpdaterMock).toHaveBeenCalledWith(
       NotificationChannelStatusValueEnum.FAILED

@@ -40,13 +40,6 @@ import { TimeToLiveSeconds } from "../api/definitions/TimeToLiveSeconds";
 import { NotificationEvent } from "../models/notification_event";
 
 jest.mock("azure-storage");
-
-jest.mock("../models/notification_status", () => ({
-  NOTIFICATION_STATUS_COLLECTION_NAME: "foobar",
-  NotificationStatusModel: jest.fn(),
-  getNotificationStatusUpdater: () => (x: any) => Promise.resolve(x)
-}));
-
 jest.mock("../utils/azure_queues");
 import { updateMessageVisibilityTimeout } from "../utils/azure_queues";
 
@@ -185,7 +178,7 @@ describe("createdMessageQueueIndex", () => {
     jest
       .spyOn(ProfileModel.prototype, "findOneProfileByFiscalCode")
       .mockImplementationOnce(() => {
-        throw new Error();
+        throw new Error("findOneProfileByFiscalCodeErr");
       });
 
     const messageStatusSpy = jest.spyOn(MessageStatusModel.prototype, "upsert");
@@ -708,17 +701,38 @@ describe("handleMessage", () => {
 });
 
 describe("processRuntimeError", () => {
-  it("should retry on transient error", async () => {
-    const error = TransientError("err");
+  it("should retry on errors during status update", async () => {
+    const error = PermanentError("err");
     const winstonSpy = jest.spyOn(winston, "warn");
-    const messageStatusUpdaterMock = jest.fn();
+    const messageStatusUpdaterMock = jest
+      .fn()
+      .mockReturnValue(left(TransientError("err")));
     await processRuntimeError(
       {} as any,
       messageStatusUpdaterMock,
       error as any,
       {} as any
     );
-    expect(messageStatusUpdaterMock).not.toHaveBeenCalled();
+    expect(messageStatusUpdaterMock).toHaveBeenCalledWith(
+      MessageStatusValueEnum.FAILED
+    );
+    expect(updateMessageVisibilityTimeout).toHaveBeenCalledTimes(1);
+    expect(winstonSpy).toHaveBeenCalledTimes(2);
+  });
+
+  it.only("should retry on transient error", async () => {
+    const error = TransientError("err");
+    const winstonSpy = jest.spyOn(winston, "warn");
+    const messageStatusUpdaterMock = jest.fn().mockReturnValue(right(none));
+    await processRuntimeError(
+      {} as any,
+      messageStatusUpdaterMock,
+      {} as any,
+      error as any
+    );
+    expect(messageStatusUpdaterMock).toHaveBeenCalledWith(
+      MessageStatusValueEnum.THROTTLED
+    );
     expect(updateMessageVisibilityTimeout).toHaveBeenCalledTimes(1);
     expect(winstonSpy).toHaveBeenCalledTimes(1);
   });
@@ -726,12 +740,12 @@ describe("processRuntimeError", () => {
   it("should fail in case of permament error", async () => {
     const error = PermanentError("err");
     const winstonSpy = jest.spyOn(winston, "error");
-    const messageStatusUpdaterMock = jest.fn();
+    const messageStatusUpdaterMock = jest.fn().mockReturnValue(right(none));
     await processRuntimeError(
       {} as any,
       messageStatusUpdaterMock,
-      error as any,
-      {} as any
+      {} as any,
+      error as any
     );
     expect(messageStatusUpdaterMock).toHaveBeenCalledWith(
       MessageStatusValueEnum.FAILED
