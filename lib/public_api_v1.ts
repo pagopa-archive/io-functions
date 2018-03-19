@@ -33,7 +33,12 @@ import * as express from "express";
 import { secureExpressApp } from "./utils/express";
 
 import { createBlobService } from "azure-storage";
+
 import { GetService } from "./controllers/services";
+import {
+  MESSAGE_STATUS_COLLECTION_NAME,
+  MessageStatusModel
+} from "./models/message_status";
 import {
   NOTIFICATION_STATUS_COLLECTION_NAME,
   NotificationStatusModel
@@ -57,6 +62,10 @@ const documentDbDatabaseUrl = documentDbUtils.getDatabaseUri(cosmosDbName);
 const messagesCollectionUrl = documentDbUtils.getCollectionUri(
   documentDbDatabaseUrl,
   "messages"
+);
+const messageStatusCollectionUrl = documentDbUtils.getCollectionUri(
+  documentDbDatabaseUrl,
+  MESSAGE_STATUS_COLLECTION_NAME
 );
 const profilesCollectionUrl = documentDbUtils.getCollectionUri(
   documentDbDatabaseUrl,
@@ -84,6 +93,10 @@ const messageModel = new MessageModel(
   documentClient,
   messagesCollectionUrl,
   messageContainerName
+);
+const messageStatusModel = new MessageStatusModel(
+  documentClient,
+  messageStatusCollectionUrl
 );
 const serviceModel = new ServiceModel(documentClient, servicesCollectionUrl);
 const notificationModel = new NotificationModel(
@@ -122,6 +135,7 @@ app.get(
   GetMessage(
     serviceModel,
     messageModel,
+    messageStatusModel,
     notificationModel,
     notificationStatusModel,
     blobService

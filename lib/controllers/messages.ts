@@ -106,10 +106,7 @@ import { MessageStatusValueEnum } from "../api/definitions/MessageStatusValue";
 import { NotificationChannelEnum } from "../api/definitions/NotificationChannel";
 import { NotificationChannelStatusValueEnum } from "../api/definitions/NotificationChannelStatusValue";
 import { TimeToLiveSeconds } from "../api/definitions/TimeToLiveSeconds";
-import {
-  getMessageStatusUpdater,
-  MessageStatusModel
-} from "../models/message_status";
+import { MessageStatusModel } from "../models/message_status";
 import { NotificationStatusModel } from "../models/notification_status";
 
 /**
@@ -323,7 +320,6 @@ async function getMessageNotificationStatuses(
 export function CreateMessageHandler(
   applicationInsightsClient: ApplicationInsights.TelemetryClient,
   messageModel: MessageModel,
-  messageStatusModel: MessageStatusModel,
   generateObjectId: ObjectIdGenerator
 ): ICreateMessageHandler {
   return async (
@@ -477,18 +473,6 @@ export function CreateMessageHandler(
     });
 
     //
-    // update message status
-    //
-
-    const messageStatusUpdater = getMessageStatusUpdater(
-      messageStatusModel,
-      newMessageWithContent.id
-    );
-
-    // best effort, skip error checking
-    await messageStatusUpdater(MessageStatusValueEnum.ACCEPTED);
-
-    //
     // respond to request
     //
 
@@ -507,13 +491,11 @@ export function CreateMessageHandler(
 export function CreateMessage(
   applicationInsightsClient: ApplicationInsights.TelemetryClient,
   serviceModel: ServiceModel,
-  messageModel: MessageModel,
-  messageStatusModel: MessageStatusModel
+  messageModel: MessageModel
 ): express.RequestHandler {
   const handler = CreateMessageHandler(
     applicationInsightsClient,
     messageModel,
-    messageStatusModel,
     ulidGenerator
   );
   const middlewaresWrap = withRequestMiddlewares(
@@ -654,7 +636,7 @@ export function GetMessageHandler(
       // we do not return the status date-time
       status: maybeMessageStatus
         .map(messageStatus => messageStatus.status)
-        .toUndefined()
+        .getOrElse(MessageStatusValueEnum.ACCEPTED)
     };
 
     return ResponseSuccessJson(withoutUndefinedValues(returnedMessage));
