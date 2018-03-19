@@ -547,18 +547,23 @@ describe("emailnotificationQueueHandlerIndex", () => {
       sendMail: jest.fn((_, cb) => cb(null, "ok"))
     });
 
-    jest
+    const statusSpy = jest
       .spyOn(NotificationStatusModel.prototype, "upsert")
       .mockReturnValue(Promise.resolve(right(none)));
 
     const winstonErrorSpy = jest.spyOn(winston, "error");
-    expect.assertions(2);
-    try {
-      await index(contextMock as any);
-    } catch (err) {
-      expect(err.kind).toEqual("TransientError");
-      expect(winstonErrorSpy).toHaveBeenCalledTimes(1);
-    }
+    const ret = await index(contextMock as any);
+    expect(ret).toEqual(undefined);
+    expect(statusSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        status: NotificationChannelStatusValueEnum.EXPIRED
+      }),
+      expect.anything(),
+      expect.anything(),
+      expect.anything(),
+      expect.anything()
+    );
+    expect(winstonErrorSpy).toHaveBeenCalledTimes(1);
   });
 
   it("should proceed on valid message payload", async () => {

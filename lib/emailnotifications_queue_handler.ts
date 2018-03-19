@@ -18,7 +18,7 @@ import { DocumentClient as DocumentDBClient } from "documentdb";
 import * as documentDbUtils from "./utils/documentdb";
 
 import { Either, isLeft, left, right } from "fp-ts/lib/Either";
-import { isNone, none, Option } from "fp-ts/lib/Option";
+import { isNone } from "fp-ts/lib/Option";
 import { getRequiredStringEnv } from "./utils/env";
 import { readableReport } from "./utils/validation_reporters";
 
@@ -330,7 +330,7 @@ export async function processRuntimeError(
   notificationStatusUpdater: NotificationStatusUpdater,
   queueMessage: IQueueMessage,
   error: RuntimeError
-): Promise<Either<boolean, Option<OutputBindings>>> {
+): Promise<boolean> {
   if (isTransient(error)) {
     winston.warn(
       `EmailNotificationQueueHandler|Transient error|${error.message}`
@@ -350,7 +350,7 @@ export async function processRuntimeError(
         }`
       );
     }
-    return left(shouldTriggerARetry);
+    return shouldTriggerARetry;
   } else {
     winston.error(
       `EmailNotificationQueueHandler|Permanent error|${error.message}`
@@ -370,7 +370,7 @@ export async function processRuntimeError(
       );
     } else {
       // return no bindings so message processing stops here
-      return right(none);
+      return false;
     }
   }
 }
