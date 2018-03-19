@@ -41,6 +41,7 @@ import { MessageSubject } from "./api/definitions/MessageSubject";
 import defaultEmailTemplate from "./templates/html/default";
 import {
   isTransient,
+  of as RuntimeErrorOf,
   PermanentError,
   RuntimeError,
   TransientError
@@ -474,7 +475,7 @@ export async function index(
       queueService,
       notificationStatusUpdater,
       context.bindingData,
-      error
+      RuntimeErrorOf(error)
     );
     if (shouldTriggerARetry) {
       throw TransientError(`EmailNotificationsHandler|Retry|${error.message}`);

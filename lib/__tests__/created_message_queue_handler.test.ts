@@ -17,7 +17,7 @@ import { NewMessageWithContent } from "../models/message";
 
 import * as functionConfig from "../../CreatedMessageQueueHandler/function.json";
 
-import { isSome, none, some } from "fp-ts/lib/Option";
+import { none, some } from "fp-ts/lib/Option";
 import { FiscalCode } from "../api/definitions/FiscalCode";
 import { MessageBodyMarkdown } from "../api/definitions/MessageBodyMarkdown";
 
@@ -55,8 +55,7 @@ import {
   handleMessage,
   index,
   MESSAGE_QUEUE_NAME,
-  processRuntimeError,
-  processSuccess
+  processRuntimeError
 } from "../created_message_queue_handler";
 
 import { MessageStatusModel } from "../models/message_status";
@@ -708,41 +707,14 @@ describe("handleMessage", () => {
   });
 });
 
-describe("processSuccess", () => {
-  it("should enqueue notification to the email queue if an email is present", async () => {
-    const notification = aCreatedNotificationWithEmail;
-    const messageStatusUpdaterMock = jest.fn();
-
-    const result = await processSuccess(
-      notification as any,
-      aMessage,
-      aMessageEvent.senderMetadata
-    );
-
-    expect(messageStatusUpdaterMock).toHaveBeenCalledWith(
-      MessageStatusValueEnum.PROCESSED
-    );
-
-    expect(isRight(result)).toBeTruthy();
-    if (isRight(result)) {
-      expect(isSome(result.value)).toBeTruthy();
-      if (isSome(result.value)) {
-        expect(result.value.value).toEqual({
-          emailNotification: anEmailNotificationEvent
-        });
-      }
-    }
-  });
-});
-
 describe("processRuntimeError", () => {
   it("should retry on transient error", async () => {
     const error = TransientError("err");
     const winstonSpy = jest.spyOn(winston, "warn");
     const messageStatusUpdaterMock = jest.fn();
     await processRuntimeError(
-      messageStatusUpdaterMock,
       {} as any,
+      messageStatusUpdaterMock,
       error as any,
       {} as any
     );
@@ -756,8 +728,8 @@ describe("processRuntimeError", () => {
     const winstonSpy = jest.spyOn(winston, "error");
     const messageStatusUpdaterMock = jest.fn();
     await processRuntimeError(
-      messageStatusUpdaterMock,
       {} as any,
+      messageStatusUpdaterMock,
       error as any,
       {} as any
     );

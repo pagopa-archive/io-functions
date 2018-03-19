@@ -52,6 +52,7 @@ import {
 } from "./utils/azure_queues";
 import {
   isTransient,
+  of as RuntimeErrorOf,
   PermanentError,
   RuntimeError,
   TransientError
@@ -436,7 +437,7 @@ export async function index(
       queueService,
       messageStatusUpdater,
       context.bindingData,
-      error
+      RuntimeErrorOf(error)
     );
     if (shouldTriggerARetry) {
       throw TransientError(`CreatedMessageQueueHandler|Retry|${error.message}`);
