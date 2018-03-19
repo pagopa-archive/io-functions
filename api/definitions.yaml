@@ -37,6 +37,7 @@ NotificationChannel:
   example: EMAIL
 NotificationChannelStatusValue:
   type: string
+  description: |-
     The status of a notification (one for each channel).
     "SENT_TO_CHANNEL": the notification was succesfully sent to the channel (ie. email or push notification)
     "THROTTLED": a temporary failure caused a retry during the notification processing;
