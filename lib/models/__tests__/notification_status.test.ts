@@ -33,7 +33,7 @@ const aSerializedNotificationStatus = {
   notificationId: "A_NOTIFICATION_ID" as NonEmptyString,
   status: NotificationChannelStatusValueEnum.SENT_TO_CHANNEL,
   statusId: aNotificationStatusId,
-  updateAt: new Date().toISOString()
+  updatedAt: new Date().toISOString()
 };
 
 const aNotificationStatus = NotificationStatus.decode(

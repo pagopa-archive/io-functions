@@ -153,7 +153,7 @@ const aRetrievedNotificationStatus: RetrievedNotificationStatus = {
   notificationId: aNotificationId,
   status: NotificationChannelStatusValueEnum.SENT_TO_CHANNEL,
   statusId: makeStatusId(aNotificationId, NotificationChannelEnum.EMAIL),
-  updateAt: new Date(),
+  updatedAt: new Date(),
   version: 1 as NonNegativeNumber
 };
 
