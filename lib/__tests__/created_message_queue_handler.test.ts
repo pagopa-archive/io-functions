@@ -50,6 +50,7 @@ jest.mock("../models/notification_status", () => ({
 jest.mock("../utils/azure_queues");
 import { updateMessageVisibilityTimeout } from "../utils/azure_queues";
 
+import { MessageStatusValueEnum } from "../api/definitions/MessageStatusValue";
 import {
   handleMessage,
   index,
@@ -57,6 +58,8 @@ import {
   processRuntimeError,
   processSuccess
 } from "../created_message_queue_handler";
+import { processGenericError } from "../created_message_queue_handler";
+import { MessageStatusModel } from "../models/message_status";
 
 afterEach(() => {
   jest.resetAllMocks();
@@ -167,9 +170,38 @@ describe("createdMessageQueueIndex", () => {
 
     const ret = await index(contextMock as any);
     expect(ret).toEqual(undefined);
-
-    expect(contextMock.bindings.emailNotification).toBeUndefined();
     expect(spy).toHaveBeenCalledTimes(1);
+  });
+
+  it("should return failure if any error occurs", async () => {
+    const contextMock = {
+      bindings: {
+        createdMessage: aMessageEvent,
+        emailNotification: undefined
+      },
+      done: jest.fn(),
+      log: jest.fn()
+    };
+
+    jest
+      .spyOn(ProfileModel.prototype, "findOneProfileByFiscalCode")
+      .mockImplementationOnce(() => {
+        throw new Error();
+      });
+
+    const messageStatusSpy = jest.spyOn(MessageStatusModel.prototype, "upsert");
+
+    const ret = await index(contextMock as any);
+    expect(ret).toEqual(undefined);
+    expect(messageStatusSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        status: MessageStatusValueEnum.FAILED
+      }),
+      expect.anything(),
+      expect.anything(),
+      expect.anything(),
+      expect.anything()
+    );
   });
 
   it("should stop processing if createdMessage is invalid (wrong fiscal code)", async () => {
@@ -679,12 +711,18 @@ describe("handleMessage", () => {
 describe("processSuccess", () => {
   it("should enqueue notification to the email queue if an email is present", async () => {
     const notification = aCreatedNotificationWithEmail;
+    const messageStatusUpdaterMock = jest.fn();
 
     const result = await processSuccess(
+      messageStatusUpdaterMock,
       {} as any,
       notification as any,
       aMessage,
       aMessageEvent.senderMetadata
+    );
+
+    expect(messageStatusUpdaterMock).toHaveBeenCalledWith(
+      MessageStatusValueEnum.PROCESSED
     );
 
     expect(isRight(result)).toBeTruthy();
@@ -699,11 +737,28 @@ describe("processSuccess", () => {
   });
 });
 
+describe("processGenericError", () => {
+  it("should update message status to FAILED", async () => {
+    const messageStatusUpdaterMock = jest.fn();
+    await processGenericError(messageStatusUpdaterMock, new Error());
+    expect(messageStatusUpdaterMock).toHaveBeenCalledWith(
+      MessageStatusValueEnum.FAILED
+    );
+  });
+});
+
 describe("processRuntimeError", () => {
   it("should retry on transient error", async () => {
     const error = TransientError("err");
     const winstonSpy = jest.spyOn(winston, "warn");
-    await processRuntimeError({} as any, error as any, {} as any);
+    const messageStatusUpdaterMock = jest.fn();
+    await processRuntimeError(
+      messageStatusUpdaterMock,
+      {} as any,
+      error as any,
+      {} as any
+    );
+    expect(messageStatusUpdaterMock).not.toHaveBeenCalled();
     expect(updateMessageVisibilityTimeout).toHaveBeenCalledTimes(1);
     expect(winstonSpy).toHaveBeenCalledTimes(1);
   });
@@ -711,7 +766,16 @@ describe("processRuntimeError", () => {
   it("should fail in case of permament error", async () => {
     const error = PermanentError("err");
     const winstonSpy = jest.spyOn(winston, "error");
-    await processRuntimeError({} as any, error as any, {} as any);
+    const messageStatusUpdaterMock = jest.fn();
+    await processRuntimeError(
+      messageStatusUpdaterMock,
+      {} as any,
+      error as any,
+      {} as any
+    );
+    expect(messageStatusUpdaterMock).toHaveBeenCalledWith(
+      MessageStatusValueEnum.FAILED
+    );
     expect(updateMessageVisibilityTimeout).not.toHaveBeenCalled();
     expect(winstonSpy).toHaveBeenCalledTimes(1);
   });

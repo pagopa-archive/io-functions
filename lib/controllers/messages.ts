@@ -93,12 +93,23 @@ import {
 import { withoutUndefinedValues } from "../utils/types";
 
 import { Either, isLeft, isRight, left, right } from "fp-ts/lib/Either";
-import { fromEither, isNone, none, Option, some } from "fp-ts/lib/Option";
+import {
+  fromEither as OptionFromEither,
+  isNone,
+  none,
+  Option,
+  some
+} from "fp-ts/lib/Option";
 
 import { CreatedMessageWithContent } from "../api/definitions/CreatedMessageWithContent";
+import { MessageStatusValueEnum } from "../api/definitions/MessageStatusValue";
 import { NotificationChannelEnum } from "../api/definitions/NotificationChannel";
 import { NotificationChannelStatusValueEnum } from "../api/definitions/NotificationChannelStatusValue";
 import { TimeToLiveSeconds } from "../api/definitions/TimeToLiveSeconds";
+import {
+  getMessageStatusUpdater,
+  MessageStatusModel
+} from "../models/message_status";
 import { NotificationStatusModel } from "../models/notification_status";
 
 /**
@@ -127,9 +138,9 @@ export const MessagePayloadMiddleware: IRequestMiddleware<
 > = request =>
   new Promise(resolve => {
     return resolve(
-      ApiNewMessageWithDefaults.decode(request.body)
-        .mapLeft(ResponseErrorFromValidationErrors(ApiNewMessageWithDefaults))
-        .map(t.identity)
+      ApiNewMessageWithDefaults.decode(request.body).mapLeft(
+        ResponseErrorFromValidationErrors(ApiNewMessageWithDefaults)
+      )
     );
   });
 
@@ -233,7 +244,7 @@ async function getChannelStatus(
     notificationId,
     channel
   );
-  return fromEither(errorOrMaybeStatus)
+  return OptionFromEither(errorOrMaybeStatus)
     .chain(t.identity)
     .map(o => o.status)
     .toUndefined();
@@ -312,6 +323,7 @@ async function getMessageNotificationStatuses(
 export function CreateMessageHandler(
   applicationInsightsClient: ApplicationInsights.TelemetryClient,
   messageModel: MessageModel,
+  messageStatusModel: MessageStatusModel,
   generateObjectId: ObjectIdGenerator
 ): ICreateMessageHandler {
   return async (
@@ -465,6 +477,18 @@ export function CreateMessageHandler(
     });
 
     //
+    // update message status
+    //
+
+    const messageStatusUpdater = getMessageStatusUpdater(
+      messageStatusModel,
+      newMessageWithContent.id
+    );
+
+    // best effort, skip error checking
+    await messageStatusUpdater(MessageStatusValueEnum.ACCEPTED);
+
+    //
     // respond to request
     //
 
@@ -483,11 +507,13 @@ export function CreateMessageHandler(
 export function CreateMessage(
   applicationInsightsClient: ApplicationInsights.TelemetryClient,
   serviceModel: ServiceModel,
-  messageModel: MessageModel
+  messageModel: MessageModel,
+  messageStatusModel: MessageStatusModel
 ): express.RequestHandler {
   const handler = CreateMessageHandler(
     applicationInsightsClient,
     messageModel,
+    messageStatusModel,
     ulidGenerator
   );
   const middlewaresWrap = withRequestMiddlewares(
@@ -520,6 +546,7 @@ export function CreateMessage(
  */
 export function GetMessageHandler(
   messageModel: MessageModel,
+  messageStatusModel: MessageStatusModel,
   notificationModel: NotificationModel,
   notificationStatusModel: NotificationStatusModel,
   blobService: BlobService
@@ -606,15 +633,31 @@ export function GetMessageHandler(
         }|${errorOrNotificationStatuses.value.message}`
       );
     }
-
     const notificationStatuses = errorOrNotificationStatuses.value;
 
-    const messageStatus: MessageResponseWithContent = {
+    const errorOrMaybeMessageStatus = await messageStatusModel.findOneByMessageId(
+      retrievedMessage.id
+    );
+
+    if (isLeft(errorOrMaybeMessageStatus)) {
+      return ResponseErrorInternal(
+        `Error retrieving MessageStatus: ${
+          errorOrMaybeMessageStatus.value.code
+        }|${errorOrMaybeMessageStatus.value.body}`
+      );
+    }
+    const maybeMessageStatus = errorOrMaybeMessageStatus.value;
+
+    const returnedMessage: MessageResponseWithContent = {
       message,
-      notification: notificationStatuses.toUndefined()
+      notification: notificationStatuses.toUndefined(),
+      // we do not return the status date-time
+      status: maybeMessageStatus
+        .map(messageStatus => messageStatus.status)
+        .toUndefined()
     };
 
-    return ResponseSuccessJson(messageStatus);
+    return ResponseSuccessJson(withoutUndefinedValues(returnedMessage));
   };
 }
 
@@ -624,12 +667,14 @@ export function GetMessageHandler(
 export function GetMessage(
   serviceModel: ServiceModel,
   messageModel: MessageModel,
+  messageStatusModel: MessageStatusModel,
   notificationModel: NotificationModel,
   notificationStatusModel: NotificationStatusModel,
   blobService: BlobService
 ): express.RequestHandler {
   const handler = GetMessageHandler(
     messageModel,
+    messageStatusModel,
     notificationModel,
     notificationStatusModel,
     blobService

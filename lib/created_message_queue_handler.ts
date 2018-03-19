@@ -58,9 +58,16 @@ import {
 } from "./utils/errors";
 
 import { EmailAddress } from "./api/definitions/EmailAddress";
+import { MessageStatusValueEnum } from "./api/definitions/MessageStatusValue";
 import { NotificationChannelEnum } from "./api/definitions/NotificationChannel";
 import { NotificationChannelStatusValueEnum } from "./api/definitions/NotificationChannelStatusValue";
 import { CreatedMessageEventSenderMetadata } from "./models/created_message_sender_metadata";
+import {
+  getMessageStatusUpdater,
+  MESSAGE_STATUS_COLLECTION_NAME,
+  MessageStatusModel,
+  MessageStatusUpdater
+} from "./models/message_status";
 import {
   getNotificationStatusUpdater,
   NOTIFICATION_STATUS_COLLECTION_NAME,
@@ -92,6 +99,10 @@ const notificationsCollectionUrl = documentDbUtils.getCollectionUri(
 const notificationStatusCollectionUrl = documentDbUtils.getCollectionUri(
   documentDbDatabaseUrl,
   NOTIFICATION_STATUS_COLLECTION_NAME
+);
+const messageStatusCollectionUrl = documentDbUtils.getCollectionUri(
+  documentDbDatabaseUrl,
+  MESSAGE_STATUS_COLLECTION_NAME
 );
 
 // must be equal to the queue name in function.json
@@ -258,8 +269,11 @@ export async function handleMessage(
   return right(errorOrNotification.value);
 }
 
-export function processGenericError(error: Error): void {
-  // TODO: update message status (FAILED)
+export async function processGenericError(
+  messageStatusUpdater: MessageStatusUpdater,
+  error: Error
+): Promise<void> {
+  await messageStatusUpdater(MessageStatusValueEnum.FAILED);
   winston.error(`CreatedMessageQueueHandler|Unexpected error|${error.message}`);
 }
 
@@ -268,6 +282,7 @@ export function processGenericError(error: Error): void {
  * trigger a retry calling context.done(true)
  */
 export async function processRuntimeError(
+  messageStatusUpdater: MessageStatusUpdater,
   queueService: QueueService,
   error: RuntimeError,
   queueMessage: IQueueMessage
@@ -281,16 +296,17 @@ export async function processRuntimeError(
     );
     return left(shouldTriggerARetry);
   } else {
-    // TODO: update message status (FAILED)
     winston.error(
       `CreatedMessageQueueHandler|Permanent error|${error.message}`
     );
+    await messageStatusUpdater(MessageStatusValueEnum.FAILED);
     // return no bindings so message processing stops here
     return right(none);
   }
 }
 
 export async function processSuccess(
+  messageStatusUpdater: MessageStatusUpdater,
   notificationStatusModel: NotificationStatusModel,
   notification: RetrievedNotification,
   message: NewMessageWithContent,
@@ -321,9 +337,10 @@ export async function processSuccess(
     emailNotification.message.id,
     emailNotification.notificationId
   );
-  await notificationStatusUpdater(NotificationChannelStatusValueEnum.QUEUED);
 
-  // TODO: update message status (ACCEPTED)
+  // status updates are best effort operations, no error checking here
+  await notificationStatusUpdater(NotificationChannelStatusValueEnum.QUEUED);
+  await messageStatusUpdater(MessageStatusValueEnum.PROCESSED);
 
   // return Function binding (enqueue a message)
   return right(some(bindings));
@@ -358,18 +375,29 @@ export async function index(
       )}`
     );
     // we will never be able to recover from this, so don't trigger a retry
-    // TODO: update message status (failed)
     return stopProcessing;
   }
 
+  const createdMessageEvent = errorOrCreatedMessageEvent.value;
+  const newMessageWithContent = createdMessageEvent.message;
+  const defaultAddresses = fromNullable(createdMessageEvent.defaultAddresses);
+  const senderMetadata = createdMessageEvent.senderMetadata;
+
+  const documentClient = new DocumentDBClient(cosmosDbUri, {
+    masterKey: cosmosDbKey
+  });
+
+  const messageStatusModel = new MessageStatusModel(
+    documentClient,
+    messageStatusCollectionUrl
+  );
+
+  const messageStatusUpdater = getMessageStatusUpdater(
+    messageStatusModel,
+    newMessageWithContent.id
+  );
+
   try {
-    const createdMessageEvent = errorOrCreatedMessageEvent.value;
-
-    // it is a CreatedMessageEvent
-    const newMessageWithContent = createdMessageEvent.message;
-    const defaultAddresses = fromNullable(createdMessageEvent.defaultAddresses);
-    const senderMetadata = createdMessageEvent.senderMetadata;
-
     winston.info(
       `CreatedMessageQueueHandler|A new message was created|${
         newMessageWithContent.id
@@ -377,9 +405,6 @@ export async function index(
     );
 
     // setup required models
-    const documentClient = new DocumentDBClient(cosmosDbUri, {
-      masterKey: cosmosDbKey
-    });
 
     const profileModel = new ProfileModel(
       documentClient,
@@ -416,9 +441,16 @@ export async function index(
     );
 
     const shouldTriggerARetryOrOutputBindings = await errorOrNotification.fold(
-      error => processRuntimeError(queueService, error, context.bindingData),
+      error =>
+        processRuntimeError(
+          messageStatusUpdater,
+          queueService,
+          error,
+          context.bindingData
+        ),
       notification =>
         processSuccess(
+          messageStatusUpdater,
           notificationStatusModel,
           notification,
           newMessageWithContent,
@@ -440,7 +472,7 @@ export async function index(
     if (isTransient(error)) {
       throw error;
     }
-    processGenericError(error);
+    await processGenericError(messageStatusUpdater, error);
     return stopProcessing;
   }
 }
