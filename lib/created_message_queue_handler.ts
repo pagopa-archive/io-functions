@@ -17,7 +17,7 @@ import { configureAzureContextTransport } from "./utils/logging";
 
 import * as documentDbUtils from "./utils/documentdb";
 
-import { fromNullable, isNone, none, Option } from "fp-ts/lib/Option";
+import { fromNullable, isNone, Option } from "fp-ts/lib/Option";
 
 import {
   BlobService,
