@@ -9,3 +9,4 @@
 .vscode
 .env
 lib/templates/**
+lib/api/**/*.ts
