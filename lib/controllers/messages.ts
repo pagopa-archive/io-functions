@@ -223,7 +223,7 @@ type IGetMessagesHandler = (
 /**
  * Convenience structure to hold notification channels
  * and the status of the relative notification
- * ie. { email: "SENT_TO_CHANNEL" }
+ * ie. { email: "SENT" }
  */
 type NotificationStatusHolder = Partial<
   Record<NotificationChannelEnum, NotificationChannelStatusValueEnum>
@@ -255,7 +255,7 @@ async function getChannelStatus(
  * to retrieve the relative notification status.
  *
  * @returns an object with channels as keys and statuses as values
- *          ie. { email: "SENT_TO_CHANNEL" }
+ *          ie. { email: "SENT" }
  */
 async function getMessageNotificationStatuses(
   notificationModel: NotificationModel,
@@ -580,25 +580,25 @@ export function GetMessageHandler(
       return ResponseErrorForbiddenNotAuthorized;
     }
 
-    const maybeContentOrError = await messageModel.getStoredContent(
+    const errorOrMaybeContent = await messageModel.getStoredContent(
       blobService,
       retrievedMessage.id,
       retrievedMessage.fiscalCode
     );
 
-    if (isLeft(maybeContentOrError)) {
+    if (isLeft(errorOrMaybeContent)) {
       winston.error(
-        `GetMessageHandler|${JSON.stringify(maybeContentOrError.value)}`
+        `GetMessageHandler|${JSON.stringify(errorOrMaybeContent.value)}`
       );
       return ResponseErrorInternal(
-        `${maybeContentOrError.value.name}: ${
-          maybeContentOrError.value.message
+        `${errorOrMaybeContent.value.name}: ${
+          errorOrMaybeContent.value.message
         }`
       );
     }
 
     const message: CreatedMessageWithContent = withoutUndefinedValues({
-      content: maybeContentOrError.value.toUndefined(),
+      content: errorOrMaybeContent.value.toUndefined(),
       ...retrievedMessageToPublic(retrievedMessage)
     });
 
@@ -636,10 +636,13 @@ export function GetMessageHandler(
       // we do not return the status date-time
       status: maybeMessageStatus
         .map(messageStatus => messageStatus.status)
+        // when the message has been received but a MessageStatus
+        // does not exist yet, the message is considered to be
+        // in the ACCEPTED state (not yet stored in the inbox)
         .getOrElse(MessageStatusValueEnum.ACCEPTED)
     };
 
-    return ResponseSuccessJson(withoutUndefinedValues(returnedMessage));
+    return ResponseSuccessJson(returnedMessage);
   };
 }
 

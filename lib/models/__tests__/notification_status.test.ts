@@ -31,7 +31,7 @@ const aSerializedNotificationStatus = {
   channel: NotificationChannelEnum.EMAIL,
   messageId: "A_MESSAGE_ID" as NonEmptyString,
   notificationId: "A_NOTIFICATION_ID" as NonEmptyString,
-  status: NotificationChannelStatusValueEnum.SENT_TO_CHANNEL,
+  status: NotificationChannelStatusValueEnum.SENT,
   statusId: aNotificationStatusId,
   updatedAt: new Date().toISOString()
 };

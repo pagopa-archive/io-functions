@@ -150,7 +150,7 @@ const aRetrievedNotificationStatus: RetrievedNotificationStatus = {
   kind: "IRetrievedNotificationStatus",
   messageId: aMessageId,
   notificationId: aNotificationId,
-  status: NotificationChannelStatusValueEnum.SENT_TO_CHANNEL,
+  status: NotificationChannelStatusValueEnum.SENT,
   statusId: makeStatusId(aNotificationId, NotificationChannelEnum.EMAIL),
   updatedAt: new Date(),
   version: 1 as NonNegativeNumber

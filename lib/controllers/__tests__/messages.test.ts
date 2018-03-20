@@ -135,7 +135,7 @@ const aPublicExtendedMessage: CreatedMessageWithoutContent = {
 const aPublicExtendedMessageResponse: MessageResponseWithoutContent = {
   message: aPublicExtendedMessage,
   notification: {
-    email: NotificationChannelStatusValueEnum.SENT_TO_CHANNEL
+    email: NotificationChannelStatusValueEnum.SENT
   },
   status: MessageStatusValueEnum.ACCEPTED
 };
@@ -158,7 +158,7 @@ const aRetrievedNotificationStatus: RetrievedNotificationStatus = {
   kind: "IRetrievedNotificationStatus",
   messageId: "1" as NonEmptyString,
   notificationId: "1" as NonEmptyString,
-  status: NotificationChannelStatusValueEnum.SENT_TO_CHANNEL,
+  status: NotificationChannelStatusValueEnum.SENT,
   statusId: makeStatusId("1" as NonEmptyString, NotificationChannelEnum.EMAIL),
   updatedAt: new Date(),
   version: 1 as NonNegativeNumber

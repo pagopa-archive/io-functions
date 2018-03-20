@@ -103,6 +103,9 @@ const messageContainerName = getRequiredStringEnv("MESSAGE_CONTAINER_NAME");
 const storageConnectionString = getRequiredStringEnv("QueueStorageConnection");
 const queueConnectionString = getRequiredStringEnv("QueueStorageConnection");
 
+// We create the db client, services and models here
+// as if any error occurs during the construction of these objects
+// that would be unrecoverable anyway and we neither may trig a retry
 const documentClient = new DocumentDBClient(cosmosDbUri, {
   masterKey: cosmosDbKey
 });
@@ -112,7 +115,9 @@ const messageStatusModel = new MessageStatusModel(
   messageStatusCollectionUrl
 );
 
-// needed for retries
+// As we cannot use Functions bindings to do retries,
+// we resort to update the message visibility timeout
+// using the queue service (client for Azure queue storage)
 const queueService = createQueueService(queueConnectionString);
 
 const profileModel = new ProfileModel(documentClient, profilesCollectionUrl);

@@ -39,18 +39,18 @@ NotificationChannelStatusValue:
   type: string
   description: |-
     The status of a notification (one for each channel).
-    "SENT_TO_CHANNEL": the notification was succesfully sent to the channel (ie. email or push notification)
+    "SENT": the notification was succesfully sent to the channel (ie. email or push notification)
     "THROTTLED": a temporary failure caused a retry during the notification processing;
-      the notification associated with this channel will be delayed until the message expires
+      the notification associated with this channel will be delayed for a maximum of 7 days or until the message expires
     "EXPIRED": the message expired before the notification could be sent;
-      this means that the maximum message time to live was reached so no notification will be sent to this channel
+      this means that the maximum message time to live was reached; no notification will be sent to this channel
     "FAILED": a permanent failure caused the process to exit with an error, no notification will be sent to this channel
   x-extensible-enum:
-    - SENT_TO_CHANNEL
+    - SENT
     - THROTTLED
     - EXPIRED
     - FAILED
-  example: SENT_TO_CHANNEL
+  example: SENT
 NotificationChannelStatus:
   type: object
   properties:
@@ -90,11 +90,13 @@ MessageStatusValue:
   type: string
   description: |-
     The processing status of a message.
-    "ACCEPTED": the message has been accepted and will be processed so we can try to notify the recipient
+    "ACCEPTED": the message has been accepted and will be processed for delivery;
+      we'll try to store its content in the user's inbox and notify him on his preferred channels
     "THROTTLED": a temporary failure caused a retry during the message processing;
       any notification associated with this message will be delayed for a maximum of 7 days
     "FAILED": a permanent failure caused the process to exit with an error, no notification will be sent for this message
-    "PROCESSED": the message was processed succesfully, we'll try to send a notification for each of the selected channels
+    "PROCESSED": the message was succesfully processed and is now stored in the user's inbox;
+      we'll try to send a notification for each of the selected channels
   x-extensible-enum:
     - ACCEPTED
     - THROTTLED

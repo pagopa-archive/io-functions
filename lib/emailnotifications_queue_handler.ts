@@ -88,6 +88,9 @@ const notificationStatusCollectionUrl = documentDbUtils.getCollectionUri(
 export const EMAIL_NOTIFICATION_QUEUE_NAME = "emailnotifications";
 const queueConnectionString = getRequiredStringEnv("QueueStorageConnection");
 
+// We create the db client, services and models here
+// as if any error occurs during the construction of these objects
+// that would be unrecoverable anyway and we neither may trig a retry
 const documentClient = new DocumentDBClient(cosmosDbUri, {
   masterKey: cosmosDbKey
 });
@@ -103,6 +106,10 @@ const notificationModel = new NotificationModel(
 );
 
 const appInsightsClient = new ApplicationInsights.TelemetryClient();
+
+// As we cannot use Functions bindings to do retries,
+// we resort to update the message visibility timeout
+// using the queue service (client for Azure queue storage)
 const queueService = createQueueService(queueConnectionString);
 
 //
@@ -455,7 +462,7 @@ export async function index(
 
     // try to save notification status to database
     const errorOrUpdatedNotificationStatus = await notificationStatusUpdater(
-      NotificationChannelStatusValueEnum.SENT_TO_CHANNEL
+      NotificationChannelStatusValueEnum.SENT
     );
     if (isLeft(errorOrUpdatedNotificationStatus)) {
       // this will trigger a retry as it's considered a transient error
