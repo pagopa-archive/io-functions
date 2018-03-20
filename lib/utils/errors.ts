@@ -6,7 +6,8 @@
 
 export const enum ErrorTypes {
   TransientError = "TransientError",
-  PermanentError = "PermanentError"
+  PermanentError = "PermanentError",
+  UnknowError = "UnknowError"
 }
 
 interface IRuntimeError<T extends ErrorTypes> {
@@ -31,7 +32,25 @@ export const TransientError = RuntimeError(ErrorTypes.TransientError);
 export type PermanentError = IRuntimeError<ErrorTypes.PermanentError>;
 export const PermanentError = RuntimeError(ErrorTypes.PermanentError);
 
-export type RuntimeError = TransientError | PermanentError;
+export type UnknowError = IRuntimeError<ErrorTypes.UnknowError>;
+export const UnknowError = RuntimeError(ErrorTypes.UnknowError);
+
+/**
+ * Construct a RuntimeError from an object.
+ * Useful in try / catch blocks where the object caught is untyped.
+ */
+// tslint:disable-next-line:no-any
+export const of = (error: any): RuntimeError =>
+  error && ErrorTypes.hasOwnProperty(error.kind)
+    ? error
+    : UnknowError(
+        error instanceof Error && error.message
+          ? error.message
+          : JSON.stringify(error),
+        error instanceof Error ? error : undefined
+      );
+
+export type RuntimeError = TransientError | PermanentError | UnknowError;
 
 // tslint:disable-next-line:no-any
 export const isTransient = (error: any): error is TransientError =>
