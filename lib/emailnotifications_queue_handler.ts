@@ -41,16 +41,22 @@ import { MessageSubject } from "./api/definitions/MessageSubject";
 import defaultEmailTemplate from "./templates/html/default";
 import {
   isTransient,
+  of as RuntimeErrorOf,
   PermanentError,
   RuntimeError,
   TransientError
 } from "./utils/errors";
 
-import { retryMessageEnqueue } from "./utils/azure_queues";
+import {
+  IQueueMessage,
+  updateMessageVisibilityTimeout
+} from "./utils/azure_queues";
 
-import { createQueueService } from "azure-storage";
+import { createQueueService, QueueService } from "azure-storage";
 import { NotificationChannelEnum } from "./api/definitions/NotificationChannel";
 import { NotificationChannelStatusValueEnum } from "./api/definitions/NotificationChannelStatusValue";
+
+import { ActiveMessage } from "./models/message";
 import {
   getNotificationStatusUpdater,
   NOTIFICATION_STATUS_COLLECTION_NAME,
@@ -81,6 +87,30 @@ const notificationStatusCollectionUrl = documentDbUtils.getCollectionUri(
 
 export const EMAIL_NOTIFICATION_QUEUE_NAME = "emailnotifications";
 const queueConnectionString = getRequiredStringEnv("QueueStorageConnection");
+
+// We create the db client, services and models here
+// as if any error occurs during the construction of these objects
+// that would be unrecoverable anyway and we neither may trig a retry
+const documentClient = new DocumentDBClient(cosmosDbUri, {
+  masterKey: cosmosDbKey
+});
+
+const notificationStatusModel = new NotificationStatusModel(
+  documentClient,
+  notificationStatusCollectionUrl
+);
+
+const notificationModel = new NotificationModel(
+  documentClient,
+  notificationsCollectionUrl
+);
+
+const appInsightsClient = new ApplicationInsights.TelemetryClient();
+
+// As we cannot use Functions bindings to do retries,
+// we resort to update the message visibility timeout
+// using the queue service (client for Azure queue storage)
+const queueService = createQueueService(queueConnectionString);
 
 //
 // setup NodeMailer
@@ -113,6 +143,8 @@ const ContextWithBindings = t.interface({
 });
 
 type ContextWithBindings = t.TypeOf<typeof ContextWithBindings> & IContext;
+
+type OutputBindings = never;
 
 /**
  * Generates the HTML for the email from the Markdown content and the subject
@@ -168,23 +200,17 @@ export async function sendMail(
  * It will then send the email.
  */
 export async function handleNotification(
-  mailerTransporter: NodeMailer.Transporter,
-  appInsightsClient: ApplicationInsights.TelemetryClient,
-  notificationModel: NotificationModel,
-  updateNotificationStatus: NotificationStatusUpdater,
+  lMailerTransporter: NodeMailer.Transporter,
+  lAppInsightsClient: ApplicationInsights.TelemetryClient,
+  lNotificationModel: NotificationModel,
   emailNotificationEvent: NotificationEvent
-): Promise<Either<RuntimeError, NodeMailer.SentMessageInfo>> {
-  const {
-    messageId,
-    notificationId,
-    messageContent,
-    senderMetadata
-  } = emailNotificationEvent;
+): Promise<Either<RuntimeError, NotificationEvent>> {
+  const { message, notificationId, senderMetadata } = emailNotificationEvent;
 
   // fetch the notification
-  const errorOrMaybeNotification = await notificationModel.find(
+  const errorOrMaybeNotification = await lNotificationModel.find(
     notificationId,
-    messageId
+    message.id
   );
 
   if (isLeft(errorOrMaybeNotification)) {
@@ -192,9 +218,9 @@ export async function handleNotification(
     // we got an error while fetching the notification
     return left(
       TransientError(
-        `Error while fetching the notification|notification=${notificationId}|message=${messageId}|error=${
-          error.code
-        }`
+        `Error while fetching the notification|notification=${notificationId}|message=${
+          message.id
+        }|error=${error.code}`
       )
     );
   }
@@ -206,7 +232,9 @@ export async function handleNotification(
     // as the notification object is retrieved from database (?)
     return left(
       TransientError(
-        `Notification not found|notification=${notificationId}|message=${messageId}`
+        `Notification not found|notification=${notificationId}|message=${
+          message.id
+        }`
       )
     );
   }
@@ -219,7 +247,9 @@ export async function handleNotification(
     const error = readableReport(errorOrEmailNotification.value);
     return left(
       PermanentError(
-        `Wrong format for email notification|notification=${notificationId}|message=${messageId}|${error}`
+        `Wrong format for email notification|notification=${notificationId}|message=${
+          message.id
+        }|${error}`
       )
     );
   }
@@ -228,13 +258,13 @@ export async function handleNotification(
 
   // use the provided subject if present, or else use the default subject line
   // TODO: generate the default subject from the service/client metadata
-  const subject = messageContent.subject
-    ? messageContent.subject
+  const subject = message.content.subject
+    ? message.content.subject
     : ("A new notification for you." as MessageSubject);
 
   const documentHtml = await generateDocumentHtml(
     subject,
-    messageContent.markdown,
+    message.content.markdown,
     senderMetadata
   );
 
@@ -244,14 +274,14 @@ export async function handleNotification(
   // trigger email delivery
   // TODO: make everything configurable via settings
   // see https://nodemailer.com/message/
-  const sendResult = await sendMail(mailerTransporter, {
+  const sendResult = await sendMail(lMailerTransporter, {
     from: "no-reply@italia.it",
     headers: {
-      "X-Italia-Messages-MessageId": messageId,
+      "X-Italia-Messages-MessageId": message.id,
       "X-Italia-Messages-NotificationId": notificationId
     },
     html: documentHtml,
-    messageId,
+    messageId: message.id,
     subject,
     text: bodyText,
     to: emailNotification.toAddress
@@ -263,14 +293,14 @@ export async function handleNotification(
   const eventName = "notification.email.delivery";
   const eventContent = {
     addressSource: emailNotification.addressSource,
-    messageId,
+    messageId: message.id,
     notificationId,
     transport: "sendgrid"
   };
 
   if (isLeft(sendResult)) {
     // track the event of failed delivery
-    appInsightsClient.trackEvent({
+    lAppInsightsClient.trackEvent({
       name: eventName,
       properties: {
         ...eventContent,
@@ -280,15 +310,15 @@ export async function handleNotification(
     const error = sendResult.value;
     return left(
       TransientError(
-        `Error while sending email|notification=${notificationId}|message=${messageId}|error=${
-          error.message
-        }`
+        `Error while sending email|notification=${notificationId}|message=${
+          message.id
+        }|error=${error.message}`
       )
     );
   }
 
   // track the event of successful delivery
-  appInsightsClient.trackEvent({
+  lAppInsightsClient.trackEvent({
     name: eventName,
     properties: {
       ...eventContent,
@@ -296,167 +326,167 @@ export async function handleNotification(
     }
   });
 
-  // now we can update the notification status
   // TODO: handling bounces and delivery updates
   // see https://nodemailer.com/usage/#sending-mail
   // see #150597597
-
-  const errorOrNotificationStatus = await updateNotificationStatus(
-    NotificationChannelStatusValueEnum.SENT_TO_CHANNEL
-  );
-
-  if (isLeft(errorOrNotificationStatus)) {
-    // Here we got an error while updating the notification status
-    // TODO: this will re-send the email, check whether the mailing provider
-    // supports idempotent calls (dedup on notificationId)
-    const error = errorOrNotificationStatus.value;
-    return left(
-      TransientError(
-        `Error while updating the notification status|notification=${notificationId}|message=${messageId}|error=${
-          error.message
-        }`
-      )
-    );
-  }
-
-  // success!
-  winston.debug(
-    `EmailNotificationsHandlerIndex|Email notification succeeded|notification=${notificationId}|message=${messageId}`
-  );
-  return right(sendResult);
+  return right(emailNotificationEvent);
 }
 
-export function processResolve(
-  errorOrResult: Either<RuntimeError, NodeMailer.SentMessageInfo>,
-  context: IContext
-): void {
-  if (isLeft(errorOrResult)) {
-    if (isTransient(errorOrResult.value)) {
+export async function processRuntimeError(
+  lQueueService: QueueService,
+  notificationStatusUpdater: NotificationStatusUpdater,
+  queueMessage: IQueueMessage,
+  error: RuntimeError
+): Promise<boolean> {
+  if (isTransient(error)) {
+    winston.warn(
+      `EmailNotificationQueueHandler|Transient error|${error.message}`
+    );
+    const shouldTriggerARetry = await updateMessageVisibilityTimeout(
+      lQueueService,
+      EMAIL_NOTIFICATION_QUEUE_NAME,
+      queueMessage
+    );
+    const errorOrNotificationStatus = await notificationStatusUpdater(
+      NotificationChannelStatusValueEnum.THROTTLED
+    );
+    if (isLeft(errorOrNotificationStatus)) {
       winston.warn(
         `EmailNotificationQueueHandler|Transient error|${
-          errorOrResult.value.message
-        }`
-      );
-      // transient error, we trigger a retry
-      const queueService = createQueueService(queueConnectionString);
-      return retryMessageEnqueue(
-        queueService,
-        EMAIL_NOTIFICATION_QUEUE_NAME,
-        context
-      );
-    } else {
-      // TODO: update notification status (FAILED)
-      winston.warn(
-        `EmailNotificationQueueHandler|Permanent error|${
-          errorOrResult.value.message
+          errorOrNotificationStatus.value.message
         }`
       );
     }
+    return shouldTriggerARetry;
+  } else {
+    winston.error(
+      `EmailNotificationQueueHandler|Permanent error|${error.message}`
+    );
+    const errorOrNotificationStatus = await notificationStatusUpdater(
+      NotificationChannelStatusValueEnum.FAILED
+    );
+    if (isLeft(errorOrNotificationStatus)) {
+      // if we get an error updating the notification status
+      // we retry the whole procedure (it will log the error anyway)
+      const transientError = errorOrNotificationStatus.value;
+      return await processRuntimeError(
+        lQueueService,
+        notificationStatusUpdater,
+        queueMessage,
+        transientError
+      );
+    } else {
+      // return no bindings so message processing stops here
+      return false;
+    }
   }
-  // in case of permanent error or success we are done
-  context.done();
 }
 
 /**
  * Function handler
  */
-export function index(context: ContextWithBindings): void {
-  try {
-    const logLevel = isProduction ? "info" : "debug";
-    configureAzureContextTransport(context, winston, logLevel);
-    winston.debug(`STARTED|${context.invocationId}`);
+export async function index(
+  context: ContextWithBindings
+): Promise<OutputBindings | Error | void> {
+  const stopProcessing = undefined;
+  const logLevel = isProduction ? "info" : "debug";
+  configureAzureContextTransport(context, winston, logLevel);
 
-    // Setup ApplicationInsights
-    const appInsightsClient = new ApplicationInsights.TelemetryClient();
+  winston.debug(`STARTED|${context.invocationId}`);
 
-    // since this function gets triggered by a queued message that gets
-    // deserialized from a json object, we must first check that what we
-    // got is what we expect.
-    const validation = NotificationEvent.decode(
-      context.bindings.notificationEvent
+  winston.debug(
+    `EmailNotificationsHandlerIndex|Dequeued email notification|${JSON.stringify(
+      context.bindings
+    )}`
+  );
+
+  // since this function gets triggered by a queued message that gets
+  // deserialized from a json object, we must first check that what we
+  // got is what we expect.
+  const errorOrNotificationEvent = NotificationEvent.decode(
+    context.bindings.notificationEvent
+  );
+  if (isLeft(errorOrNotificationEvent)) {
+    winston.error(
+      `EmailNotificationsHandler|Fatal! No valid message found in bindings.|${readableReport(
+        errorOrNotificationEvent.value
+      )}`
     );
-    if (isLeft(validation)) {
-      winston.error(
-        `EmailNotificationsHandlerIndex|Fatal! No valid email notification found in bindings.`
+    return stopProcessing;
+  }
+  const emailNotificationEvent = errorOrNotificationEvent.value;
+
+  const mailerTransporter = NodeMailer.createTransport(
+    sendGridTransport({
+      auth: {
+        api_key: sendgridKey
+      }
+    })
+  );
+
+  const notificationStatusUpdater = getNotificationStatusUpdater(
+    notificationStatusModel,
+    NotificationChannelEnum.EMAIL,
+    emailNotificationEvent.message.id,
+    emailNotificationEvent.notificationId
+  );
+
+  try {
+    // Check if the message is not expired
+    const errorOrActiveMessage = ActiveMessage.decode(
+      emailNotificationEvent.message
+    );
+    if (isLeft(errorOrActiveMessage)) {
+      const errorMsg = readableReport(errorOrActiveMessage.value);
+      const errorOrUpdateNotificationStatus = await notificationStatusUpdater(
+        NotificationChannelStatusValueEnum.EXPIRED
       );
-      winston.debug(
-        `EmailNotificationsHandlerIndex|validationError|${readableReport(
-          validation.value
-        )}`
-      );
-      return context.done();
+      if (isLeft(errorOrUpdateNotificationStatus)) {
+        // retry in case we cannot save the notification status to the database
+        throw TransientError(errorOrUpdateNotificationStatus.value.message);
+      }
+      // if the message is expired no more processing is necessary
+      throw PermanentError(errorMsg);
     }
 
-    const emailNotificationEvent = validation.value;
-
-    // it is an IEmailNotificationEvent
-    winston.debug(
-      `EmailNotificationsHandlerIndex|Dequeued email notification|${
-        emailNotificationEvent.notificationId
-      }`
-    );
-
-    // setup required models
-    const documentClient = new DocumentDBClient(cosmosDbUri, {
-      masterKey: cosmosDbKey
-    });
-
-    const notificationModel = new NotificationModel(
-      documentClient,
-      notificationsCollectionUrl
-    );
-
-    const notificationStatusModel = new NotificationStatusModel(
-      documentClient,
-      notificationStatusCollectionUrl
-    );
-
-    const updateNotificationStatus = getNotificationStatusUpdater(
-      notificationStatusModel,
-      NotificationChannelEnum.EMAIL,
-      emailNotificationEvent.messageId,
-      emailNotificationEvent.notificationId
-    );
-
-    const mailerTransporter = NodeMailer.createTransport(
-      sendGridTransport({
-        auth: {
-          api_key: sendgridKey
-        }
-      })
-    );
-
-    handleNotification(
+    const errorOrEmailNotificationEvt = await handleNotification(
       mailerTransporter,
       appInsightsClient,
       notificationModel,
-      updateNotificationStatus,
       emailNotificationEvent
-    )
-      .then(errorOrResult => {
-        processResolve(errorOrResult, context);
-      })
-      .catch(error => {
-        // Some unexpected exception occurred inside the promise.
-        // We consider this event as a permanent unrecoverable error.
-        // TODO: update notification status (failed)
-        winston.error(
-          `EmailNotificationQueueHandler|Error while processing event` +
-            `|${emailNotificationEvent.messageId}|${
-              emailNotificationEvent.notificationId
-            }|${error}`
-        );
-        context.done();
-      });
-  } catch (error) {
-    // Avoid poison queue in case of unexpected errors
-    // occurred outside handleNotification (shouldn't happen)
-    // TODO: update notification status (failed)
-    winston.error(
-      `EmailNotificationQueueHandler|Exception caught|${error.message}|${
-        error.stack
-      }`
     );
-    context.done();
+    if (isLeft(errorOrEmailNotificationEvt)) {
+      // something went wrong sending the email
+      throw errorOrEmailNotificationEvt.value;
+    }
+
+    // try to save notification status to database
+    const errorOrUpdatedNotificationStatus = await notificationStatusUpdater(
+      NotificationChannelStatusValueEnum.SENT
+    );
+    if (isLeft(errorOrUpdatedNotificationStatus)) {
+      // this will trigger a retry as it's considered a transient error
+      throw errorOrUpdatedNotificationStatus.value;
+    }
+
+    winston.debug(
+      `EmailNotificationsHandler|Email notification succeeded|notification=${
+        emailNotificationEvent.notificationId
+      }|message=${emailNotificationEvent.message.id}`
+    );
+
+    return stopProcessing;
+    //
+  } catch (error) {
+    const shouldTriggerARetry = await processRuntimeError(
+      queueService,
+      notificationStatusUpdater,
+      context.bindingData,
+      RuntimeErrorOf(error)
+    );
+    if (shouldTriggerARetry) {
+      throw TransientError(`EmailNotificationsHandler|Retry|${error.message}`);
+    }
+    return stopProcessing;
   }
 }

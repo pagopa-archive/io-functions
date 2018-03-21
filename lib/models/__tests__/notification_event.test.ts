@@ -9,6 +9,8 @@ import { NotificationEvent } from "../notification_event";
 
 import { MessageContent } from "../../api/definitions/MessageContent";
 
+import { isRight } from "fp-ts/lib/Either";
+import { TimeToLiveSeconds } from "../../api/definitions/TimeToLiveSeconds";
 import { CreatedMessageEventSenderMetadata } from "../created_message_sender_metadata";
 
 const aMessageId = "A_MESSAGE_ID" as NonEmptyString;
@@ -18,6 +20,17 @@ const aMessageBodyMarkdown = "test".repeat(80) as MessageBodyMarkdown;
 
 const aMessageContent: MessageContent = {
   markdown: aMessageBodyMarkdown
+};
+
+const aMessage = {
+  content: aMessageContent,
+  createdAt: new Date().toISOString(),
+  fiscalCode: "FRLFRC74E04B157I",
+  id: aMessageId,
+  kind: "INewMessageWithoutContent",
+  senderServiceId: "",
+  senderUserId: "u123" as NonEmptyString,
+  timeToLive: 3600 as TimeToLiveSeconds
 };
 
 const aSenderMetadata: CreatedMessageEventSenderMetadata = {
@@ -30,14 +43,16 @@ describe("isNotificationEvent", () => {
   it("should return true for valid payloads", () => {
     const fixtures: ReadonlyArray<any> = [
       {
-        messageContent: aMessageContent,
-        messageId: aMessageId,
+        message: aMessage,
         notificationId: aNotificationId,
         senderMetadata: aSenderMetadata
       }
     ];
 
-    fixtures.forEach(f => expect(NotificationEvent.is(f)).toBeTruthy());
+    fixtures.forEach(f => {
+      const errorOrNotification = NotificationEvent.decode(f);
+      expect(isRight(errorOrNotification)).toBeTruthy();
+    });
   });
 
   it("should return false for invalid payloads", () => {
@@ -67,6 +82,9 @@ describe("isNotificationEvent", () => {
       }
     ];
 
-    fixtures.forEach(f => expect(NotificationEvent.is(f)).toBeFalsy());
+    fixtures.forEach(f => {
+      const errorOrNotification = NotificationEvent.decode(f);
+      expect(isRight(errorOrNotification)).toBeFalsy();
+    });
   });
 });

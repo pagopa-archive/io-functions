@@ -37,12 +37,20 @@ NotificationChannel:
   example: EMAIL
 NotificationChannelStatusValue:
   type: string
+  description: |-
+    The status of a notification (one for each channel).
+    "SENT": the notification was succesfully sent to the channel (ie. email or push notification)
+    "THROTTLED": a temporary failure caused a retry during the notification processing;
+      the notification associated with this channel will be delayed for a maximum of 7 days or until the message expires
+    "EXPIRED": the message expired before the notification could be sent;
+      this means that the maximum message time to live was reached; no notification will be sent to this channel
+    "FAILED": a permanent failure caused the process to exit with an error, no notification will be sent to this channel
   x-extensible-enum:
-    - QUEUED
-    - SENT_TO_CHANNEL
+    - SENT
+    - THROTTLED
     - EXPIRED
     - FAILED
-  example: SENT_TO_CHANNEL
+  example: SENT
 NotificationChannelStatus:
   type: object
   properties:
@@ -50,12 +58,14 @@ NotificationChannelStatus:
       $ref: "#/NotificationChannel"
     status:
       $ref: "#/NotificationChannelStatusValue"
-    updateAt:
+    updated_at:
       $ref: "#/Timestamp"
+    version:
+      type: integer
   required:
     - channel
     - status
-    - updateAt
+    - updated_at
 MessageContent:
   type: object
   properties:
@@ -69,7 +79,7 @@ NewMessage:
   type: object
   properties:
     time_to_live:
-      $ref: "#/TimeToLive"
+      $ref: "#/TimeToLiveSeconds"
     content:
       $ref: "#/MessageContent"
     default_addresses:
@@ -78,18 +88,33 @@ NewMessage:
     - content
 MessageStatusValue:
   type: string
+  description: |-
+    The processing status of a message.
+    "ACCEPTED": the message has been accepted and will be processed for delivery;
+      we'll try to store its content in the user's inbox and notify him on his preferred channels
+    "THROTTLED": a temporary failure caused a retry during the message processing;
+      any notification associated with this message will be delayed for a maximum of 7 days
+    "FAILED": a permanent failure caused the process to exit with an error, no notification will be sent for this message
+    "PROCESSED": the message was succesfully processed and is now stored in the user's inbox;
+      we'll try to send a notification for each of the selected channels
   x-extensible-enum:
-    - PROCESSING
     - ACCEPTED
+    - THROTTLED
     - FAILED
+    - PROCESSED
   example: ACCEPTED
 MessageStatus:
   type: object
   properties:
     status:
       $ref: "#/MessageStatusValue"
-    updateAt:
+    updated_at:
       $ref: "#/Timestamp"
+    version:
+      type: integer
+  required:
+    - status
+    - updated_at
 CreatedMessageWithContent:
   type: object
   properties:
@@ -98,7 +123,7 @@ CreatedMessageWithContent:
     fiscal_code:
       $ref: "#/FiscalCode"
     time_to_live:
-      $ref: "#/TimeToLive"
+      $ref: "#/TimeToLiveSeconds"
     content:
       $ref: "#/MessageContent"
     sender_service_id:
@@ -114,7 +139,7 @@ CreatedMessageWithoutContent:
     fiscal_code:
       $ref: "#/FiscalCode"
     time_to_live:
-      $ref: "#/TimeToLive"
+      $ref: "#/TimeToLiveSeconds"
     sender_service_id:
       type: string
   required:
@@ -132,6 +157,8 @@ MessageResponseWithContent:
       $ref: "#/CreatedMessageWithContent"
     notification:
       $ref: "#/MessageResponseNotificationStatus"
+    status:
+      $ref: "#/MessageStatusValue"
   required:
     - message
 MessageResponseWithoutContent:
@@ -141,6 +168,8 @@ MessageResponseWithoutContent:
       $ref: "#/CreatedMessageWithoutContent"
     notification:
       $ref: "#/MessageResponseNotificationStatus"
+    status:
+      $ref: "#/MessageStatusValue"
   required:
     - message
 FiscalCode:
@@ -211,11 +240,11 @@ IsInboxEnabled:
   default: false
   description: True if the recipient of a message wants to store its content for
     later retrieval.
-TimeToLive:
+TimeToLiveSeconds:
   type: integer
   default: 3600
   minimum: 3600
-  maximum: 31536000
+  maximum: 604800
   description: This parameter specifies for how long (in seconds) the system will
     try to deliver the message to the channels configured by the user.
   example: 3600

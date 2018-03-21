@@ -4,8 +4,8 @@ import { toAuthorizedCIDRs } from "../../models/service";
 
 import { response as MockResponse } from "jest-mock-express";
 
-import { isLeft, isRight, left, right } from "fp-ts/lib/Either";
-import { none, some } from "fp-ts/lib/Option";
+import { Either, isLeft, isRight, left, right } from "fp-ts/lib/Either";
+import { none, Option, some } from "fp-ts/lib/Option";
 
 import { ModelId } from "../../utils/documentdb_model_versioned";
 
@@ -14,7 +14,6 @@ import { EmailAddress } from "../../api/definitions/EmailAddress";
 import { FiscalCode } from "../../api/definitions/FiscalCode";
 import { MessageBodyMarkdown } from "../../api/definitions/MessageBodyMarkdown";
 import { MessageSubject } from "../../api/definitions/MessageSubject";
-import { NewMessage as ApiNewMessage } from "../../api/definitions/NewMessage";
 
 import {
   IAzureApiAuthorization,
@@ -23,15 +22,20 @@ import {
 import { IAzureUserAttributes } from "../../utils/middlewares/azure_user_attributes";
 import { EmailString, NonEmptyString } from "../../utils/strings";
 
+import { QueryError } from "documentdb";
+import { MessageContent } from "../../api/definitions/MessageContent";
 import { MessageResponseWithoutContent } from "../../api/definitions/MessageResponseWithoutContent";
+import { MessageStatusValueEnum } from "../../api/definitions/MessageStatusValue";
 import { NotificationChannelEnum } from "../../api/definitions/NotificationChannel";
 import { NotificationChannelStatusValueEnum } from "../../api/definitions/NotificationChannelStatusValue";
+import { TimeToLiveSeconds } from "../../api/definitions/TimeToLiveSeconds";
 import {
   NewMessage,
   NewMessageWithContent,
   NewMessageWithoutContent,
   RetrievedMessageWithoutContent
 } from "../../models/message";
+import { MessageStatus } from "../../models/message_status";
 import {
   NotificationAddressSourceEnum,
   RetrievedNotification
@@ -42,12 +46,18 @@ import {
 } from "../../models/notification_status";
 import { NonNegativeNumber } from "../../utils/numbers";
 import {
+  ApiNewMessageWithDefaults,
   CreateMessage,
   CreateMessageHandler,
   GetMessageHandler,
   GetMessagesHandler,
   MessagePayloadMiddleware
 } from "../messages";
+
+afterEach(() => {
+  jest.resetAllMocks();
+  jest.restoreAllMocks();
+});
 
 interface IHeaders {
   readonly [key: string]: string | undefined;
@@ -88,10 +98,11 @@ const aUserAuthenticationTrustedApplication: IAzureApiAuthorization = {
   userId: "u123" as NonEmptyString
 };
 
-const aMessagePayload: ApiNewMessage = {
+const aMessagePayload: ApiNewMessageWithDefaults = {
   content: {
     markdown: aMessageBodyMarkdown
-  }
+  },
+  time_to_live: 3600 as TimeToLiveSeconds
 };
 
 const aCustomSubject = "A custom subject" as MessageSubject;
@@ -99,17 +110,19 @@ const aCustomSubject = "A custom subject" as MessageSubject;
 const aMessageId = "A_MESSAGE_ID" as NonEmptyString;
 
 const aNewMessageWithoutContent: NewMessageWithoutContent = {
+  createdAt: new Date(),
   fiscalCode: aFiscalCode,
   id: "A_MESSAGE_ID" as NonEmptyString,
   kind: "INewMessageWithoutContent",
   senderServiceId: "test" as ModelId,
-  senderUserId: "u123" as NonEmptyString
+  senderUserId: "u123" as NonEmptyString,
+  timeToLiveSeconds: 3600 as TimeToLiveSeconds
 };
 
 const aRetrievedMessageWithoutContent: RetrievedMessageWithoutContent = {
   ...aNewMessageWithoutContent,
   _self: "xyz",
-  _ts: "xyz",
+  _ts: 1,
   kind: "IRetrievedMessageWithoutContent"
 };
 
@@ -122,8 +135,9 @@ const aPublicExtendedMessage: CreatedMessageWithoutContent = {
 const aPublicExtendedMessageResponse: MessageResponseWithoutContent = {
   message: aPublicExtendedMessage,
   notification: {
-    email: NotificationChannelStatusValueEnum.SENT_TO_CHANNEL
-  }
+    email: NotificationChannelStatusValueEnum.SENT
+  },
+  status: MessageStatusValueEnum.ACCEPTED
 };
 
 function getNotificationModelMock(
@@ -144,10 +158,16 @@ const aRetrievedNotificationStatus: RetrievedNotificationStatus = {
   kind: "IRetrievedNotificationStatus",
   messageId: "1" as NonEmptyString,
   notificationId: "1" as NonEmptyString,
-  status: NotificationChannelStatusValueEnum.SENT_TO_CHANNEL,
+  status: NotificationChannelStatusValueEnum.SENT,
   statusId: makeStatusId("1" as NonEmptyString, NotificationChannelEnum.EMAIL),
-  updateAt: new Date(),
+  updatedAt: new Date(),
   version: 1 as NonNegativeNumber
+};
+
+const aMessageStatus: MessageStatus = {
+  messageId: aMessageId,
+  status: MessageStatusValueEnum.ACCEPTED,
+  updatedAt: new Date()
 };
 
 function getNotificationStatusModelMock(
@@ -157,6 +177,15 @@ function getNotificationStatusModelMock(
     findOneNotificationStatusByNotificationChannel: jest.fn(() =>
       Promise.resolve(retrievedNotificationStatus)
     )
+  };
+}
+
+function getMessageStatusModelMock(
+  s: Either<QueryError, Option<MessageStatus>> = right(some(aMessageStatus))
+): any {
+  return {
+    findOneByMessageId: jest.fn().mockReturnValue(Promise.resolve(s)),
+    upsert: jest.fn(status => Promise.resolve(left(status)))
   };
 }
 
@@ -237,9 +266,13 @@ describe("CreateMessageHandler", () => {
 
     expect(mockContext.bindings).toEqual({
       createdMessage: {
-        message: aNewMessageWithoutContent,
-        messageContent: {
-          markdown: aMessagePayload.content.markdown
+        message: {
+          ...aNewMessageWithoutContent,
+          content: {
+            markdown: aMessagePayload.content.markdown
+          },
+          createdAt: expect.any(Date),
+          kind: "INewMessageWithContent"
         },
         senderMetadata: {
           departmentName: "IT",
@@ -324,9 +357,13 @@ describe("CreateMessageHandler", () => {
 
     expect(mockContext.bindings).toEqual({
       createdMessage: {
-        message: aNewMessageWithoutContent,
-        messageContent: {
-          markdown: aMessagePayload.content.markdown
+        message: {
+          ...aNewMessageWithoutContent,
+          content: {
+            markdown: aMessagePayload.content.markdown
+          },
+          createdAt: expect.any(Date),
+          kind: "INewMessageWithContent"
         },
         senderMetadata: {
           departmentName: "IT",
@@ -407,10 +444,14 @@ describe("CreateMessageHandler", () => {
 
     expect(mockContext.bindings).toEqual({
       createdMessage: {
-        message: aNewMessageWithoutContent,
-        messageContent: {
-          markdown: aMessagePayload.content.markdown,
-          subject: aCustomSubject
+        message: {
+          ...aNewMessageWithoutContent,
+          content: {
+            markdown: aMessagePayload.content.markdown,
+            subject: aCustomSubject
+          },
+          createdAt: expect.any(Date),
+          kind: "INewMessageWithContent"
         },
         senderMetadata: {
           departmentName: "IT",
@@ -449,7 +490,9 @@ describe("CreateMessageHandler", () => {
     };
 
     const mockMessageModel = {
-      create: jest.fn(() => right(aRetrievedMessageWithoutContent))
+      create: jest.fn(() =>
+        Promise.resolve(right(aRetrievedMessageWithoutContent))
+      )
     };
 
     const createMessageHandler = CreateMessageHandler(
@@ -463,7 +506,7 @@ describe("CreateMessageHandler", () => {
       log: jest.fn()
     };
 
-    const messagePayload: ApiNewMessage = {
+    const messagePayload: ApiNewMessageWithDefaults = {
       ...aMessagePayload,
       default_addresses: {
         email: "test@example.com" as EmailAddress
@@ -488,8 +531,9 @@ describe("CreateMessageHandler", () => {
     expect(mockMessageModel.create).toHaveBeenCalledTimes(1);
 
     const messageDocument = mockMessageModel.create.mock.calls[0][0];
-    expect(NewMessage.is(messageDocument)).toBeTruthy();
-    expect(NewMessageWithContent.is(messageDocument.content)).toBeFalsy();
+
+    expect(NewMessageWithoutContent.is(messageDocument)).toBeTruthy();
+    expect(MessageContent.is(messageDocument.content)).toBeFalsy();
 
     expect(mockMessageModel.create.mock.calls[0][1]).toEqual(aFiscalCode);
 
@@ -498,9 +542,13 @@ describe("CreateMessageHandler", () => {
         defaultAddresses: {
           email: "test@example.com" as EmailAddress
         },
-        message: aNewMessageWithoutContent,
-        messageContent: {
-          markdown: messagePayload.content.markdown
+        message: {
+          ...aNewMessageWithoutContent,
+          content: {
+            markdown: messagePayload.content.markdown
+          },
+          createdAt: expect.any(Date),
+          kind: "INewMessageWithContent"
         },
         senderMetadata: {
           departmentName: "IT",
@@ -553,7 +601,7 @@ describe("CreateMessageHandler", () => {
       log: jest.fn()
     };
 
-    const messagePayload: ApiNewMessage = {
+    const messagePayload: ApiNewMessageWithDefaults = {
       ...aMessagePayload,
       default_addresses: {
         email: "test@example.com" as EmailAddress
@@ -683,6 +731,7 @@ describe("GetMessageHandler", () => {
 
     const getMessageHandler = GetMessageHandler(
       mockMessageModel as any,
+      getMessageStatusModelMock(),
       getNotificationModelMock(),
       getNotificationStatusModelMock(),
       {} as any
@@ -719,6 +768,7 @@ describe("GetMessageHandler", () => {
 
     const getMessageHandler = GetMessageHandler(
       mockMessageModel as any,
+      getMessageStatusModelMock(),
       getNotificationModelMock(),
       getNotificationStatusModelMock(),
       {} as any
@@ -752,6 +802,7 @@ describe("GetMessageHandler", () => {
 
     const getMessageHandler = GetMessageHandler(
       mockMessageModel as any,
+      getMessageStatusModelMock(),
       getNotificationModelMock(),
       getNotificationStatusModelMock(),
       {} as any
@@ -791,6 +842,7 @@ describe("GetMessageHandler", () => {
 
     const getMessageHandler = GetMessageHandler(
       mockMessageModel as any,
+      getMessageStatusModelMock(),
       {} as any,
       {} as any,
       {} as any
@@ -821,6 +873,7 @@ describe("GetMessageHandler", () => {
 
     const getMessageHandler = GetMessageHandler(
       mockMessageModel as any,
+      getMessageStatusModelMock(),
       {} as any,
       {} as any,
       {} as any
@@ -864,6 +917,7 @@ describe("GetMessageHandler", () => {
 
     const getMessageHandler = GetMessageHandler(
       mockMessageModel as any,
+      getMessageStatusModelMock(),
       getNotificationModelMock(aRetrievedNotification),
       getNotificationStatusModelMock(),
       {} as any
@@ -888,6 +942,73 @@ describe("GetMessageHandler", () => {
     if (result.kind === "IResponseSuccessJson") {
       expect(result.value).toEqual(aPublicExtendedMessageResponse);
     }
+  });
+
+  it("should fail if any error occurs trying to retrieve the message status", async () => {
+    const mockMessageModel = {
+      findMessageForRecipient: jest.fn(() =>
+        right(some(aRetrievedMessageWithoutContent))
+      ),
+      getStoredContent: jest.fn(() => right(none))
+    };
+
+    const getMessageHandler = GetMessageHandler(
+      mockMessageModel as any,
+      getMessageStatusModelMock(
+        left<QueryError, Option<MessageStatus>>({
+          body: "error",
+          code: 1
+        })
+      ),
+      getNotificationModelMock(),
+      getNotificationStatusModelMock(),
+      {} as any
+    );
+
+    const result = await getMessageHandler(
+      aUserAuthenticationDeveloper,
+      undefined as any, // not used
+      someUserAttributes,
+      aFiscalCode,
+      aRetrievedMessageWithoutContent.id
+    );
+
+    expect(result.kind).toBe("IResponseErrorInternal");
+  });
+  it("should fail if any error occurs trying to retrieve the notification status", async () => {
+    const mockMessageModel = {
+      findMessageForRecipient: jest.fn(() =>
+        right(some(aRetrievedMessageWithoutContent))
+      ),
+      getStoredContent: jest.fn(() => right(none))
+    };
+
+    const getMessageHandler = GetMessageHandler(
+      mockMessageModel as any,
+      getMessageStatusModelMock(),
+      {
+        findNotificationForMessage: jest.fn(() =>
+          Promise.resolve(
+            left({
+              body: "error",
+              code: 1
+            })
+          )
+        )
+      } as any,
+      getNotificationStatusModelMock(),
+      {} as any
+    );
+
+    const result = await getMessageHandler(
+      aUserAuthenticationDeveloper,
+      undefined as any, // not used
+      someUserAttributes,
+      aFiscalCode,
+      aRetrievedMessageWithoutContent.id
+    );
+
+    expect(result.kind).toBe("IResponseErrorInternal");
   });
 });
 
@@ -950,6 +1071,12 @@ describe("MessagePayloadMiddleware", () => {
         default_addresses: {
           email: "test@example.com"
         }
+      },
+      {
+        content: {
+          markdown: "test".repeat(100)
+        },
+        time_to_live: 4000
       }
     ];
     await Promise.all(
@@ -962,7 +1089,7 @@ describe("MessagePayloadMiddleware", () => {
         expect(result.value).toEqual({
           ...f,
           default_addresses: f.default_addresses,
-          time_to_live: 3600
+          time_to_live: f.time_to_live || 3600
         });
       })
     );
