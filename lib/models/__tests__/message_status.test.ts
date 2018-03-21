@@ -9,61 +9,57 @@ import * as DocumentDbUtils from "../../utils/documentdb";
 import { NonNegativeNumber } from "../../utils/numbers";
 import { NonEmptyString } from "../../utils/strings";
 
-import { NotificationChannelEnum } from "../../api/definitions/NotificationChannel";
-import { NotificationChannelStatusValueEnum } from "../../api/definitions/NotificationChannelStatusValue";
+import { MessageStatusValueEnum } from "../../api/definitions/MessageStatusValue";
 import { readableReport } from "../../utils/validation_reporters";
 import {
-  NotificationStatus,
-  NotificationStatusId,
-  NotificationStatusModel,
-  RetrievedNotificationStatus
-} from "../notification_status";
+  MESSAGE_STATUS_COLLECTION_NAME,
+  MessageStatus,
+  MessageStatusModel,
+  RetrievedMessageStatus
+} from "../message_status";
 
 const aDatabaseUri = DocumentDbUtils.getDatabaseUri("mockdb" as NonEmptyString);
 const collectionUrl = DocumentDbUtils.getCollectionUri(
   aDatabaseUri,
-  "notification-status"
+  MESSAGE_STATUS_COLLECTION_NAME
 );
 
-const aNotificationStatusId = "A_NOTIFICATION_ID:EMAIL" as NotificationStatusId;
+const aMessageId = "A_MESSAGE_ID" as NonEmptyString;
 
-const aSerializedNotificationStatus = {
-  channel: NotificationChannelEnum.EMAIL,
-  messageId: "A_MESSAGE_ID" as NonEmptyString,
-  notificationId: "A_NOTIFICATION_ID" as NonEmptyString,
-  status: NotificationChannelStatusValueEnum.SENT,
-  statusId: aNotificationStatusId,
+const aSerializedMessageStatus = {
+  messageId: aMessageId,
+  status: MessageStatusValueEnum.ACCEPTED,
   updatedAt: new Date().toISOString()
 };
 
-const aNotificationStatus = NotificationStatus.decode(
-  aSerializedNotificationStatus
+const aMessageStatus = MessageStatus.decode(
+  aSerializedMessageStatus
 ).getOrElseL(errs => {
   const error = readableReport(errs);
-  throw new Error("Fix NotificationStatus mock: " + error);
+  throw new Error("Fix MessageStatus mock: " + error);
 });
 
-const aSerializedRetrievedNotificationStatus = {
+const aSerializedRetrievedMessageStatus = {
   _self: "_self",
   _ts: 1,
-  ...aSerializedNotificationStatus,
-  id: `${aNotificationStatusId}-${"0".repeat(16)}` as NonEmptyString,
-  kind: "IRetrievedNotificationStatus",
+  ...aSerializedMessageStatus,
+  id: `${aMessageId}-${"0".repeat(16)}` as NonEmptyString,
+  kind: "IRetrievedMessageStatus",
   version: 0 as NonNegativeNumber
 };
 
-const aRetrievedNotificationStatus = RetrievedNotificationStatus.decode(
-  aSerializedRetrievedNotificationStatus
+const aRetrievedMessageStatus = RetrievedMessageStatus.decode(
+  aSerializedRetrievedMessageStatus
 ).getOrElseL(errs => {
   const error = readableReport(errs);
-  throw new Error("Fix NotificationStatus mock: " + error);
+  throw new Error("Fix MessageStatus mock: " + error);
 });
 
-describe("findOneNotificationStatusById", () => {
-  it("should resolve a promise to an existing notification status", async () => {
+describe("findOneMessageStatusById", () => {
+  it("should resolve a promise to an existing Message status", async () => {
     const iteratorMock = {
       executeNext: jest.fn(cb =>
-        cb(undefined, [aSerializedRetrievedNotificationStatus], undefined)
+        cb(undefined, [aSerializedRetrievedMessageStatus], undefined)
       )
     };
 
@@ -71,24 +67,21 @@ describe("findOneNotificationStatusById", () => {
       queryDocuments: jest.fn((__, ___) => iteratorMock)
     };
 
-    const model = new NotificationStatusModel(
+    const model = new MessageStatusModel(
       (clientMock as any) as DocumentDb.DocumentClient,
       collectionUrl
     );
 
-    const result = await model.findOneNotificationStatusByNotificationChannel(
-      "A_NOTIFICATION_ID" as NonEmptyString,
-      NotificationChannelEnum.EMAIL
-    );
+    const result = await model.findOneByMessageId(aMessageId);
 
     expect(isRight(result)).toBeTruthy();
     if (isRight(result)) {
       expect(result.value.isSome()).toBeTruthy();
-      expect(result.value.toUndefined()).toEqual(aRetrievedNotificationStatus);
+      expect(result.value.toUndefined()).toEqual(aRetrievedMessageStatus);
     }
   });
 
-  it("should resolve a promise to an empty value if no NotificationStatus is found", async () => {
+  it("should resolve a promise to an empty value if no MessageStatus is found", async () => {
     const iteratorMock = {
       executeNext: jest.fn(cb => cb(undefined, [], undefined))
     };
@@ -97,15 +90,12 @@ describe("findOneNotificationStatusById", () => {
       queryDocuments: jest.fn((__, ___) => iteratorMock)
     };
 
-    const model = new NotificationStatusModel(
+    const model = new MessageStatusModel(
       (clientMock as any) as DocumentDb.DocumentClient,
       collectionUrl
     );
 
-    const result = await model.findOneNotificationStatusByNotificationChannel(
-      "A_NOTIFICATION_ID" as NonEmptyString,
-      NotificationChannelEnum.EMAIL
-    );
+    const result = await model.findOneByMessageId(aMessageId);
 
     expect(isRight(result)).toBeTruthy();
     if (isRight(result)) {
@@ -114,33 +104,28 @@ describe("findOneNotificationStatusById", () => {
   });
 });
 
-describe("createNotificationStatus", () => {
-  it("should create a new NotificationStatus", async () => {
+describe("createMessageStatus", () => {
+  it("should create a new MessageStatus", async () => {
     const clientMock: any = {
       createDocument: jest.fn((_, __, ___, cb) => {
-        cb(undefined, aSerializedRetrievedNotificationStatus);
+        cb(undefined, aSerializedRetrievedMessageStatus);
       })
     };
 
-    const model = new NotificationStatusModel(clientMock, collectionUrl);
+    const model = new MessageStatusModel(clientMock, collectionUrl);
 
-    const result = await model.create(
-      aNotificationStatus,
-      aNotificationStatus.notificationId
-    );
+    const result = await model.create(aMessageStatus, aMessageStatus.messageId);
 
     expect(clientMock.createDocument).toHaveBeenCalledTimes(1);
     expect(clientMock.createDocument.mock.calls[0][1].kind).toBeUndefined();
     expect(clientMock.createDocument.mock.calls[0][2]).toHaveProperty(
       "partitionKey",
-      aNotificationStatus.notificationId
+      aMessageStatus.messageId
     );
     expect(isRight(result)).toBeTruthy();
     if (isRight(result)) {
-      expect(result.value.statusId).toEqual(aNotificationStatus.statusId);
-      expect(result.value.id).toEqual(
-        `${aNotificationStatusId}-${"0".repeat(16)}`
-      );
+      expect(result.value.messageId).toEqual(aMessageStatus.messageId);
+      expect(result.value.id).toEqual(`${aMessageId}-${"0".repeat(16)}`);
       expect(result.value.version).toEqual(0);
     }
   });
@@ -152,11 +137,11 @@ describe("createNotificationStatus", () => {
       })
     };
 
-    const model = new NotificationStatusModel(clientMock, collectionUrl);
+    const model = new MessageStatusModel(clientMock, collectionUrl);
 
     const result = await model.create(
-      aNotificationStatus,
-      aSerializedNotificationStatus.notificationId
+      aMessageStatus,
+      aSerializedMessageStatus.messageId
     );
 
     expect(clientMock.createDocument).toHaveBeenCalledTimes(1);
@@ -168,25 +153,23 @@ describe("createNotificationStatus", () => {
   });
 });
 
-describe("updateNotificationStatus", () => {
-  it("should update an existing NotificationStatus", async () => {
+describe("updateMessageStatus", () => {
+  it("should update an existing MessageStatus", async () => {
     const clientMock: any = {
       createDocument: jest.fn((_, newDocument, ___, cb) => {
-        const retrievedDocument = RetrievedNotificationStatus.encode(
-          newDocument
-        );
+        const retrievedDocument = RetrievedMessageStatus.encode(newDocument);
         cb(undefined, { ...retrievedDocument, _self: "_self", _ts: 1 });
       }),
       readDocument: jest.fn((_, __, cb) =>
-        cb(undefined, aSerializedRetrievedNotificationStatus)
+        cb(undefined, aSerializedRetrievedMessageStatus)
       )
     };
 
-    const model = new NotificationStatusModel(clientMock, collectionUrl);
+    const model = new MessageStatusModel(clientMock, collectionUrl);
 
     const result = await model.update(
-      aRetrievedNotificationStatus.id,
-      aRetrievedNotificationStatus.notificationId,
+      aRetrievedMessageStatus.id,
+      aRetrievedMessageStatus.messageId,
       p => {
         return {
           ...p
@@ -198,22 +181,22 @@ describe("updateNotificationStatus", () => {
     expect(clientMock.createDocument.mock.calls[0][1].kind).toBeUndefined();
     expect(clientMock.createDocument.mock.calls[0][2]).toHaveProperty(
       "partitionKey",
-      aRetrievedNotificationStatus.notificationId
+      aRetrievedMessageStatus.messageId
     );
     expect(isRight(result)).toBeTruthy();
     if (isRight(result)) {
       expect(result.value.isSome()).toBeTruthy();
       if (isSome(result.value)) {
-        const updatedNotificationStatus = result.value.value;
-        expect(updatedNotificationStatus.statusId).toEqual(
-          aRetrievedNotificationStatus.statusId
+        const updatedMessageStatus = result.value.value;
+        expect(updatedMessageStatus.messageId).toEqual(
+          aRetrievedMessageStatus.messageId
         );
-        expect(updatedNotificationStatus.id).toEqual(
-          `${aNotificationStatusId}-${"0".repeat(15)}1`
+        expect(updatedMessageStatus.id).toEqual(
+          `${aMessageId}-${"0".repeat(15)}1`
         );
-        expect(updatedNotificationStatus.version).toEqual(1);
-        expect(updatedNotificationStatus.status).toEqual(
-          aRetrievedNotificationStatus.status
+        expect(updatedMessageStatus.version).toEqual(1);
+        expect(updatedMessageStatus.status).toEqual(
+          aRetrievedMessageStatus.status
         );
       }
     }
@@ -225,11 +208,11 @@ describe("updateNotificationStatus", () => {
       readDocument: jest.fn((_, __, cb) => cb("error"))
     };
 
-    const model = new NotificationStatusModel(clientMock, collectionUrl);
+    const model = new MessageStatusModel(clientMock, collectionUrl);
 
     const result = await model.update(
-      aRetrievedNotificationStatus.id,
-      aRetrievedNotificationStatus.notificationId,
+      aRetrievedMessageStatus.id,
+      aRetrievedMessageStatus.messageId,
       o => o
     );
 
@@ -246,15 +229,15 @@ describe("updateNotificationStatus", () => {
     const clientMock: any = {
       createDocument: jest.fn((_, __, ___, cb) => cb("error")),
       readDocument: jest.fn((_, __, cb) =>
-        cb(undefined, aSerializedRetrievedNotificationStatus)
+        cb(undefined, aSerializedRetrievedMessageStatus)
       )
     };
 
-    const model = new NotificationStatusModel(clientMock, collectionUrl);
+    const model = new MessageStatusModel(clientMock, collectionUrl);
 
     const result = await model.update(
-      aRetrievedNotificationStatus.id,
-      aRetrievedNotificationStatus.notificationId,
+      aRetrievedMessageStatus.id,
+      aRetrievedMessageStatus.messageId,
       o => o
     );
 

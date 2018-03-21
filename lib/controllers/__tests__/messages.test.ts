@@ -4,8 +4,8 @@ import { toAuthorizedCIDRs } from "../../models/service";
 
 import { response as MockResponse } from "jest-mock-express";
 
-import { isLeft, isRight, left, right } from "fp-ts/lib/Either";
-import { none, some } from "fp-ts/lib/Option";
+import { Either, isLeft, isRight, left, right } from "fp-ts/lib/Either";
+import { none, Option, some } from "fp-ts/lib/Option";
 
 import { ModelId } from "../../utils/documentdb_model_versioned";
 
@@ -22,8 +22,10 @@ import {
 import { IAzureUserAttributes } from "../../utils/middlewares/azure_user_attributes";
 import { EmailString, NonEmptyString } from "../../utils/strings";
 
+import { QueryError } from "documentdb";
 import { MessageContent } from "../../api/definitions/MessageContent";
 import { MessageResponseWithoutContent } from "../../api/definitions/MessageResponseWithoutContent";
+import { MessageStatusValueEnum } from "../../api/definitions/MessageStatusValue";
 import { NotificationChannelEnum } from "../../api/definitions/NotificationChannel";
 import { NotificationChannelStatusValueEnum } from "../../api/definitions/NotificationChannelStatusValue";
 import { TimeToLiveSeconds } from "../../api/definitions/TimeToLiveSeconds";
@@ -33,6 +35,7 @@ import {
   NewMessageWithoutContent,
   RetrievedMessageWithoutContent
 } from "../../models/message";
+import { MessageStatus } from "../../models/message_status";
 import {
   NotificationAddressSourceEnum,
   RetrievedNotification
@@ -132,8 +135,9 @@ const aPublicExtendedMessage: CreatedMessageWithoutContent = {
 const aPublicExtendedMessageResponse: MessageResponseWithoutContent = {
   message: aPublicExtendedMessage,
   notification: {
-    email: NotificationChannelStatusValueEnum.SENT_TO_CHANNEL
-  }
+    email: NotificationChannelStatusValueEnum.SENT
+  },
+  status: MessageStatusValueEnum.ACCEPTED
 };
 
 function getNotificationModelMock(
@@ -154,10 +158,16 @@ const aRetrievedNotificationStatus: RetrievedNotificationStatus = {
   kind: "IRetrievedNotificationStatus",
   messageId: "1" as NonEmptyString,
   notificationId: "1" as NonEmptyString,
-  status: NotificationChannelStatusValueEnum.SENT_TO_CHANNEL,
+  status: NotificationChannelStatusValueEnum.SENT,
   statusId: makeStatusId("1" as NonEmptyString, NotificationChannelEnum.EMAIL),
-  updateAt: new Date(),
+  updatedAt: new Date(),
   version: 1 as NonNegativeNumber
+};
+
+const aMessageStatus: MessageStatus = {
+  messageId: aMessageId,
+  status: MessageStatusValueEnum.ACCEPTED,
+  updatedAt: new Date()
 };
 
 function getNotificationStatusModelMock(
@@ -167,6 +177,15 @@ function getNotificationStatusModelMock(
     findOneNotificationStatusByNotificationChannel: jest.fn(() =>
       Promise.resolve(retrievedNotificationStatus)
     )
+  };
+}
+
+function getMessageStatusModelMock(
+  s: Either<QueryError, Option<MessageStatus>> = right(some(aMessageStatus))
+): any {
+  return {
+    findOneByMessageId: jest.fn().mockReturnValue(Promise.resolve(s)),
+    upsert: jest.fn(status => Promise.resolve(left(status)))
   };
 }
 
@@ -712,6 +731,7 @@ describe("GetMessageHandler", () => {
 
     const getMessageHandler = GetMessageHandler(
       mockMessageModel as any,
+      getMessageStatusModelMock(),
       getNotificationModelMock(),
       getNotificationStatusModelMock(),
       {} as any
@@ -748,6 +768,7 @@ describe("GetMessageHandler", () => {
 
     const getMessageHandler = GetMessageHandler(
       mockMessageModel as any,
+      getMessageStatusModelMock(),
       getNotificationModelMock(),
       getNotificationStatusModelMock(),
       {} as any
@@ -781,6 +802,7 @@ describe("GetMessageHandler", () => {
 
     const getMessageHandler = GetMessageHandler(
       mockMessageModel as any,
+      getMessageStatusModelMock(),
       getNotificationModelMock(),
       getNotificationStatusModelMock(),
       {} as any
@@ -820,6 +842,7 @@ describe("GetMessageHandler", () => {
 
     const getMessageHandler = GetMessageHandler(
       mockMessageModel as any,
+      getMessageStatusModelMock(),
       {} as any,
       {} as any,
       {} as any
@@ -850,6 +873,7 @@ describe("GetMessageHandler", () => {
 
     const getMessageHandler = GetMessageHandler(
       mockMessageModel as any,
+      getMessageStatusModelMock(),
       {} as any,
       {} as any,
       {} as any
@@ -893,6 +917,7 @@ describe("GetMessageHandler", () => {
 
     const getMessageHandler = GetMessageHandler(
       mockMessageModel as any,
+      getMessageStatusModelMock(),
       getNotificationModelMock(aRetrievedNotification),
       getNotificationStatusModelMock(),
       {} as any
@@ -917,6 +942,73 @@ describe("GetMessageHandler", () => {
     if (result.kind === "IResponseSuccessJson") {
       expect(result.value).toEqual(aPublicExtendedMessageResponse);
     }
+  });
+
+  it("should fail if any error occurs trying to retrieve the message status", async () => {
+    const mockMessageModel = {
+      findMessageForRecipient: jest.fn(() =>
+        right(some(aRetrievedMessageWithoutContent))
+      ),
+      getStoredContent: jest.fn(() => right(none))
+    };
+
+    const getMessageHandler = GetMessageHandler(
+      mockMessageModel as any,
+      getMessageStatusModelMock(
+        left<QueryError, Option<MessageStatus>>({
+          body: "error",
+          code: 1
+        })
+      ),
+      getNotificationModelMock(),
+      getNotificationStatusModelMock(),
+      {} as any
+    );
+
+    const result = await getMessageHandler(
+      aUserAuthenticationDeveloper,
+      undefined as any, // not used
+      someUserAttributes,
+      aFiscalCode,
+      aRetrievedMessageWithoutContent.id
+    );
+
+    expect(result.kind).toBe("IResponseErrorInternal");
+  });
+  it("should fail if any error occurs trying to retrieve the notification status", async () => {
+    const mockMessageModel = {
+      findMessageForRecipient: jest.fn(() =>
+        right(some(aRetrievedMessageWithoutContent))
+      ),
+      getStoredContent: jest.fn(() => right(none))
+    };
+
+    const getMessageHandler = GetMessageHandler(
+      mockMessageModel as any,
+      getMessageStatusModelMock(),
+      {
+        findNotificationForMessage: jest.fn(() =>
+          Promise.resolve(
+            left({
+              body: "error",
+              code: 1
+            })
+          )
+        )
+      } as any,
+      getNotificationStatusModelMock(),
+      {} as any
+    );
+
+    const result = await getMessageHandler(
+      aUserAuthenticationDeveloper,
+      undefined as any, // not used
+      someUserAttributes,
+      aFiscalCode,
+      aRetrievedMessageWithoutContent.id
+    );
+
+    expect(result.kind).toBe("IResponseErrorInternal");
   });
 });
 

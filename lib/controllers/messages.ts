@@ -93,12 +93,20 @@ import {
 import { withoutUndefinedValues } from "../utils/types";
 
 import { Either, isLeft, isRight, left, right } from "fp-ts/lib/Either";
-import { fromEither, isNone, none, Option, some } from "fp-ts/lib/Option";
+import {
+  fromEither as OptionFromEither,
+  isNone,
+  none,
+  Option,
+  some
+} from "fp-ts/lib/Option";
 
 import { CreatedMessageWithContent } from "../api/definitions/CreatedMessageWithContent";
+import { MessageStatusValueEnum } from "../api/definitions/MessageStatusValue";
 import { NotificationChannelEnum } from "../api/definitions/NotificationChannel";
 import { NotificationChannelStatusValueEnum } from "../api/definitions/NotificationChannelStatusValue";
 import { TimeToLiveSeconds } from "../api/definitions/TimeToLiveSeconds";
+import { MessageStatusModel } from "../models/message_status";
 import { NotificationStatusModel } from "../models/notification_status";
 
 /**
@@ -127,9 +135,9 @@ export const MessagePayloadMiddleware: IRequestMiddleware<
 > = request =>
   new Promise(resolve => {
     return resolve(
-      ApiNewMessageWithDefaults.decode(request.body)
-        .mapLeft(ResponseErrorFromValidationErrors(ApiNewMessageWithDefaults))
-        .map(t.identity)
+      ApiNewMessageWithDefaults.decode(request.body).mapLeft(
+        ResponseErrorFromValidationErrors(ApiNewMessageWithDefaults)
+      )
     );
   });
 
@@ -215,7 +223,7 @@ type IGetMessagesHandler = (
 /**
  * Convenience structure to hold notification channels
  * and the status of the relative notification
- * ie. { email: "SENT_TO_CHANNEL" }
+ * ie. { email: "SENT" }
  */
 type NotificationStatusHolder = Partial<
   Record<NotificationChannelEnum, NotificationChannelStatusValueEnum>
@@ -233,7 +241,7 @@ async function getChannelStatus(
     notificationId,
     channel
   );
-  return fromEither(errorOrMaybeStatus)
+  return OptionFromEither(errorOrMaybeStatus)
     .chain(t.identity)
     .map(o => o.status)
     .toUndefined();
@@ -247,7 +255,7 @@ async function getChannelStatus(
  * to retrieve the relative notification status.
  *
  * @returns an object with channels as keys and statuses as values
- *          ie. { email: "SENT_TO_CHANNEL" }
+ *          ie. { email: "SENT" }
  */
 async function getMessageNotificationStatuses(
   notificationModel: NotificationModel,
@@ -520,6 +528,7 @@ export function CreateMessage(
  */
 export function GetMessageHandler(
   messageModel: MessageModel,
+  messageStatusModel: MessageStatusModel,
   notificationModel: NotificationModel,
   notificationStatusModel: NotificationStatusModel,
   blobService: BlobService
@@ -571,25 +580,25 @@ export function GetMessageHandler(
       return ResponseErrorForbiddenNotAuthorized;
     }
 
-    const maybeContentOrError = await messageModel.getStoredContent(
+    const errorOrMaybeContent = await messageModel.getStoredContent(
       blobService,
       retrievedMessage.id,
       retrievedMessage.fiscalCode
     );
 
-    if (isLeft(maybeContentOrError)) {
+    if (isLeft(errorOrMaybeContent)) {
       winston.error(
-        `GetMessageHandler|${JSON.stringify(maybeContentOrError.value)}`
+        `GetMessageHandler|${JSON.stringify(errorOrMaybeContent.value)}`
       );
       return ResponseErrorInternal(
-        `${maybeContentOrError.value.name}: ${
-          maybeContentOrError.value.message
+        `${errorOrMaybeContent.value.name}: ${
+          errorOrMaybeContent.value.message
         }`
       );
     }
 
     const message: CreatedMessageWithContent = withoutUndefinedValues({
-      content: maybeContentOrError.value.toUndefined(),
+      content: errorOrMaybeContent.value.toUndefined(),
       ...retrievedMessageToPublic(retrievedMessage)
     });
 
@@ -606,15 +615,34 @@ export function GetMessageHandler(
         }|${errorOrNotificationStatuses.value.message}`
       );
     }
-
     const notificationStatuses = errorOrNotificationStatuses.value;
 
-    const messageStatus: MessageResponseWithContent = {
+    const errorOrMaybeMessageStatus = await messageStatusModel.findOneByMessageId(
+      retrievedMessage.id
+    );
+
+    if (isLeft(errorOrMaybeMessageStatus)) {
+      return ResponseErrorInternal(
+        `Error retrieving MessageStatus: ${
+          errorOrMaybeMessageStatus.value.code
+        }|${errorOrMaybeMessageStatus.value.body}`
+      );
+    }
+    const maybeMessageStatus = errorOrMaybeMessageStatus.value;
+
+    const returnedMessage: MessageResponseWithContent = {
       message,
-      notification: notificationStatuses.toUndefined()
+      notification: notificationStatuses.toUndefined(),
+      // we do not return the status date-time
+      status: maybeMessageStatus
+        .map(messageStatus => messageStatus.status)
+        // when the message has been received but a MessageStatus
+        // does not exist yet, the message is considered to be
+        // in the ACCEPTED state (not yet stored in the inbox)
+        .getOrElse(MessageStatusValueEnum.ACCEPTED)
     };
 
-    return ResponseSuccessJson(messageStatus);
+    return ResponseSuccessJson(returnedMessage);
   };
 }
 
@@ -624,12 +652,14 @@ export function GetMessageHandler(
 export function GetMessage(
   serviceModel: ServiceModel,
   messageModel: MessageModel,
+  messageStatusModel: MessageStatusModel,
   notificationModel: NotificationModel,
   notificationStatusModel: NotificationStatusModel,
   blobService: BlobService
 ): express.RequestHandler {
   const handler = GetMessageHandler(
     messageModel,
+    messageStatusModel,
     notificationModel,
     notificationStatusModel,
     blobService

@@ -47,7 +47,7 @@ export const NotificationStatus = t.interface({
   // As we have one NotificationStatus for each channel
   // of a Notification => statusId = notificationId + channelName
   statusId: NotificationStatusId,
-  updateAt: Timestamp
+  updatedAt: Timestamp
 });
 
 export type NotificationStatus = t.TypeOf<typeof NotificationStatus>;
@@ -139,7 +139,7 @@ function toBaseType(o: RetrievedNotificationStatus): NotificationStatus {
       "notificationId",
       "status",
       "statusId",
-      "updateAt"
+      "updatedAt"
     ],
     o
   );
@@ -147,7 +147,7 @@ function toBaseType(o: RetrievedNotificationStatus): NotificationStatus {
 
 export type NotificationStatusUpdater = ((
   status: NotificationChannelStatusValueEnum
-) => Promise<Either<RuntimeError, NotificationStatus>>);
+) => Promise<Either<RuntimeError, RetrievedNotificationStatus>>);
 
 /**
  * Convenience method that returns a function to update the notification status
@@ -169,7 +169,7 @@ export const getNotificationStatusUpdater = (
           notificationId,
           status,
           statusId,
-          updateAt: new Date()
+          updatedAt: new Date()
         },
         NOTIFICATION_STATUS_MODEL_ID_FIELD,
         statusId,
