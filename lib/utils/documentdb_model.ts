@@ -2,7 +2,7 @@ import * as DocumentDb from "documentdb";
 import * as DocumentDbUtils from "../utils/documentdb";
 
 import { Either, isLeft, left, right } from "fp-ts/lib/Either";
-import { fromNullable, isNone, none, Option, some } from "fp-ts/lib/Option";
+import { fromNullable, none, Option, some } from "fp-ts/lib/Option";
 
 /**
  * A persisted data model backed by a DocumentDB client: this base class
