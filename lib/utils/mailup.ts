@@ -272,7 +272,7 @@ export function MailUpTransport(
 
       if (isLeft(errorOrEmail)) {
         const errors = readableReport(errorOrEmail.value);
-        winston.debug("MailUpTransport|errors", errors);
+        winston.error("MailUpTransport|errors", errors);
         return callback(
           new Error(`Invalid email payload: ${errors}`),
           undefined
@@ -280,8 +280,6 @@ export function MailUpTransport(
       }
 
       const email = errorOrEmail.value;
-
-      winston.debug("MailUpTransport|email|", JSON.stringify(email));
 
       const errorOrResponse = await sendTransactionalMail(options.creds, email);
 
