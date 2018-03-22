@@ -1,3 +1,5 @@
+/* tslint:disable:no-duplicate-string */
+
 import { isRight } from "fp-ts/lib/Either";
 import * as t from "io-ts";
 

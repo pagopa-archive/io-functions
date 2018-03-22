@@ -1,5 +1,5 @@
-// tslint:disable:no-object-mutation
-// tslint:disable:no-any
+/* tslint:disable:no-any */
+
 import { NonEmptyString } from "../strings";
 
 jest.mock("../documentdb");

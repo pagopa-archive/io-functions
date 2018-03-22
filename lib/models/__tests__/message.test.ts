@@ -1,5 +1,4 @@
-// tslint:disable:no-object-mutation
-// tslint:disable:no-any
+/* tslint:disable:no-any */
 
 import { isLeft, isRight, left, right } from "fp-ts/lib/Either";
 

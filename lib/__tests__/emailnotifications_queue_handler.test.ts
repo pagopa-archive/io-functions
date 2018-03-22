@@ -1,5 +1,6 @@
-// tslint:disable:no-any
-// tslint:disable:no-null-keyword
+/* tslint:disable:no-any */
+/* tslint:disable:no-null-keyword */
+/* tslint:disable:no-big-function */
 
 // set a dummy value for the env vars needed by the handler
 // tslint:disable-next-line:no-object-mutation
@@ -165,12 +166,6 @@ const notificationDefaults: INotificationDefaults = {
   },
   MAIL_FROM: "no-reply@italia.it" as NonEmptyString
 };
-
-// function getUpdateNotificationStatusMock(
-//   retrievedNotificationStatus: any = right(aRetrievedNotificationStatus)
-// ): any {
-//   return jest.fn(() => Promise.resolve(retrievedNotificationStatus));
-// }
 
 describe("sendMail", () => {
   it("should call sendMail on the Transporter and return the result", async () => {

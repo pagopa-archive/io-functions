@@ -1,3 +1,5 @@
+/* tslint:disable:no-identical-functions */
+
 import { isRight } from "fp-ts/lib/Either";
 import { getBlobAsText, upsertBlobFromText } from "../azure_storage";
 

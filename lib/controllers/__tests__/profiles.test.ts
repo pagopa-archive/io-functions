@@ -1,4 +1,5 @@
-// tslint:disable:no-any
+/* tslint:disable:no-any */
+/* tslint:disable:no-duplicate-string */
 
 import { right } from "fp-ts/lib/Either";
 import { none, some } from "fp-ts/lib/Option";

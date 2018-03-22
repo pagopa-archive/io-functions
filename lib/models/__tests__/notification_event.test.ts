@@ -1,5 +1,5 @@
-// tslint:disable:no-null-keyword
-// tslint:disable:no-any
+/* tslint:disable:no-any */
+/* tslint:disable:no-null-keyword */
 
 import { NonEmptyString } from "../../utils/strings";
 

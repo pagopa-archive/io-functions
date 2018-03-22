@@ -1,5 +1,6 @@
-// tslint:disable:no-object-mutation
-// tslint:disable:no-any
+/* tslint:disable:no-any */
+/* tslint:disable:no-duplicate-string */
+
 import { NonEmptyString } from "../strings";
 
 import * as DocumentDb from "documentdb";

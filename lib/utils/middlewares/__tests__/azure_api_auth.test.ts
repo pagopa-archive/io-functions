@@ -1,4 +1,7 @@
-// tslint:disable:no-any
+/* tslint:disable:no-any */
+/* tslint:disable:no-big-function */
+/* tslint:disable:no-duplicate-string */
+
 import { isLeft, isRight } from "fp-ts/lib/Either";
 
 import { AzureApiAuthMiddleware, UserGroup } from "../azure_api_auth";
