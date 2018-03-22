@@ -1,4 +1,6 @@
-// tslint:disable:no-any
+/* tslint:disable:no-any */
+/* tslint:disable:no-duplicate-string */
+/* tslint:disable:no-big-function */
 
 import { toAuthorizedCIDRs } from "../../models/service";
 
@@ -1212,8 +1214,6 @@ describe("CreateMessage", () => {
     };
     createMessage(request as any, mockResponse, _ => _);
     await Promise.resolve({});
-    // expect(request.header).toHaveBeenCalledWith("x-user-id");
-    // expect(request.header).toHaveBeenCalledWith("x-subscription-id");
     expect(mockResponse.set).toHaveBeenCalledWith(
       "Content-Type",
       "application/problem+json"

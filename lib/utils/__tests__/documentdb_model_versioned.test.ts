@@ -1,5 +1,5 @@
-// tslint:disable:no-object-mutation
-// tslint:disable:no-any
+/* tslint:disable:no-any */
+
 import { NonEmptyString } from "../strings";
 
 jest.mock("../documentdb");
@@ -53,13 +53,12 @@ function updateModelId(
   id: NonEmptyString,
   version: NonNegativeNumber
 ): INewMyDocument {
-  const newMyDocument: INewMyDocument = {
+  return {
     ...o,
     id,
     kind: "INewMyDocument",
     version
   };
-  return newMyDocument;
 }
 
 class MyModel extends DocumentDbModelVersioned<

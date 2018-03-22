@@ -1,5 +1,6 @@
-// tslint:disable:no-any
-// tslint:disable:object-literal-sort-keys
+/* tslint:disable:no-any */
+/* tslint:disable:object-literal-sort-keys */
+
 import * as t from "io-ts";
 
 import { NonEmptyString } from "../strings";

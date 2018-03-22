@@ -1,16 +1,17 @@
-// tslint:disable:no-any
+/* tslint:disable:no-any */
+/* tslint:disable:no-big-function */
+/* tslint:disable:no-identical-functions */
 
 // set a dummy value for the env vars needed by the handler
 // tslint:disable-next-line:no-object-mutation
-process.env.CUSTOMCONNSTR_COSMOSDB_URI = "anyCosmosDbUri";
-// tslint:disable-next-line:no-object-mutation
-process.env.CUSTOMCONNSTR_COSMOSDB_KEY = "anyCosmosDbKey";
-// tslint:disable-next-line:no-object-mutation
-process.env.COSMOSDB_NAME = "anyDbName";
-// tslint:disable-next-line:no-object-mutation
-process.env.MESSAGE_CONTAINER_NAME = "anyMessageContainerName";
-// tslint:disable-next-line:no-object-mutation
-process.env.QueueStorageConnection = "anyQueueStorageConnection";
+process.env = {
+  ...process.env,
+  COSMOSDB_NAME: "anyDbName",
+  CUSTOMCONNSTR_COSMOSDB_KEY: "anyCosmosDbKey",
+  CUSTOMCONNSTR_COSMOSDB_URI: "anyCosmosDbUri",
+  MESSAGE_CONTAINER_NAME: "anyMessageContainerName",
+  QueueStorageConnection: "anyQueueStorageConnection"
+};
 
 import { CreatedMessageEvent } from "../models/created_message_event";
 import { NewMessageWithContent } from "../models/message";
