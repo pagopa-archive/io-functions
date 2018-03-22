@@ -534,17 +534,6 @@ export function GetMessageHandler(
   blobService: BlobService
 ): IGetMessageHandler {
   return async (userAuth, _, userAttributes, fiscalCode, messageId) => {
-    // whether the user is a trusted application (i.e. can access all messages for a user)
-    const canListMessages = userAuth.groups.has(UserGroup.ApiMessageList);
-    if (!canListMessages) {
-      // since this is not a trusted application we must allow only accessing messages
-      // that have been sent by the service he belongs to
-      if (!userAttributes.service) {
-        // the user doesn't have any service associated, so we can't continue
-        return ResponseErrorForbiddenNotAuthorized;
-      }
-    }
-
     const errorOrMaybeDocument = await messageModel.findMessageForRecipient(
       fiscalCode,
       messageId
@@ -568,6 +557,9 @@ export function GetMessageHandler(
     }
 
     const retrievedMessage = maybeDocument.value;
+
+    // whether the user is a trusted application (i.e. can access all messages for any recipient)
+    const canListMessages = userAuth.groups.has(UserGroup.ApiMessageList);
 
     // the user is allowed to see the message when he is either
     // a trusted application or he is the sender of the message
