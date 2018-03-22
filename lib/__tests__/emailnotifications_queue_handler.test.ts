@@ -1,21 +1,23 @@
-// tslint:disable:no-any
-// tslint:disable:no-null-keyword
+/* tslint:disable:no-any */
+/* tslint:disable:no-null-keyword */
+/* tslint:disable:no-big-function */
 
 // set a dummy value for the env vars needed by the handler
 // tslint:disable-next-line:no-object-mutation
-process.env.CUSTOMCONNSTR_COSMOSDB_URI = "anyCosmosDbUri";
-// tslint:disable-next-line:no-object-mutation
-process.env.CUSTOMCONNSTR_COSMOSDB_KEY = "anyCosmosDbKey";
-// tslint:disable-next-line:no-object-mutation
-process.env.COSMOSDB_NAME = "anyDbName";
-// tslint:disable-next-line:no-object-mutation
-process.env.CUSTOMCONNSTR_SENDGRID_KEY = "anySendgridKey";
-// tslint:disable-next-line:no-object-mutation
-process.env.QueueStorageConnection = "anyConnectionString";
+process.env = {
+  ...process.env,
+  COSMOSDB_NAME: "anyDbName",
+  CUSTOMCONNSTR_COSMOSDB_KEY: "anyCosmosDbKey",
+  CUSTOMCONNSTR_COSMOSDB_URI: "anyCosmosDbUri",
+  MAILUP_SECRET: "anyMailupSecret",
+  MAILUP_USERNAME: "anyMailupUser",
+  MAIL_FROM_DEFAULT: "no-reply@italia.it",
+  QueueStorageConnection: "anyConnectionString"
+};
 
 jest.mock("applicationinsights");
 jest.mock("azure-storage");
-jest.mock("nodemailer-sendgrid-transport");
+jest.mock("../utils/mailup");
 
 // updateMessageVisibilityTimeout
 jest.mock("../utils/azure_queues");
@@ -37,6 +39,7 @@ import {
   generateDocumentHtml,
   handleNotification,
   index,
+  INotificationDefaults,
   processRuntimeError,
   sendMail
 } from "../emailnotifications_queue_handler";
@@ -156,11 +159,13 @@ const aRetrievedNotificationStatus: RetrievedNotificationStatus = {
   version: 1 as NonNegativeNumber
 };
 
-// function getUpdateNotificationStatusMock(
-//   retrievedNotificationStatus: any = right(aRetrievedNotificationStatus)
-// ): any {
-//   return jest.fn(() => Promise.resolve(retrievedNotificationStatus));
-// }
+const notificationDefaults: INotificationDefaults = {
+  HTML_TO_TEXT_OPTIONS: {
+    ignoreImage: true, // ignore all document images
+    tables: true
+  },
+  MAIL_FROM: "no-reply@italia.it" as NonEmptyString
+};
 
 describe("sendMail", () => {
   it("should call sendMail on the Transporter and return the result", async () => {
@@ -207,7 +212,8 @@ describe("handleNotification", () => {
       {} as any,
       {} as any,
       notificationModelMock as any,
-      getMockNotificationEvent()
+      getMockNotificationEvent(),
+      notificationDefaults
     );
 
     expect(notificationModelMock.find).toHaveBeenCalledWith(
@@ -229,7 +235,8 @@ describe("handleNotification", () => {
       {} as any,
       {} as any,
       notificationModelMock as any,
-      getMockNotificationEvent()
+      getMockNotificationEvent(),
+      notificationDefaults
     );
 
     expect(isLeft(result)).toBeTruthy();
@@ -247,7 +254,8 @@ describe("handleNotification", () => {
       {} as any,
       {} as any,
       notificationModelMock as any,
-      getMockNotificationEvent()
+      getMockNotificationEvent(),
+      notificationDefaults
     );
 
     expect(isLeft(result)).toBeTruthy();
@@ -279,12 +287,13 @@ describe("handleNotification", () => {
       mockTransporter,
       mockAppinsights as any,
       notificationModelMock as any,
-      getMockNotificationEvent(aMessageContent)
+      getMockNotificationEvent(aMessageContent),
+      notificationDefaults
     );
 
     expect(mockTransport.sentMail.length).toBe(1);
     const sentMail = mockTransport.sentMail[0];
-    expect(sentMail.data.from).toBe("no-reply@italia.it");
+    expect(sentMail.data.from).toBe(notificationDefaults.MAIL_FROM);
     expect(sentMail.data.to).toBe("pinco@pallino.com");
     expect(sentMail.data.messageId).toBe(aMessageId);
     expect(sentMail.data.subject).not.toBeUndefined();
@@ -311,7 +320,7 @@ describe("handleNotification", () => {
         messageId: aMessageId,
         notificationId: aNotificationId,
         success: "true",
-        transport: "sendgrid"
+        transport: "mailup"
       }
     });
 
@@ -347,7 +356,8 @@ This is a *message* from the future!
       mockTransporter,
       mockAppinsights as any,
       notificationModelMock as any,
-      getMockNotificationEvent(aMessageContent)
+      getMockNotificationEvent(aMessageContent),
+      notificationDefaults
     );
 
     expect(
@@ -390,7 +400,8 @@ This is a message from the future!`.replace(/[ \n]+/g, "|")
       getMockNotificationEvent({
         markdown: aMessageBodyMarkdown,
         subject: undefined
-      })
+      }),
+      notificationDefaults
     );
 
     expect(mockTransport.sentMail[0].data.subject).toBe(
@@ -425,7 +436,8 @@ This is a message from the future!`.replace(/[ \n]+/g, "|")
       mockTransporter,
       mockAppinsights as any,
       notificationModelMock as any,
-      getMockNotificationEvent(aMessageContent)
+      getMockNotificationEvent(aMessageContent),
+      notificationDefaults
     );
 
     expect(mockTransport.sentMail[0].data.subject).toBe(customSubject);
@@ -453,7 +465,8 @@ This is a message from the future!`.replace(/[ \n]+/g, "|")
       mockTransporter,
       mockAppinsights as any,
       notificationModelMock as any,
-      getMockNotificationEvent()
+      getMockNotificationEvent(),
+      notificationDefaults
     );
 
     expect(mockAppinsights.trackEvent).toHaveBeenCalledWith({
@@ -463,7 +476,7 @@ This is a message from the future!`.replace(/[ \n]+/g, "|")
         messageId: aMessageId,
         notificationId: aNotificationId,
         success: "false",
-        transport: "sendgrid"
+        transport: "mailup"
       }
     });
 

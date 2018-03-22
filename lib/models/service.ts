@@ -120,13 +120,12 @@ function updateModelId(
   id: NonEmptyString,
   version: NonNegativeNumber
 ): NewService {
-  const newService: NewService = {
+  return {
     ...o,
     id,
     kind: "INewService",
     version
   };
-  return newService;
 }
 
 function toBaseType(o: RetrievedService): Service {

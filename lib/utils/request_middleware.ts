@@ -140,6 +140,8 @@ export function withRequestMiddlewares<
  * gets passed to the custom handler that in turn will return a response.
  * That final response gets sent to the client.
  */
+// TODO: Refactor this function to reduce its Cognitive Complexity
+/* tslint:disable-next-line:cognitive-complexity */
 export function withRequestMiddlewares<
   R1,
   R2,

@@ -1,4 +1,5 @@
-// tslint:disable:no-any
+/* tslint:disable:no-any */
+/* tslint:disable:no-identical-functions */
 
 import { isLeft, isRight } from "fp-ts/lib/Either";
 import { isSome } from "fp-ts/lib/Option";

@@ -90,14 +90,12 @@ function updateModelId(
   id: NonEmptyString,
   version: NonNegativeNumber
 ): NewProfile {
-  const newProfile: NewProfile = {
+  return {
     ...o,
     id,
     kind: "INewProfile",
     version
   };
-
-  return newProfile;
 }
 
 function toBaseType(o: RetrievedProfile): Profile {

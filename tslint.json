@@ -4,6 +4,7 @@
       "typestrict",
       "tslint:recommended",
       "tslint-immutable",
+      "tslint-sonarts",
       "tslint-plugin-prettier",
       "tslint-config-prettier"
     ],

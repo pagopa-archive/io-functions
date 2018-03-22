@@ -1,4 +1,6 @@
-// tslint:disable:no-any
+/* tslint:disable:no-any */
+/* tslint:disable:no-duplicate-string */
+
 import { NonEmptyString } from "../strings";
 
 import * as DocumentDb from "documentdb";
@@ -176,25 +178,6 @@ describe("readDocument", () => {
       expect(result.value).toEqual(documentFixture);
     }
   });
-
-  /*
-  it("should resolve a promise with the created document (composite partition key)", async () => {
-    const clientMock = {
-      readDocument: jest.fn((__, ___, cb) => cb(undefined, documentFixture)),
-    };
-    const result = await DocumentDbUtils.readDocument(
-      (clientMock as any) as DocumentDb.DocumentClient,
-      documentUriFixture,
-      [ "k1", "k2" ],
-    );
-    expect(clientMock.readDocument).toHaveBeenCalledTimes(1);
-    expect(clientMock.readDocument.mock.calls[0][1]).toEqual({ partitionKey: [ "k1", "k2" ] });
-    expect(isRight(result)).toBeTruthy();
-    if (isRight(result)) {
-      expect(result.value).toEqual(documentFixture);
-    }
-  });
-  */
 
   it("should reject a promise with the error", async () => {
     const clientMock = {

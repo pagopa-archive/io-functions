@@ -2,7 +2,7 @@ import * as DocumentDb from "documentdb";
 import * as DocumentDbUtils from "../utils/documentdb";
 
 import { Either, isLeft, left, right } from "fp-ts/lib/Either";
-import { fromNullable, isNone, none, Option, some } from "fp-ts/lib/Option";
+import { fromNullable, none, Option, some } from "fp-ts/lib/Option";
 
 /**
  * A persisted data model backed by a DocumentDB client: this base class
@@ -99,55 +99,6 @@ export abstract class DocumentDbModel<
     // for any other error (errorOrDocument is a left), we return it as is
     // or in case of success, we map the result to a retrieved interface
     return errorOrDocument.map(r => some(this.toRetrieved(r)));
-  }
-
-  /**
-   * Updates (i.e. replaces) a document.
-   *
-   * @param documentId    The ID of the document to retrieve.
-   * @param partitionKey  The partitionKey associated to this model.
-   * @param updater       A function that gets called with the current document
-   *    and should return the updated document.
-   */
-  public async update(
-    documentId: string,
-    partitionKey: string,
-    updater: (current: T) => T
-  ): Promise<Either<DocumentDb.QueryError, Option<TR>>> {
-    // fetch the document
-    const errorOrMaybeCurrent = await this.find(documentId, partitionKey);
-    if (isLeft(errorOrMaybeCurrent)) {
-      // if the query returned an error, forward it
-      return errorOrMaybeCurrent;
-    }
-
-    const maybeCurrent = errorOrMaybeCurrent.value;
-
-    if (isNone(maybeCurrent)) {
-      return right(maybeCurrent);
-    }
-
-    const currentRetrievedDocument = maybeCurrent.value;
-    const currentObject = this.toBaseType(currentRetrievedDocument);
-
-    const updatedObject = updater(currentObject);
-
-    const kindlessNewDocument: T & DocumentDb.NewDocument = Object.assign(
-      Object.assign({}, updatedObject),
-      {
-        id: documentId,
-        kind: undefined
-      }
-    );
-
-    const updatedDocument = await DocumentDbUtils.replaceDocument(
-      this.dbClient,
-      DocumentDbUtils.getDocumentUri(this.collectionUri, documentId),
-      kindlessNewDocument,
-      partitionKey
-    );
-
-    return updatedDocument.map(this.toRetrieved).map(some);
   }
 
   /**

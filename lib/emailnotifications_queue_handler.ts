@@ -25,7 +25,7 @@ import { readableReport } from "./utils/validation_reporters";
 import { IContext } from "azure-functions-types";
 
 import * as NodeMailer from "nodemailer";
-import * as sendGridTransport from "nodemailer-sendgrid-transport";
+import { MailUpTransport } from "./utils/mailup";
 
 import * as HtmlToText from "html-to-text";
 
@@ -63,6 +63,7 @@ import {
   NotificationStatusModel,
   NotificationStatusUpdater
 } from "./models/notification_status";
+import { NonEmptyString } from "./utils/strings";
 
 // Whether we're in a production environment
 const isProduction = process.env.NODE_ENV === "production";
@@ -115,8 +116,8 @@ const queueService = createQueueService(queueConnectionString);
 //
 // setup NodeMailer
 //
-
-const sendgridKey = getRequiredStringEnv("CUSTOMCONNSTR_SENDGRID_KEY");
+const mailupUsername = getRequiredStringEnv("MAILUP_USERNAME");
+const mailupSecret = getRequiredStringEnv("MAILUP_SECRET");
 
 //
 // options used when converting an HTML message to pure text
@@ -127,6 +128,14 @@ const HTML_TO_TEXT_OPTIONS: HtmlToTextOptions = {
   ignoreImage: true, // ignore all document images
   tables: true
 };
+
+// default sender for email
+const MAIL_FROM = getRequiredStringEnv("MAIL_FROM_DEFAULT");
+
+export interface INotificationDefaults {
+  readonly HTML_TO_TEXT_OPTIONS: HtmlToTextOptions;
+  readonly MAIL_FROM: NonEmptyString;
+}
 
 //
 // Main function
@@ -163,7 +172,7 @@ export async function generateDocumentHtml(
   }`;
 
   // wrap the generated HTML into an email template
-  const documentHtml = defaultEmailTemplate(
+  return defaultEmailTemplate(
     subject, // title
     "", // TODO: headline
     senderMetadata.organizationName, // organization name
@@ -172,8 +181,6 @@ export async function generateDocumentHtml(
     bodyHtml,
     "" // TODO: footer
   );
-
-  return documentHtml;
 }
 
 /**
@@ -203,7 +210,8 @@ export async function handleNotification(
   lMailerTransporter: NodeMailer.Transporter,
   lAppInsightsClient: ApplicationInsights.TelemetryClient,
   lNotificationModel: NotificationModel,
-  emailNotificationEvent: NotificationEvent
+  emailNotificationEvent: NotificationEvent,
+  notificationDefaultParams: INotificationDefaults
 ): Promise<Either<RuntimeError, NotificationEvent>> {
   const { message, notificationId, senderMetadata } = emailNotificationEvent;
 
@@ -269,13 +277,15 @@ export async function handleNotification(
   );
 
   // converts the HTML to pure text to generate the text version of the message
-  const bodyText = HtmlToText.fromString(documentHtml, HTML_TO_TEXT_OPTIONS);
+  const bodyText = HtmlToText.fromString(
+    documentHtml,
+    notificationDefaultParams.HTML_TO_TEXT_OPTIONS
+  );
 
   // trigger email delivery
-  // TODO: make everything configurable via settings
   // see https://nodemailer.com/message/
   const sendResult = await sendMail(lMailerTransporter, {
-    from: "no-reply@italia.it",
+    from: notificationDefaultParams.MAIL_FROM,
     headers: {
       "X-Italia-Messages-MessageId": message.id,
       "X-Italia-Messages-NotificationId": notificationId
@@ -295,7 +305,7 @@ export async function handleNotification(
     addressSource: emailNotification.addressSource,
     messageId: message.id,
     notificationId,
-    transport: "sendgrid"
+    transport: "mailup"
   };
 
   if (isLeft(sendResult)) {
@@ -416,14 +426,6 @@ export async function index(
   }
   const emailNotificationEvent = errorOrNotificationEvent.value;
 
-  const mailerTransporter = NodeMailer.createTransport(
-    sendGridTransport({
-      auth: {
-        api_key: sendgridKey
-      }
-    })
-  );
-
   const notificationStatusUpdater = getNotificationStatusUpdater(
     notificationStatusModel,
     NotificationChannelEnum.EMAIL,
@@ -432,6 +434,15 @@ export async function index(
   );
 
   try {
+    const mailerTransporter = NodeMailer.createTransport(
+      MailUpTransport({
+        creds: {
+          Secret: mailupSecret,
+          Username: mailupUsername
+        }
+      })
+    );
+
     // Check if the message is not expired
     const errorOrActiveMessage = ActiveMessage.decode(
       emailNotificationEvent.message
@@ -453,7 +464,11 @@ export async function index(
       mailerTransporter,
       appInsightsClient,
       notificationModel,
-      emailNotificationEvent
+      emailNotificationEvent,
+      {
+        HTML_TO_TEXT_OPTIONS,
+        MAIL_FROM
+      }
     );
     if (isLeft(errorOrEmailNotificationEvt)) {
       // something went wrong sending the email
