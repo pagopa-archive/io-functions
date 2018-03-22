@@ -89,6 +89,11 @@ function getGroupsFromHeader(groupsHeader: string): Set<UserGroup> {
   );
 }
 
+type AzureApiAuthMiddlewareErrorResponses =
+  | IResponseErrorForbiddenNotAuthorized
+  | IResponseErrorForbiddenAnonymousUser
+  | IResponseErrorForbiddenNoAuthorizationGroups;
+
 /**
  * A middleware that will extract the Azure API Management authentication
  * information from the request.
@@ -123,12 +128,9 @@ export function AzureApiAuthMiddleware(
         // we cannot proceed unless we cannot associate the request to a
         // valid user and a subscription
         return resolve(
-          left<
-            | IResponseErrorForbiddenNotAuthorized
-            | IResponseErrorForbiddenAnonymousUser
-            | IResponseErrorForbiddenNoAuthorizationGroups,
-            IAzureApiAuthorization
-          >(ResponseErrorForbiddenAnonymousUser)
+          left<AzureApiAuthMiddlewareErrorResponses, IAzureApiAuthorization>(
+            ResponseErrorForbiddenAnonymousUser
+          )
         );
       }
 
@@ -172,12 +174,9 @@ export function AzureApiAuthMiddleware(
       if (!userHasAnyAllowedGroup) {
         // the user is not allowed here
         return resolve(
-          left<
-            | IResponseErrorForbiddenNotAuthorized
-            | IResponseErrorForbiddenAnonymousUser
-            | IResponseErrorForbiddenNoAuthorizationGroups,
-            IAzureApiAuthorization
-          >(ResponseErrorForbiddenNotAuthorized)
+          left<AzureApiAuthMiddlewareErrorResponses, IAzureApiAuthorization>(
+            ResponseErrorForbiddenNotAuthorized
+          )
         );
       }
 
@@ -190,12 +189,9 @@ export function AzureApiAuthMiddleware(
       };
 
       resolve(
-        right<
-          | IResponseErrorForbiddenNotAuthorized
-          | IResponseErrorForbiddenAnonymousUser
-          | IResponseErrorForbiddenNoAuthorizationGroups,
-          IAzureApiAuthorization
-        >(authInfo)
+        right<AzureApiAuthMiddlewareErrorResponses, IAzureApiAuthorization>(
+          authInfo
+        )
       );
     });
 }
