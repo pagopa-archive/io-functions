@@ -470,7 +470,6 @@ export function replaceDocument<T>(
       {
         partitionKey
       },
-      /* tslint:disable-next-line:no-identical-functions */
       (err, created) => {
         if (err) {
           resolve(
