@@ -180,12 +180,11 @@ export function UpdateServiceHandler(
       existingService.id,
       existingService.serviceId,
       currentService => {
-        const updatedService = {
+        return {
           ...currentService,
           ...servicePayloadToService(serviceModelPayload),
           serviceId
         };
-        return updatedService;
       }
     );
     if (isLeft(errorOrMaybeUpdatedService)) {

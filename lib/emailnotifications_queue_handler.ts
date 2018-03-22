@@ -172,7 +172,7 @@ export async function generateDocumentHtml(
   }`;
 
   // wrap the generated HTML into an email template
-  const documentHtml = defaultEmailTemplate(
+  return defaultEmailTemplate(
     subject, // title
     "", // TODO: headline
     senderMetadata.organizationName, // organization name
@@ -181,8 +181,6 @@ export async function generateDocumentHtml(
     bodyHtml,
     "" // TODO: footer
   );
-
-  return documentHtml;
 }
 
 /**

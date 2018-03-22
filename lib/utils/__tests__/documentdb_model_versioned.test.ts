@@ -53,13 +53,12 @@ function updateModelId(
   id: NonEmptyString,
   version: NonNegativeNumber
 ): INewMyDocument {
-  const newMyDocument: INewMyDocument = {
+  return {
     ...o,
     id,
     kind: "INewMyDocument",
     version
   };
-  return newMyDocument;
 }
 
 class MyModel extends DocumentDbModelVersioned<

@@ -276,7 +276,7 @@ export function queryDocuments<T>(
   query: DocumentDb.DocumentQuery
 ): IResultIterator<T & DocumentDb.RetrievedDocument> {
   const documentIterator = client.queryDocuments(collectionUri.uri, query);
-  const resultIterator: IResultIterator<T & DocumentDb.RetrievedDocument> = {
+  return {
     executeNext: () => {
       return new Promise(resolve => {
         documentIterator.executeNext((error, documents, _) => {
@@ -313,7 +313,6 @@ export function queryDocuments<T>(
       });
     }
   };
-  return resultIterator;
 }
 
 /**
@@ -539,7 +538,7 @@ export function queryAttachments<T>(
   options: DocumentDb.FeedOptions
 ): IResultIterator<T & DocumentDb.AttachmentMeta> {
   const attachmentsIterator = client.readAttachments(documentUri.uri, options);
-  const resultIterator: IResultIterator<T & DocumentDb.AttachmentMeta> = {
+  return {
     executeNext: () => {
       return new Promise(resolve => {
         attachmentsIterator.executeNext((error, attachments, _) => {
@@ -576,7 +575,6 @@ export function queryAttachments<T>(
       });
     }
   };
-  return resultIterator;
 }
 
 ///////////// </Attachments>
