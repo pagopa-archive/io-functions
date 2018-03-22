@@ -4,7 +4,7 @@
   "version": "2.0.0",
   "tasks": [
     {
-      "label": "watch:build",
+      "label": "watch",
       "command": "tsc",
       "type": "shell",
       "args": ["-w", "-p", "."],
@@ -13,16 +13,6 @@
       },
       "isBackground": true,
       "problemMatcher": "$tsc-watch"
-    },
-    {
-      "label": "watch:lint",
-      "command": "chokidar lib/**/*.ts -c \"yarn lint\"",
-      "type": "shell",
-      "presentation": {
-        "reveal": "silent"
-      },
-      "isBackground": true,
-      "problemMatcher": "$tslint5"
     },
     {
       "type": "npm",
