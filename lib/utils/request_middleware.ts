@@ -209,11 +209,7 @@ function withRequestMiddlewaresAr(
             // one middleware returned a response
             response => response,
             // all middlewares returned a result
-            r => {
-              // tslint:disable
-              console.log(r);
-              return handler(...r);
-            }
+            r => handler(...r)
           )
         );
     };
