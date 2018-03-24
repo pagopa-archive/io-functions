@@ -193,7 +193,7 @@ function withRequestMiddlewaresAr(
   // by the handler or one of the types returned by any of the middlewares (i.e., when
   // a middleware returns an error response).
   return handler => request =>
-    // run middlewares sequentially
+    // run middlewares (in parallel)
     // and collect their output results
     processTasks(
       mws.reduce(
