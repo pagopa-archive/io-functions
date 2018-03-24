@@ -199,7 +199,7 @@ function withRequestMiddlewaresAr(
       return processTasks(
         mws.reduce(
           (prev: Array<TaskEither<any, any>>, mw) =>
-            prev.concat(mw ? [fromTask(() => mw(request))] : prev),
+            prev.concat(mw ? [fromTask(() => mw(request))] : []),
           []
         )
       )
@@ -209,7 +209,11 @@ function withRequestMiddlewaresAr(
             // one middleware returned a response
             response => response,
             // all middlewares returned a result
-            r => handler.apply(undefined, r)
+            r => {
+              // tslint:disable
+              console.log(r);
+              return handler(...r);
+            }
           )
         );
     };
