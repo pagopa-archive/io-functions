@@ -204,12 +204,12 @@ function withRequestMiddlewaresAr(
         )
       )
         .run()
-        .then(results =>
-          results.fold(
+        .then(responseOrResults =>
+          responseOrResults.fold(
             // one middleware returned a response
             response => response,
             // all middlewares returned a result
-            r => handler(...r)
+            results => handler(...results)
           )
         );
     };
