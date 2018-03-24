@@ -7,11 +7,6 @@ import { Task } from "fp-ts/lib/Task";
 import { TaskEither, taskEither } from "fp-ts/lib/TaskEither";
 import { sequence } from "fp-ts/lib/Traversable";
 
-const fromTask = <L, R>(p: () => Promise<Either<L, R>>) =>
-  new TaskEither(new Task(p));
-
-const processTasks = sequence(taskEither, array);
-
 import { IResponse, ResponseErrorInternal } from "./response";
 
 export type RequestHandler<R> = (
@@ -182,6 +177,11 @@ export function withRequestMiddlewares<
   return withRequestMiddlewaresAr([v1, v2, v3, v4, v5, v6]);
 }
 
+const fromTask = <L, R>(p: () => Promise<Either<L, R>>) =>
+  new TaskEither(new Task(p));
+
+const processTasks = sequence(taskEither, array);
+
 /* tslint:disable:no-any */
 /* tslint:disable:readonly-array */
 function withRequestMiddlewaresAr(
@@ -212,6 +212,5 @@ function withRequestMiddlewaresAr(
         )
       );
 }
-
 /* tslint:enable:no-any */
 /* tslint:enable:readonly-array */
