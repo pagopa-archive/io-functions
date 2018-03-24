@@ -56,6 +56,10 @@ import {
   MessagePayloadMiddleware
 } from "../messages";
 
+function flushPromises<T>(): Promise<T> {
+  return new Promise(resolve => setImmediate(resolve));
+}
+
 afterEach(() => {
   jest.resetAllMocks();
   jest.restoreAllMocks();
@@ -1169,7 +1173,7 @@ describe("CreateMessage", () => {
       params: { fiscalcode: "x" }
     };
     createMessage(request as any, mockResponse, _ => _);
-    await Promise.resolve({});
+    await flushPromises();
     expect(request.app.get).toHaveBeenCalledWith("context");
     expect(mockResponse.set).toHaveBeenCalledWith(
       "Content-Type",
@@ -1195,7 +1199,7 @@ describe("CreateMessage", () => {
       params: { fiscalcode: "x" }
     };
     createMessage(request as any, mockResponse, _ => _);
-    await Promise.resolve({});
+    await flushPromises();
     expect(mockResponse.set).toHaveBeenCalledWith(
       "Content-Type",
       "application/problem+json"
@@ -1221,7 +1225,7 @@ describe("CreateMessage", () => {
       params: { fiscalcode: "x" }
     };
     createMessage(request as any, mockResponse, _ => _);
-    await Promise.resolve({});
+    await flushPromises();
     expect(mockResponse.set).toHaveBeenCalledWith(
       "Content-Type",
       "application/problem+json"
