@@ -194,19 +194,15 @@ function withRequestMiddlewaresAr(
     // by the handler or one of the types returned by any of the middlewares (i.e., when
     // a middleware returns an error response).
     return request => {
-      // make an array of middleware tasks
-      // to defer their execution
-      const tasks = mws.reduce(
-        (prev, curr) => {
-          return curr !== undefined
-            ? prev.concat([fromTask(() => curr(request))])
-            : prev;
-        },
-        [] as Array<TaskEither<any, any>>
-      );
       // run middlewares sequentially
       // and collect their output results
-      return processTasks(tasks)
+      return processTasks(
+        mws.reduce(
+          (prev: Array<TaskEither<any, any>>, mw) =>
+            prev.concat(mw ? [fromTask(() => mw(request))] : prev),
+          []
+        )
+      )
         .run()
         .then(results =>
           results.fold(
