@@ -18,7 +18,7 @@ export function wrapRequestHandler<R>(
   handler: RequestHandler<R>
 ): express.RequestHandler {
   return (request, response, _) => {
-    handler(request).then(
+    return handler(request).then(
       r => {
         r.apply(response);
         winston.log(
