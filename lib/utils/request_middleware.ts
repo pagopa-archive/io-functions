@@ -189,31 +189,29 @@ function withRequestMiddlewaresAr(
 ): (
   handler: (...args: any[]) => Promise<IResponse<any>>
 ) => RequestHandler<any> {
-  return handler => {
-    // The outer promise with resolve to a type that can either be the the type returned
-    // by the handler or one of the types returned by any of the middlewares (i.e., when
-    // a middleware returns an error response).
-    return request => {
-      // run middlewares sequentially
-      // and collect their output results
-      return processTasks(
-        mws.reduce(
-          (prev: Array<TaskEither<any, any>>, mw) =>
-            prev.concat(mw ? [fromTask(() => mw(request))] : []),
-          []
-        )
+  // The outer promise with resolve to a type that can either be the the type returned
+  // by the handler or one of the types returned by any of the middlewares (i.e., when
+  // a middleware returns an error response).
+  return handler => request =>
+    // run middlewares sequentially
+    // and collect their output results
+    processTasks(
+      mws.reduce(
+        (prev: Array<TaskEither<any, any>>, mw) =>
+          prev.concat(mw ? [fromTask(() => mw(request))] : []),
+        []
       )
-        .run()
-        .then(responseOrResults =>
-          responseOrResults.fold(
-            // one middleware returned a response
-            response => response,
-            // all middlewares returned a result
-            results => handler(...results)
-          )
-        );
-    };
-  };
+    )
+      .run()
+      .then(responseOrResults =>
+        responseOrResults.fold(
+          // one middleware returned a response
+          response => response,
+          // all middlewares returned a result
+          results => handler(...results)
+        )
+      );
 }
+
 /* tslint:enable:no-any */
 /* tslint:enable:readonly-array */
