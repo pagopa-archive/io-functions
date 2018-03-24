@@ -198,7 +198,7 @@ function withRequestMiddlewaresAr(
     processTasks(
       mws.reduce(
         (prev: Array<TaskEither<any, any>>, mw) =>
-          prev.concat(mw ? [fromTask(() => mw(request))] : []),
+          mw ? [...prev, fromTask(() => mw(request))] : prev,
         []
       )
     )
