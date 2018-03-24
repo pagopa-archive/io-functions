@@ -1154,13 +1154,19 @@ describe("MessagePayloadMiddleware", () => {
 
 describe("CreateMessage", () => {
   it("should fail with 500 if context cannot be retrieved", async () => {
+    const headers: IHeaders = {
+      "x-subscription-id": "someId",
+      "x-user-groups": "ApiMessageWrite"
+    };
     const createMessage = CreateMessage({} as any, {} as any, {} as any);
     const mockResponse = MockResponse();
     const request = {
       app: {
         get: jest.fn(() => undefined)
       },
-      body: {}
+      body: {},
+      header: jest.fn(lookup(headers)),
+      params: { fiscalcode: "x" }
     };
     createMessage(request as any, mockResponse, _ => _);
     await Promise.resolve({});
@@ -1185,7 +1191,8 @@ describe("CreateMessage", () => {
         })
       },
       body: {},
-      header: jest.fn(lookup(headers))
+      header: jest.fn(lookup(headers)),
+      params: { fiscalcode: "x" }
     };
     createMessage(request as any, mockResponse, _ => _);
     await Promise.resolve({});
@@ -1210,7 +1217,8 @@ describe("CreateMessage", () => {
         })
       },
       body: {},
-      header: jest.fn(lookup(headers))
+      header: jest.fn(lookup(headers)),
+      params: { fiscalcode: "x" }
     };
     createMessage(request as any, mockResponse, _ => _);
     await Promise.resolve({});
