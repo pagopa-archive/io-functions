@@ -1,7 +1,11 @@
 import * as express from "express";
 import * as winston from "winston";
 
-import { Either, isLeft } from "fp-ts/lib/Either";
+import { array } from "fp-ts/lib/Array";
+import { Either } from "fp-ts/lib/Either";
+import { Task } from "fp-ts/lib/Task";
+import { TaskEither, taskEither } from "fp-ts/lib/TaskEither";
+import { sequence } from "fp-ts/lib/Traversable";
 
 import { IResponse, ResponseErrorInternal } from "./response";
 
@@ -18,7 +22,7 @@ export function wrapRequestHandler<R>(
   handler: RequestHandler<R>
 ): express.RequestHandler {
   return (request, response, _) => {
-    handler(request).then(
+    return handler(request).then(
       r => {
         r.apply(response);
         winston.log(
@@ -140,8 +144,6 @@ export function withRequestMiddlewares<
  * gets passed to the custom handler that in turn will return a response.
  * That final response gets sent to the client.
  */
-// TODO: Refactor this function to reduce its Cognitive Complexity
-/* tslint:disable-next-line:cognitive-complexity */
 export function withRequestMiddlewares<
   R1,
   R2,
@@ -172,120 +174,43 @@ export function withRequestMiddlewares<
     v6?: T6
   ) => Promise<IResponse<RH>>
 ) => RequestHandler<R1 | R2 | R3 | R4 | R5 | R6 | RH> {
-  return <RH>(
-    handler: (
-      v1: T1,
-      v2?: T2,
-      v3?: T3,
-      v4?: T4,
-      v5?: T5,
-      v6?: T6
-    ) => Promise<IResponse<RH>>
-  ) => {
-    // The outer promise with resolve to a type that can either be the the type returned
-    // by the handler or one of the types returned by any of the middlewares (i.e., when
-    // a middleware returns an error response).
-    return request =>
-      new Promise<IResponse<R1 | R2 | R3 | R4 | R5 | R6 | RH>>(
-        (resolve, reject) => {
-          // we execute each middleware in sequence, stopping at the first middleware that is
-          // undefined or when a middleware returns an error response.
-          // when we find an undefined middleware, we call the handler with all the results of
-          // the executed middlewares
-          v1(request).then(r1 => {
-            if (isLeft(r1)) {
-              // 1st middleware returned a response
-              // stop processing the middlewares
-              resolve(r1.value);
-            } else if (v2 !== undefined) {
-              // 1st middleware returned a value
-              // process 2nd middleware
-              v2(request).then(r2 => {
-                if (isLeft(r2)) {
-                  // 2nd middleware returned a response
-                  // stop processing the middlewares
-                  resolve(r2.value);
-                } else if (v3 !== undefined) {
-                  // process 3rd middleware
-                  v3(request).then(r3 => {
-                    if (isLeft(r3)) {
-                      // 3rd middleware returned a response
-                      // stop processing the middlewares
-                      resolve(r3.value);
-                    } else if (v4 !== undefined) {
-                      v4(request).then(r4 => {
-                        if (isLeft(r4)) {
-                          // 4th middleware returned a response
-                          // stop processing the middlewares
-                          resolve(r4.value);
-                        } else if (v5 !== undefined) {
-                          v5(request).then(r5 => {
-                            if (isLeft(r5)) {
-                              // 5th middleware returned a response
-                              // stop processing the middlewares
-                              resolve(r5.value);
-                            } else if (v6 !== undefined) {
-                              v6(request).then(r6 => {
-                                if (isLeft(r6)) {
-                                  // 6th middleware returned a response
-                                  // stop processing the middlewares
-                                  resolve(r6.value);
-                                } else {
-                                  // 6th middleware returned a value
-                                  // run handler
-                                  handler(
-                                    r1.value,
-                                    r2.value,
-                                    r3.value,
-                                    r4.value,
-                                    r5.value,
-                                    r6.value
-                                  ).then(resolve, reject);
-                                }
-                              }, reject);
-                            } else {
-                              // 5th middleware returned a value
-                              // run handler
-                              handler(
-                                r1.value,
-                                r2.value,
-                                r3.value,
-                                r4.value,
-                                r5.value
-                              ).then(resolve, reject);
-                            }
-                          }, reject);
-                        } else {
-                          // 4th middleware returned a value
-                          // run handler
-                          handler(r1.value, r2.value, r3.value, r4.value).then(
-                            resolve,
-                            reject
-                          );
-                        }
-                      }, reject);
-                    } else {
-                      // 3rd middleware returned a value
-                      // run handler
-                      handler(r1.value, r2.value, r3.value).then(
-                        resolve,
-                        reject
-                      );
-                    }
-                  }, reject);
-                } else {
-                  // 2nd middleware returned a value
-                  // run handler
-                  handler(r1.value, r2.value).then(resolve, reject);
-                }
-              }, reject);
-            } else {
-              // 1st middleware returned a value
-              // run handler
-              handler(r1.value).then(resolve, reject);
-            }
-          }, reject);
-        }
-      );
-  };
+  return withRequestMiddlewaresAr([v1, v2, v3, v4, v5, v6]);
 }
+
+const fromTask = <L, R>(p: () => Promise<Either<L, R>>) =>
+  new TaskEither(new Task(p));
+
+const processTasks = sequence(taskEither, array);
+
+/* tslint:disable:no-any */
+/* tslint:disable:readonly-array */
+function withRequestMiddlewaresAr(
+  mws: ReadonlyArray<IRequestMiddleware<any, any> | undefined>
+): (
+  handler: (...args: any[]) => Promise<IResponse<any>>
+) => RequestHandler<any> {
+  // The outer promise with resolve to a type that can either be the the type returned
+  // by the handler or one of the types returned by any of the middlewares (i.e., when
+  // a middleware returns an error response).
+  return handler => request =>
+    // run middlewares (in parallel)
+    // and collect their output results
+    processTasks(
+      mws.reduce(
+        (prev: Array<TaskEither<any, any>>, mw) =>
+          mw ? [...prev, fromTask(() => mw(request))] : prev,
+        []
+      )
+    )
+      .run()
+      .then(responseOrResults =>
+        responseOrResults.fold(
+          // one middleware returned a response
+          response => response,
+          // all middlewares returned a result
+          results => handler(...results)
+        )
+      );
+}
+/* tslint:enable:no-any */
+/* tslint:enable:readonly-array */
