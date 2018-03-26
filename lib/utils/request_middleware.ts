@@ -146,7 +146,6 @@ export function withRequestMiddlewares<
   // by the handler or one of the types returned by any of the middlewares (i.e., when
   // a middleware returns an error response).
   return handler => async request => {
-    // tslint:disable-next-line:readonly-array
     const tasks: [
       TaskEither<IResponse<R1>, T1>,
       TaskEither<IResponse<R2>, T2 | undefined>,
@@ -183,8 +182,7 @@ export function withRequestMiddlewares<
 
     // these overloads are needed to preserve argument types
     // the alternative is to just call handler(...results)
-    // tslint:disable-next-line:readonly-array
-    const handlers = [
+    const handlers: ReadonlyArray<Task<IResponse<RH>>> = [
       new Task(() => handler(results[0])),
       new Task(() => handler(results[0], results[1])),
       new Task(() => handler(results[0], results[1], results[2])),
