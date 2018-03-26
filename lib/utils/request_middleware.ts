@@ -1,7 +1,7 @@
 import * as express from "express";
 import * as winston from "winston";
 
-import { Either, right } from "fp-ts/lib/Either";
+import { Either, isLeft, right } from "fp-ts/lib/Either";
 
 import { Task } from "fp-ts/lib/Task";
 import { TaskEither } from "fp-ts/lib/TaskEither";
@@ -145,7 +145,7 @@ export function withRequestMiddlewares<
   // The outer promise with resolve to a type that can either be the the type returned
   // by the handler or one of the types returned by any of the middlewares (i.e., when
   // a middleware returns an error response).
-  return handler => request => {
+  return handler => async request => {
     // tslint:disable-next-line:readonly-array
     const tasks: [
       TaskEither<IResponse<R1>, T1>,
@@ -162,58 +162,48 @@ export function withRequestMiddlewares<
       fromTask(() => (v5 || dummyMiddleware)(request)),
       fromTask(() => (v6 || dummyMiddleware)(request))
     ];
+
     // run middlewares sequentially
     // and collect their output results
-    return processTaskEithers(
+    const responseOrResults = await processTaskEithers(
       tasks[0],
       tasks[1],
       tasks[2],
       tasks[3],
       tasks[4],
       tasks[5]
-    )
-      .run()
-      .then(responseOrResults =>
-        responseOrResults.fold<
-          Promise<IResponse<R1 | R2 | R3 | R4 | R5 | R6 | RH>>
-        >(
-          // one middleware returned a response
-          async response => response,
-          // all middlewares returned a result
-          results => {
-            // these overloads are needed to preserve argument types
-            // the alternative is to just call handler(...results)
-            // tslint:disable-next-line:readonly-array
-            const handlers = [
-              new Task(() => handler(results[0])),
-              new Task(() => handler(results[0], results[1])),
-              new Task(() => handler(results[0], results[1], results[2])),
-              new Task(() =>
-                handler(results[0], results[1], results[2], results[3])
-              ),
-              new Task(() =>
-                handler(
-                  results[0],
-                  results[1],
-                  results[2],
-                  results[3],
-                  results[4]
-                )
-              ),
-              new Task(() =>
-                handler(
-                  results[0],
-                  results[1],
-                  results[2],
-                  results[3],
-                  results[4],
-                  results[5]
-                )
-              )
-            ];
-            return handlers[arguments.length - 1].run();
-          }
+    ).run();
+
+    if (isLeft(responseOrResults)) {
+      // middleware returned a response
+      return responseOrResults.value;
+    }
+
+    const results = responseOrResults.value;
+
+    // these overloads are needed to preserve argument types
+    // the alternative is to just call handler(...results)
+    // tslint:disable-next-line:readonly-array
+    const handlers = [
+      new Task(() => handler(results[0])),
+      new Task(() => handler(results[0], results[1])),
+      new Task(() => handler(results[0], results[1], results[2])),
+      new Task(() => handler(results[0], results[1], results[2], results[3])),
+      new Task(() =>
+        handler(results[0], results[1], results[2], results[3], results[4])
+      ),
+      new Task(() =>
+        handler(
+          results[0],
+          results[1],
+          results[2],
+          results[3],
+          results[4],
+          results[5]
         )
-      );
+      )
+    ];
+
+    return handlers[arguments.length - 1].run();
   };
 }
