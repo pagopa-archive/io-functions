@@ -180,28 +180,30 @@ export function withRequestMiddlewares<
 
     const results = responseOrResults.value;
 
-    // these overloads are needed to preserve argument types
-    // the alternative is to just call handler(...results)
-    const handlers: ReadonlyArray<Task<IResponse<RH>>> = [
-      new Task(() => handler(results[0])),
-      new Task(() => handler(results[0], results[1])),
-      new Task(() => handler(results[0], results[1], results[2])),
-      new Task(() => handler(results[0], results[1], results[2], results[3])),
-      new Task(() =>
-        handler(results[0], results[1], results[2], results[3], results[4])
-      ),
-      new Task(() =>
-        handler(
-          results[0],
-          results[1],
-          results[2],
-          results[3],
-          results[4],
-          results[5]
-        )
-      )
-    ];
-
-    return handlers[arguments.length - 1].run();
+    if (v6 !== undefined) {
+      return handler(
+        results[0],
+        results[1],
+        results[2],
+        results[3],
+        results[4],
+        results[5]
+      );
+    } else if (v5 !== undefined) {
+      return handler(
+        results[0],
+        results[1],
+        results[2],
+        results[3],
+        results[4]
+      );
+    } else if (v4 !== undefined) {
+      return handler(results[0], results[1], results[2], results[3]);
+    } else if (v3 !== undefined) {
+      return handler(results[0], results[1], results[2]);
+    } else if (v2 !== undefined) {
+      return handler(results[0], results[1]);
+    }
+    return handler(results[0]);
   };
 }
