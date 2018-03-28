@@ -425,8 +425,11 @@ export async function index(
                 errorOrUpdateNotificationStatus.value.message
               );
             }
+            // if the message is expired we're done, stop here
+            return;
           }
-          // delegate to the catch handler anyway
+          // for every other kind of error
+          // delegate to the catch handler
           throw error;
         },
         async _ => {
