@@ -40,7 +40,6 @@ import {
   handleNotification,
   index,
   INotificationDefaults,
-  processRuntimeError,
   sendMail
 } from "../emailnotifications_queue_handler";
 
@@ -52,7 +51,7 @@ import {
   NotificationAddressSourceEnum,
   NotificationModel
 } from "../models/notification";
-import { isTransient, PermanentError, TransientError } from "../utils/errors";
+import { isTransient } from "../utils/errors";
 
 import { NotificationEvent } from "../models/notification_event";
 
@@ -67,7 +66,6 @@ import {
   NotificationStatusModel,
   RetrievedNotificationStatus
 } from "../models/notification_status";
-import { updateMessageVisibilityTimeout } from "../utils/azure_queues";
 import { NonNegativeNumber } from "../utils/numbers";
 import { readableReport } from "../utils/validation_reporters";
 
@@ -564,7 +562,6 @@ describe("emailnotificationQueueHandlerIndex", () => {
       .spyOn(NotificationStatusModel.prototype, "upsert")
       .mockReturnValue(Promise.resolve(right(none)));
 
-    const winstonErrorSpy = jest.spyOn(winston, "error");
     const ret = await index(contextMock as any);
     expect(ret).toEqual(undefined);
     expect(statusSpy).toHaveBeenCalledWith(
@@ -576,7 +573,6 @@ describe("emailnotificationQueueHandlerIndex", () => {
       expect.anything(),
       expect.anything()
     );
-    expect(winstonErrorSpy).toHaveBeenCalledTimes(1);
   });
 
   it("should proceed on valid message payload", async () => {
@@ -610,46 +606,6 @@ describe("emailnotificationQueueHandlerIndex", () => {
     expect(notificationModelSpy).toHaveBeenCalledTimes(1);
     expect(nodemailerSpy).toHaveBeenCalledTimes(1);
     expect(ret).toEqual(undefined);
-  });
-});
-
-describe("processRuntimeError", () => {
-  it("should retry on transient error", async () => {
-    const notificationStatusUpdaterMock = jest
-      .fn()
-      .mockReturnValue(Promise.resolve(right(none)));
-    const error = TransientError("err");
-    const winstonSpy = jest.spyOn(winston, "warn");
-    await processRuntimeError(
-      {} as any,
-      notificationStatusUpdaterMock,
-      {} as any,
-      error as any
-    );
-    expect(notificationStatusUpdaterMock).toHaveBeenCalledWith(
-      NotificationChannelStatusValueEnum.THROTTLED
-    );
-    expect(updateMessageVisibilityTimeout).toHaveBeenCalledTimes(1);
-    expect(winstonSpy).toHaveBeenCalledTimes(1);
-  });
-
-  it("should fail in case of permament error", async () => {
-    const notificationStatusUpdaterMock = jest
-      .fn()
-      .mockReturnValue(Promise.resolve(right(none)));
-    const error = PermanentError("err");
-    const winstonSpy = jest.spyOn(winston, "error");
-    await processRuntimeError(
-      {} as any,
-      notificationStatusUpdaterMock,
-      {} as any,
-      error as any
-    );
-    expect(notificationStatusUpdaterMock).toHaveBeenCalledWith(
-      NotificationChannelStatusValueEnum.FAILED
-    );
-    expect(updateMessageVisibilityTimeout).not.toHaveBeenCalled();
-    expect(winstonSpy).toHaveBeenCalledTimes(1);
   });
 });
 
