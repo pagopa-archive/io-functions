@@ -4,10 +4,11 @@
  * and useful inside unit tests.
  */
 
-export const enum ErrorTypes {
+export enum ErrorTypes {
   TransientError = "TransientError",
   PermanentError = "PermanentError",
-  UnknowError = "UnknowError"
+  UnknowError = "UnknowError",
+  ExpiredError = "ExpiredError"
 }
 
 interface IRuntimeError<T extends ErrorTypes> {
@@ -35,6 +36,9 @@ export const PermanentError = RuntimeError(ErrorTypes.PermanentError);
 export type UnknowError = IRuntimeError<ErrorTypes.UnknowError>;
 export const UnknowError = RuntimeError(ErrorTypes.UnknowError);
 
+export type ExpiredError = IRuntimeError<ErrorTypes.ExpiredError>;
+export const ExpiredError = RuntimeError(ErrorTypes.ExpiredError);
+
 /**
  * Construct a RuntimeError from an object.
  * Useful in try / catch blocks where the object caught is untyped.
@@ -50,8 +54,16 @@ export const of = (error: any): RuntimeError =>
         error instanceof Error ? error : undefined
       );
 
-export type RuntimeError = TransientError | PermanentError | UnknowError;
+export type RuntimeError =
+  | TransientError
+  | PermanentError
+  | UnknowError
+  | ExpiredError;
 
 // tslint:disable-next-line:no-any
 export const isTransient = (error: any): error is TransientError =>
   error.kind && error.kind === ErrorTypes.TransientError;
+
+// tslint:disable-next-line:no-any
+export const isExpired = (error: any): error is ExpiredError =>
+  error.kind && error.kind === ErrorTypes.ExpiredError;

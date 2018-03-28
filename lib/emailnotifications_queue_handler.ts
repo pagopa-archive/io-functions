@@ -40,19 +40,16 @@ import { markdownToHtml } from "./utils/markdown";
 import { MessageSubject } from "./api/definitions/MessageSubject";
 import defaultEmailTemplate from "./templates/html/default";
 import {
-  isTransient,
-  of as RuntimeErrorOf,
+  ExpiredError,
+  isExpired,
   PermanentError,
   RuntimeError,
   TransientError
 } from "./utils/errors";
 
-import {
-  IQueueMessage,
-  updateMessageVisibilityTimeout
-} from "./utils/azure_queues";
+import { handleQueueProcessingFailure } from "./utils/azure_queues";
 
-import { createQueueService, QueueService } from "azure-storage";
+import { createQueueService } from "azure-storage";
 import { NotificationChannelEnum } from "./api/definitions/NotificationChannel";
 import { NotificationChannelStatusValueEnum } from "./api/definitions/NotificationChannelStatusValue";
 
@@ -60,8 +57,7 @@ import { ActiveMessage } from "./models/message";
 import {
   getNotificationStatusUpdater,
   NOTIFICATION_STATUS_COLLECTION_NAME,
-  NotificationStatusModel,
-  NotificationStatusUpdater
+  NotificationStatusModel
 } from "./models/notification_status";
 import { NonEmptyString } from "./utils/strings";
 
@@ -215,6 +211,18 @@ export async function handleNotification(
 ): Promise<Either<RuntimeError, NotificationEvent>> {
   const { message, notificationId, senderMetadata } = emailNotificationEvent;
 
+  // Check if the message is not expired
+  const errorOrActiveMessage = ActiveMessage.decode(message);
+
+  if (isLeft(errorOrActiveMessage)) {
+    // if the message is expired no more processing is necessary
+    return left(
+      ExpiredError(
+        `Message expired|notification=${notificationId}|message=${message.id}`
+      )
+    );
+  }
+
   // fetch the notification
   const errorOrMaybeNotification = await lNotificationModel.find(
     notificationId,
@@ -342,56 +350,6 @@ export async function handleNotification(
   return right(emailNotificationEvent);
 }
 
-export async function processRuntimeError(
-  lQueueService: QueueService,
-  notificationStatusUpdater: NotificationStatusUpdater,
-  queueMessage: IQueueMessage,
-  error: RuntimeError
-): Promise<boolean> {
-  if (isTransient(error)) {
-    winston.warn(
-      `EmailNotificationQueueHandler|Transient error|${error.message}`
-    );
-    const shouldTriggerARetry = await updateMessageVisibilityTimeout(
-      lQueueService,
-      EMAIL_NOTIFICATION_QUEUE_NAME,
-      queueMessage
-    );
-    const errorOrNotificationStatus = await notificationStatusUpdater(
-      NotificationChannelStatusValueEnum.THROTTLED
-    );
-    if (isLeft(errorOrNotificationStatus)) {
-      winston.warn(
-        `EmailNotificationQueueHandler|Transient error|${
-          errorOrNotificationStatus.value.message
-        }`
-      );
-    }
-    return shouldTriggerARetry;
-  } else {
-    winston.error(
-      `EmailNotificationQueueHandler|Permanent error|${error.message}`
-    );
-    const errorOrNotificationStatus = await notificationStatusUpdater(
-      NotificationChannelStatusValueEnum.FAILED
-    );
-    if (isLeft(errorOrNotificationStatus)) {
-      // if we get an error updating the notification status
-      // we retry the whole procedure (it will log the error anyway)
-      const transientError = errorOrNotificationStatus.value;
-      return await processRuntimeError(
-        lQueueService,
-        notificationStatusUpdater,
-        queueMessage,
-        transientError
-      );
-    } else {
-      // return no bindings so message processing stops here
-      return false;
-    }
-  }
-}
-
 /**
  * Function handler
  */
@@ -433,75 +391,78 @@ export async function index(
     emailNotificationEvent.notificationId
   );
 
-  try {
-    const mailerTransporter = NodeMailer.createTransport(
-      MailUpTransport({
-        creds: {
-          Secret: mailupSecret,
-          Username: mailupUsername
+  const mailerTransporter = NodeMailer.createTransport(
+    MailUpTransport({
+      creds: {
+        Secret: mailupSecret,
+        Username: mailupUsername
+      }
+    })
+  );
+
+  return handleNotification(
+    mailerTransporter,
+    appInsightsClient,
+    notificationModel,
+    emailNotificationEvent,
+    {
+      HTML_TO_TEXT_OPTIONS,
+      MAIL_FROM
+    }
+  )
+    .then(errorOrEmailNotificationEvt =>
+      errorOrEmailNotificationEvt.fold(
+        async error => {
+          if (isExpired(error)) {
+            // message is expired. try to save the notification status into the database
+            const errorOrUpdateNotificationStatus = await notificationStatusUpdater(
+              NotificationChannelStatusValueEnum.EXPIRED
+            );
+            if (isLeft(errorOrUpdateNotificationStatus)) {
+              // retry the whole handler in case we cannot save
+              // the notification status into the database
+              throw TransientError(
+                errorOrUpdateNotificationStatus.value.message
+              );
+            }
+          }
+          // delegate to the catch handler anyway
+          throw error;
+        },
+        async _ => {
+          // success. try to save the notification status into the database
+          const errorOrUpdatedNotificationStatus = await notificationStatusUpdater(
+            NotificationChannelStatusValueEnum.SENT
+          );
+          if (isLeft(errorOrUpdatedNotificationStatus)) {
+            // retry the whole handler in case we cannot save
+            // the notification status into the database
+            throw TransientError(
+              errorOrUpdatedNotificationStatus.value.message
+            );
+          }
+          winston.info(
+            `EmailNotificationsHandler|Email notification succeeded|notification=${
+              emailNotificationEvent.notificationId
+            }|message=${emailNotificationEvent.message.id}`
+          );
         }
-      })
+      )
+    )
+    .catch(error =>
+      handleQueueProcessingFailure(
+        queueService,
+        context.bindingData,
+        EMAIL_NOTIFICATION_QUEUE_NAME,
+        // execute in case of transient errors
+        () =>
+          notificationStatusUpdater(
+            NotificationChannelStatusValueEnum.THROTTLED
+          ),
+        // execute in case of permanent errors
+        () =>
+          notificationStatusUpdater(NotificationChannelStatusValueEnum.FAILED),
+        error
+      )
     );
-
-    // Check if the message is not expired
-    const errorOrActiveMessage = ActiveMessage.decode(
-      emailNotificationEvent.message
-    );
-    if (isLeft(errorOrActiveMessage)) {
-      const errorMsg = readableReport(errorOrActiveMessage.value);
-      const errorOrUpdateNotificationStatus = await notificationStatusUpdater(
-        NotificationChannelStatusValueEnum.EXPIRED
-      );
-      if (isLeft(errorOrUpdateNotificationStatus)) {
-        // retry in case we cannot save the notification status to the database
-        throw TransientError(errorOrUpdateNotificationStatus.value.message);
-      }
-      // if the message is expired no more processing is necessary
-      throw PermanentError(errorMsg);
-    }
-
-    const errorOrEmailNotificationEvt = await handleNotification(
-      mailerTransporter,
-      appInsightsClient,
-      notificationModel,
-      emailNotificationEvent,
-      {
-        HTML_TO_TEXT_OPTIONS,
-        MAIL_FROM
-      }
-    );
-    if (isLeft(errorOrEmailNotificationEvt)) {
-      // something went wrong sending the email
-      throw errorOrEmailNotificationEvt.value;
-    }
-
-    // try to save notification status to database
-    const errorOrUpdatedNotificationStatus = await notificationStatusUpdater(
-      NotificationChannelStatusValueEnum.SENT
-    );
-    if (isLeft(errorOrUpdatedNotificationStatus)) {
-      // this will trigger a retry as it's considered a transient error
-      throw errorOrUpdatedNotificationStatus.value;
-    }
-
-    winston.debug(
-      `EmailNotificationsHandler|Email notification succeeded|notification=${
-        emailNotificationEvent.notificationId
-      }|message=${emailNotificationEvent.message.id}`
-    );
-
-    return stopProcessing;
-    //
-  } catch (error) {
-    const shouldTriggerARetry = await processRuntimeError(
-      queueService,
-      notificationStatusUpdater,
-      context.bindingData,
-      RuntimeErrorOf(error)
-    );
-    if (shouldTriggerARetry) {
-      throw TransientError(`EmailNotificationsHandler|Retry|${error.message}`);
-    }
-    return stopProcessing;
-  }
 }
