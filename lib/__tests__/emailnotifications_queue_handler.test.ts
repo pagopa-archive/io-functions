@@ -19,9 +19,6 @@ jest.mock("applicationinsights");
 jest.mock("azure-storage");
 jest.mock("../utils/mailup");
 
-// updateMessageVisibilityTimeout
-jest.mock("../utils/azure_queues");
-
 import * as NodeMailer from "nodemailer";
 import * as winston from "winston";
 
@@ -68,6 +65,9 @@ import {
 } from "../models/notification_status";
 import { NonNegativeNumber } from "../utils/numbers";
 import { readableReport } from "../utils/validation_reporters";
+
+jest.mock("../utils/azure_queues");
+import { handleQueueProcessingFailure } from "../utils/azure_queues";
 
 afterEach(() => {
   jest.resetAllMocks();
@@ -573,6 +573,92 @@ describe("emailnotificationQueueHandlerIndex", () => {
       expect.anything(),
       expect.anything()
     );
+  });
+
+  it("should retry (throw) on transient error updating message status to EXPIRED", async () => {
+    const contextMock = {
+      bindings: {
+        notificationEvent: {
+          ...aNotificationEvent,
+          message: {
+            ...aNotificationEvent.message,
+            createdAt: new Date("2012-12-12")
+          }
+        }
+      },
+      done: jest.fn(),
+      log: jest.fn()
+    };
+
+    (handleQueueProcessingFailure as jest.Mock).mockImplementation(() => {
+      throw new Error();
+    });
+
+    jest.spyOn(NodeMailer, "createTransport").mockReturnValue({
+      sendMail: jest.fn((_, cb) => cb(null, "ok"))
+    });
+
+    const statusSpy = jest
+      .spyOn(NotificationStatusModel.prototype, "upsert")
+      .mockReturnValue(Promise.resolve(left(new Error("err"))));
+
+    expect.assertions(1);
+
+    try {
+      await index(contextMock as any);
+    } catch {
+      expect(statusSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          status: NotificationChannelStatusValueEnum.EXPIRED
+        }),
+        expect.anything(),
+        expect.anything(),
+        expect.anything(),
+        expect.anything()
+      );
+    }
+  });
+
+  it("should retry (throw) on transient error updating message status to SENT", async () => {
+    const contextMock = {
+      bindings: {
+        notificationEvent: aNotificationEvent
+      },
+      done: jest.fn(),
+      log: jest.fn()
+    };
+
+    (handleQueueProcessingFailure as jest.Mock).mockImplementation(() => {
+      throw new Error();
+    });
+
+    jest.spyOn(NodeMailer, "createTransport").mockReturnValue({
+      sendMail: jest.fn((_, cb) => cb(null, "ok"))
+    });
+
+    jest
+      .spyOn(NotificationModel.prototype, "find")
+      .mockImplementation(jest.fn(() => right(some(aNotification))));
+
+    const statusSpy = jest
+      .spyOn(NotificationStatusModel.prototype, "upsert")
+      .mockReturnValue(Promise.resolve(left(new Error("err"))));
+
+    expect.assertions(1);
+
+    try {
+      await index(contextMock as any);
+    } catch {
+      expect(statusSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          status: NotificationChannelStatusValueEnum.SENT
+        }),
+        expect.anything(),
+        expect.anything(),
+        expect.anything(),
+        expect.anything()
+      );
+    }
   });
 
   it("should proceed on valid message payload", async () => {
