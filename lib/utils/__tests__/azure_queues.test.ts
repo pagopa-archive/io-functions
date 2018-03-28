@@ -96,6 +96,43 @@ describe("handleQueueProcessingFailure", () => {
     }
   });
 
+  it("should not throw on transient error and max retries reached", async () => {
+    const transientErrorSpy = jest.fn(() => Promise.resolve(right(undefined)));
+    const permanentErrorSpy = jest.fn(() => Promise.resolve(right(undefined)));
+    await handleQueueProcessingFailure(
+      aQueueService as any,
+      aMessageWithManyRetries as any,
+      aQueueName,
+      transientErrorSpy,
+      permanentErrorSpy,
+      TransientError("transient")
+    );
+    expect(transientErrorSpy).toHaveBeenCalledTimes(1);
+    expect(permanentErrorSpy).not.toHaveBeenCalled();
+  });
+
+  it("should throw on nested transient error", async () => {
+    const transientErrorSpy = jest.fn(() =>
+      Promise.resolve(left(TransientError("err")))
+    );
+    const permanentErrorSpy = jest.fn(() => Promise.resolve(right(undefined)));
+    expect.assertions(3);
+    try {
+      await handleQueueProcessingFailure(
+        aQueueService as any,
+        aMessage as any,
+        aQueueName,
+        transientErrorSpy,
+        permanentErrorSpy,
+        TransientError("transient")
+      );
+    } catch (e) {
+      expect(transientErrorSpy).toHaveBeenCalledTimes(1);
+      expect(permanentErrorSpy).not.toHaveBeenCalled();
+      expect(e).toBeDefined();
+    }
+  });
+
   it("should recurse and throw on nested permanent error", async () => {
     const permanentErrorSpy = jest.fn(() =>
       Promise.resolve(left(TransientError("err")))
