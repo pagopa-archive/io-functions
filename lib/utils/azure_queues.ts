@@ -113,12 +113,15 @@ export function updateMessageVisibilityTimeout<T extends IQueueMessage>(
           queueMessage.popReceipt,
           visibilityTimeoutSec,
           err => {
+            if (err) {
+              winston.error(
+                `updateMessageVisibilityTimeout|Error|${err.message}`
+              );
+            }
             winston.info(
-              err
-                ? err.message
-                : `Updated visibilityTimeout|retry=${numberOfRetries}|timeout=${visibilityTimeoutSec}|queueMessageId=${
-                    queueMessage.id
-                  }`
+              `Updated visibilityTimeout|retry=${numberOfRetries}|timeout=${visibilityTimeoutSec}|queueMessageId=${
+                queueMessage.id
+              }`
             );
             // try to schedule a retry even in case updateMessage fails
             resolve(true);
