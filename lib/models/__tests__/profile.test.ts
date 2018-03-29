@@ -24,10 +24,11 @@ const aFiscalCode = "FRLFRC74E04B157I" as FiscalCode;
 
 const aRetrievedProfile: RetrievedProfile = {
   _self: "xyz",
-  _ts: "xyz",
+  _ts: 123,
   fiscalCode: aFiscalCode,
   id: "xyz" as NonEmptyString,
   isInboxEnabled: false,
+  isWebhookEnabled: false,
   kind: "IRetrievedProfile",
   version: 0 as NonNegativeNumber
 };
@@ -86,7 +87,7 @@ describe("createProfile", () => {
         cb(undefined, {
           ...newDocument,
           _self: "self",
-          _ts: "123"
+          _ts: 123
         });
       })
     };
@@ -144,7 +145,7 @@ describe("update", () => {
         cb(undefined, {
           ...newDocument,
           _self: "self",
-          _ts: "123"
+          _ts: 123
         });
       }),
       readDocument: jest.fn((_, __, cb) => cb(undefined, aRetrievedProfile))

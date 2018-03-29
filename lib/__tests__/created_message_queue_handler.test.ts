@@ -100,7 +100,7 @@ const aMessageEvent: CreatedMessageEvent = {
 
 const aRetrievedProfileWithEmail: RetrievedProfile = {
   _self: "123",
-  _ts: "123",
+  _ts: 123,
   email: anEmail,
   fiscalCode: aCorrectFiscalCode,
   id: "123" as NonEmptyString,
@@ -110,7 +110,7 @@ const aRetrievedProfileWithEmail: RetrievedProfile = {
 
 const aRetrievedProfileWithoutEmail: RetrievedProfile = {
   _self: "123",
-  _ts: "123",
+  _ts: 123,
   fiscalCode: aCorrectFiscalCode,
   id: "123" as NonEmptyString,
   kind: "IRetrievedProfile",

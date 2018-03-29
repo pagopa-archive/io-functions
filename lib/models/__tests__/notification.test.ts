@@ -43,7 +43,7 @@ const aNewEmailNotification: NewNotification = {
 const aRetrievedNotification: RetrievedNotification = {
   ...aNewEmailNotification,
   _self: "xyz",
-  _ts: "xyz",
+  _ts: 123,
   kind: "IRetrievedNotification"
 };
 
