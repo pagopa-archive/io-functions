@@ -28,6 +28,7 @@ const aRetrievedProfile: RetrievedProfile = {
   fiscalCode: aFiscalCode,
   id: "xyz" as NonEmptyString,
   isInboxEnabled: false,
+  isWebhookEnabled: false,
   kind: "IRetrievedProfile",
   version: 0 as NonNegativeNumber
 };

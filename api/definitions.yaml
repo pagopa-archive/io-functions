@@ -233,6 +233,8 @@ ExtendedProfile:
       $ref: "#/PreferredLanguages"
     is_inbox_enabled:
       $ref: "#/IsInboxEnabled"
+    is_webhook_enabled:
+      $ref: "#/IsWebhookEnabled"
     version:
       type: integer
 IsInboxEnabled:
@@ -240,6 +242,10 @@ IsInboxEnabled:
   default: false
   description: True if the recipient of a message wants to store its content for
     later retrieval.
+IsWebhookEnabled:
+  type: boolean
+  default: false
+  description: True if the recipient of a message wants to receive push notifications.
 TimeToLiveSeconds:
   type: integer
   default: 3600
