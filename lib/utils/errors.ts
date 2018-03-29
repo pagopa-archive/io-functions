@@ -4,10 +4,11 @@
  * and useful inside unit tests.
  */
 
-export const enum ErrorTypes {
+export enum ErrorTypes {
   TransientError = "TransientError",
   PermanentError = "PermanentError",
-  UnknowError = "UnknowError"
+  UnknownError = "UnknownError",
+  ExpiredError = "ExpiredError"
 }
 
 interface IRuntimeError<T extends ErrorTypes> {
@@ -32,26 +33,35 @@ export const TransientError = RuntimeError(ErrorTypes.TransientError);
 export type PermanentError = IRuntimeError<ErrorTypes.PermanentError>;
 export const PermanentError = RuntimeError(ErrorTypes.PermanentError);
 
-export type UnknowError = IRuntimeError<ErrorTypes.UnknowError>;
-export const UnknowError = RuntimeError(ErrorTypes.UnknowError);
+export type UnknownError = IRuntimeError<ErrorTypes.UnknownError>;
+export const UnknownError = RuntimeError(ErrorTypes.UnknownError);
+
+export type ExpiredError = IRuntimeError<ErrorTypes.ExpiredError>;
+export const ExpiredError = RuntimeError(ErrorTypes.ExpiredError);
 
 /**
  * Construct a RuntimeError from an object.
  * Useful in try / catch blocks where the object caught is untyped.
  */
 // tslint:disable-next-line:no-any
-export const of = (error: any): RuntimeError =>
+export const toRuntimeError = (error: any): RuntimeError =>
   error && ErrorTypes.hasOwnProperty(error.kind)
     ? error
-    : UnknowError(
+    : UnknownError(
         error instanceof Error && error.message
           ? error.message
           : JSON.stringify(error),
         error instanceof Error ? error : undefined
       );
 
-export type RuntimeError = TransientError | PermanentError | UnknowError;
+export type RuntimeError =
+  | TransientError
+  | PermanentError
+  | UnknownError
+  | ExpiredError;
 
-// tslint:disable-next-line:no-any
-export const isTransient = (error: any): error is TransientError =>
+export const isTransient = (error: RuntimeError): error is TransientError =>
   error.kind && error.kind === ErrorTypes.TransientError;
+
+export const isExpired = (error: RuntimeError): error is ExpiredError =>
+  error.kind && error.kind === ErrorTypes.ExpiredError;

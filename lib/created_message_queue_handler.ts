@@ -22,8 +22,7 @@ import { fromNullable, isNone, Option } from "fp-ts/lib/Option";
 import {
   BlobService,
   createBlobService,
-  createQueueService,
-  QueueService
+  createQueueService
 } from "azure-storage";
 
 import { NewMessageDefaultAddresses } from "./api/definitions/NewMessageDefaultAddresses";
@@ -31,13 +30,12 @@ import { NewMessageDefaultAddresses } from "./api/definitions/NewMessageDefaultA
 import { getRequiredStringEnv } from "./utils/env";
 
 import { CreatedMessageEvent } from "./models/created_message_event";
-import { MessageModel, NewMessageWithContent } from "./models/message";
+import { MessageModel } from "./models/message";
 import {
   createNewNotification,
   NotificationAddressSourceEnum,
   NotificationChannelEmail,
-  NotificationModel,
-  RetrievedNotification
+  NotificationModel
 } from "./models/notification";
 import { NotificationEvent } from "./models/notification_event";
 import { ProfileModel, RetrievedProfile } from "./models/profile";
@@ -46,17 +44,8 @@ import { Either, isLeft, left, right } from "fp-ts/lib/Either";
 import { Tuple2 } from "./utils/tuples";
 import { readableReport } from "./utils/validation_reporters";
 
-import {
-  IQueueMessage,
-  updateMessageVisibilityTimeout
-} from "./utils/azure_queues";
-import {
-  isTransient,
-  of as RuntimeErrorOf,
-  PermanentError,
-  RuntimeError,
-  TransientError
-} from "./utils/errors";
+import { handleQueueProcessingFailure } from "./utils/azure_queues";
+import { PermanentError, RuntimeError, TransientError } from "./utils/errors";
 
 import { EmailAddress } from "./api/definitions/EmailAddress";
 import { MessageStatusValueEnum } from "./api/definitions/MessageStatusValue";
@@ -65,8 +54,7 @@ import { NotificationChannelEnum } from "./api/definitions/NotificationChannel";
 import {
   getMessageStatusUpdater,
   MESSAGE_STATUS_COLLECTION_NAME,
-  MessageStatusModel,
-  MessageStatusUpdater
+  MessageStatusModel
 } from "./models/message_status";
 import { ulidGenerator } from "./utils/strings";
 
@@ -212,9 +200,12 @@ export async function handleMessage(
   lMessageModel: MessageModel,
   lNotificationModel: NotificationModel,
   lBlobService: BlobService,
-  newMessageWithContent: NewMessageWithContent,
-  defaultAddresses: Option<NewMessageDefaultAddresses>
-): Promise<Either<RuntimeError, RetrievedNotification>> {
+  createdMessageEvent: CreatedMessageEvent
+): Promise<Either<RuntimeError, OutputBindings>> {
+  const newMessageWithContent = createdMessageEvent.message;
+  const defaultAddresses = fromNullable(createdMessageEvent.defaultAddresses);
+  const senderMetadata = createdMessageEvent.senderMetadata;
+
   // async fetch of profile data associated to the fiscal code the message
   // should be delivered to
   const errorOrMaybeProfile = await lProfileModel.findOneProfileByFiscalCode(
@@ -289,59 +280,18 @@ export async function handleMessage(
     return left(TransientError("Cannot save notification to database"));
   }
 
-  return right(errorOrNotification.value);
-}
+  const notification = errorOrNotification.value;
 
-/**
- * Returns true in case the caller must
- * trigger a retry
- */
-export async function processRuntimeError(
-  lQueueService: QueueService,
-  messageStatusUpdater: MessageStatusUpdater,
-  queueMessage: IQueueMessage,
-  error: RuntimeError
-): Promise<boolean> {
-  if (isTransient(error)) {
-    winston.warn(`CreatedMessageQueueHandler|Transient error|${error.message}`);
-    const shouldTriggerARetry = await updateMessageVisibilityTimeout(
-      lQueueService,
-      MESSAGE_QUEUE_NAME,
-      queueMessage
-    );
-    const errorOrUpdatedMessageStatus = await messageStatusUpdater(
-      MessageStatusValueEnum.THROTTLED
-    );
-    if (isLeft(errorOrUpdatedMessageStatus)) {
-      winston.warn(
-        `CreatedMessageQueueHandler|Transient error|${
-          errorOrUpdatedMessageStatus.value.message
-        }`
-      );
-    }
-    return shouldTriggerARetry;
-  } else {
-    winston.error(
-      `CreatedMessageQueueHandler|Permanent error|${error.message}`
-    );
-    const errorOrUpdatedMessageStatus = await messageStatusUpdater(
-      MessageStatusValueEnum.FAILED
-    );
-    if (isLeft(errorOrUpdatedMessageStatus)) {
-      // if we get an error updating the message status
-      // we retry the whole procedure (it will log the error anyway)
-      const transientError = errorOrUpdatedMessageStatus.value;
-      return await processRuntimeError(
-        lQueueService,
-        messageStatusUpdater,
-        queueMessage,
-        transientError
-      );
-    } else {
-      // message processing stops here
-      return false;
-    }
-  }
+  const emailNotification: NotificationEvent = {
+    message: {
+      ...newMessageWithContent,
+      kind: "INewMessageWithContent"
+    },
+    notificationId: notification.id,
+    senderMetadata
+  };
+
+  return right({ emailNotification });
 }
 
 /**
@@ -350,7 +300,6 @@ export async function processRuntimeError(
 export async function index(
   context: ContextWithBindings
 ): Promise<OutputBindings | Error | void> {
-  const stopProcessing = undefined;
   const logLevel = isProduction ? "info" : "debug";
   configureAzureContextTransport(context, winston, logLevel);
 
@@ -373,13 +322,11 @@ export async function index(
       )}`
     );
     // we will never be able to recover from this, so don't trigger a retry
-    return stopProcessing;
+    return;
   }
 
   const createdMessageEvent = errorOrCreatedMessageEvent.value;
   const newMessageWithContent = createdMessageEvent.message;
-  const defaultAddresses = fromNullable(createdMessageEvent.defaultAddresses);
-  const senderMetadata = createdMessageEvent.senderMetadata;
 
   winston.info(
     `CreatedMessageQueueHandler|A new message was created|${
@@ -392,61 +339,41 @@ export async function index(
     newMessageWithContent.id
   );
 
-  try {
-    // now we can trigger the notifications for the message
-    const errorOrNotification = await handleMessage(
-      profileModel,
-      messageModel,
-      notificationModel,
-      blobService,
-      newMessageWithContent,
-      defaultAddresses
+  // now we can trigger the notifications for the message
+  return handleMessage(
+    profileModel,
+    messageModel,
+    notificationModel,
+    blobService,
+    createdMessageEvent
+  )
+    .then(errorOrOutputBindings =>
+      errorOrOutputBindings.fold(
+        error => {
+          // delegate to the catch handler
+          throw error;
+        },
+        async outputBindings => {
+          await messageStatusUpdater(MessageStatusValueEnum.PROCESSED);
+          winston.debug(
+            `CreatedMessageQueueHandler|succeeded|message=${
+              newMessageWithContent.id
+            }`
+          );
+          return outputBindings;
+        }
+      )
+    )
+    .catch(error =>
+      handleQueueProcessingFailure(
+        queueService,
+        context.bindingData,
+        MESSAGE_QUEUE_NAME,
+        // execute in case of transient errors
+        () => messageStatusUpdater(MessageStatusValueEnum.THROTTLED),
+        // execute in case of permanent errors
+        () => messageStatusUpdater(MessageStatusValueEnum.FAILED),
+        error
+      )
     );
-
-    if (isLeft(errorOrNotification)) {
-      // something went wrong trying to get the notification object
-      // if it's a transient error, this will trigger a retry
-      throw errorOrNotification.value;
-    }
-    const notification = errorOrNotification.value;
-
-    // try to update the message status in the database
-    const errorOrUpdatedMessageStatus = await messageStatusUpdater(
-      MessageStatusValueEnum.PROCESSED
-    );
-    if (isLeft(errorOrUpdatedMessageStatus)) {
-      // this will trigger a retry as it's considered a transient error
-      throw errorOrUpdatedMessageStatus.value;
-    }
-
-    // everything went well, make output bindings
-    const emailNotification: NotificationEvent = {
-      message: {
-        ...newMessageWithContent,
-        kind: "INewMessageWithContent"
-      },
-      notificationId: notification.id,
-      senderMetadata
-    };
-
-    winston.debug(
-      `CreatedMessageQueueHandler|succeeded|message=${
-        emailNotification.notificationId
-      }|message=${emailNotification.message.id}`
-    );
-
-    return { emailNotification };
-    //
-  } catch (error) {
-    const shouldTriggerARetry = await processRuntimeError(
-      queueService,
-      messageStatusUpdater,
-      context.bindingData,
-      RuntimeErrorOf(error)
-    );
-    if (shouldTriggerARetry) {
-      throw TransientError(`CreatedMessageQueueHandler|Retry|${error.message}`);
-    }
-    return stopProcessing;
-  }
 }

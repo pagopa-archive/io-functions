@@ -5,7 +5,14 @@ import * as winston from "winston";
 
 import { QueueService } from "azure-storage";
 
+import { Either } from "fp-ts/lib/Either";
 import { Option, some } from "fp-ts/lib/Option";
+import {
+  isTransient,
+  RuntimeError,
+  toRuntimeError,
+  TransientError
+} from "./errors";
 
 export interface IQueueMessage extends QueueService.QueueMessageResult {
   readonly id: string;
@@ -66,7 +73,7 @@ export function queueMessageToString(queueMessage: IQueueMessage): string {
 /**
  * Update message visibilityTimeout with an incremental delay.
  *
- * You MUST call context.done(retryMsg) in the caller
+ * You MUST call context.done(retryMsg) or throw an exception in the caller
  * to schedule a retry (the re-processing of a message in the queue).
  *
  * Useful in case of transient errors. The message is enqueued with
@@ -106,11 +113,15 @@ export function updateMessageVisibilityTimeout<T extends IQueueMessage>(
           queueMessage.popReceipt,
           visibilityTimeoutSec,
           err => {
+            if (err) {
+              winston.error(
+                `updateMessageVisibilityTimeout|Error|${err.message}`
+              );
+            }
             winston.info(
-              err.message ||
-                `Updated visibilityTimeout|retry=${numberOfRetries}|timeout=${visibilityTimeoutSec}|queueMessageId=${
-                  queueMessage.id
-                }`
+              `Updated visibilityTimeout|retry=${numberOfRetries}|timeout=${visibilityTimeoutSec}|queueMessageId=${
+                queueMessage.id
+              }`
             );
             // try to schedule a retry even in case updateMessage fails
             resolve(true);
@@ -126,4 +137,69 @@ export function updateMessageVisibilityTimeout<T extends IQueueMessage>(
         resolve(false);
       });
   });
+}
+
+/**
+ * Returns false when we need to trigger a retry.
+ */
+export async function handleQueueProcessingFailure(
+  queueService: QueueService,
+  queueMessage: IQueueMessage,
+  queueName: string,
+  onTransientError: () => Promise<Either<RuntimeError, {}>>,
+  onPermanentError: () => Promise<Either<RuntimeError, {}>>,
+  error: Error | RuntimeError
+): Promise<void> {
+  const runtimeError = toRuntimeError(error);
+  if (isTransient(runtimeError)) {
+    winston.warn(`Transient error|${queueName}|${runtimeError.message}`);
+    const shouldTriggerARetry = await updateMessageVisibilityTimeout(
+      queueService,
+      queueName,
+      queueMessage
+    );
+    // execute the callback for transient errors
+    await onTransientError()
+      .then(errorOrResult =>
+        errorOrResult.mapLeft(err =>
+          winston.warn(
+            `Transient error (onTransientError)|${queueName}|${err.message}`
+          )
+        )
+      )
+      .catch(winston.error);
+    if (shouldTriggerARetry) {
+      // throws to trigger a retry in the caller handler
+      throw TransientError(`Retry|${queueName}|${runtimeError.message}`);
+    } else {
+      winston.error(
+        `Maximum number of retries reached, stop processing|${queueName}|${
+          runtimeError.message
+        }`
+      );
+    }
+  } else {
+    winston.error(`Permanent error|${queueName}|${runtimeError.message}`);
+    // execute the callback for permanent errors
+    await onPermanentError().then(
+      errorOrResult =>
+        errorOrResult.fold(
+          // try to trigger a retry in case any error
+          // occurs during the execution of the callback
+          callbackError =>
+            handleQueueProcessingFailure(
+              queueService,
+              queueMessage,
+              queueName,
+              onTransientError,
+              onPermanentError,
+              TransientError(callbackError.message)
+            ),
+          // exits (stop processing) in case no error
+          // occurs during the execution of the callback
+          async () => void 0
+        )
+      // do not catch here, let it throw
+    );
+  }
 }
