@@ -33,7 +33,7 @@ const aProfilePayloadMock = {
 
 const aRetrievedProfile: RetrievedProfile = {
   _self: "123",
-  _ts: "123",
+  _ts: 123,
   email: "x@example.com" as EmailString,
   fiscalCode: aFiscalCode,
   id: "123" as NonEmptyString,

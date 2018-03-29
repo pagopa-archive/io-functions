@@ -28,7 +28,7 @@ const aServiceId = "xyz" as NonEmptyString;
 
 const aRetrievedService: RetrievedService = {
   _self: "xyz",
-  _ts: "xyz",
+  _ts: 123,
   authorizedCIDRs: toAuthorizedCIDRs([]),
   authorizedRecipients: toAuthorizedRecipients([]),
   departmentName: "MyDept" as NonEmptyString,
@@ -99,7 +99,7 @@ describe("createService", () => {
         cb(undefined, {
           ...newDocument,
           _self: "self",
-          _ts: "123"
+          _ts: 123
         });
       })
     };
@@ -167,7 +167,7 @@ describe("update", () => {
         cb(undefined, {
           ...newDocument,
           _self: "self",
-          _ts: "123"
+          _ts: 123
         });
       }),
       readDocument: jest.fn((_, __, cb) => cb(undefined, aRetrievedService))
