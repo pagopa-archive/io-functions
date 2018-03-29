@@ -147,7 +147,7 @@ const aNotification: Notification = {
 
 const aRetrievedNotificationStatus: RetrievedNotificationStatus = {
   _self: "xyz",
-  _ts: "xyz",
+  _ts: 123,
   channel: NotificationChannelEnum.EMAIL,
   id: "1" as NonEmptyString,
   kind: "IRetrievedNotificationStatus",
