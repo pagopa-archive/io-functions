@@ -212,8 +212,8 @@ export abstract class DocumentDbModelVersioned<
             value: partitionKeyValue
           }
         ],
-        // do not use ${collectionName} here as it may contain special characters
-        query: `SELECT TOP 1 * FROM m WHERE (m.${modelIdField} = @modelId ${
+        // do not use ${collectionName} here as it may contain special character
+        query: `SELECT * FROM m WHERE (m.${modelIdField} = @modelId ${
           partitionKeyField ? `AND m.${partitionKeyField} = @partitionKey` : ``
         }) ORDER BY m.version DESC`
       }
