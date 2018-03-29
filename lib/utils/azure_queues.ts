@@ -9,8 +9,8 @@ import { Either } from "fp-ts/lib/Either";
 import { Option, some } from "fp-ts/lib/Option";
 import {
   isTransient,
-  of as RuntimeErrorOf,
   RuntimeError,
+  toRuntimeError,
   TransientError
 } from "./errors";
 
@@ -150,7 +150,7 @@ export async function handleQueueProcessingFailure(
   onPermanentError: () => Promise<Either<RuntimeError, {}>>,
   error: Error | RuntimeError
 ): Promise<void> {
-  const runtimeError = RuntimeErrorOf(error);
+  const runtimeError = toRuntimeError(error);
   if (isTransient(runtimeError)) {
     winston.warn(`Transient error|${queueName}|${runtimeError.message}`);
     const shouldTriggerARetry = await updateMessageVisibilityTimeout(

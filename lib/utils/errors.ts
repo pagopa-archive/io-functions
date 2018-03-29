@@ -44,7 +44,7 @@ export const ExpiredError = RuntimeError(ErrorTypes.ExpiredError);
  * Useful in try / catch blocks where the object caught is untyped.
  */
 // tslint:disable-next-line:no-any
-export const of = (error: any): RuntimeError =>
+export const toRuntimeError = (error: any): RuntimeError =>
   error && ErrorTypes.hasOwnProperty(error.kind)
     ? error
     : UnknownError(
@@ -60,10 +60,8 @@ export type RuntimeError =
   | UnknownError
   | ExpiredError;
 
-// tslint:disable-next-line:no-any
-export const isTransient = (error: any): error is TransientError =>
+export const isTransient = (error: RuntimeError): error is TransientError =>
   error.kind && error.kind === ErrorTypes.TransientError;
 
-// tslint:disable-next-line:no-any
-export const isExpired = (error: any): error is ExpiredError =>
+export const isExpired = (error: RuntimeError): error is ExpiredError =>
   error.kind && error.kind === ErrorTypes.ExpiredError;

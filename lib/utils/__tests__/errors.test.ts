@@ -1,17 +1,17 @@
-import { of, TransientError } from "../errors";
+import { toRuntimeError, TransientError } from "../errors";
 
 afterEach(() => {
   jest.clearAllMocks();
   jest.resetAllMocks();
 });
 
-describe("of", () => {
+describe("toRuntimeError", () => {
   it("should build a RuntimeError from an unknow Error", async () => {
-    const runtimeError = of(new Error());
-    expect(runtimeError.kind).toEqual("UnknowError");
+    const runtimeError = toRuntimeError(new Error());
+    expect(runtimeError.kind).toEqual("UnknownError");
   });
   it("should build a RuntimeError from a RuntimError", async () => {
-    const runtimeError = of(TransientError(""));
+    const runtimeError = toRuntimeError(TransientError(""));
     expect(runtimeError.kind).toEqual("TransientError");
   });
 });
