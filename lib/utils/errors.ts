@@ -7,7 +7,7 @@
 export enum ErrorTypes {
   TransientError = "TransientError",
   PermanentError = "PermanentError",
-  UnknowError = "UnknowError",
+  UnknownError = "UnknownError",
   ExpiredError = "ExpiredError"
 }
 
@@ -33,8 +33,8 @@ export const TransientError = RuntimeError(ErrorTypes.TransientError);
 export type PermanentError = IRuntimeError<ErrorTypes.PermanentError>;
 export const PermanentError = RuntimeError(ErrorTypes.PermanentError);
 
-export type UnknowError = IRuntimeError<ErrorTypes.UnknowError>;
-export const UnknowError = RuntimeError(ErrorTypes.UnknowError);
+export type UnknownError = IRuntimeError<ErrorTypes.UnknownError>;
+export const UnknownError = RuntimeError(ErrorTypes.UnknownError);
 
 export type ExpiredError = IRuntimeError<ErrorTypes.ExpiredError>;
 export const ExpiredError = RuntimeError(ErrorTypes.ExpiredError);
@@ -47,7 +47,7 @@ export const ExpiredError = RuntimeError(ErrorTypes.ExpiredError);
 export const of = (error: any): RuntimeError =>
   error && ErrorTypes.hasOwnProperty(error.kind)
     ? error
-    : UnknowError(
+    : UnknownError(
         error instanceof Error && error.message
           ? error.message
           : JSON.stringify(error),
@@ -57,7 +57,7 @@ export const of = (error: any): RuntimeError =>
 export type RuntimeError =
   | TransientError
   | PermanentError
-  | UnknowError
+  | UnknownError
   | ExpiredError;
 
 // tslint:disable-next-line:no-any
