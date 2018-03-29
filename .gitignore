@@ -2,6 +2,7 @@
 **/coverage
 **/*.js
 !gulpfile.js
+!webpack.config.js
 **/*.log
 **/local.*
 **/*.js.map
