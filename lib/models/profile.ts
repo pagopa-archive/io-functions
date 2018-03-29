@@ -39,7 +39,7 @@ export const Profile = t.intersection([
     // whether to store the content of messages sent to this citizen
     isInboxEnabled: IsInboxEnabled,
 
-    // whether to push notifications to the mobile app backend
+    // whether to push notifications to the default webhook
     isWebhookEnabled: IsWebhookEnabled,
 
     // array of user's preferred languages in ISO-3166-1-2 format
