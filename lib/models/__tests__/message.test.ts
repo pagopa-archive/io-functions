@@ -61,14 +61,14 @@ const aNewMessageWithContent: NewMessageWithContent = {
 const aSerializedRetrievedMessageWithContent = {
   ...aSerializedNewMessageWithContent,
   _self: "xyz",
-  _ts: "xyz",
+  _ts: 123,
   kind: "IRetrievedMessageWithContent"
 };
 
 const aRetrievedMessageWithContent: RetrievedMessageWithContent = {
   ...aNewMessageWithContent,
   _self: "xyz",
-  _ts: "xyz",
+  _ts: 123,
   kind: "IRetrievedMessageWithContent"
 };
 
