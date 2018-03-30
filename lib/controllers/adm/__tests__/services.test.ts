@@ -76,7 +76,7 @@ const aNewService: NewService = {
 const aRetrievedService: RetrievedService = {
   ...aNewService,
   _self: "123",
-  _ts: "123",
+  _ts: 123,
   kind: "IRetrievedService"
 };
 

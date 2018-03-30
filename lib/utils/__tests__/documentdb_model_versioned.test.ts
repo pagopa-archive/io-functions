@@ -6,7 +6,7 @@ jest.mock("../documentdb");
 import * as DocumentDb from "documentdb";
 import * as DocumentDbUtils from "../documentdb";
 
-import { isRight, right } from "fp-ts/lib/Either";
+import { isRight, left, right } from "fp-ts/lib/Either";
 import { none, some } from "fp-ts/lib/Option";
 import {
   DocumentDbModelVersioned,
@@ -164,6 +164,7 @@ describe("upsert", () => {
       });
     }
   });
+
   it("should update an existing document", async () => {
     const model = new MyModel(aDbClient, aCollectionUri);
     (DocumentDbUtils.queryOneDocument as any).mockReturnValueOnce(
@@ -209,5 +210,43 @@ describe("upsert", () => {
         version: 2
       });
     }
+  });
+
+  it("should return on error", async () => {
+    const model = new MyModel(aDbClient, aCollectionUri);
+    (DocumentDbUtils.queryOneDocument as any).mockReturnValueOnce(
+      Promise.resolve(left(new Error()))
+    );
+    await model.upsert(
+      aNewMyDocument,
+      aModelIdField,
+      aModelIdValue,
+      aPartitionKeyField,
+      aPartitionKeyValue
+    );
+    expect(DocumentDbUtils.createDocument).not.toHaveBeenCalledWith();
+  });
+});
+
+describe("update", () => {
+  it("should return on error", async () => {
+    const model = new MyModel(aDbClient, aCollectionUri);
+    (DocumentDbUtils.readDocument as any).mockReturnValueOnce(
+      Promise.resolve(left(new Error()))
+    );
+    await model.update(aModelIdValue, aPartitionKeyValue, curr => curr);
+    expect(DocumentDbUtils.createDocument).not.toHaveBeenCalledWith();
+  });
+});
+
+describe("findLastVersionByModelId", () => {
+  it("should return none when the document is not found", async () => {
+    const model = new MyModel(aDbClient, aCollectionUri);
+    (DocumentDbUtils.queryOneDocument as any).mockReturnValueOnce(
+      Promise.resolve(right(none))
+    );
+    // @ts-ignore (ignore "protected" modifier)
+    await model.findLastVersionByModelId(aModelIdField, aModelIdValue);
+    expect(DocumentDbUtils.createDocument).not.toHaveBeenCalledWith();
   });
 });

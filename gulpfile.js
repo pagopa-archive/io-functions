@@ -123,7 +123,9 @@ gulp.task("test", cb => runSequence("yarn:lint", "unit:test", cb));
  * Package Azure Functions code and dependencines in a single file
  */
 gulp.task("yarn:funcpack", () => {
-  return gulp.src(TYPESCRIPT_SOURCE_DIR).pipe(run("yarn run funcpack pack ./"));
+  return gulp
+    .src(TYPESCRIPT_SOURCE_DIR)
+    .pipe(run("yarn run funcpack pack -e webpack.config.js ./"));
 });
 
 /**

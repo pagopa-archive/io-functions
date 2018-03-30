@@ -1,6 +1,6 @@
 {
   "name": "digital-citizenship-functions",
-  "version": "0.36.0-SNAPSHOT",
+  "version": "0.38.0-SNAPSHOT",
   "description": "Implementation of the Public API V1, part of the Digital Citizenship platform",
   "main": "index.js",
   "repository": {
@@ -53,7 +53,7 @@
     "remark-rehype": "^3.0.0",
     "request-ip": "^2.0.2",
     "superagent": "^3.8.2",
-    "typescript": "^2.7.0",
+    "typescript": "^2.8.0",
     "ulid": "^2.2.2",
     "unified": "^6.1.5",
     "validator": "^9.2.0",
@@ -66,7 +66,7 @@
     "@types/prettier": "^1.6.1",
     "@types/swagger-parser": "^4.0.2",
     "@types/swagger-schema-official": "^2.0.6",
-    "azure-functions-pack": "^0.3.1",
+    "azure-functions-pack": "^1.0.0",
     "danger": "^3.1.7",
     "danger-plugin-digitalcitizenship": "https://github.com/teamdigitale/danger-plugin-digitalcitizenship#v0.0.4",
     "gulp": "^3.9.1",
