@@ -105,7 +105,7 @@ export type {{ definitionName }} = t.TypeOf<typeof {{ definitionName }}>;
 
     import { PatternString } from "../../utils/strings";
 
-    {% set typedef %}PatternString("{{ definition.pattern }}"){% endset %}
+    {% set typedef %}PatternString("{{ definition.pattern | safe }}"){% endset %}
     {{ macro.exportConst(definition.default, definitionName, typedef, quote=true) }}
 
   {% elif definition.minLength and definition.maxLength %}

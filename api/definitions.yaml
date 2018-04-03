@@ -355,18 +355,18 @@ ServiceName:
   minLength: 1
 OrganizationName:
   type: string
-  description: The organizazione that runs the service. Will be added to the content
+  description: The organization that runs the service. Will be added to the content
     of sent messages to identify the sender.
   minLength: 1
 DepartmentName:
   type: string
-  description: The departmenet inside the organization that runs the service. Will
+  description: The department inside the organization that runs the service. Will
     be added to the content of sent messages.
   minLength: 1
 CIDR:
   type: string
   description: Describes a single IP or a range of IPs.
-  pattern: "([0-9]{1,3}\\.){3}[0-9]{1,3}(\\/([0-9]|[1-2][0-9]|3[0-2]))?"
+  pattern: "^([0-9]{1,3}[.]){3}[0-9]{1,3}(/([0-9]|[1-2][0-9]|3[0-2]))?$"
 Timestamp:
   type: string
   format: date-time
