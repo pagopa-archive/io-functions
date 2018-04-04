@@ -223,9 +223,11 @@ export async function handleMessage(
     }
   }
 
-  // Try to get email notification metadata
   const maybeNotificationChannelEmail = maybeProfile
+    // try to get the destination email address from the user's profile
     .chain(getEmailAddressFromProfile)
+    // if it's not set, or we don't have a profile for this fiscal code,
+    // try to get the default email address from the request payload
     .alt(defaultAddresses.chain(getEmailAddressFromDefaultAddresses));
 
   if (isNone(maybeNotificationChannelEmail)) {
