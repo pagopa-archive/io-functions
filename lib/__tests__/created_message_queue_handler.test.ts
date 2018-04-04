@@ -413,7 +413,7 @@ describe("handleMessage", () => {
   );
 
   it(
-    "should create a notification with an email if a profile exists for" +
+    "should create a notification with an email if a profile exists for " +
       "fiscal code, the email field is empty but a default email was provided",
     async () => {
       const profileModelMock = {

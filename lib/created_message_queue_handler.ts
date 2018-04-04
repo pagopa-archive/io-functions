@@ -41,13 +41,11 @@ import { NotificationEvent } from "./models/notification_event";
 import { ProfileModel, RetrievedProfile } from "./models/profile";
 
 import { Either, isLeft, left, right } from "fp-ts/lib/Either";
-import { Tuple2 } from "./utils/tuples";
 import { readableReport } from "./utils/validation_reporters";
 
 import { handleQueueProcessingFailure } from "./utils/azure_queues";
 import { PermanentError, RuntimeError, TransientError } from "./utils/errors";
 
-import { EmailAddress } from "./api/definitions/EmailAddress";
 import { MessageStatusValueEnum } from "./api/definitions/MessageStatusValue";
 import { NotificationChannelEnum } from "./api/definitions/NotificationChannel";
 
@@ -144,47 +142,29 @@ const ContextWithBindings = t.interface({
 type ContextWithBindings = t.TypeOf<typeof ContextWithBindings> & IContext;
 
 /**
- * Attempt to resolve an email address from the recipient profile
- * or from a provided default address.
- *
- * @param maybeProfile      the recipient's profile (or none)
- * @param defaultAddresses  default addresses (one per channel)
+ * Attempt to resolve an email address from
+ * the provided default address.
  */
-function tryGetDestinationEmail(
-  maybeProfile: Option<RetrievedProfile>,
-  defaultAddresses: Option<NewMessageDefaultAddresses>
-): Option<Tuple2<EmailAddress, NotificationAddressSourceEnum>> {
-  const maybeProfileEmail = maybeProfile
-    .chain(profile => fromNullable(profile.email))
-    .map(email => Tuple2(email, NotificationAddressSourceEnum.PROFILE_ADDRESS));
-  const maybeDefaultEmail = defaultAddresses
-    .chain(addresses => fromNullable(addresses.email))
-    .map(email => Tuple2(email, NotificationAddressSourceEnum.DEFAULT_ADDRESS));
-  return maybeProfileEmail.alt(maybeDefaultEmail);
+function getEmailAddressFromDefaultAddresses(
+  defaultAddresses: NewMessageDefaultAddresses
+): Option<NotificationChannelEmail> {
+  return fromNullable(defaultAddresses.email).map(email => ({
+    addressSource: NotificationAddressSourceEnum.DEFAULT_ADDRESS,
+    toAddress: email
+  }));
 }
 
 /**
- * Attempt to resolve an email notification.
- *
- * @param maybeProfile the user's profile we try to get an email address from
- * @param defaultAddresses the email address provided as input to the message APIs
- * @returns none when both maybeProfile.email and defaultAddresses are empty
+ * Attempt to resolve an email address from
+ * the recipient profile.
  */
-function tryGetEmailNotification(
-  maybeProfile: Option<RetrievedProfile>,
-  defaultAddresses: Option<NewMessageDefaultAddresses>
+function getEmailAddressFromProfile(
+  profile: RetrievedProfile
 ): Option<NotificationChannelEmail> {
-  const maybeDestinationEmail = tryGetDestinationEmail(
-    maybeProfile,
-    defaultAddresses
-  );
-  // Now that we have a valid destination email address, we create an EmailNotification
-  return maybeDestinationEmail.map(({ e1: toAddress, e2: addressSource }) => {
-    return {
-      addressSource,
-      toAddress
-    };
-  });
+  return fromNullable(profile.email).map(email => ({
+    addressSource: NotificationAddressSourceEnum.PROFILE_ADDRESS,
+    toAddress: email
+  }));
 }
 
 /**
@@ -243,11 +223,10 @@ export async function handleMessage(
     }
   }
 
-  // Try to get email notification metadata from user's profile
-  const maybeNotificationChannelEmail = tryGetEmailNotification(
-    maybeProfile,
-    defaultAddresses
-  );
+  // Try to get email notification metadata
+  const maybeNotificationChannelEmail = maybeProfile
+    .chain(getEmailAddressFromProfile)
+    .alt(defaultAddresses.chain(getEmailAddressFromDefaultAddresses));
 
   if (isNone(maybeNotificationChannelEmail)) {
     // TODO: when we'll add other channels do not exit here (just log the error)
