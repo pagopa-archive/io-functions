@@ -44,6 +44,14 @@ const currentVersion = semver.parse(currentPackageJson.version);
 const releaseVersionValue = `${currentVersion.major}.${currentVersion.minor}.${
   currentVersion.patch
 }`;
+
+if (
+  process.env.RELEASE &&
+  !["major", "minor", "patch"].includes(process.env.RELEASE)
+) {
+  throw new Error("RELEASE must be one between major, minor, patch");
+}
+
 const nextVersionValue = `${semver.inc(
   releaseVersionValue,
   // RELEASE can be "major", "minor" (default) or "patch"
