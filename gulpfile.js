@@ -338,6 +338,8 @@ gulp.task("release", function(cb) {
     // check that the working directory is a git repository and
     // the repository has no outstanding changes.
     "git:check:clean",
+    // generate models, templates and compile typescript
+    "yarn:build",
     // run tests
     "test",
     // bumps the version to the next release version:
@@ -349,8 +351,7 @@ gulp.task("release", function(cb) {
     "release:git:tag:release",
     // checkout a new branch funcpack-release-vx.x.x
     "release:git:checkout:funcpack",
-    // build and run funcpack
-    "yarn:build",
+    // run funcpack
     "yarn:funcpack",
     // commits and pushes funcpack branch
     "release:git:commit:funcpack",
