@@ -49,7 +49,7 @@ if (
   process.env.RELEASE &&
   !["major", "minor", "patch"].includes(process.env.RELEASE)
 ) {
-  throw new Error("RELEASE must be one between 'major', 'minor' or patch");
+  throw new Error("RELEASE must be one between 'major', 'minor' or 'patch'");
 }
 
 const nextVersionValue = `${semver.inc(
