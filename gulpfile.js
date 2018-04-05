@@ -44,7 +44,19 @@ const currentVersion = semver.parse(currentPackageJson.version);
 const releaseVersionValue = `${currentVersion.major}.${currentVersion.minor}.${
   currentVersion.patch
 }`;
-const nextVersionValue = `${semver.inc(releaseVersionValue, "minor")}-SNAPSHOT`;
+
+if (
+  process.env.RELEASE &&
+  !["major", "minor", "patch"].includes(process.env.RELEASE)
+) {
+  throw new Error("RELEASE must be one between 'major', 'minor' or 'patch'");
+}
+
+const nextVersionValue = `${semver.inc(
+  releaseVersionValue,
+  // RELEASE can be "major", "minor" (default) or "patch"
+  process.env.RELEASE || "minor"
+)}-SNAPSHOT`;
 const funcpackBranchPrefix = "funcpack-release";
 const releaseVersionFuncpackBranchName = `${funcpackBranchPrefix}-v${releaseVersionValue}`;
 
@@ -211,7 +223,13 @@ gulp.task("git:push:origin", cb => {
  * Push the tags to origin
  */
 gulp.task("git:push:tags", cb => {
-  return git.push(GIT_ORIGIN, GIT_RELEASE_BRANCH, { args: "--tags" }, cb);
+  return git.push(
+    GIT_ORIGIN,
+    GIT_RELEASE_BRANCH,
+    // push only annotated tags
+    { args: "--follow-tags" },
+    cb
+  );
 });
 
 /**
