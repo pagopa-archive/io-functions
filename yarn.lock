@@ -1473,9 +1473,9 @@ d@1:
   dependencies:
     es5-ext "^0.10.9"
 
-"danger-plugin-digitalcitizenship@https://github.com/teamdigitale/danger-plugin-digitalcitizenship#v0.0.4":
-  version "0.0.1"
-  resolved "https://github.com/teamdigitale/danger-plugin-digitalcitizenship#5c48e7a74fc67a36f7b4d02f64b10b3692c7ac7b"
+danger-plugin-digitalcitizenship@^0.1.0:
+  version "0.1.0"
+  resolved "https://registry.yarnpkg.com/danger-plugin-digitalcitizenship/-/danger-plugin-digitalcitizenship-0.1.0.tgz#14eb9bfad12cafe192b299218eb601ad4b8acd56"
   dependencies:
     pivotaljs "^1.0.3"
 
