@@ -37,7 +37,7 @@
     "azure-storage": "^2.8.0",
     "cidr-matcher": "^1.0.5",
     "documentdb": "^1.12.2",
-    "dotenv": "^4.0.0",
+    "dotenv": "^5.0.1",
     "express": "^4.15.3",
     "fp-ts": "^1.0.0",
     "fs-extra": "^4.0.1",
