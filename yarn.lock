@@ -7234,9 +7234,9 @@ tslint-config-prettier@^1.6.0:
   version "1.7.0"
   resolved "https://registry.yarnpkg.com/tslint-config-prettier/-/tslint-config-prettier-1.7.0.tgz#1588f794c6863ba31420e8b1d14ae91326063815"
 
-tslint-immutable@^4.4.0:
-  version "4.5.1"
-  resolved "https://registry.yarnpkg.com/tslint-immutable/-/tslint-immutable-4.5.1.tgz#85cf4366ae60acb341ebdd3e1ea8b670d6cf2a11"
+tslint-immutable@^4.5.4:
+  version "4.5.4"
+  resolved "https://registry.yarnpkg.com/tslint-immutable/-/tslint-immutable-4.5.4.tgz#17b0d825c1067fa6d125a8010d9b22feb12e5d32"
 
 tslint-microsoft-contrib@^5.0.1:
   version "5.0.3"
