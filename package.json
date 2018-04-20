@@ -62,7 +62,7 @@
   },
   "devDependencies": {
     "@types/jest": "^22.0.0",
-    "@types/nunjucks": "^0.0.33",
+    "@types/nunjucks": "^3.0.0",
     "@types/prettier": "^1.6.1",
     "@types/swagger-parser": "^4.0.2",
     "@types/swagger-schema-official": "^2.0.6",
