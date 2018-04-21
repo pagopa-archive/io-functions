@@ -1,6 +1,6 @@
 import * as t from "io-ts";
 
-import { pick, tag } from "../utils/types";
+import { pick, tag } from "italia-ts-commons/dist/lib/types";
 
 import * as DocumentDb from "documentdb";
 import * as DocumentDbUtils from "../utils/documentdb";
@@ -12,6 +12,8 @@ import {
 
 import { Either } from "fp-ts/lib/Either";
 import { Option } from "fp-ts/lib/Option";
+import { NonNegativeNumber } from "italia-ts-commons/dist/lib/numbers";
+import { NonEmptyString } from "italia-ts-commons/dist/lib/strings";
 import {
   NotificationChannel,
   NotificationChannelEnum
@@ -23,8 +25,6 @@ import {
 import { Timestamp } from "../api/definitions/Timestamp";
 import { notificationStatusIdToModelId } from "../utils/conversions";
 import { RuntimeError, TransientError } from "../utils/errors";
-import { NonNegativeNumber } from "../utils/numbers";
-import { NonEmptyString } from "../utils/strings";
 
 export const NOTIFICATION_STATUS_COLLECTION_NAME = "notification-status";
 export const NOTIFICATION_STATUS_MODEL_ID_FIELD = "statusId";

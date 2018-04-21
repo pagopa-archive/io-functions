@@ -6,9 +6,9 @@ import { IAzureUserAttributes } from "./middlewares/azure_user_attributes";
  */
 
 import CIDRMatcher = require("cidr-matcher");
+import { IPString } from "italia-ts-commons/dist/lib/strings";
+import { ITuple2, Tuple2 } from "italia-ts-commons/dist/lib/tuples";
 import { ClientIp } from "./middlewares/client_ip_middleware";
-import { IPString } from "./strings";
-import { Tuple2 } from "./tuples";
 
 import {
   IResponseErrorForbiddenNotAuthorized,
@@ -30,17 +30,17 @@ function isContainedInCidrs(ip: IPString, cidrs: ReadonlySet<string>): boolean {
 
 export function checkSourceIpForHandler<P1, O>(
   f: (p1: P1) => Promise<O>,
-  e: (p1: P1) => Tuple2<ClientIp, ReadonlySet<string>>
+  e: (p1: P1) => ITuple2<ClientIp, ReadonlySet<string>>
 ): (p1: P1) => Promise<O | IResponseErrorForbiddenNotAuthorized>;
 
 export function checkSourceIpForHandler<P1, P2, O>(
   f: (p1: P1, p2: P2) => Promise<O>,
-  e: (p1: P1, p2: P2) => Tuple2<ClientIp, ReadonlySet<string>>
+  e: (p1: P1, p2: P2) => ITuple2<ClientIp, ReadonlySet<string>>
 ): (p1: P1, p2: P2) => Promise<O | IResponseErrorForbiddenNotAuthorized>;
 
 export function checkSourceIpForHandler<P1, P2, P3, O>(
   f: (p1: P1, p2: P2, p3: P3) => Promise<O>,
-  e: (p1: P1, p2: P2, p3: P3) => Tuple2<ClientIp, ReadonlySet<string>>
+  e: (p1: P1, p2: P2, p3: P3) => ITuple2<ClientIp, ReadonlySet<string>>
 ): (
   p1: P1,
   p2: P2,
@@ -49,7 +49,7 @@ export function checkSourceIpForHandler<P1, P2, P3, O>(
 
 export function checkSourceIpForHandler<P1, P2, P3, P4, O>(
   f: (p1: P1, p2: P2, p3: P3, p4: P4) => Promise<O>,
-  e: (p1: P1, p2: P2, p3: P3, p4: P4) => Tuple2<ClientIp, ReadonlySet<string>>
+  e: (p1: P1, p2: P2, p3: P3, p4: P4) => ITuple2<ClientIp, ReadonlySet<string>>
 ): (
   p1: P1,
   p2: P2,
@@ -65,7 +65,7 @@ export function checkSourceIpForHandler<P1, P2, P3, P4, P5, O>(
     p3: P3,
     p4: P4,
     p5: P5
-  ) => Tuple2<ClientIp, ReadonlySet<string>>
+  ) => ITuple2<ClientIp, ReadonlySet<string>>
 ): (
   p1: P1,
   p2: P2,
@@ -83,7 +83,7 @@ export function checkSourceIpForHandler<P1, P2, P3, P4, P5, P6, O>(
     p4: P4,
     p5: P5,
     p6: P6
-  ) => Tuple2<ClientIp, ReadonlySet<string>>
+  ) => ITuple2<ClientIp, ReadonlySet<string>>
 ): (
   p1: P1,
   p2: P2,
@@ -110,7 +110,7 @@ export function checkSourceIpForHandler<P1, P2, P3, P4, P5, P6, O>(
     p4: P4,
     p5: P5,
     p6: P6
-  ) => Tuple2<ClientIp, ReadonlySet<string>>
+  ) => ITuple2<ClientIp, ReadonlySet<string>>
 ): (
   p1: P1,
   p2: P2,
@@ -161,6 +161,6 @@ export function checkSourceIpForHandler<P1, P2, P3, P4, P5, P6, O>(
 export function clientIPAndCidrTuple(
   clientIp: ClientIp,
   userAttributes: IAzureUserAttributes
-): Tuple2<ClientIp, ReadonlySet<string>> {
+): ITuple2<ClientIp, ReadonlySet<string>> {
   return Tuple2(clientIp, userAttributes.service.authorizedCIDRs);
 }

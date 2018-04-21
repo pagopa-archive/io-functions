@@ -35,7 +35,7 @@ import {
   ResponseSuccessJson
 } from "../utils/response";
 
-import { NonEmptyString } from "../utils/strings";
+import { NonEmptyString } from "italia-ts-commons/dist/lib/strings";
 
 import {
   AzureUserAttributesMiddleware,

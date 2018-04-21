@@ -8,9 +8,12 @@ import * as DocumentDb from "documentdb";
 
 import * as DocumentDbUtils from "../../utils/documentdb";
 
+import { NonNegativeNumber } from "italia-ts-commons/dist/lib/numbers";
+import {
+  EmailString,
+  NonEmptyString
+} from "italia-ts-commons/dist/lib/strings";
 import { FiscalCode } from "../../api/definitions/FiscalCode";
-import { NonNegativeNumber } from "../../utils/numbers";
-import { EmailString, NonEmptyString } from "../../utils/strings";
 
 import { Profile, ProfileModel, RetrievedProfile } from "../profile";
 

@@ -2,25 +2,25 @@ import * as t from "io-ts";
 
 import * as DocumentDb from "documentdb";
 
-import { pick, tag } from "../utils/types";
+import { pick, tag } from "italia-ts-commons/dist/lib/types";
 
 import * as DocumentDbUtils from "../utils/documentdb";
 import { DocumentDbModel } from "../utils/documentdb_model";
 
 import { Either, isLeft, left, right } from "fp-ts/lib/Either";
 import { isNone, none, Option, some } from "fp-ts/lib/Option";
-import { NonEmptyString } from "../utils/strings";
+import { NonEmptyString } from "italia-ts-commons/dist/lib/strings";
 
 import { MessageContent } from "../api/definitions/MessageContent";
 
 import { FiscalCode } from "../api/definitions/FiscalCode";
 
 import { BlobService } from "azure-storage";
+import { readableReport } from "italia-ts-commons/dist/lib/reporters";
 import { Timestamp } from "../api/definitions/Timestamp";
 import { TimeToLiveSeconds } from "../api/definitions/TimeToLiveSeconds";
 import { getBlobAsText, upsertBlobFromObject } from "../utils/azure_storage";
 import { iteratorToArray } from "../utils/documentdb";
-import { readableReport } from "../utils/validation_reporters";
 
 const MESSAGE_BLOB_STORAGE_SUFFIX = ".json";
 

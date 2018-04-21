@@ -10,7 +10,7 @@ import { FiscalCode } from "../../api/definitions/FiscalCode";
 import { MessageBodyMarkdown } from "../../api/definitions/MessageBodyMarkdown";
 import { MessageContent } from "../../api/definitions/MessageContent";
 
-import { NonEmptyString } from "../../utils/strings";
+import { NonEmptyString } from "italia-ts-commons/dist/lib/strings";
 
 import { fromNullable, none, some } from "fp-ts/lib/Option";
 

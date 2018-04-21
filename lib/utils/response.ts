@@ -8,7 +8,7 @@ import { IResultIterator, iteratorToArray } from "./documentdb";
 import { HttpStatusCode } from "../api/definitions/HttpStatusCode";
 import { ProblemJson } from "../api/definitions/ProblemJson";
 
-import { errorsToReadableMessages } from "./validation_reporters";
+import { errorsToReadableMessages } from "italia-ts-commons/dist/lib/reporters";
 
 const HTTP_STATUS_400 = 400 as HttpStatusCode;
 const HTTP_STATUS_403 = 403 as HttpStatusCode;

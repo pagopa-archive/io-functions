@@ -9,7 +9,10 @@ import * as t from "io-ts";
 import * as request from "superagent";
 
 import { Either, isLeft, isRight, left, right } from "fp-ts/lib/Either";
-import { EmailString, NonEmptyString } from "./strings";
+import {
+  EmailString,
+  NonEmptyString
+} from "italia-ts-commons/dist/lib/strings";
 
 import * as nodemailer from "nodemailer";
 
@@ -18,7 +21,7 @@ import { Address as NodemailerAddress } from "nodemailer/lib/addressparser";
 import * as winston from "winston";
 
 import { fromNullable, Option } from "fp-ts/lib/Option";
-import { readableReport } from "./validation_reporters";
+import { readableReport } from "italia-ts-commons/dist/lib/reporters";
 
 // request timeout in milliseconds
 const DEFAULT_REQUEST_TIMEOUT_MS = 10000;

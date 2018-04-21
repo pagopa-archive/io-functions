@@ -50,7 +50,7 @@ import {
 
 import { isLeft, isRight } from "fp-ts/lib/Either";
 import { isNone } from "fp-ts/lib/Option";
-import { NonEmptyString } from "../../utils/strings";
+import { NonEmptyString } from "italia-ts-commons/dist/lib/strings";
 
 import {
   AzureUserAttributesMiddleware,

@@ -1,7 +1,7 @@
+import { NonEmptyString } from "italia-ts-commons/dist/lib/strings";
 import { FiscalCode } from "../api/definitions/FiscalCode";
 import { NotificationStatusId } from "../models/notification_status";
 import { ModelId } from "./documentdb_model_versioned";
-import { NonEmptyString } from "./strings";
 
 /**
  * Converts a FiscalCode to a ModelId.

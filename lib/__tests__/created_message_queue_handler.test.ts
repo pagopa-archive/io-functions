@@ -31,10 +31,13 @@ import {
 import { ProfileModel, RetrievedProfile } from "../models/profile";
 
 import { isLeft, isRight, left, right } from "fp-ts/lib/Either";
+import { NonNegativeNumber } from "italia-ts-commons/dist/lib/numbers";
+import {
+  EmailString,
+  NonEmptyString
+} from "italia-ts-commons/dist/lib/strings";
 import * as winston from "winston";
 import { isTransient } from "../utils/errors";
-import { NonNegativeNumber } from "../utils/numbers";
-import { EmailString, NonEmptyString } from "../utils/strings";
 
 import { NotificationChannelEnum } from "../api/definitions/NotificationChannel";
 import { TimeToLiveSeconds } from "../api/definitions/TimeToLiveSeconds";

@@ -1,6 +1,6 @@
 /* tslint:disable:no-any */
 
-import { NonEmptyString } from "../strings";
+import { NonEmptyString } from "italia-ts-commons/dist/lib/strings";
 
 jest.mock("../documentdb");
 import * as DocumentDb from "documentdb";
@@ -8,12 +8,12 @@ import * as DocumentDbUtils from "../documentdb";
 
 import { isRight, left, right } from "fp-ts/lib/Either";
 import { none, some } from "fp-ts/lib/Option";
+import { NonNegativeNumber } from "italia-ts-commons/dist/lib/numbers";
 import {
   DocumentDbModelVersioned,
   ModelId,
   VersionedModel
 } from "../documentdb_model_versioned";
-import { NonNegativeNumber } from "../numbers";
 
 afterEach(() => {
   jest.resetAllMocks();

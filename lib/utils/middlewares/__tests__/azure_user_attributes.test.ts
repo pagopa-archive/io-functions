@@ -7,7 +7,7 @@ import { isLeft, isRight, left, right } from "fp-ts/lib/Either";
 
 import { Service, toAuthorizedCIDRs } from "../../../models/service";
 
-import { NonEmptyString } from "../../../utils/strings";
+import { NonEmptyString } from "italia-ts-commons/dist/lib/strings";
 
 import { Set } from "json-set-map";
 import { AzureUserAttributesMiddleware } from "../azure_user_attributes";

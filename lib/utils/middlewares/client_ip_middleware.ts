@@ -3,8 +3,8 @@ import * as winston from "winston";
 
 import { right } from "fp-ts/lib/Either";
 import { fromEither as OptionFromEither, Option } from "fp-ts/lib/Option";
+import { IPString } from "italia-ts-commons/dist/lib/strings";
 import { IRequestMiddleware } from "../request_middleware";
-import { IPString } from "../strings";
 
 export type ClientIp = Option<IPString>;
 

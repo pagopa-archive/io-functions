@@ -8,7 +8,7 @@ import * as DocumentDbUtils from "../../utils/documentdb";
 
 import { FiscalCode } from "../../api/definitions/FiscalCode";
 
-import { NonEmptyString } from "../../utils/strings";
+import { NonEmptyString } from "italia-ts-commons/dist/lib/strings";
 
 import { EmailAddress } from "../../api/definitions/EmailAddress";
 import { NotificationChannelEnum } from "../../api/definitions/NotificationChannel";

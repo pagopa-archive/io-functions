@@ -17,11 +17,11 @@ import { Set } from "json-set-map";
 import { CIDR } from "../api/definitions/CIDR";
 import { FiscalCode } from "../api/definitions/FiscalCode";
 
+import { NonNegativeNumber } from "italia-ts-commons/dist/lib/numbers";
+import { NonEmptyString } from "italia-ts-commons/dist/lib/strings";
 import { nonEmptyStringToModelId } from "../utils/conversions";
-import { NonNegativeNumber } from "../utils/numbers";
-import { NonEmptyString } from "../utils/strings";
 
-import { readonlySetType, tag } from "../utils/types";
+import { readonlySetType, tag } from "italia-ts-commons/dist/lib/types";
 
 /**
  * Base interface for Service objects

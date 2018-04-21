@@ -41,7 +41,7 @@ import { NotificationEvent } from "./models/notification_event";
 import { ProfileModel, RetrievedProfile } from "./models/profile";
 
 import { Either, isLeft, left, right } from "fp-ts/lib/Either";
-import { readableReport } from "./utils/validation_reporters";
+import { readableReport } from "italia-ts-commons/dist/lib/reporters";
 
 import { handleQueueProcessingFailure } from "./utils/azure_queues";
 import { PermanentError, RuntimeError, TransientError } from "./utils/errors";

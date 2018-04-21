@@ -4,8 +4,8 @@
 import { none, some } from "fp-ts/lib/Option";
 
 import { isLeft, isRight, left, right } from "fp-ts/lib/Either";
-import { NonNegativeNumber } from "../../../utils/numbers";
-import { NonEmptyString } from "../../../utils/strings";
+import { NonNegativeNumber } from "italia-ts-commons/dist/lib/numbers";
+import { NonEmptyString } from "italia-ts-commons/dist/lib/strings";
 
 import { Set } from "json-set-map";
 
