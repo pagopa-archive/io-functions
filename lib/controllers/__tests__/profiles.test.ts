@@ -3,10 +3,7 @@
 
 import { right } from "fp-ts/lib/Either";
 import { none, some } from "fp-ts/lib/Option";
-import {
-  EmailString,
-  NonEmptyString
-} from "italia-ts-commons/dist/lib/strings";
+import { EmailString, NonEmptyString } from "italia-ts-commons/lib/strings";
 
 import { RetrievedProfile } from "../../models/profile";
 import {
@@ -19,7 +16,7 @@ import { ExtendedProfile } from "../../api/definitions/ExtendedProfile";
 import { FiscalCode } from "../../api/definitions/FiscalCode";
 import { LimitedProfile } from "../../api/definitions/LimitedProfile";
 
-import { NonNegativeNumber } from "italia-ts-commons/dist/lib/numbers";
+import { NonNegativeNumber } from "italia-ts-commons/lib/numbers";
 
 const anAzureAuthorization: IAzureApiAuthorization = {
   groups: new Set([UserGroup.ApiLimitedProfileRead]),

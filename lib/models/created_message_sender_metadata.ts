@@ -1,6 +1,6 @@
 import * as t from "io-ts";
 
-import { NonEmptyString } from "italia-ts-commons/dist/lib/strings";
+import { NonEmptyString } from "italia-ts-commons/lib/strings";
 
 /**
  * Sender metadata associated to a message

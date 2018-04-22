@@ -1,4 +1,4 @@
-import { NonEmptyString } from "italia-ts-commons/dist/lib/strings";
+import { NonEmptyString } from "italia-ts-commons/lib/strings";
 import { FiscalCode } from "../api/definitions/FiscalCode";
 import { NotificationStatusId } from "../models/notification_status";
 import { ModelId } from "./documentdb_model_versioned";

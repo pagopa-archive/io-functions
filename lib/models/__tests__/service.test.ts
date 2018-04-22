@@ -6,8 +6,8 @@ import { isSome } from "fp-ts/lib/Option";
 
 import * as DocumentDb from "documentdb";
 
-import { NonNegativeNumber } from "italia-ts-commons/dist/lib/numbers";
-import { NonEmptyString } from "italia-ts-commons/dist/lib/strings";
+import { NonNegativeNumber } from "italia-ts-commons/lib/numbers";
+import { NonEmptyString } from "italia-ts-commons/lib/strings";
 import * as DocumentDbUtils from "../../utils/documentdb";
 
 import {

@@ -17,10 +17,7 @@ import { FiscalCode } from "../../api/definitions/FiscalCode";
 import { MessageBodyMarkdown } from "../../api/definitions/MessageBodyMarkdown";
 import { MessageSubject } from "../../api/definitions/MessageSubject";
 
-import {
-  EmailString,
-  NonEmptyString
-} from "italia-ts-commons/dist/lib/strings";
+import { EmailString, NonEmptyString } from "italia-ts-commons/lib/strings";
 import {
   IAzureApiAuthorization,
   UserGroup
@@ -28,7 +25,7 @@ import {
 import { IAzureUserAttributes } from "../../utils/middlewares/azure_user_attributes";
 
 import { QueryError } from "documentdb";
-import { NonNegativeNumber } from "italia-ts-commons/dist/lib/numbers";
+import { NonNegativeNumber } from "italia-ts-commons/lib/numbers";
 import { MessageContent } from "../../api/definitions/MessageContent";
 import { MessageResponseWithoutContent } from "../../api/definitions/MessageResponseWithoutContent";
 import { MessageStatusValueEnum } from "../../api/definitions/MessageStatusValue";

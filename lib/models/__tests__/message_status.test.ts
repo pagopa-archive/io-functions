@@ -5,11 +5,11 @@ import { isSome } from "fp-ts/lib/Option";
 
 import * as DocumentDb from "documentdb";
 
-import { NonNegativeNumber } from "italia-ts-commons/dist/lib/numbers";
-import { NonEmptyString } from "italia-ts-commons/dist/lib/strings";
+import { NonNegativeNumber } from "italia-ts-commons/lib/numbers";
+import { NonEmptyString } from "italia-ts-commons/lib/strings";
 import * as DocumentDbUtils from "../../utils/documentdb";
 
-import { readableReport } from "italia-ts-commons/dist/lib/reporters";
+import { readableReport } from "italia-ts-commons/lib/reporters";
 import { MessageStatusValueEnum } from "../../api/definitions/MessageStatusValue";
 import {
   MESSAGE_STATUS_COLLECTION_NAME,

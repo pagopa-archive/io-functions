@@ -31,11 +31,8 @@ import {
 import { ProfileModel, RetrievedProfile } from "../models/profile";
 
 import { isLeft, isRight, left, right } from "fp-ts/lib/Either";
-import { NonNegativeNumber } from "italia-ts-commons/dist/lib/numbers";
-import {
-  EmailString,
-  NonEmptyString
-} from "italia-ts-commons/dist/lib/strings";
+import { NonNegativeNumber } from "italia-ts-commons/lib/numbers";
+import { EmailString, NonEmptyString } from "italia-ts-commons/lib/strings";
 import * as winston from "winston";
 import { isTransient } from "../utils/errors";
 

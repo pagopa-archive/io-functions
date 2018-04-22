@@ -1,7 +1,7 @@
 /* tslint:disable:no-any */
 /* tslint:disable:no-null-keyword */
 
-import { NonEmptyString } from "italia-ts-commons/dist/lib/strings";
+import { NonEmptyString } from "italia-ts-commons/lib/strings";
 
 import { MessageBodyMarkdown } from "../../api/definitions/MessageBodyMarkdown";
 

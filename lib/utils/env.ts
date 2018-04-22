@@ -1,5 +1,5 @@
 import { isLeft } from "fp-ts/lib/Either";
-import { NonEmptyString } from "italia-ts-commons/dist/lib/strings";
+import { NonEmptyString } from "italia-ts-commons/lib/strings";
 
 /**
  * Helper function that validates an environment variable and return its value

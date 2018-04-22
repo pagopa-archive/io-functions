@@ -3604,17 +3604,17 @@ istanbul-reports@^1.1.4:
   dependencies:
     handlebars "^4.0.3"
 
-italia-ts-commons@^0.0.1:
-  version "0.0.1"
-  resolved "https://registry.yarnpkg.com/italia-ts-commons/-/italia-ts-commons-0.0.1.tgz#59b044e18a9bcec0ac426c071291411098b41147"
+italia-ts-commons@^1.0.0:
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/italia-ts-commons/-/italia-ts-commons-1.0.0.tgz#472619ab402802be3e412e9454901665abf6271c"
   dependencies:
     io-ts "^1.0.5"
     json-set-map "^1.0.2"
     validator "^9.4.1"
 
-italia-utils@^0.0.3:
-  version "0.0.3"
-  resolved "https://registry.yarnpkg.com/italia-utils/-/italia-utils-0.0.3.tgz#586ed76b93d5dbe683dd529470efc56163099a7b"
+italia-utils@^2.0.0:
+  version "2.0.0"
+  resolved "https://registry.yarnpkg.com/italia-utils/-/italia-utils-2.0.0.tgz#e6146a04f27bb0ce4952c1b433978c2b2e6fc09d"
   dependencies:
     fs-extra "^5.0.0"
     nunjucks "^3.1.2"

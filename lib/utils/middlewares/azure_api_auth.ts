@@ -1,7 +1,7 @@
 import { isLeft, left, right } from "fp-ts/lib/Either";
 import { fromNullable, isSome, Option, Some } from "fp-ts/lib/Option";
 
-import { NonEmptyString } from "italia-ts-commons/dist/lib/strings";
+import { NonEmptyString } from "italia-ts-commons/lib/strings";
 import { IRequestMiddleware } from "../request_middleware";
 import {
   IResponseErrorForbiddenAnonymousUser,

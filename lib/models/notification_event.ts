@@ -1,6 +1,6 @@
 import * as t from "io-ts";
 
-import { NonEmptyString } from "italia-ts-commons/dist/lib/strings";
+import { NonEmptyString } from "italia-ts-commons/lib/strings";
 
 import { CreatedMessageEventSenderMetadata } from "./created_message_sender_metadata";
 import { NewMessageWithContent } from "./message";

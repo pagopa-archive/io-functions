@@ -1,4 +1,4 @@
-import { NonEmptyString } from "italia-ts-commons/dist/lib/strings";
+import { NonEmptyString } from "italia-ts-commons/lib/strings";
 import { ulid } from "ulid";
 
 // a generator of identifiers

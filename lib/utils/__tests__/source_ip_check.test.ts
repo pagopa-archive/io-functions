@@ -1,5 +1,5 @@
-import { IPString } from "italia-ts-commons/dist/lib/strings";
-import { ITuple2, Tuple2 } from "italia-ts-commons/dist/lib/tuples";
+import { IPString } from "italia-ts-commons/lib/strings";
+import { ITuple2, Tuple2 } from "italia-ts-commons/lib/tuples";
 import { toAuthorizedCIDRs } from "../../models/service";
 import { ClientIp } from "../middlewares/client_ip_middleware";
 import { ResponseSuccessJson } from "../response";

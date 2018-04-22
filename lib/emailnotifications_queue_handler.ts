@@ -19,7 +19,7 @@ import * as documentDbUtils from "./utils/documentdb";
 
 import { Either, isLeft, left, right } from "fp-ts/lib/Either";
 import { isNone } from "fp-ts/lib/Option";
-import { readableReport } from "italia-ts-commons/dist/lib/reporters";
+import { readableReport } from "italia-ts-commons/lib/reporters";
 import { getRequiredStringEnv } from "./utils/env";
 
 import { IContext } from "azure-functions-types";
@@ -53,7 +53,7 @@ import { createQueueService } from "azure-storage";
 import { NotificationChannelEnum } from "./api/definitions/NotificationChannel";
 import { NotificationChannelStatusValueEnum } from "./api/definitions/NotificationChannelStatusValue";
 
-import { NonEmptyString } from "italia-ts-commons/dist/lib/strings";
+import { NonEmptyString } from "italia-ts-commons/lib/strings";
 import { ActiveMessage } from "./models/message";
 import {
   getNotificationStatusUpdater,

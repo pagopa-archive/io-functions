@@ -24,7 +24,7 @@ import { CreatedMessageEvent } from "./../models/created_message_event";
 
 import { RequiredParamMiddleware } from "../utils/middlewares/required_param";
 
-import { NonEmptyString } from "italia-ts-commons/dist/lib/strings";
+import { NonEmptyString } from "italia-ts-commons/lib/strings";
 import {
   AzureApiAuthMiddleware,
   IAzureApiAuthorization,
@@ -87,7 +87,7 @@ import {
   RetrievedMessage
 } from "../models/message";
 
-import { withoutUndefinedValues } from "italia-ts-commons/dist/lib/types";
+import { withoutUndefinedValues } from "italia-ts-commons/lib/types";
 
 import { Either, isLeft, isRight, left, right } from "fp-ts/lib/Either";
 import {

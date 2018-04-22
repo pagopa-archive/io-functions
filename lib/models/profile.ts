@@ -1,6 +1,6 @@
 import * as t from "io-ts";
 
-import { tag } from "italia-ts-commons/dist/lib/types";
+import { tag } from "italia-ts-commons/lib/types";
 
 import * as DocumentDb from "documentdb";
 import * as DocumentDbUtils from "../utils/documentdb";
@@ -13,8 +13,8 @@ import {
 import { Either } from "fp-ts/lib/Either";
 import { Option } from "fp-ts/lib/Option";
 
-import { NonNegativeNumber } from "italia-ts-commons/dist/lib/numbers";
-import { NonEmptyString } from "italia-ts-commons/dist/lib/strings";
+import { NonNegativeNumber } from "italia-ts-commons/lib/numbers";
+import { NonEmptyString } from "italia-ts-commons/lib/strings";
 import { EmailAddress } from "../api/definitions/EmailAddress";
 import { FiscalCode } from "../api/definitions/FiscalCode";
 import { IsInboxEnabled } from "../api/definitions/IsInboxEnabled";

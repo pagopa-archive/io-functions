@@ -7,10 +7,7 @@ import { isLeft, left, right } from "fp-ts/lib/Either";
 
 import { isNone } from "fp-ts/lib/Option";
 
-import {
-  EmailString,
-  NonEmptyString
-} from "italia-ts-commons/dist/lib/strings";
+import { EmailString, NonEmptyString } from "italia-ts-commons/lib/strings";
 
 import { Service, ServiceModel } from "../../models/service";
 import { IRequestMiddleware } from "../request_middleware";
