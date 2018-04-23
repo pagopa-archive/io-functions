@@ -19,8 +19,8 @@ import * as documentDbUtils from "./utils/documentdb";
 
 import { Either, isLeft, left, right } from "fp-ts/lib/Either";
 import { isNone } from "fp-ts/lib/Option";
+import { readableReport } from "italia-ts-commons/lib/reporters";
 import { getRequiredStringEnv } from "./utils/env";
-import { readableReport } from "./utils/validation_reporters";
 
 import { IContext } from "azure-functions-types";
 
@@ -53,13 +53,13 @@ import { createQueueService } from "azure-storage";
 import { NotificationChannelEnum } from "./api/definitions/NotificationChannel";
 import { NotificationChannelStatusValueEnum } from "./api/definitions/NotificationChannelStatusValue";
 
+import { NonEmptyString } from "italia-ts-commons/lib/strings";
 import { ActiveMessage } from "./models/message";
 import {
   getNotificationStatusUpdater,
   NOTIFICATION_STATUS_COLLECTION_NAME,
   NotificationStatusModel
 } from "./models/notification_status";
-import { NonEmptyString } from "./utils/strings";
 
 // Whether we're in a production environment
 const isProduction = process.env.NODE_ENV === "production";

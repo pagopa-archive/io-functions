@@ -1,8 +1,8 @@
+import { IPString } from "italia-ts-commons/lib/strings";
+import { ITuple2, Tuple2 } from "italia-ts-commons/lib/tuples";
 import { toAuthorizedCIDRs } from "../../models/service";
 import { ClientIp } from "../middlewares/client_ip_middleware";
 import { ResponseSuccessJson } from "../response";
-import { IPString } from "../strings";
-import { Tuple2 } from "../tuples";
 
 import { fromEither as OptionFromEither } from "fp-ts/lib/Option";
 import { checkSourceIpForHandler } from "../source_ip_check";
@@ -18,7 +18,7 @@ describe("checkSourceIpForHandler", () => {
   function extractor(
     sourceIp: ClientIp,
     cidrs: ReadonlySet<string>
-  ): Tuple2<ClientIp, ReadonlySet<string>> {
+  ): ITuple2<ClientIp, ReadonlySet<string>> {
     return Tuple2(sourceIp, cidrs);
   }
 
