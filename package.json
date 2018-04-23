@@ -73,7 +73,7 @@
     "danger-plugin-digitalcitizenship": "^0.2.0",
     "gulp": "^3.9.1",
     "gulp-git": "^2.4.2",
-    "gulp-json-editor": "^2.2.1",
+    "gulp-json-editor": "^2.3.0",
     "gulp-rename": "^1.2.2",
     "gulp-run": "^1.7.1",
     "gulp-text-simple": "^0.4.1",
