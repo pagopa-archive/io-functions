@@ -1,6 +1,6 @@
 import * as t from "io-ts";
 
-import { tag } from "../utils/types";
+import { tag } from "italia-ts-commons/lib/types";
 
 import * as DocumentDb from "documentdb";
 import * as DocumentDbUtils from "../utils/documentdb";
@@ -13,14 +13,14 @@ import {
 import { Either } from "fp-ts/lib/Either";
 import { Option } from "fp-ts/lib/Option";
 
+import { NonNegativeNumber } from "italia-ts-commons/lib/numbers";
+import { NonEmptyString } from "italia-ts-commons/lib/strings";
 import { EmailAddress } from "../api/definitions/EmailAddress";
 import { FiscalCode } from "../api/definitions/FiscalCode";
 import { IsInboxEnabled } from "../api/definitions/IsInboxEnabled";
 import { IsWebhookEnabled } from "../api/definitions/IsWebhookEnabled";
 import { PreferredLanguages } from "../api/definitions/PreferredLanguages";
 import { fiscalCodeToModelId } from "../utils/conversions";
-import { NonNegativeNumber } from "../utils/numbers";
-import { NonEmptyString } from "../utils/strings";
 
 /**
  * Base interface for Profile objects

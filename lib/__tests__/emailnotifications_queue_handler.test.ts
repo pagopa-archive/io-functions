@@ -27,7 +27,7 @@ import MockTransport = require("nodemailer-mock-transport");
 import { none, some } from "fp-ts/lib/Option";
 
 import { isLeft, isRight, left, right } from "fp-ts/lib/Either";
-import { EmailString, NonEmptyString } from "../utils/strings";
+import { EmailString, NonEmptyString } from "italia-ts-commons/lib/strings";
 
 import { FiscalCode } from "../api/definitions/FiscalCode";
 
@@ -58,13 +58,13 @@ import { NotificationChannelEnum } from "../api/definitions/NotificationChannel"
 import { NotificationChannelStatusValueEnum } from "../api/definitions/NotificationChannelStatusValue";
 import { TimeToLiveSeconds } from "../api/definitions/TimeToLiveSeconds";
 
+import { NonNegativeNumber } from "italia-ts-commons/lib/numbers";
+import { readableReport } from "italia-ts-commons/lib/reporters";
 import {
   makeStatusId,
   NotificationStatusModel,
   RetrievedNotificationStatus
 } from "../models/notification_status";
-import { NonNegativeNumber } from "../utils/numbers";
-import { readableReport } from "../utils/validation_reporters";
 
 jest.mock("../utils/azure_queues");
 import { handleQueueProcessingFailure } from "../utils/azure_queues";

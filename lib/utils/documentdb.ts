@@ -12,7 +12,7 @@ import * as t from "io-ts";
 
 import * as DocumentDb from "documentdb";
 
-import { NonEmptyString } from "./strings";
+import { NonEmptyString } from "italia-ts-commons/lib/strings";
 
 import { isNone, none, Option, some } from "fp-ts/lib/Option";
 
