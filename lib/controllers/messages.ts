@@ -24,6 +24,7 @@ import { CreatedMessageEvent } from "./../models/created_message_event";
 
 import { RequiredParamMiddleware } from "../utils/middlewares/required_param";
 
+import { NonEmptyString } from "italia-ts-commons/lib/strings";
 import {
   AzureApiAuthMiddleware,
   IAzureApiAuthorization,
@@ -64,11 +65,7 @@ import {
   ResponseSuccessJsonIterator,
   ResponseSuccessRedirectToResource
 } from "../utils/response";
-import {
-  NonEmptyString,
-  ObjectIdGenerator,
-  ulidGenerator
-} from "../utils/strings";
+import { ObjectIdGenerator, ulidGenerator } from "../utils/strings";
 
 import {
   checkSourceIpForHandler,
@@ -90,7 +87,7 @@ import {
   RetrievedMessage
 } from "../models/message";
 
-import { withoutUndefinedValues } from "../utils/types";
+import { withoutUndefinedValues } from "italia-ts-commons/lib/types";
 
 import { Either, isLeft, isRight, left, right } from "fp-ts/lib/Either";
 import {

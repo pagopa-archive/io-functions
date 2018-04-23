@@ -5,13 +5,13 @@ import { isSome } from "fp-ts/lib/Option";
 
 import * as DocumentDb from "documentdb";
 
+import { NonNegativeNumber } from "italia-ts-commons/lib/numbers";
+import { NonEmptyString } from "italia-ts-commons/lib/strings";
 import * as DocumentDbUtils from "../../utils/documentdb";
-import { NonNegativeNumber } from "../../utils/numbers";
-import { NonEmptyString } from "../../utils/strings";
 
+import { readableReport } from "italia-ts-commons/lib/reporters";
 import { NotificationChannelEnum } from "../../api/definitions/NotificationChannel";
 import { NotificationChannelStatusValueEnum } from "../../api/definitions/NotificationChannelStatusValue";
-import { readableReport } from "../../utils/validation_reporters";
 import {
   NotificationStatus,
   NotificationStatusId,

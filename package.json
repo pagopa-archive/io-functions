@@ -18,7 +18,7 @@
     "test": "gulp test",
     "generate:models:public_api_v1": "gen-api-models --api-spec ./api/public_api_v1.yaml --out-dir ./lib/api/definitions --ts-spec-file ./lib/api/public_api_v1.ts",
     "generate:models:admin_api": "gen-api-models --api-spec ./api/admin_api.yaml --out-dir ./lib/api/definitions --ts-spec-file ./lib/api/admin_api.ts",
-    "generate:models": "npm-run-all generate:models:public_api_v1 generate:models:admin_api",
+    "generate:models": "rimraf lib/api && mkdir -p lib/api/definitions && npm-run-all generate:models:public_api_v1 generate:models:admin_api",
     "generate:templates": "gulp generate:templates"
   },
   "dependencies": {
@@ -47,6 +47,7 @@
     "helmet-csp": "^2.5.1",
     "html-to-text": "^3.3.0",
     "io-ts": "^1.0.5",
+    "italia-ts-commons": "^1.0.0",
     "json-set-map": "^1.0.2",
     "nodemailer": "^4.6.4",
     "referrer-policy": "^1.1.0",
@@ -60,12 +61,12 @@
     "unified": "^6.1.5",
     "validator": "^9.4.1",
     "vfile": "^2.2.0",
-    "winston": "^2.3.1"
+    "winston": "^2.4.2"
   },
   "devDependencies": {
     "@types/jest": "^22.0.0",
     "@types/nunjucks": "^3.0.0",
-    "@types/prettier": "^1.6.1",
+    "@types/prettier": "^1.12.0",
     "@types/swagger-parser": "^4.0.2",
     "@types/swagger-schema-official": "^2.0.6",
     "azure-functions-pack": "^1.0.0",
@@ -77,7 +78,7 @@
     "gulp-rename": "^1.2.2",
     "gulp-run": "^1.7.1",
     "gulp-text-simple": "^0.4.1",
-    "italia-utils": "^0.0.3",
+    "italia-utils": "^2.1.0",
     "jest": "^22.0.0",
     "jest-mock-express": "^0.1.1",
     "mjml": "^3.3.5",
@@ -85,6 +86,7 @@
     "npm-run-all": "^4.1.1",
     "nunjucks": "^3.1.2",
     "prettier": "^1.12.1",
+    "rimraf": "^2.6.2",
     "run-sequence": "^2.2.0",
     "semver": "^5.4.1",
     "swagger-parser": "^3.4.2",
