@@ -55,7 +55,7 @@
     "remark-parse": "^4.0.0",
     "remark-rehype": "^3.0.0",
     "request-ip": "^2.0.2",
-    "superagent": "^3.8.2",
+    "superagent": "^3.8.3",
     "typescript": "^2.8.0",
     "ulid": "^2.2.2",
     "unified": "^6.1.5",
