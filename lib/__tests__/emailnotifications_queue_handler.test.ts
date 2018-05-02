@@ -361,7 +361,8 @@ This is a *message* from the future!
     expect(
       String(mockTransport.sentMail[0].data.text).replace(/[ \n]+/g, "|")
     ).toBe(
-      `org
+      `
+org
 dept
 service
 
