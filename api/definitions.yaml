@@ -124,12 +124,17 @@ CreatedMessageWithContent:
       $ref: "#/FiscalCode"
     time_to_live:
       $ref: "#/TimeToLiveSeconds"
+    created_at:
+      $ref: "#/Timestamp"
     content:
       $ref: "#/MessageContent"
     sender_service_id:
       type: string
   required:
+    - id
     - fiscal_code
+    - created_at
+    - content
     - sender_service_id
 CreatedMessageWithoutContent:
   type: object
@@ -140,10 +145,14 @@ CreatedMessageWithoutContent:
       $ref: "#/FiscalCode"
     time_to_live:
       $ref: "#/TimeToLiveSeconds"
+    created_at:
+      $ref: "#/Timestamp"
     sender_service_id:
       type: string
   required:
+    - id
     - fiscal_code
+    - created_at
     - sender_service_id
 MessageResponseNotificationStatus:
   type: object

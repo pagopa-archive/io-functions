@@ -129,6 +129,7 @@ const aRetrievedMessageWithoutContent: RetrievedMessageWithoutContent = {
 };
 
 const aPublicExtendedMessage: CreatedMessageWithoutContent = {
+  created_at: new Date(),
   fiscal_code: aNewMessageWithoutContent.fiscalCode,
   id: "A_MESSAGE_ID",
   sender_service_id: aNewMessageWithoutContent.senderServiceId

@@ -99,6 +99,7 @@ import {
 } from "fp-ts/lib/Option";
 
 import { CreatedMessageWithContent } from "../api/definitions/CreatedMessageWithContent";
+import { MessageResponseWithoutContent } from "../api/definitions/MessageResponseWithoutContent";
 import { MessageStatusValueEnum } from "../api/definitions/MessageStatusValue";
 import { NotificationChannelEnum } from "../api/definitions/NotificationChannel";
 import { NotificationChannelStatusValueEnum } from "../api/definitions/NotificationChannelStatusValue";
@@ -145,6 +146,7 @@ function retrievedMessageToPublic(
   retrievedMessage: RetrievedMessage
 ): CreatedMessageWithoutContent {
   return {
+    created_at: retrievedMessage.createdAt,
     fiscal_code: retrievedMessage.fiscalCode,
     id: retrievedMessage.id,
     sender_service_id: retrievedMessage.senderServiceId
@@ -190,7 +192,9 @@ type IGetMessageHandler = (
   fiscalCode: FiscalCode,
   messageId: string
 ) => Promise<
-  | IResponseSuccessJson<MessageResponseWithContent>
+  | IResponseSuccessJson<
+      MessageResponseWithContent | MessageResponseWithoutContent
+    >
   | IResponseErrorNotFound
   | IResponseErrorQuery
   | IResponseErrorValidation
@@ -586,7 +590,9 @@ export function GetMessageHandler(
       );
     }
 
-    const message: CreatedMessageWithContent = withoutUndefinedValues({
+    const message:
+      | CreatedMessageWithContent
+      | CreatedMessageWithoutContent = withoutUndefinedValues({
       content: errorOrMaybeContent.value.toUndefined(),
       ...retrievedMessageToPublic(retrievedMessage)
     });
@@ -619,7 +625,9 @@ export function GetMessageHandler(
     }
     const maybeMessageStatus = errorOrMaybeMessageStatus.value;
 
-    const returnedMessage: MessageResponseWithContent = {
+    const returnedMessage:
+      | MessageResponseWithContent
+      | MessageResponseWithoutContent = {
       message,
       notification: notificationStatuses.toUndefined(),
       // we do not return the status date-time
