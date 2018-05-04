@@ -4,7 +4,7 @@ import Mail = require("nodemailer/lib/mailer");
 
 import * as nodemailer from "nodemailer";
 
-import * as request from "superagent";
+import * as superagent from "superagent";
 
 import { MailUpTransport, SmtpAuthInfo } from "../mailup";
 
@@ -13,9 +13,13 @@ afterEach(() => {
   jest.resetAllMocks();
 });
 
+// as superagent does not export request methods directly
+// we must override the superagent.Request prototype
+// so we can set up our jest mock to use it instead
+// of the send() method
 const mockSuperagentResponse = (response: any) =>
   // tslint:disable-next-line:no-object-mutation
-  (Object.getPrototypeOf(request("", "")).send = jest.fn()).mockReturnValueOnce(
+  ((superagent as any).Request.prototype.send = jest.fn()).mockReturnValueOnce(
     Promise.resolve(response)
   );
 
