@@ -149,7 +149,7 @@ const anAttachmentMeta = {
   media: "media.json"
 };
 
-const anUrl = "http://anUrl.com" as WebUrl;
+const aUrl = "http://aUrl.com" as WebUrl;
 
 describe("createdMessageQueueIndex", () => {
   it("should return failure if createdMessage is undefined", async () => {
@@ -302,7 +302,7 @@ describe("handleMessage", () => {
       {} as any,
       {} as any,
       {} as any,
-      anUrl,
+      aUrl,
       aMessageEvent
     );
     expect(profileModelMock.findOneProfileByFiscalCode).toHaveBeenCalledWith(
@@ -326,7 +326,7 @@ describe("handleMessage", () => {
       {} as any,
       {} as any,
       {} as any,
-      anUrl,
+      aUrl,
       aMessageEvent
     );
 
@@ -360,7 +360,7 @@ describe("handleMessage", () => {
         {} as any,
         notificationModelMock as any,
         {} as any,
-        anUrl,
+        aUrl,
         aMessageEvent
       );
 
@@ -395,7 +395,7 @@ describe("handleMessage", () => {
         {} as any,
         notificationModelMock as any,
         {} as any,
-        anUrl,
+        aUrl,
         aMessageEvent
       );
 
@@ -448,7 +448,7 @@ describe("handleMessage", () => {
         {} as any,
         notificationModelMock as any,
         {} as any,
-        anUrl,
+        aUrl,
         {
           ...aMessageEvent,
           defaultAddresses: { email: anEmail }
@@ -503,7 +503,7 @@ describe("handleMessage", () => {
         {} as any,
         notificationModelMock as any,
         {} as any,
-        anUrl,
+        aUrl,
         {
           ...aMessageEvent,
           defaultAddresses: { email: anEmail }
@@ -572,7 +572,7 @@ describe("handleMessage", () => {
       messageModelMock as any,
       notificationModelMock as any,
       aBlobService as any,
-      anUrl,
+      aUrl,
       {
         ...aMessageEvent,
         defaultAddresses: { email: anEmail }
@@ -645,7 +645,7 @@ describe("handleMessage", () => {
       messageModelMock as any,
       notificationModelMock as any,
       aBlobService as any,
-      anUrl,
+      aUrl,
       {
         ...aMessageEvent,
         defaultAddresses: { email: anEmail }
@@ -691,7 +691,7 @@ describe("handleMessage", () => {
       {} as any,
       notificationModelMock as any,
       {} as any,
-      anUrl,
+      aUrl,
       aMessageEvent
     );
 
