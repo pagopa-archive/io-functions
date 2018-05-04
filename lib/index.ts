@@ -4,5 +4,6 @@ export = {
   EmailNotificationsQueueHandler: require("./emailnotifications_queue_handler")
     .index,
   Openapi: require("./openapi").index,
-  PublicApiV1: require("./public_api_v1").index
+  PublicApiV1: require("./public_api_v1").index,
+  WebhookNotificationsQueueHandler: require("./webhook_queue_handler").index
 };

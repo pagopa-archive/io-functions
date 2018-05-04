@@ -1,0 +1,14 @@
+{
+ "scriptFile": "../lib/index.js",
+ "disabled": false,
+ "bindings": [
+  {
+   "type": "queueTrigger",
+   "direction": "in",
+   "name": "notificationEvent",
+   "queueName": "webhooknotifications",
+   "connection": "QueueStorageConnection"
+  }
+ ],
+ "entryPoint": "WebhookNotificationsQueueHandler"
+}
