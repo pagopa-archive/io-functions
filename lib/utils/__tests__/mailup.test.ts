@@ -13,7 +13,7 @@ afterEach(() => {
   jest.resetAllMocks();
 });
 
-const mockSupertestResponse = (response: any) =>
+const mockSuperagentResponse = (response: any) =>
   // tslint:disable-next-line:no-object-mutation
   (Object.getPrototypeOf(request("", "")).send = jest.fn()).mockReturnValueOnce(
     Promise.resolve(response)
@@ -64,7 +64,7 @@ const aNodemailerTransporter = nodemailer.createTransport(
 
 describe("sendMail", () => {
   it("should get a success response from the API endpoint", async () => {
-    const requestSpy = mockSupertestResponse({
+    const requestSpy = mockSuperagentResponse({
       body: aResponsePayload,
       status: 200
     });
@@ -115,7 +115,7 @@ describe("sendMail", () => {
   });
 
   it("should fail on API error", async () => {
-    mockSupertestResponse({
+    mockSuperagentResponse({
       body: aResponsePayload,
       error: "500",
       status: 500
