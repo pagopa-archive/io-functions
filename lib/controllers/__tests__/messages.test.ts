@@ -138,7 +138,8 @@ const aPublicExtendedMessage: CreatedMessageWithoutContent = {
 const aPublicExtendedMessageResponse: MessageResponseWithoutContent = {
   message: aPublicExtendedMessage,
   notification: {
-    email: NotificationChannelStatusValueEnum.SENT
+    email: NotificationChannelStatusValueEnum.SENT,
+    webhook: NotificationChannelStatusValueEnum.SENT
   },
   status: MessageStatusValueEnum.ACCEPTED
 };
