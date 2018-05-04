@@ -202,7 +202,7 @@ async function createNotification(
   const errorOrNotification = await lNotificationModel.create(
     {
       ...newNotification,
-      channels: {
+      channel: {
         [channel]: notificationChannel
       }
     },

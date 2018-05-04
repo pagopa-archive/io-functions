@@ -64,7 +64,7 @@ export type NotificationChannelEmail = t.TypeOf<
 
 export const EmailNotification = t.interface({
   ...NotificationBase.props,
-  channels: t.interface({
+  channel: t.interface({
     [NotificationChannelEnum.EMAIL]: NotificationChannelEmail
   })
 });
@@ -81,7 +81,7 @@ export type NotificationChannelWebhook = t.TypeOf<
 
 export const WebhookNotification = t.interface({
   ...NotificationBase.props,
-  channels: t.interface({
+  channel: t.interface({
     [NotificationChannelEnum.WEBHOOK]: NotificationChannelWebhook
   })
 });
@@ -100,7 +100,7 @@ export type NotificationChannelMeta = t.TypeOf<typeof NotificationChannelMeta>;
 export const Notification = t.intersection([
   NotificationBase,
   t.interface({
-    channels: t.partial({
+    channel: t.partial({
       [NotificationChannelEnum.EMAIL]: NotificationChannelEmail,
       [NotificationChannelEnum.WEBHOOK]: NotificationChannelWebhook
     })
@@ -130,7 +130,7 @@ export function createNewNotification(
   messageId: NonEmptyString
 ): NewNotification {
   return {
-    channels: {},
+    channel: {},
     fiscalCode,
     id: ulidGenerator(),
     kind: "INewNotification",
@@ -154,7 +154,7 @@ export type RetrievedNotification = t.TypeOf<typeof RetrievedNotification>;
 
 /* istanbul ignore next */
 function toBaseType(o: RetrievedNotification): Notification {
-  return pick(["fiscalCode", "messageId", "channels"], o);
+  return pick(["fiscalCode", "messageId", "channel"], o);
 }
 
 function toRetrieved(

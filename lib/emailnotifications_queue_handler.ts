@@ -270,7 +270,7 @@ export async function handleNotification(
     );
   }
 
-  const emailNotification = errorOrEmailNotification.value.channels.EMAIL;
+  const emailNotification = errorOrEmailNotification.value.channel.EMAIL;
 
   // use the provided subject if present, or else use the default subject line
   // TODO: generate the default subject from the service/client metadata

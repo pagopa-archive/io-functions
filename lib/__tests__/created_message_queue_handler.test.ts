@@ -64,7 +64,7 @@ const aWrongFiscalCode = "FRLFRC74E04B157" as FiscalCode;
 const anEmail = "x@example.com" as EmailString;
 
 const anEmailNotification: EmailNotification = {
-  channels: {
+  channel: {
     [NotificationChannelEnum.EMAIL]: {
       addressSource: NotificationAddressSourceEnum.PROFILE_ADDRESS,
       // fromAddress: anEmail,
@@ -462,9 +462,9 @@ describe("handleMessage", () => {
       expect(notificationModelMock.create).toHaveBeenCalledWith(
         {
           ...anEmailNotification,
-          channels: {
+          channel: {
             EMAIL: {
-              ...anEmailNotification.channels.EMAIL,
+              ...anEmailNotification.channel.EMAIL,
               addressSource: NotificationAddressSourceEnum.DEFAULT_ADDRESS
             }
           },
@@ -516,9 +516,9 @@ describe("handleMessage", () => {
       expect(notificationModelMock.create).toHaveBeenCalledWith(
         {
           ...anEmailNotification,
-          channels: {
+          channel: {
             EMAIL: {
-              ...anEmailNotification.channels.EMAIL,
+              ...anEmailNotification.channel.EMAIL,
               addressSource: NotificationAddressSourceEnum.DEFAULT_ADDRESS
             }
           },

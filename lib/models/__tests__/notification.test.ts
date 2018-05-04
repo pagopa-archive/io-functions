@@ -28,7 +28,7 @@ const aNotificationsCollectionUri = DocumentDbUtils.getCollectionUri(
 const aFiscalCode = "FRLFRC74E04B157I" as FiscalCode;
 
 const aNewEmailNotification: NewNotification = {
-  channels: {
+  channel: {
     [NotificationChannelEnum.EMAIL]: {
       addressSource: NotificationAddressSourceEnum.DEFAULT_ADDRESS,
       toAddress: "to@example.com" as EmailAddress

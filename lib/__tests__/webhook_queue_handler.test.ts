@@ -139,7 +139,7 @@ const getMockNotificationEvent = (
 };
 
 const aNotification: Notification = {
-  channels: {
+  channel: {
     [NotificationChannelEnum.WEBHOOK]: {
       url: process.env.WEBHOOK_CHANNEL_URL
     }

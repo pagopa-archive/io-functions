@@ -133,7 +133,7 @@ const getMockNotificationEvent = (
 };
 
 const aNotification: Notification = {
-  channels: {
+  channel: {
     [NotificationChannelEnum.EMAIL]: {
       addressSource: NotificationAddressSourceEnum.DEFAULT_ADDRESS,
       toAddress: "pinco@pallino.com" as EmailString

@@ -900,7 +900,7 @@ describe("GetMessageHandler", () => {
     const aRetrievedNotification: RetrievedNotification = {
       _self: "xyz",
       _ts: 123,
-      channels: {
+      channel: {
         [NotificationChannelEnum.EMAIL]: {
           addressSource: NotificationAddressSourceEnum.PROFILE_ADDRESS,
           toAddress: "x@example.com" as EmailString
