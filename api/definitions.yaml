@@ -34,6 +34,7 @@ NotificationChannel:
   type: string
   x-extensible-enum:
     - EMAIL
+    - WEBHOOK
   example: EMAIL
 NotificationChannelStatusValue:
   type: string
@@ -302,6 +303,21 @@ PreferredLanguages:
     values are concatenation of the ISO 639-1 two letter language code, an underscore,
     and the ISO 3166-1 2 letter country code; e.g., 'en_US' specifies the language
     English and country US.
+SenderMetadata:
+  title: Sender metadata
+  description: Metadata associated to a sender (service).
+  type: object
+  properties:
+    service_name:
+      $ref: "#/ServiceName"
+    organization_name:
+      $ref: "#/OrganizationName"
+    department_name:
+      $ref: "#/DepartmentName"
+  required:
+    - service_name
+    - organization_name
+    - department_name
 Service:
   description: A Service tied to an user's subscription.
   type: object
@@ -380,3 +396,8 @@ Timestamp:
   type: string
   format: date-time
   description: A date-time field in ISO-8601 format
+WebUrl:
+  type: string
+  format: uri
+  description: An http(s) url.
+  pattern: "^http(s)?://[-a-zA-Z0-9@:%._+~#=]{2,256}[.][a-z]{2,6}\\\\b([-a-zA-Z0-9@:%_+.~#?&/=]*)$"
