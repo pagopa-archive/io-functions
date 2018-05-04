@@ -58,7 +58,7 @@ import { handleQueueProcessingFailure } from "../utils/azure_queues";
 
 import * as request from "superagent";
 
-const mockSupertestResponse = (response: any) =>
+const mockSuperagentResponse = (response: any) =>
   // tslint:disable-next-line:no-object-mutation
   (Object.getPrototypeOf(request("", "")).send = jest.fn()).mockReturnValueOnce(
     Promise.resolve(response)
@@ -234,7 +234,7 @@ describe("handleNotification", () => {
       getMockNotificationEvent(aMessageContent)
     );
 
-    mockSupertestResponse({ status: 200 });
+    mockSuperagentResponse({ status: 200 });
 
     expect(mockAppinsights.trackEvent).toHaveBeenCalledWith({
       name: "notification.webhook.delivery",
@@ -257,7 +257,7 @@ describe("handleNotification", () => {
 
     const customSubject = "A custom subject" as MessageSubject;
 
-    mockSupertestResponse({ status: 200 });
+    mockSuperagentResponse({ status: 200 });
 
     const aLongMessageContent = {
       markdown: aMessageBodyMarkdown,
@@ -284,7 +284,7 @@ describe("handleNotification", () => {
       trackEvent: jest.fn()
     };
 
-    mockSupertestResponse({
+    mockSuperagentResponse({
       error: "some error"
     });
 
@@ -418,7 +418,7 @@ describe("webhookNotificationQueueHandlerIndex", () => {
       throw new Error();
     });
 
-    mockSupertestResponse({ status: 200 });
+    mockSuperagentResponse({ status: 200 });
 
     jest
       .spyOn(NotificationModel.prototype, "find")
@@ -454,7 +454,7 @@ describe("webhookNotificationQueueHandlerIndex", () => {
       log: jest.fn()
     };
 
-    mockSupertestResponse({ status: 200 });
+    mockSuperagentResponse({ status: 200 });
 
     const notificationModelSpy = jest
       .spyOn(NotificationModel.prototype, "find")
