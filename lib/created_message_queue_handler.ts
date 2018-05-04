@@ -54,7 +54,7 @@ import {
 } from "./api/definitions/NotificationChannel";
 
 import { withoutUndefinedValues } from "italia-ts-commons/lib/types";
-import { WebUrl } from "./api/definitions/WebUrl";
+import { HttpsUrl } from "./api/definitions/HttpsUrl";
 import { CreatedMessageEventSenderMetadata } from "./models/created_message_sender_metadata";
 import {
   getMessageStatusUpdater,
@@ -89,11 +89,11 @@ const messageStatusCollectionUrl = documentDbUtils.getCollectionUri(
   MESSAGE_STATUS_COLLECTION_NAME
 );
 
-const defaultWebhookUrl = WebUrl.decode(
-  getRequiredStringEnv("API_PROXY_WEBHOOK_URL")
+const defaultWebhookUrl = HttpsUrl.decode(
+  getRequiredStringEnv("WEBHOOK_CHANNEL_URL")
 ).getOrElseL(_ => {
   throw new Error(
-    `Check that the environment variable API_PROXY_WEBHOOK_URL is set to a valid URL`
+    `Check that the environment variable WEBHOOK_CHANNEL_URL is set to a valid URL`
   );
 });
 
@@ -239,7 +239,7 @@ export async function handleMessage(
   lMessageModel: MessageModel,
   lNotificationModel: NotificationModel,
   lBlobService: BlobService,
-  lDefaultWebhookUrl: WebUrl,
+  lDefaultWebhookUrl: HttpsUrl,
   createdMessageEvent: CreatedMessageEvent
 ): Promise<Either<RuntimeError, OutputBindings>> {
   const newMessageWithContent = createdMessageEvent.message;

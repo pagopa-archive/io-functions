@@ -19,8 +19,8 @@ import { FiscalCode } from "../api/definitions/FiscalCode";
 import { Either } from "fp-ts/lib/Either";
 import { Option } from "fp-ts/lib/Option";
 import { NonEmptyString } from "italia-ts-commons/lib/strings";
+import { HttpsUrl } from "../api/definitions/HttpsUrl";
 import { NotificationChannelEnum } from "../api/definitions/NotificationChannel";
-import { WebUrl } from "../api/definitions/WebUrl";
 import { ObjectIdGenerator } from "../utils/strings";
 
 /**
@@ -73,7 +73,7 @@ export type EmailNotification = t.TypeOf<typeof EmailNotification>;
 // Webhook Notification
 
 export const NotificationChannelWebhook = t.interface({
-  url: WebUrl
+  url: HttpsUrl
 });
 export type NotificationChannelWebhook = t.TypeOf<
   typeof NotificationChannelWebhook

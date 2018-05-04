@@ -6,11 +6,11 @@
 // tslint:disable-next-line:no-object-mutation
 process.env = {
   ...process.env,
-  API_PROXY_WEBHOOK_URL: "https://example.com",
   COSMOSDB_NAME: "anyDbName",
   CUSTOMCONNSTR_COSMOSDB_KEY: "anyCosmosDbKey",
   CUSTOMCONNSTR_COSMOSDB_URI: "anyCosmosDbUri",
-  QueueStorageConnection: "anyConnectionString"
+  QueueStorageConnection: "anyConnectionString",
+  WEBHOOK_CHANNEL_URL: "https://example.com"
 };
 
 jest.mock("applicationinsights");
@@ -140,7 +140,7 @@ const getMockNotificationEvent = (
 const aNotification: Notification = {
   channels: {
     [NotificationChannelEnum.WEBHOOK]: {
-      url: process.env.API_PROXY_WEBHOOK_URL
+      url: process.env.WEBHOOK_CHANNEL_URL
     }
   },
   fiscalCode: aFiscalCode,
@@ -246,7 +246,7 @@ describe("handleNotification", () => {
         messageId: aMessageId,
         notificationId: aNotificationId,
         success: "true",
-        url: process.env.API_PROXY_WEBHOOK_URL
+        url: process.env.WEBHOOK_CHANNEL_URL
       }
     });
 
@@ -309,7 +309,7 @@ describe("handleNotification", () => {
         messageId: aMessageId,
         notificationId: aNotificationId,
         success: "false",
-        url: process.env.API_PROXY_WEBHOOK_URL
+        url: process.env.WEBHOOK_CHANNEL_URL
       }
     });
 

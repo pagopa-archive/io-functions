@@ -396,8 +396,8 @@ Timestamp:
   type: string
   format: date-time
   description: A date-time field in ISO-8601 format
-WebUrl:
+HttpsUrl:
   type: string
   format: uri
   description: An http(s) url.
-  pattern: "^http(s)?://[-a-zA-Z0-9@:%._+~#=]{2,256}[.][a-z]{2,6}\\\\b([-a-zA-Z0-9@:%_+.~#?&/=]*)$"
+  pattern: "^https://[-a-zA-Z0-9@:%._+~#=]{2,256}[.][a-z]{2,6}\\\\b([-a-zA-Z0-9@:%_+.~#?&/=]*)$"

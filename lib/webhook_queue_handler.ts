@@ -45,8 +45,8 @@ import { NotificationChannelEnum } from "./api/definitions/NotificationChannel";
 import { NotificationChannelStatusValueEnum } from "./api/definitions/NotificationChannelStatusValue";
 
 import { CreatedMessageWithContent } from "./api/definitions/CreatedMessageWithContent";
+import { HttpsUrl } from "./api/definitions/HttpsUrl";
 import { SenderMetadata } from "./api/definitions/SenderMetadata";
-import { WebUrl } from "./api/definitions/WebUrl";
 import { CreatedMessageEventSenderMetadata } from "./models/created_message_sender_metadata";
 import { ActiveMessage, NewMessageWithContent } from "./models/message";
 import {
@@ -161,7 +161,7 @@ function senderMetadataToPublic(
  * Post data to the API proxy webhook endpoint.
  */
 export async function sendToWebhook(
-  webhookEndpoint: WebUrl,
+  webhookEndpoint: HttpsUrl,
   message: NewMessageWithContent,
   senderMetadata: CreatedMessageEventSenderMetadata
 ): Promise<Either<RuntimeError, {}>> {

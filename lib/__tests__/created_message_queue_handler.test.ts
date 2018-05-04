@@ -6,12 +6,12 @@
 // tslint:disable-next-line:no-object-mutation
 process.env = {
   ...process.env,
-  API_PROXY_WEBHOOK_URL: "http://aUrl.com",
   COSMOSDB_NAME: "anyDbName",
   CUSTOMCONNSTR_COSMOSDB_KEY: "anyCosmosDbKey",
   CUSTOMCONNSTR_COSMOSDB_URI: "anyCosmosDbUri",
   MESSAGE_CONTAINER_NAME: "anyMessageContainerName",
-  QueueStorageConnection: "anyQueueStorageConnection"
+  QueueStorageConnection: "anyQueueStorageConnection",
+  WEBHOOK_CHANNEL_URL: "http://aUrl.com"
 };
 
 import { CreatedMessageEvent } from "../models/created_message_event";
@@ -51,7 +51,7 @@ import {
   MESSAGE_QUEUE_NAME
 } from "../created_message_queue_handler";
 
-import { WebUrl } from "../api/definitions/WebUrl";
+import { HttpsUrl } from "../api/definitions/HttpsUrl";
 import { MessageStatusModel } from "../models/message_status";
 
 afterEach(() => {
@@ -149,7 +149,7 @@ const anAttachmentMeta = {
   media: "media.json"
 };
 
-const aUrl = "http://aUrl.com" as WebUrl;
+const aUrl = "http://aUrl.com" as HttpsUrl;
 
 describe("createdMessageQueueIndex", () => {
   it("should return failure if createdMessage is undefined", async () => {
