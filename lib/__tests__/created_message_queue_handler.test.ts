@@ -6,6 +6,7 @@
 // tslint:disable-next-line:no-object-mutation
 process.env = {
   ...process.env,
+  API_PROXY_WEBHOOK_URL: "http://aUrl.com",
   COSMOSDB_NAME: "anyDbName",
   CUSTOMCONNSTR_COSMOSDB_KEY: "anyCosmosDbKey",
   CUSTOMCONNSTR_COSMOSDB_URI: "anyCosmosDbUri",
@@ -50,6 +51,7 @@ import {
   MESSAGE_QUEUE_NAME
 } from "../created_message_queue_handler";
 
+import { WebUrl } from "../api/definitions/WebUrl";
 import { MessageStatusModel } from "../models/message_status";
 
 afterEach(() => {
@@ -146,6 +148,8 @@ const anAttachmentMeta = {
   contentType: "application/json",
   media: "media.json"
 };
+
+const anUrl = "http://anUrl.com" as WebUrl;
 
 describe("createdMessageQueueIndex", () => {
   it("should return failure if createdMessage is undefined", async () => {
@@ -298,6 +302,7 @@ describe("handleMessage", () => {
       {} as any,
       {} as any,
       {} as any,
+      anUrl,
       aMessageEvent
     );
     expect(profileModelMock.findOneProfileByFiscalCode).toHaveBeenCalledWith(
@@ -309,7 +314,7 @@ describe("handleMessage", () => {
     }
   });
 
-  it("should fail with a permanent error if no channels can be resolved", async () => {
+  it("should return an empty object if no channels can be resolved", async () => {
     const profileModelMock = {
       findOneProfileByFiscalCode: jest.fn(() => {
         return Promise.resolve(right(none));
@@ -321,20 +326,21 @@ describe("handleMessage", () => {
       {} as any,
       {} as any,
       {} as any,
+      anUrl,
       aMessageEvent
     );
 
     expect(profileModelMock.findOneProfileByFiscalCode).toHaveBeenCalledWith(
       aCorrectFiscalCode
     );
-    expect(isLeft(response)).toBeTruthy();
-    if (isLeft(response)) {
-      expect(isTransient(response.value)).toBeFalsy();
+    expect(isRight(response)).toBeTruthy();
+    if (isRight(response)) {
+      expect(response.value).toEqual({});
     }
   });
 
   it(
-    "should not create a notification if a profile exists " +
+    "should not create an email notification if a profile exists " +
       "but the email field is empty and no default email was provided",
     async () => {
       const profileModelMock = {
@@ -354,15 +360,16 @@ describe("handleMessage", () => {
         {} as any,
         notificationModelMock as any,
         {} as any,
+        anUrl,
         aMessageEvent
       );
 
       expect(profileModelMock.findOneProfileByFiscalCode).toHaveBeenCalledWith(
         aCorrectFiscalCode
       );
-      expect(isLeft(response)).toBeTruthy();
-      if (isLeft(response)) {
-        expect(isTransient(response.value)).toBeFalsy();
+      expect(isRight(response)).toBeTruthy();
+      if (isRight(response)) {
+        expect(response.value).toEqual({});
       }
     }
   );
@@ -388,6 +395,7 @@ describe("handleMessage", () => {
         {} as any,
         notificationModelMock as any,
         {} as any,
+        anUrl,
         aMessageEvent
       );
 
@@ -440,6 +448,7 @@ describe("handleMessage", () => {
         {} as any,
         notificationModelMock as any,
         {} as any,
+        anUrl,
         {
           ...aMessageEvent,
           defaultAddresses: { email: anEmail }
@@ -494,6 +503,7 @@ describe("handleMessage", () => {
         {} as any,
         notificationModelMock as any,
         {} as any,
+        anUrl,
         {
           ...aMessageEvent,
           defaultAddresses: { email: anEmail }
@@ -562,6 +572,7 @@ describe("handleMessage", () => {
       messageModelMock as any,
       notificationModelMock as any,
       aBlobService as any,
+      anUrl,
       {
         ...aMessageEvent,
         defaultAddresses: { email: anEmail }
@@ -634,6 +645,7 @@ describe("handleMessage", () => {
       messageModelMock as any,
       notificationModelMock as any,
       aBlobService as any,
+      anUrl,
       {
         ...aMessageEvent,
         defaultAddresses: { email: anEmail }
@@ -679,6 +691,7 @@ describe("handleMessage", () => {
       {} as any,
       notificationModelMock as any,
       {} as any,
+      anUrl,
       aMessageEvent
     );
 
