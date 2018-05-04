@@ -4,36 +4,24 @@ import Mail = require("nodemailer/lib/mailer");
 
 import * as nodemailer from "nodemailer";
 
-jest.mock("superagent");
-import * as request from "superagent";
+import * as superagent from "superagent";
 
 import { MailUpTransport, SmtpAuthInfo } from "../mailup";
 
-interface IResponse {
-  readonly body: {
-    readonly Code: string;
-    readonly Message: string;
-    readonly Status: string;
-  };
-  readonly error?: string;
-  readonly status: number;
-  readonly text?: string;
-}
+afterEach(() => {
+  jest.restoreAllMocks();
+  jest.resetAllMocks();
+});
 
-// get superagent mock instance
-const superagent = request("method", "url");
-
-const setMockResponse = (response: IResponse) => {
-  (superagent as any).__setResponse(response);
-};
-const setResponseSpy = (responseSpy: (() => void)) => {
-  (superagent as any).__setResponseSpy(responseSpy);
-};
-const setRequestSpy = (requestSpy: (() => void)) => {
-  (superagent as any).__setRequestSpy(requestSpy);
-};
-const resetSuperagentMocks = () => {
-  (superagent as any).__resetMocks();
+// as superagent does not export request methods directly
+// we must override the superagent.Request prototype
+// so we can set up our jest mock to use it instead
+// of the send() method
+const mockSuperagentResponse = (response: any) => {
+  const sendMock = jest.fn();
+  // tslint:disable-next-line:no-object-mutation
+  (superagent as any).Request.prototype.send = sendMock;
+  return sendMock.mockReturnValueOnce(Promise.resolve(response));
 };
 
 // format required by nodemailer
@@ -81,13 +69,7 @@ const aNodemailerTransporter = nodemailer.createTransport(
 
 describe("sendMail", () => {
   it("should get a success response from the API endpoint", async () => {
-    const responseSpy = jest.fn();
-    setResponseSpy(responseSpy);
-
-    const requestSpy = jest.fn();
-    setRequestSpy(requestSpy);
-
-    setMockResponse({
+    const requestSpy = mockSuperagentResponse({
       body: aResponsePayload,
       status: 200
     });
@@ -98,10 +80,7 @@ describe("sendMail", () => {
       ...anEmailPayload,
       User: someCreds
     });
-    expect(responseSpy).toHaveBeenCalledWith(aResponsePayload);
     expect(response).toEqual(aResponsePayload);
-
-    resetSuperagentMocks();
   });
 
   it("should fail on empty from address", async () => {
@@ -141,7 +120,7 @@ describe("sendMail", () => {
   });
 
   it("should fail on API error", async () => {
-    setMockResponse({
+    mockSuperagentResponse({
       body: aResponsePayload,
       error: "500",
       status: 500
@@ -152,6 +131,5 @@ describe("sendMail", () => {
     } catch (e) {
       expect(e).toBeInstanceOf(Error);
     }
-    resetSuperagentMocks();
   });
 });
