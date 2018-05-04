@@ -13,6 +13,10 @@ afterEach(() => {
   jest.resetAllMocks();
 });
 
+// since superagent does not export the request methods directly
+// we must "walk backwards" the instanced request prototype
+// to reach the request.send() method definition
+// so we can set up our jest mock there
 const mockSuperagentResponse = (response: any) =>
   // tslint:disable-next-line:no-object-mutation
   (Object.getPrototypeOf(request("", "")).send = jest.fn()).mockReturnValueOnce(
