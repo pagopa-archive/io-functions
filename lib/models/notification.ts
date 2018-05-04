@@ -20,6 +20,7 @@ import { Either } from "fp-ts/lib/Either";
 import { Option } from "fp-ts/lib/Option";
 import { NonEmptyString } from "italia-ts-commons/lib/strings";
 import { NotificationChannelEnum } from "../api/definitions/NotificationChannel";
+import { WebUrl } from "../api/definitions/WebUrl";
 import { ObjectIdGenerator } from "../utils/strings";
 
 /**
@@ -69,22 +70,39 @@ export const EmailNotification = t.interface({
 });
 export type EmailNotification = t.TypeOf<typeof EmailNotification>;
 
-// All notification channels possible metadata.
-// We have only email at the moment, add other channels here when implemented
+// Webhook Notification
 
-export const NotificationChannelMeta = t.intersection([
-  NotificationChannelEmail
+export const NotificationChannelWebhook = t.interface({
+  url: WebUrl
+});
+export type NotificationChannelWebhook = t.TypeOf<
+  typeof NotificationChannelWebhook
+>;
+
+export const WebhookNotification = t.interface({
+  ...NotificationBase.props,
+  channels: t.interface({
+    [NotificationChannelEnum.WEBHOOK]: NotificationChannelWebhook
+  })
+});
+export type WebhookNotification = t.TypeOf<typeof WebhookNotification>;
+
+// All notification channels possible metadata.
+
+export const NotificationChannelMeta = t.union([
+  NotificationChannelEmail,
+  NotificationChannelWebhook
 ]);
 export type NotificationChannelMeta = t.TypeOf<typeof NotificationChannelMeta>;
 
 // Generic Notification object
-// We have only email at the moment, add other channels here when implemented
 
 export const Notification = t.intersection([
   NotificationBase,
   t.interface({
     channels: t.partial({
-      [NotificationChannelEnum.EMAIL]: NotificationChannelEmail
+      [NotificationChannelEnum.EMAIL]: NotificationChannelEmail,
+      [NotificationChannelEnum.WEBHOOK]: NotificationChannelWebhook
     })
   })
 ]);
