@@ -11,7 +11,7 @@ process.env = {
   CUSTOMCONNSTR_COSMOSDB_URI: "anyCosmosDbUri",
   MESSAGE_CONTAINER_NAME: "anyMessageContainerName",
   QueueStorageConnection: "anyQueueStorageConnection",
-  WEBHOOK_CHANNEL_URL: "http://aUrl.com"
+  WEBHOOK_CHANNEL_URL: "https://example.com"
 };
 
 import { CreatedMessageEvent } from "../models/created_message_event";
