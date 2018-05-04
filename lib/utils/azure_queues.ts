@@ -140,7 +140,12 @@ export function updateMessageVisibilityTimeout<T extends IQueueMessage>(
 }
 
 /**
- * Returns false when we need to trigger a retry.
+ * Call this method in the catch handler of a queue handler to:
+ *
+ * - execute onTransientError() in case of Transient Error
+ * - execute onPermanentError() in case of Permanent Error
+ * - trigger a retry in case of TransientError
+ *   and retriesNumber < maxRetriesNumber
  */
 export async function handleQueueProcessingFailure(
   queueService: QueueService,
