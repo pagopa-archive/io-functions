@@ -56,11 +56,15 @@ import {
 jest.mock("../utils/azure_queues");
 import { handleQueueProcessingFailure } from "../utils/azure_queues";
 
-import * as request from "superagent";
+import * as superagent from "superagent";
 
+// as superagent does not export request methods directly
+// we must override the superagent.Request prototype
+// so we can set up our jest mock to use it instead
+// of the send() method
 const mockSuperagentResponse = (response: any) =>
   // tslint:disable-next-line:no-object-mutation
-  (Object.getPrototypeOf(request("", "")).send = jest.fn()).mockReturnValueOnce(
+  ((superagent as any).Request.prototype.send = jest.fn()).mockReturnValueOnce(
     Promise.resolve(response)
   );
 
