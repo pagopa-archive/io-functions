@@ -17,11 +17,12 @@ afterEach(() => {
 // we must override the superagent.Request prototype
 // so we can set up our jest mock to use it instead
 // of the send() method
-const mockSuperagentResponse = (response: any) =>
+const mockSuperagentResponse = (response: any) => {
+  const sendMock = jest.fn();
   // tslint:disable-next-line:no-object-mutation
-  ((superagent as any).Request.prototype.send = jest.fn()).mockReturnValueOnce(
-    Promise.resolve(response)
-  );
+  (superagent as any).Request.prototype.send = sendMock;
+  return sendMock.mockReturnValueOnce(Promise.resolve(response));
+};
 
 // format required by nodemailer
 const anEmailMessage: Mail.Options = {
