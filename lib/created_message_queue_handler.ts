@@ -33,9 +33,9 @@ import { CreatedMessageEvent } from "./models/created_message_event";
 import { MessageModel, NewMessageWithContent } from "./models/message";
 import {
   createNewNotification,
+  Notification,
   NotificationAddressSourceEnum,
   NotificationChannelEmail,
-  NotificationChannelMeta,
   NotificationModel
 } from "./models/notification";
 import { NotificationEvent } from "./models/notification_event";
@@ -48,10 +48,7 @@ import { handleQueueProcessingFailure } from "./utils/azure_queues";
 import { RuntimeError, TransientError } from "./utils/errors";
 
 import { MessageStatusValueEnum } from "./api/definitions/MessageStatusValue";
-import {
-  NotificationChannel,
-  NotificationChannelEnum
-} from "./api/definitions/NotificationChannel";
+import { NotificationChannelEnum } from "./api/definitions/NotificationChannel";
 
 import { withoutUndefinedValues } from "italia-ts-commons/lib/types";
 import { HttpsUrl } from "./api/definitions/HttpsUrl";
@@ -165,8 +162,10 @@ function getEmailAddressFromDefaultAddresses(
   defaultAddresses: NewMessageDefaultAddresses
 ): Option<NotificationChannelEmail> {
   return fromNullable(defaultAddresses.email).map(email => ({
-    addressSource: NotificationAddressSourceEnum.DEFAULT_ADDRESS,
-    toAddress: email
+    [NotificationChannelEnum.EMAIL]: {
+      addressSource: NotificationAddressSourceEnum.DEFAULT_ADDRESS,
+      toAddress: email
+    }
   }));
 }
 
@@ -178,8 +177,10 @@ function getEmailAddressFromProfile(
   profile: RetrievedProfile
 ): Option<NotificationChannelEmail> {
   return fromNullable(profile.email).map(email => ({
-    addressSource: NotificationAddressSourceEnum.PROFILE_ADDRESS,
-    toAddress: email
+    [NotificationChannelEnum.EMAIL]: {
+      addressSource: NotificationAddressSourceEnum.PROFILE_ADDRESS,
+      toAddress: email
+    }
   }));
 }
 
@@ -190,22 +191,10 @@ async function createNotification(
   lNotificationModel: NotificationModel,
   senderMetadata: CreatedMessageEventSenderMetadata,
   newMessageWithContent: NewMessageWithContent,
-  channel: NotificationChannel,
-  notificationChannel: NotificationChannelMeta
+  newNotification: Notification
 ): Promise<Either<RuntimeError, Option<NotificationEvent>>> {
-  const newNotification = createNewNotification(
-    ulidGenerator,
-    newMessageWithContent.fiscalCode,
-    newMessageWithContent.id
-  );
-
   const errorOrNotification = await lNotificationModel.create(
-    {
-      ...newNotification,
-      channel: {
-        [channel]: notificationChannel
-      }
-    },
+    createNewNotification(ulidGenerator, newNotification),
     newNotification.messageId
   );
 
@@ -314,8 +303,11 @@ export async function handleMessage(
           lNotificationModel,
           senderMetadata,
           newMessageWithContent,
-          NotificationChannelEnum.EMAIL,
-          notificationChannelEmail
+          {
+            channel: notificationChannelEmail,
+            fiscalCode: newMessageWithContent.fiscalCode,
+            messageId: newMessageWithContent.id
+          }
         )
     );
 
@@ -338,8 +330,15 @@ export async function handleMessage(
         lNotificationModel,
         senderMetadata,
         newMessageWithContent,
-        NotificationChannelEnum.WEBHOOK,
-        { url: lDefaultWebhookUrl }
+        {
+          channel: {
+            [NotificationChannelEnum.WEBHOOK]: {
+              url: lDefaultWebhookUrl
+            }
+          },
+          fiscalCode: newMessageWithContent.fiscalCode,
+          messageId: newMessageWithContent.id
+        }
       )
     : right<RuntimeError, Option<NotificationEvent>>(none);
 
