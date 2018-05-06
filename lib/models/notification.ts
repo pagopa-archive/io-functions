@@ -49,33 +49,30 @@ export const NotificationBase = t.interface({
 
 // Email Notification
 
-export const NotificationChannelEmail = t.interface({
-  [NotificationChannelEnum.EMAIL]: t.intersection([
-    t.interface({
-      addressSource: NotificationAddressSource,
-      toAddress: EmailAddress
-    }),
-    t.partial({
-      fromAddress: EmailAddress
-    })
-  ])
-});
+export const NotificationChannelEmail = t.intersection([
+  t.interface({
+    addressSource: NotificationAddressSource,
+    toAddress: EmailAddress
+  }),
+  t.partial({
+    fromAddress: EmailAddress
+  })
+]);
 export type NotificationChannelEmail = t.TypeOf<
   typeof NotificationChannelEmail
 >;
 
 export const EmailNotification = t.interface({
   ...NotificationBase.props,
-  channel: NotificationChannelEmail
+  channel: NotificationChannelEmail,
+  type: t.literal(NotificationChannelEnum.EMAIL)
 });
 export type EmailNotification = t.TypeOf<typeof EmailNotification>;
 
 // Webhook Notification
 
 export const NotificationChannelWebhook = t.interface({
-  [NotificationChannelEnum.WEBHOOK]: t.interface({
-    url: HttpsUrl
-  })
+  url: HttpsUrl
 });
 export type NotificationChannelWebhook = t.TypeOf<
   typeof NotificationChannelWebhook
@@ -83,21 +80,17 @@ export type NotificationChannelWebhook = t.TypeOf<
 
 export const WebhookNotification = t.interface({
   ...NotificationBase.props,
-  channel: NotificationChannelWebhook
+  channel: NotificationChannelWebhook,
+  type: t.literal(NotificationChannelEnum.WEBHOOK)
 });
 export type WebhookNotification = t.TypeOf<typeof WebhookNotification>;
 
-// All notification channels possible metadata.
-
-export const NotificationChannelMeta = t.union([
-  NotificationChannelEmail,
-  NotificationChannelWebhook
-]);
-export type NotificationChannelMeta = t.TypeOf<typeof NotificationChannelMeta>;
-
 // Generic Notification object
 
-export const Notification = t.union([WebhookNotification, EmailNotification]);
+export const Notification = t.taggedUnion("type", [
+  WebhookNotification,
+  EmailNotification
+]);
 export type Notification = t.TypeOf<typeof Notification>;
 
 /**

@@ -267,7 +267,7 @@ export async function handleNotification(
     );
   }
 
-  const webhookNotification = errorOrWebhookNotification.value.channel.WEBHOOK;
+  const webhookNotification = errorOrWebhookNotification.value.channel;
 
   const sendResult = await sendToWebhook(
     webhookNotification.url,

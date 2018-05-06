@@ -65,14 +65,13 @@ const anEmail = "x@example.com" as EmailString;
 
 const anEmailNotification: EmailNotification = {
   channel: {
-    [NotificationChannelEnum.EMAIL]: {
-      addressSource: NotificationAddressSourceEnum.PROFILE_ADDRESS,
-      // fromAddress: anEmail,
-      toAddress: anEmail
-    }
+    addressSource: NotificationAddressSourceEnum.PROFILE_ADDRESS,
+    // fromAddress: anEmail,
+    toAddress: anEmail
   },
   fiscalCode: aCorrectFiscalCode,
-  messageId: "m123" as NonEmptyString
+  messageId: "m123" as NonEmptyString,
+  type: NotificationChannelEnum.EMAIL
 };
 
 const aMessageBodyMarkdown = "test".repeat(80) as MessageBodyMarkdown;
@@ -463,13 +462,12 @@ describe("handleMessage", () => {
         {
           ...anEmailNotification,
           channel: {
-            EMAIL: {
-              ...anEmailNotification.channel.EMAIL,
-              addressSource: NotificationAddressSourceEnum.DEFAULT_ADDRESS
-            }
+            ...anEmailNotification.channel,
+            addressSource: NotificationAddressSourceEnum.DEFAULT_ADDRESS
           },
           id: expect.anything(),
-          kind: "INewNotification"
+          kind: "INewNotification",
+          type: "EMAIL"
         },
         anEmailNotification.messageId
       );
@@ -517,13 +515,12 @@ describe("handleMessage", () => {
         {
           ...anEmailNotification,
           channel: {
-            EMAIL: {
-              ...anEmailNotification.channel.EMAIL,
-              addressSource: NotificationAddressSourceEnum.DEFAULT_ADDRESS
-            }
+            ...anEmailNotification.channel,
+            addressSource: NotificationAddressSourceEnum.DEFAULT_ADDRESS
           },
           id: expect.anything(),
-          kind: "INewNotification"
+          kind: "INewNotification",
+          type: "EMAIL"
         },
         anEmailNotification.messageId
       );

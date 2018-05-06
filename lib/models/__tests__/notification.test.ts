@@ -29,15 +29,14 @@ const aFiscalCode = "FRLFRC74E04B157I" as FiscalCode;
 
 const aNewEmailNotification: NewNotification = {
   channel: {
-    [NotificationChannelEnum.EMAIL]: {
-      addressSource: NotificationAddressSourceEnum.DEFAULT_ADDRESS,
-      toAddress: "to@example.com" as EmailAddress
-    }
+    addressSource: NotificationAddressSourceEnum.DEFAULT_ADDRESS,
+    toAddress: "to@example.com" as EmailAddress
   },
   fiscalCode: aFiscalCode,
   id: "A_NOTIFICATION_ID" as NonEmptyString,
   kind: "INewNotification",
-  messageId: "A_MESSAGE_ID" as NonEmptyString
+  messageId: "A_MESSAGE_ID" as NonEmptyString,
+  type: NotificationChannelEnum.EMAIL
 };
 
 const aRetrievedNotification: RetrievedNotification = {

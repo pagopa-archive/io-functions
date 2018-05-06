@@ -140,12 +140,11 @@ const getMockNotificationEvent = (
 
 const aNotification: Notification = {
   channel: {
-    [NotificationChannelEnum.WEBHOOK]: {
-      url: process.env.WEBHOOK_CHANNEL_URL
-    }
+    url: process.env.WEBHOOK_CHANNEL_URL
   },
   fiscalCode: aFiscalCode,
-  messageId: aMessageId
+  messageId: aMessageId,
+  type: NotificationChannelEnum.WEBHOOK
 };
 
 const aRetrievedNotificationStatus: RetrievedNotificationStatus = {

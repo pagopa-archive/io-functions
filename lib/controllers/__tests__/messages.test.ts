@@ -901,15 +901,14 @@ describe("GetMessageHandler", () => {
       _self: "xyz",
       _ts: 123,
       channel: {
-        [NotificationChannelEnum.EMAIL]: {
-          addressSource: NotificationAddressSourceEnum.PROFILE_ADDRESS,
-          toAddress: "x@example.com" as EmailString
-        }
+        addressSource: NotificationAddressSourceEnum.PROFILE_ADDRESS,
+        toAddress: "x@example.com" as EmailString
       },
       fiscalCode: aFiscalCode,
       id: "A_NOTIFICATION_ID" as NonEmptyString,
       kind: "IRetrievedNotification",
-      messageId: "A_MESSAGE_ID" as NonEmptyString
+      messageId: "A_MESSAGE_ID" as NonEmptyString,
+      type: NotificationChannelEnum.EMAIL
     };
 
     const mockMessageModel = {

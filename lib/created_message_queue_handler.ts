@@ -162,10 +162,8 @@ function getEmailAddressFromDefaultAddresses(
   defaultAddresses: NewMessageDefaultAddresses
 ): Option<NotificationChannelEmail> {
   return fromNullable(defaultAddresses.email).map(email => ({
-    [NotificationChannelEnum.EMAIL]: {
-      addressSource: NotificationAddressSourceEnum.DEFAULT_ADDRESS,
-      toAddress: email
-    }
+    addressSource: NotificationAddressSourceEnum.DEFAULT_ADDRESS,
+    toAddress: email
   }));
 }
 
@@ -177,10 +175,8 @@ function getEmailAddressFromProfile(
   profile: RetrievedProfile
 ): Option<NotificationChannelEmail> {
   return fromNullable(profile.email).map(email => ({
-    [NotificationChannelEnum.EMAIL]: {
-      addressSource: NotificationAddressSourceEnum.PROFILE_ADDRESS,
-      toAddress: email
-    }
+    addressSource: NotificationAddressSourceEnum.PROFILE_ADDRESS,
+    toAddress: email
   }));
 }
 
@@ -306,7 +302,8 @@ export async function handleMessage(
           {
             channel: notificationChannelEmail,
             fiscalCode: newMessageWithContent.fiscalCode,
-            messageId: newMessageWithContent.id
+            messageId: newMessageWithContent.id,
+            type: NotificationChannelEnum.EMAIL
           }
         )
     );
@@ -332,12 +329,11 @@ export async function handleMessage(
         newMessageWithContent,
         {
           channel: {
-            [NotificationChannelEnum.WEBHOOK]: {
-              url: lDefaultWebhookUrl
-            }
+            url: lDefaultWebhookUrl
           },
           fiscalCode: newMessageWithContent.fiscalCode,
-          messageId: newMessageWithContent.id
+          messageId: newMessageWithContent.id,
+          type: NotificationChannelEnum.WEBHOOK
         }
       )
     : right<RuntimeError, Option<NotificationEvent>>(none);
