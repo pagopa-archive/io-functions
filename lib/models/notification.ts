@@ -138,7 +138,10 @@ export type RetrievedNotification = t.TypeOf<typeof RetrievedNotification>;
 function toBaseType(o: RetrievedNotification): Notification {
   // this cast is due to a typescript limitation inferring union types
   // see https://github.com/gcanti/io-ts/issues/169
-  return pick(["fiscalCode", "messageId", "channel"], o) as Notification;
+  return pick(
+    ["fiscalCode", "messageId", "channel", "type"],
+    o
+  ) as Notification;
 }
 
 function toRetrieved(
