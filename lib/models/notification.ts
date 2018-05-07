@@ -19,6 +19,7 @@ import { FiscalCode } from "../api/definitions/FiscalCode";
 import { Either } from "fp-ts/lib/Either";
 import { Option } from "fp-ts/lib/Option";
 import { NonEmptyString } from "italia-ts-commons/lib/strings";
+import { HttpsUrl } from "../api/definitions/HttpsUrl";
 import { NotificationChannelEnum } from "../api/definitions/NotificationChannel";
 import { ObjectIdGenerator } from "../utils/strings";
 
@@ -63,30 +64,32 @@ export type NotificationChannelEmail = t.TypeOf<
 
 export const EmailNotification = t.interface({
   ...NotificationBase.props,
-  channels: t.interface({
-    [NotificationChannelEnum.EMAIL]: NotificationChannelEmail
-  })
+  channel: NotificationChannelEmail,
+  type: t.literal(NotificationChannelEnum.EMAIL)
 });
 export type EmailNotification = t.TypeOf<typeof EmailNotification>;
 
-// All notification channels possible metadata.
-// We have only email at the moment, add other channels here when implemented
+// Webhook Notification
 
-export const NotificationChannelMeta = t.intersection([
-  NotificationChannelEmail
-]);
-export type NotificationChannelMeta = t.TypeOf<typeof NotificationChannelMeta>;
+export const NotificationChannelWebhook = t.interface({
+  url: HttpsUrl
+});
+export type NotificationChannelWebhook = t.TypeOf<
+  typeof NotificationChannelWebhook
+>;
+
+export const WebhookNotification = t.interface({
+  ...NotificationBase.props,
+  channel: NotificationChannelWebhook,
+  type: t.literal(NotificationChannelEnum.WEBHOOK)
+});
+export type WebhookNotification = t.TypeOf<typeof WebhookNotification>;
 
 // Generic Notification object
-// We have only email at the moment, add other channels here when implemented
 
-export const Notification = t.intersection([
-  NotificationBase,
-  t.interface({
-    channels: t.partial({
-      [NotificationChannelEnum.EMAIL]: NotificationChannelEmail
-    })
-  })
+export const Notification = t.taggedUnion("type", [
+  WebhookNotification,
+  EmailNotification
 ]);
 export type Notification = t.TypeOf<typeof Notification>;
 
@@ -108,15 +111,12 @@ export type NewNotification = t.TypeOf<typeof NewNotification>;
  */
 export function createNewNotification(
   ulidGenerator: ObjectIdGenerator,
-  fiscalCode: FiscalCode,
-  messageId: NonEmptyString
+  notification: Notification
 ): NewNotification {
   return {
-    channels: {},
-    fiscalCode,
     id: ulidGenerator(),
     kind: "INewNotification",
-    messageId
+    ...notification
   };
 }
 
@@ -136,7 +136,12 @@ export type RetrievedNotification = t.TypeOf<typeof RetrievedNotification>;
 
 /* istanbul ignore next */
 function toBaseType(o: RetrievedNotification): Notification {
-  return pick(["fiscalCode", "messageId", "channels"], o);
+  // this cast is due to a typescript limitation inferring union types
+  // see https://github.com/gcanti/io-ts/issues/169
+  return pick(
+    ["fiscalCode", "messageId", "channel", "type"],
+    o
+  ) as Notification;
 }
 
 function toRetrieved(

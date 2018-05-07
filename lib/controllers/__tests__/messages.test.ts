@@ -138,7 +138,8 @@ const aPublicExtendedMessage: CreatedMessageWithoutContent = {
 const aPublicExtendedMessageResponse: MessageResponseWithoutContent = {
   message: aPublicExtendedMessage,
   notification: {
-    email: NotificationChannelStatusValueEnum.SENT
+    email: NotificationChannelStatusValueEnum.SENT,
+    webhook: NotificationChannelStatusValueEnum.SENT
   },
   status: MessageStatusValueEnum.ACCEPTED
 };
@@ -899,16 +900,15 @@ describe("GetMessageHandler", () => {
     const aRetrievedNotification: RetrievedNotification = {
       _self: "xyz",
       _ts: 123,
-      channels: {
-        [NotificationChannelEnum.EMAIL]: {
-          addressSource: NotificationAddressSourceEnum.PROFILE_ADDRESS,
-          toAddress: "x@example.com" as EmailString
-        }
+      channel: {
+        addressSource: NotificationAddressSourceEnum.PROFILE_ADDRESS,
+        toAddress: "x@example.com" as EmailString
       },
       fiscalCode: aFiscalCode,
       id: "A_NOTIFICATION_ID" as NonEmptyString,
       kind: "IRetrievedNotification",
-      messageId: "A_MESSAGE_ID" as NonEmptyString
+      messageId: "A_MESSAGE_ID" as NonEmptyString,
+      type: NotificationChannelEnum.EMAIL
     };
 
     const mockMessageModel = {

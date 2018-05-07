@@ -17,7 +17,7 @@ import { configureAzureContextTransport } from "./utils/logging";
 
 import * as documentDbUtils from "./utils/documentdb";
 
-import { fromNullable, isNone, Option } from "fp-ts/lib/Option";
+import { fromNullable, none, Option, some } from "fp-ts/lib/Option";
 
 import {
   BlobService,
@@ -30,9 +30,10 @@ import { NewMessageDefaultAddresses } from "./api/definitions/NewMessageDefaultA
 import { getRequiredStringEnv } from "./utils/env";
 
 import { CreatedMessageEvent } from "./models/created_message_event";
-import { MessageModel } from "./models/message";
+import { MessageModel, NewMessageWithContent } from "./models/message";
 import {
   createNewNotification,
+  Notification,
   NotificationAddressSourceEnum,
   NotificationChannelEmail,
   NotificationModel
@@ -44,11 +45,14 @@ import { Either, isLeft, left, right } from "fp-ts/lib/Either";
 import { readableReport } from "italia-ts-commons/lib/reporters";
 
 import { handleQueueProcessingFailure } from "./utils/azure_queues";
-import { PermanentError, RuntimeError, TransientError } from "./utils/errors";
+import { RuntimeError, TransientError } from "./utils/errors";
 
 import { MessageStatusValueEnum } from "./api/definitions/MessageStatusValue";
 import { NotificationChannelEnum } from "./api/definitions/NotificationChannel";
 
+import { withoutUndefinedValues } from "italia-ts-commons/lib/types";
+import { HttpsUrl } from "./api/definitions/HttpsUrl";
+import { CreatedMessageEventSenderMetadata } from "./models/created_message_sender_metadata";
 import {
   getMessageStatusUpdater,
   MESSAGE_STATUS_COLLECTION_NAME,
@@ -81,6 +85,14 @@ const messageStatusCollectionUrl = documentDbUtils.getCollectionUri(
   documentDbDatabaseUrl,
   MESSAGE_STATUS_COLLECTION_NAME
 );
+
+const defaultWebhookUrl = HttpsUrl.decode(
+  getRequiredStringEnv("WEBHOOK_CHANNEL_URL")
+).getOrElseL(_ => {
+  throw new Error(
+    `Check that the environment variable WEBHOOK_CHANNEL_URL is set to a valid URL`
+  );
+});
 
 // must be equal to the queue name in function.json
 export const MESSAGE_QUEUE_NAME = "createdmessages";
@@ -127,7 +139,8 @@ const InputBindings = t.partial({
 type InputBindings = t.TypeOf<typeof InputBindings>;
 
 const OutputBindings = t.partial({
-  emailNotification: NotificationEvent
+  emailNotification: NotificationEvent,
+  webhookNotification: NotificationEvent
 });
 type OutputBindings = t.TypeOf<typeof OutputBindings>;
 
@@ -168,6 +181,37 @@ function getEmailAddressFromProfile(
 }
 
 /**
+ * Try to create (save) a new notification
+ */
+async function createNotification(
+  lNotificationModel: NotificationModel,
+  senderMetadata: CreatedMessageEventSenderMetadata,
+  newMessageWithContent: NewMessageWithContent,
+  newNotification: Notification
+): Promise<Either<RuntimeError, Option<NotificationEvent>>> {
+  const errorOrNotification = await lNotificationModel.create(
+    createNewNotification(ulidGenerator, newNotification),
+    newNotification.messageId
+  );
+
+  if (isLeft(errorOrNotification)) {
+    return left(TransientError("Cannot save notification to database"));
+  }
+
+  const notification = errorOrNotification.value;
+
+  const notificationEvent: NotificationEvent = {
+    message: {
+      ...newMessageWithContent,
+      kind: "INewMessageWithContent"
+    },
+    notificationId: notification.id,
+    senderMetadata
+  };
+  return right(some(notificationEvent));
+}
+
+/**
  * Handles the retrieved message by looking up the associated profile and
  * creating a Notification record that has all the channels configured.
  *
@@ -180,6 +224,7 @@ export async function handleMessage(
   lMessageModel: MessageModel,
   lNotificationModel: NotificationModel,
   lBlobService: BlobService,
+  lDefaultWebhookUrl: HttpsUrl,
   createdMessageEvent: CreatedMessageEvent
 ): Promise<Either<RuntimeError, OutputBindings>> {
   const newMessageWithContent = createdMessageEvent.message;
@@ -207,6 +252,10 @@ export async function handleMessage(
     profile => profile.isInboxEnabled === true
   );
 
+  //
+  //  Inbox storage
+  //
+
   if (isMessageStorageEnabled) {
     // If the recipient wants to store the messages
     // we add the content of the message to the blob storage for later retrieval.
@@ -223,56 +272,87 @@ export async function handleMessage(
     }
   }
 
-  const maybeNotificationChannelEmail = maybeProfile
+  //
+  //  Email notification
+  //
+
+  const errorOrMaybeEmailNotification = await maybeProfile
     // try to get the destination email address from the user's profile
     .chain(getEmailAddressFromProfile)
     // if it's not set, or we don't have a profile for this fiscal code,
     // try to get the default email address from the request payload
-    .alt(defaultAddresses.chain(getEmailAddressFromDefaultAddresses));
-
-  if (isNone(maybeNotificationChannelEmail)) {
-    // TODO: when we'll add other channels do not exit here (just log the error)
-    return left(
-      PermanentError(
-        `Fiscal code has no associated email address and no default email address was provided|${
-          newMessageWithContent.fiscalCode
-        }`
-      )
+    .alt(defaultAddresses.chain(getEmailAddressFromDefaultAddresses))
+    .foldL<Promise<Either<RuntimeError, Option<NotificationEvent>>>>(
+      // if we didn't get any destination address, just log a warning
+      async () => {
+        winston.warn(
+          `Fiscal code has no associated email address and no default email address was provided|${
+            newMessageWithContent.fiscalCode
+          }`
+        );
+        return right(none);
+      },
+      // if we got a destination address from profile or defaults,
+      // try to create an email notification to enqueue
+      async notificationChannelEmail =>
+        await createNotification(
+          lNotificationModel,
+          senderMetadata,
+          newMessageWithContent,
+          {
+            channel: notificationChannelEmail,
+            fiscalCode: newMessageWithContent.fiscalCode,
+            messageId: newMessageWithContent.id,
+            type: NotificationChannelEnum.EMAIL
+          }
+        )
     );
-  }
 
-  const newNotification = createNewNotification(
-    ulidGenerator,
-    newMessageWithContent.fiscalCode,
-    newMessageWithContent.id
+  if (isLeft(errorOrMaybeEmailNotification)) {
+    return left(errorOrMaybeEmailNotification.value);
+  }
+  const maybeEmailNotification = errorOrMaybeEmailNotification.value;
+
+  //
+  //  Webhook notification
+  //
+
+  // whether the recipient wants us to send notifications to the app backend
+  const isWebhookEnabled = maybeProfile.exists(
+    profile => profile.isWebhookEnabled === true
   );
 
-  const errorOrNotification = await lNotificationModel.create(
-    {
-      ...newNotification,
-      channels: {
-        [NotificationChannelEnum.EMAIL]: maybeNotificationChannelEmail.toUndefined()
-      }
-    },
-    newNotification.messageId
-  );
+  const errorOrMaybeWebhookNotification = isWebhookEnabled
+    ? await createNotification(
+        lNotificationModel,
+        senderMetadata,
+        newMessageWithContent,
+        {
+          channel: {
+            url: lDefaultWebhookUrl
+          },
+          fiscalCode: newMessageWithContent.fiscalCode,
+          messageId: newMessageWithContent.id,
+          type: NotificationChannelEnum.WEBHOOK
+        }
+      )
+    : right<RuntimeError, Option<NotificationEvent>>(none);
 
-  if (isLeft(errorOrNotification)) {
-    return left(TransientError("Cannot save notification to database"));
+  if (isLeft(errorOrMaybeWebhookNotification)) {
+    return left(errorOrMaybeWebhookNotification.value);
   }
+  const maybeWebhookNotification = errorOrMaybeWebhookNotification.value;
 
-  const notification = errorOrNotification.value;
-
-  const emailNotification: NotificationEvent = {
-    message: {
-      ...newMessageWithContent,
-      kind: "INewMessageWithContent"
-    },
-    notificationId: notification.id,
-    senderMetadata
+  //
+  //  Return notification events (one for each channel)
+  //
+  const outputBindings: OutputBindings = {
+    emailNotification: maybeEmailNotification.toUndefined(),
+    webhookNotification: maybeWebhookNotification.toUndefined()
   };
 
-  return right({ emailNotification });
+  // avoid to enqueue messages for non existing notifications
+  return right(withoutUndefinedValues(outputBindings));
 }
 
 /**
@@ -326,6 +406,7 @@ export async function index(
     messageModel,
     notificationModel,
     blobService,
+    defaultWebhookUrl,
     createdMessageEvent
   )
     .then(errorOrOutputBindings =>

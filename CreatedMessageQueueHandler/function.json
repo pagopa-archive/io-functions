@@ -15,7 +15,14 @@
    "name": "emailNotification",
    "queueName": "emailnotifications",
    "connection": "QueueStorageConnection"
-  }
- ],
+  },
+  {
+    "type": "queue",
+    "direction": "out",
+    "name": "webhookNotification",
+    "queueName": "webhooknotifications",
+    "connection": "QueueStorageConnection"
+   }
+  ],
  "entryPoint": "CreatedMessageQueueHandler"
 }

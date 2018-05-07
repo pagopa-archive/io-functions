@@ -10,7 +10,8 @@ process.env = {
   CUSTOMCONNSTR_COSMOSDB_KEY: "anyCosmosDbKey",
   CUSTOMCONNSTR_COSMOSDB_URI: "anyCosmosDbUri",
   MESSAGE_CONTAINER_NAME: "anyMessageContainerName",
-  QueueStorageConnection: "anyQueueStorageConnection"
+  QueueStorageConnection: "anyQueueStorageConnection",
+  WEBHOOK_CHANNEL_URL: "https://example.com"
 };
 
 import { CreatedMessageEvent } from "../models/created_message_event";
@@ -50,6 +51,7 @@ import {
   MESSAGE_QUEUE_NAME
 } from "../created_message_queue_handler";
 
+import { HttpsUrl } from "../api/definitions/HttpsUrl";
 import { MessageStatusModel } from "../models/message_status";
 
 afterEach(() => {
@@ -62,15 +64,14 @@ const aWrongFiscalCode = "FRLFRC74E04B157" as FiscalCode;
 const anEmail = "x@example.com" as EmailString;
 
 const anEmailNotification: EmailNotification = {
-  channels: {
-    [NotificationChannelEnum.EMAIL]: {
-      addressSource: NotificationAddressSourceEnum.PROFILE_ADDRESS,
-      // fromAddress: anEmail,
-      toAddress: anEmail
-    }
+  channel: {
+    addressSource: NotificationAddressSourceEnum.PROFILE_ADDRESS,
+    // fromAddress: anEmail,
+    toAddress: anEmail
   },
   fiscalCode: aCorrectFiscalCode,
-  messageId: "m123" as NonEmptyString
+  messageId: "m123" as NonEmptyString,
+  type: NotificationChannelEnum.EMAIL
 };
 
 const aMessageBodyMarkdown = "test".repeat(80) as MessageBodyMarkdown;
@@ -146,6 +147,8 @@ const anAttachmentMeta = {
   contentType: "application/json",
   media: "media.json"
 };
+
+const aUrl = "http://aUrl.com" as HttpsUrl;
 
 describe("createdMessageQueueIndex", () => {
   it("should return failure if createdMessage is undefined", async () => {
@@ -298,6 +301,7 @@ describe("handleMessage", () => {
       {} as any,
       {} as any,
       {} as any,
+      aUrl,
       aMessageEvent
     );
     expect(profileModelMock.findOneProfileByFiscalCode).toHaveBeenCalledWith(
@@ -309,7 +313,7 @@ describe("handleMessage", () => {
     }
   });
 
-  it("should fail with a permanent error if no channels can be resolved", async () => {
+  it("should return an empty object if no channels can be resolved", async () => {
     const profileModelMock = {
       findOneProfileByFiscalCode: jest.fn(() => {
         return Promise.resolve(right(none));
@@ -321,20 +325,21 @@ describe("handleMessage", () => {
       {} as any,
       {} as any,
       {} as any,
+      aUrl,
       aMessageEvent
     );
 
     expect(profileModelMock.findOneProfileByFiscalCode).toHaveBeenCalledWith(
       aCorrectFiscalCode
     );
-    expect(isLeft(response)).toBeTruthy();
-    if (isLeft(response)) {
-      expect(isTransient(response.value)).toBeFalsy();
+    expect(isRight(response)).toBeTruthy();
+    if (isRight(response)) {
+      expect(response.value).toEqual({});
     }
   });
 
   it(
-    "should not create a notification if a profile exists " +
+    "should not create an email notification if a profile exists " +
       "but the email field is empty and no default email was provided",
     async () => {
       const profileModelMock = {
@@ -354,15 +359,16 @@ describe("handleMessage", () => {
         {} as any,
         notificationModelMock as any,
         {} as any,
+        aUrl,
         aMessageEvent
       );
 
       expect(profileModelMock.findOneProfileByFiscalCode).toHaveBeenCalledWith(
         aCorrectFiscalCode
       );
-      expect(isLeft(response)).toBeTruthy();
-      if (isLeft(response)) {
-        expect(isTransient(response.value)).toBeFalsy();
+      expect(isRight(response)).toBeTruthy();
+      if (isRight(response)) {
+        expect(response.value).toEqual({});
       }
     }
   );
@@ -388,6 +394,7 @@ describe("handleMessage", () => {
         {} as any,
         notificationModelMock as any,
         {} as any,
+        aUrl,
         aMessageEvent
       );
 
@@ -440,6 +447,7 @@ describe("handleMessage", () => {
         {} as any,
         notificationModelMock as any,
         {} as any,
+        aUrl,
         {
           ...aMessageEvent,
           defaultAddresses: { email: anEmail }
@@ -453,14 +461,13 @@ describe("handleMessage", () => {
       expect(notificationModelMock.create).toHaveBeenCalledWith(
         {
           ...anEmailNotification,
-          channels: {
-            EMAIL: {
-              ...anEmailNotification.channels.EMAIL,
-              addressSource: NotificationAddressSourceEnum.DEFAULT_ADDRESS
-            }
+          channel: {
+            ...anEmailNotification.channel,
+            addressSource: NotificationAddressSourceEnum.DEFAULT_ADDRESS
           },
           id: expect.anything(),
-          kind: "INewNotification"
+          kind: "INewNotification",
+          type: "EMAIL"
         },
         anEmailNotification.messageId
       );
@@ -494,6 +501,7 @@ describe("handleMessage", () => {
         {} as any,
         notificationModelMock as any,
         {} as any,
+        aUrl,
         {
           ...aMessageEvent,
           defaultAddresses: { email: anEmail }
@@ -506,14 +514,13 @@ describe("handleMessage", () => {
       expect(notificationModelMock.create).toHaveBeenCalledWith(
         {
           ...anEmailNotification,
-          channels: {
-            EMAIL: {
-              ...anEmailNotification.channels.EMAIL,
-              addressSource: NotificationAddressSourceEnum.DEFAULT_ADDRESS
-            }
+          channel: {
+            ...anEmailNotification.channel,
+            addressSource: NotificationAddressSourceEnum.DEFAULT_ADDRESS
           },
           id: expect.anything(),
-          kind: "INewNotification"
+          kind: "INewNotification",
+          type: "EMAIL"
         },
         anEmailNotification.messageId
       );
@@ -562,6 +569,7 @@ describe("handleMessage", () => {
       messageModelMock as any,
       notificationModelMock as any,
       aBlobService as any,
+      aUrl,
       {
         ...aMessageEvent,
         defaultAddresses: { email: anEmail }
@@ -634,6 +642,7 @@ describe("handleMessage", () => {
       messageModelMock as any,
       notificationModelMock as any,
       aBlobService as any,
+      aUrl,
       {
         ...aMessageEvent,
         defaultAddresses: { email: anEmail }
@@ -679,6 +688,7 @@ describe("handleMessage", () => {
       {} as any,
       notificationModelMock as any,
       {} as any,
+      aUrl,
       aMessageEvent
     );
 
