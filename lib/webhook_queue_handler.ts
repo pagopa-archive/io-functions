@@ -165,34 +165,42 @@ export async function sendToWebhook(
   message: NewMessageWithContent,
   senderMetadata: CreatedMessageEventSenderMetadata
 ): Promise<Either<RuntimeError, {}>> {
-  return (
-    request("POST", webhookEndpoint)
-      .timeout(DEFAULT_REQUEST_TIMEOUT_MS)
-      .set("Content-Type", "application/json")
-      .accept("application/json")
-      .send({
-        message: newMessageToPublic(message),
-        senderMetadata: senderMetadataToPublic(senderMetadata)
-      })
-      // TODO: [#157306805] handle transient errors
-      .then(response => {
+  return request("POST", webhookEndpoint)
+    .timeout(DEFAULT_REQUEST_TIMEOUT_MS)
+    .set("Content-Type", "application/json")
+    .accept("application/json")
+    .send({
+      message: newMessageToPublic(message),
+      senderMetadata: senderMetadataToPublic(senderMetadata)
+    })
+    .then(
+      response => {
         if (response.error) {
           return left<RuntimeError, ApiProxyResponse>(
-            PermanentError(
-              `Error calling API Proxy API: ${JSON.stringify(response)}`
-            )
+            // in case of server HTTP 5xx errors we trigger a retry
+            response.serverError
+              ? TransientError(
+                  `Transient HTTP error calling API Proxy API: ${response.text}`
+                )
+              : PermanentError(
+                  `Permanent HTTP error calling API Proxy API: ${response.text}`
+                )
           );
         }
         return right<RuntimeError, ApiProxyResponse>(response.body);
-      })
-      // Fail with a permanent error in case any exception
-      // is thrown during the HTTP request
-      .catch(err => {
+      },
+      err => {
         return left<RuntimeError, ApiProxyResponse>(
-          PermanentError(`Error calling API Proxy API: ${JSON.stringify(err)}`)
+          err.timeout
+            ? TransientError(`Timeout calling API Proxy API`)
+            : // Fail with a permanent error in case any exception
+              // is thrown during the HTTP request
+              PermanentError(
+                `Permanent error calling API Proxy API: ${JSON.stringify(err)}`
+              )
         );
-      })
-  );
+      }
+    );
 }
 
 /**
@@ -231,7 +239,7 @@ export async function handleNotification(
     // we got an error while fetching the notification
     return left(
       TransientError(
-        `Error while fetching the notification|notification=${notificationId}|message=${
+        `Error while fetching { the } notification|notification=${notificationId}|message=${
           message.id
         }|error=${error.code}`
       )
