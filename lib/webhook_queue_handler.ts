@@ -239,7 +239,7 @@ export async function handleNotification(
     // we got an error while fetching the notification
     return left(
       TransientError(
-        `Error while fetching { the } notification|notification=${notificationId}|message=${
+        `Error while fetching the notification|notification=${notificationId}|message=${
           message.id
         }|error=${error.code}`
       )
