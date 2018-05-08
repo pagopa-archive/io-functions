@@ -117,6 +117,16 @@
   dependencies:
     "@types/node" "*"
 
+"@types/swagger-parser@^4.0.2":
+  version "4.0.2"
+  resolved "https://registry.yarnpkg.com/@types/swagger-parser/-/swagger-parser-4.0.2.tgz#d181f6e6a3b7e6492808b37173b06f027af2cff0"
+  dependencies:
+    "@types/swagger-schema-official" "*"
+
+"@types/swagger-schema-official@*":
+  version "2.0.9"
+  resolved "https://registry.yarnpkg.com/@types/swagger-schema-official/-/swagger-schema-official-2.0.9.tgz#e761520f21fce93b830cdab850bed10e24cc72c0"
+
 "@types/unist@*":
   version "1.0.0"
   resolved "https://registry.yarnpkg.com/@types/unist/-/unist-1.0.0.tgz#a05df966d9b4b8191f04bf5109056a1848fcb9dd"
