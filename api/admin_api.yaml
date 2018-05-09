@@ -58,7 +58,8 @@ paths:
           description: No service found for the provided ID.
       summary: Update Service
       operationId: updateService
-      description: Update an existing service with the attributes provided in the
+      description:  |-
+        Update an existing service with the attributes provided in the
         request payload.
       parameters:
       - in: body
@@ -79,7 +80,8 @@ paths:
     get:
       responses:
         '200':
-          description: Returns a JSON object with HTTP request parameters, headers
+          description: |-
+            Returns a JSON object with HTTP request parameters, headers
             and payload.
           schema:
             type: object
@@ -138,7 +140,8 @@ paths:
     post:
       responses:
         '200':
-          description: Returns a JSON object with HTTP request parameters, headers
+          description:  |-
+            Returns a JSON object with HTTP request parameters, headers
             and payload.
           schema:
             type: object
@@ -211,7 +214,8 @@ paths:
               version: 1
               authorized_cidrs: []
       summary: Create Service
-      description: Create a new Service with the attributes provided in the requst
+      description:  |-
+        Create a new Service with the attributes provided in the requst
         payload.
       operationId: createService
       parameters:
