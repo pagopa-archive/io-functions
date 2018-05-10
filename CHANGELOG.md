@@ -11,8 +11,10 @@ The format of this file is loosely based on [Keep a Changelog](http://keepachang
 
 ## [Unreleased]
 
+## [v0.39.0] - 2018-05-04
+
 ### Added
-- [getMessage] Added `created_at` field in returned message payload 
+- [getMessage] Added `created_at` field to the returned message payload 
 
 ## [v0.38.0] - 2018-05-04
 
@@ -20,7 +22,7 @@ The format of this file is loosely based on [Keep a Changelog](http://keepachang
 - Added CHANGELOG.md
 
 ### Fixed
-- Small tweaks to the release procedure
+- Small tweaks for the release procedure
 
 ## [v0.37.0] - 2018-29-03
 
