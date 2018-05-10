@@ -56,6 +56,18 @@ import {
   MessagePayloadMiddleware
 } from "../messages";
 
+import * as lolex from "lolex";
+
+// mock time (ie. created_at)
+// tslint:disable-next-line:no-let
+let clock: any;
+beforeEach(() => {
+  clock = lolex.install();
+});
+afterEach(() => {
+  clock.uninstall();
+});
+
 afterEach(() => {
   jest.resetAllMocks();
   jest.restoreAllMocks();
