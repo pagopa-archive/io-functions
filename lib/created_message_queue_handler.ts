@@ -17,7 +17,7 @@ import { configureAzureContextTransport } from "./utils/logging";
 
 import * as documentDbUtils from "./utils/documentdb";
 
-import { fromNullable, none, Option, some } from "fp-ts/lib/Option";
+import { fromNullable, isNone, none, Option, some } from "fp-ts/lib/Option";
 
 import {
   BlobService,
@@ -33,7 +33,7 @@ import { CreatedMessageEvent } from "./models/created_message_event";
 import { MessageModel, NewMessageWithContent } from "./models/message";
 import {
   createNewNotification,
-  Notification,
+  NewNotification,
   NotificationAddressSourceEnum,
   NotificationChannelEmail,
   NotificationModel
@@ -45,7 +45,7 @@ import { Either, isLeft, left, right } from "fp-ts/lib/Either";
 import { readableReport } from "italia-ts-commons/lib/reporters";
 
 import { handleQueueProcessingFailure } from "./utils/azure_queues";
-import { RuntimeError, TransientError } from "./utils/errors";
+import { PermanentError, RuntimeError, TransientError } from "./utils/errors";
 
 import { MessageStatusValueEnum } from "./api/definitions/MessageStatusValue";
 import { NotificationChannelEnum } from "./api/definitions/NotificationChannel";
@@ -187,10 +187,10 @@ async function createNotification(
   lNotificationModel: NotificationModel,
   senderMetadata: CreatedMessageEventSenderMetadata,
   newMessageWithContent: NewMessageWithContent,
-  newNotification: Notification
-): Promise<Either<RuntimeError, Option<NotificationEvent>>> {
+  newNotification: NewNotification
+): Promise<Either<RuntimeError, NotificationEvent>> {
   const errorOrNotification = await lNotificationModel.create(
-    createNewNotification(ulidGenerator, newNotification),
+    newNotification,
     newNotification.messageId
   );
 
@@ -208,7 +208,7 @@ async function createNotification(
     notificationId: notification.id,
     senderMetadata
   };
-  return right(some(notificationEvent));
+  return right(notificationEvent);
 }
 
 /**
@@ -276,42 +276,20 @@ export async function handleMessage(
   //  Email notification
   //
 
-  const errorOrMaybeEmailNotification = await maybeProfile
+  const maybeEmailNotification = maybeProfile
     // try to get the destination email address from the user's profile
     .chain(getEmailAddressFromProfile)
     // if it's not set, or we don't have a profile for this fiscal code,
     // try to get the default email address from the request payload
-    .alt(defaultAddresses.chain(getEmailAddressFromDefaultAddresses))
-    .foldL<Promise<Either<RuntimeError, Option<NotificationEvent>>>>(
-      // if we didn't get any destination address, just log a warning
-      async () => {
-        winston.warn(
-          `Fiscal code has no associated email address and no default email address was provided|${
-            newMessageWithContent.fiscalCode
-          }`
-        );
-        return right(none);
-      },
-      // if we got a destination address from profile or defaults,
-      // try to create an email notification to enqueue
-      async notificationChannelEmail =>
-        await createNotification(
-          lNotificationModel,
-          senderMetadata,
-          newMessageWithContent,
-          {
-            channel: notificationChannelEmail,
-            fiscalCode: newMessageWithContent.fiscalCode,
-            messageId: newMessageWithContent.id,
-            type: NotificationChannelEnum.EMAIL
-          }
-        )
-    );
+    .alt(defaultAddresses.chain(getEmailAddressFromDefaultAddresses));
 
-  if (isLeft(errorOrMaybeEmailNotification)) {
-    return left(errorOrMaybeEmailNotification.value);
+  if (isNone(maybeEmailNotification)) {
+    winston.warn(
+      `Fiscal code has no associated email address and no default email address was provided|${
+        newMessageWithContent.fiscalCode
+      }`
+    );
   }
-  const maybeEmailNotification = errorOrMaybeEmailNotification.value;
 
   //
   //  Webhook notification
@@ -322,33 +300,57 @@ export async function handleMessage(
     profile => profile.isWebhookEnabled === true
   );
 
-  const errorOrMaybeWebhookNotification = isWebhookEnabled
-    ? await createNotification(
-        lNotificationModel,
-        senderMetadata,
-        newMessageWithContent,
-        {
-          channel: {
-            url: lDefaultWebhookUrl
-          },
-          fiscalCode: newMessageWithContent.fiscalCode,
-          messageId: newMessageWithContent.id,
-          type: NotificationChannelEnum.WEBHOOK
-        }
-      )
-    : right<RuntimeError, Option<NotificationEvent>>(none);
+  const maybeWebhookNotification = isWebhookEnabled
+    ? some({
+        url: lDefaultWebhookUrl
+      })
+    : none;
 
-  if (isLeft(errorOrMaybeWebhookNotification)) {
-    return left(errorOrMaybeWebhookNotification.value);
+  if (isNone(maybeEmailNotification) && isNone(maybeWebhookNotification)) {
+    return left(
+      PermanentError(
+        `No channels configured for the user ${
+          newMessageWithContent.fiscalCode
+        }`
+      )
+    );
   }
-  const maybeWebhookNotification = errorOrMaybeWebhookNotification.value;
+
+  const newNotification: NewNotification = {
+    ...createNewNotification(
+      ulidGenerator,
+      newMessageWithContent.fiscalCode,
+      newMessageWithContent.id
+    ),
+    channels: withoutUndefinedValues({
+      [NotificationChannelEnum.EMAIL]: maybeEmailNotification.toUndefined(),
+      [NotificationChannelEnum.WEBHOOK]: maybeWebhookNotification.toUndefined()
+    })
+  };
+
+  const errorOrNotificationEvent = await createNotification(
+    lNotificationModel,
+    senderMetadata,
+    newMessageWithContent,
+    newNotification
+  );
+
+  if (isLeft(errorOrNotificationEvent)) {
+    return left(errorOrNotificationEvent.value);
+  }
+
+  const notificationEvent = errorOrNotificationEvent.value;
 
   //
   //  Return notification events (one for each channel)
   //
   const outputBindings: OutputBindings = {
-    emailNotification: maybeEmailNotification.toUndefined(),
-    webhookNotification: maybeWebhookNotification.toUndefined()
+    emailNotification: maybeEmailNotification
+      .map(() => notificationEvent)
+      .toUndefined(),
+    webhookNotification: maybeWebhookNotification
+      .map(() => notificationEvent)
+      .toUndefined()
   };
 
   // avoid to enqueue messages for non existing notifications

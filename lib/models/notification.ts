@@ -64,8 +64,9 @@ export type NotificationChannelEmail = t.TypeOf<
 
 export const EmailNotification = t.interface({
   ...NotificationBase.props,
-  channel: NotificationChannelEmail,
-  type: t.literal(NotificationChannelEnum.EMAIL)
+  channels: t.interface({
+    [NotificationChannelEnum.EMAIL]: NotificationChannelEmail
+  })
 });
 export type EmailNotification = t.TypeOf<typeof EmailNotification>;
 
@@ -80,16 +81,24 @@ export type NotificationChannelWebhook = t.TypeOf<
 
 export const WebhookNotification = t.interface({
   ...NotificationBase.props,
-  channel: NotificationChannelWebhook,
-  type: t.literal(NotificationChannelEnum.WEBHOOK)
+  channels: t.interface({
+    [NotificationChannelEnum.WEBHOOK]: NotificationChannelWebhook
+  })
 });
 export type WebhookNotification = t.TypeOf<typeof WebhookNotification>;
 
 // Generic Notification object
 
-export const Notification = t.taggedUnion("type", [
-  WebhookNotification,
-  EmailNotification
+export const Notification = t.intersection([
+  NotificationBase,
+  t.interface({
+    channels: t.exact(
+      t.partial({
+        [NotificationChannelEnum.EMAIL]: NotificationChannelEmail,
+        [NotificationChannelEnum.WEBHOOK]: NotificationChannelWebhook
+      })
+    )
+  })
 ]);
 export type Notification = t.TypeOf<typeof Notification>;
 
@@ -111,12 +120,15 @@ export type NewNotification = t.TypeOf<typeof NewNotification>;
  */
 export function createNewNotification(
   ulidGenerator: ObjectIdGenerator,
-  notification: Notification
+  fiscalCode: FiscalCode,
+  messageId: NonEmptyString
 ): NewNotification {
   return {
+    channels: {},
+    fiscalCode,
     id: ulidGenerator(),
     kind: "INewNotification",
-    ...notification
+    messageId
   };
 }
 
@@ -136,12 +148,7 @@ export type RetrievedNotification = t.TypeOf<typeof RetrievedNotification>;
 
 /* istanbul ignore next */
 function toBaseType(o: RetrievedNotification): Notification {
-  // this cast is due to a typescript limitation inferring union types
-  // see https://github.com/gcanti/io-ts/issues/169
-  return pick(
-    ["fiscalCode", "messageId", "channel", "type"],
-    o
-  ) as Notification;
+  return pick(["fiscalCode", "messageId", "channels"], o);
 }
 
 function toRetrieved(

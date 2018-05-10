@@ -56,6 +56,18 @@ import {
   MessagePayloadMiddleware
 } from "../messages";
 
+import * as lolex from "lolex";
+
+// mock time (ie. created_at)
+// tslint:disable-next-line:no-let
+let clock: any;
+beforeEach(() => {
+  clock = lolex.install();
+});
+afterEach(() => {
+  clock.uninstall();
+});
+
 afterEach(() => {
   jest.resetAllMocks();
   jest.restoreAllMocks();
@@ -900,15 +912,16 @@ describe("GetMessageHandler", () => {
     const aRetrievedNotification: RetrievedNotification = {
       _self: "xyz",
       _ts: 123,
-      channel: {
-        addressSource: NotificationAddressSourceEnum.PROFILE_ADDRESS,
-        toAddress: "x@example.com" as EmailString
+      channels: {
+        [NotificationChannelEnum.EMAIL]: {
+          addressSource: NotificationAddressSourceEnum.PROFILE_ADDRESS,
+          toAddress: "x@example.com" as EmailString
+        }
       },
       fiscalCode: aFiscalCode,
       id: "A_NOTIFICATION_ID" as NonEmptyString,
       kind: "IRetrievedNotification",
-      messageId: "A_MESSAGE_ID" as NonEmptyString,
-      type: NotificationChannelEnum.EMAIL
+      messageId: "A_MESSAGE_ID" as NonEmptyString
     };
 
     const mockMessageModel = {
