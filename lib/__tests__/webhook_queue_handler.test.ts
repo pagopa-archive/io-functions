@@ -28,6 +28,7 @@ import { FiscalCode } from "../api/definitions/FiscalCode";
 import {
   handleNotification,
   index,
+  sendToWebhook,
   WEBHOOK_NOTIFICATION_QUEUE_NAME
 } from "../webhook_queue_handler";
 
@@ -161,10 +162,22 @@ const aRetrievedNotificationStatus: RetrievedNotificationStatus = {
   version: 1 as NonNegativeNumber
 };
 
-// tslint:disable-next-line
-// describe("sendToWebhook", () => {
-//   it("should ", async () => {});
-// });
+describe("sendToWebhook", () => {
+  it("should return a transient error in case of timeout", async () => {
+    const sendMock = jest.fn();
+    sendMock.mockImplementation(() => {
+      return Promise.reject({ timeout: true });
+    });
+    // tslint:disable-next-line:no-object-mutation
+    (superagent as any).Request.prototype.send = sendMock;
+    const ret = await sendToWebhook({} as any, {} as any, {} as any);
+    expect(sendMock).toHaveBeenCalledTimes(1);
+    expect(isLeft(ret)).toBeTruthy();
+    if (isLeft(ret)) {
+      expect(isTransient(ret.value)).toBeTruthy();
+    }
+  });
+});
 
 describe("handleNotification", () => {
   it("should return a transient error when there's an error while retrieving the notification", async () => {
@@ -232,13 +245,13 @@ describe("handleNotification", () => {
       update: jest.fn(() => Promise.resolve(right(some(aNotification))))
     };
 
+    mockSuperagentResponse({ status: 200 });
+
     const result = await handleNotification(
       mockAppinsights as any,
       notificationModelMock as any,
       getMockNotificationEvent(aMessageContent)
     );
-
-    mockSuperagentResponse({ status: 200 });
 
     expect(mockAppinsights.trackEvent).toHaveBeenCalledWith({
       name: "notification.webhook.delivery",
