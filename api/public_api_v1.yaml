@@ -46,7 +46,8 @@ paths:
     get:
       operationId: getMessage
       summary: Get Message
-      description: The previously created message with the provided message ID is
+      description: |-
+        The previously created message with the provided message ID is
         returned.
       responses:
         '200':
@@ -61,7 +62,8 @@ paths:
                 time_to_live: 3600
                 content:
                   subject: message subject, aliquip sint nulla in estinut
-                  markdown: Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas et mollis felis.
+                  markdown:  |-
+                    Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas et mollis felis.
                     Vivamus orci nisl, commodo ut sodales ut, eleifend a libero. Donec dapibus, turpis in mattis tempor,
                     risus nunc malesuada ex, non aliquet metus nunc a lacus. Aenean in arcu vitae nisl porta
                     fermentum nec non nibh. Phasellus tortor tellus, semper in metus eget, eleifend
@@ -103,7 +105,8 @@ paths:
                 time_to_live: 3600
                 content:
                   subject: amet sunt dolor nulla esseesseanim
-                  markdown: Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas et mollis felis.
+                  markdown:  |-
+                    Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas et mollis felis.
                     Vivamus orci nisl, commodo ut sodales ut, eleifend a libero. Donec dapibus, turpis in mattis tempor,
                     risus nunc malesuada ex, non aliquet metus nunc a lacus. Aenean in arcu vitae nisl porta
                     fermentum nec non nibh. Phasellus tortor tellus, semper in metus eget, eleifend
@@ -114,7 +117,8 @@ paths:
                 time_to_live: 3600
                 content:
                   subject: idUt quis tempor esseesseanim
-                  markdown: Nullam dapibus metus sed elementum efficitur. Curabitur facilisis sagittis risus nec sodales.
+                  markdown:  |-
+                    Nullam dapibus metus sed elementum efficitur. Curabitur facilisis sagittis risus nec sodales.
                     Vestibulum in eros sapien. Donec ac odio sit amet dui semper ornare eget nec odio. Pellentesque habitant
                     morbi tristique senectus et netus et malesuada fames ac turpis egestas. Praesent nibh ex, mattis sit amet
                     felis id, sodales euismod velit. Lorem ipsum dolor sit amet, consectetur adipiscing elit.
@@ -143,7 +147,8 @@ paths:
             time_to_live: 3600
             content:
               subject: ipsum labore deserunt fugiat
-              markdown: Nullam dapibus metus sed elementum efficitur. Curabitur facilisis sagittis risus nec sodales.
+              markdown:  |-
+                Nullam dapibus metus sed elementum efficitur. Curabitur facilisis sagittis risus nec sodales.
                 Vestibulum in eros sapien. Donec ac odio sit amet dui semper ornare eget nec odio. Pellentesque habitant
                 morbi tristique senectus et netus et malesuada fames ac turpis egestas. Praesent nibh ex, mattis sit amet
                 felis id, sodales euismod velit. Lorem ipsum dolor sit amet, consectetur adipiscing elit.
@@ -172,7 +177,8 @@ paths:
     get:
       operationId: getProfile
       summary: Get User's Preferences
-      description: Returns the preferences for the user identified by the provided
+      description:  |-
+        Returns the preferences for the user identified by the provided
         fiscal code.
       responses:
         '200':
@@ -211,7 +217,8 @@ paths:
           description: Profile cannot be updated.
           schema:
             $ref: "#/definitions/ProblemJson"
-      description: Create or update the preferences for the user identified by the
+      description:  |-
+        Create or update the preferences for the user identified by the
         provided fiscal code.
       operationId: upsertProfile
       summary: Set User's Preferences
