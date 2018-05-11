@@ -2580,9 +2580,9 @@ fs-extra@6.0.0:
     jsonfile "^4.0.0"
     universalify "^0.1.0"
 
-fs-extra@^5.0.0:
-  version "5.0.0"
-  resolved "https://registry.yarnpkg.com/fs-extra/-/fs-extra-5.0.0.tgz#414d0110cdd06705734d055652c5411260c31abd"
+fs-extra@^6.0.0:
+  version "6.0.1"
+  resolved "https://registry.yarnpkg.com/fs-extra/-/fs-extra-6.0.1.tgz#8abc128f7946e310135ddc93b98bddb410e7a34b"
   dependencies:
     graceful-fs "^4.1.2"
     jsonfile "^4.0.0"
@@ -3700,11 +3700,11 @@ italia-ts-commons@^1.0.0:
     json-set-map "^1.0.2"
     validator "^9.4.1"
 
-italia-utils@^2.1.0:
-  version "2.1.0"
-  resolved "https://registry.yarnpkg.com/italia-utils/-/italia-utils-2.1.0.tgz#90536c3c29ad63d47ecceb81fdbc89eb7051800a"
+italia-utils@^3.7.0:
+  version "3.7.0"
+  resolved "https://registry.yarnpkg.com/italia-utils/-/italia-utils-3.7.0.tgz#5f6bd5d9442840b1bcdea155afb8c398e16ed6c8"
   dependencies:
-    fs-extra "^5.0.0"
+    fs-extra "^6.0.0"
     nunjucks "^3.1.2"
     prettier "^1.12.1"
     swagger-parser "^4.1.0"
@@ -4866,8 +4866,8 @@ lodash@~1.0.1:
   resolved "https://registry.yarnpkg.com/lodash/-/lodash-1.0.2.tgz#8f57560c83b59fc270bd3d561b690043430e2551"
 
 lolex@^2.4.1:
-  version "2.4.1"
-  resolved "https://registry.yarnpkg.com/lolex/-/lolex-2.4.1.tgz#960884895837916e8963a54e58edf97c95d3060c"
+  version "2.4.2"
+  resolved "https://registry.yarnpkg.com/lolex/-/lolex-2.4.2.tgz#d1d8df28fac51920b969aea10f90366b4c0d5e93"
 
 longest@^1.0.1:
   version "1.0.1"

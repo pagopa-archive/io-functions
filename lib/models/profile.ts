@@ -15,6 +15,7 @@ import { Option } from "fp-ts/lib/Option";
 
 import { NonNegativeNumber } from "italia-ts-commons/lib/numbers";
 import { NonEmptyString } from "italia-ts-commons/lib/strings";
+import { BlockedChannels } from "../api/definitions/BlockedChannels";
 import { EmailAddress } from "../api/definitions/EmailAddress";
 import { FiscalCode } from "../api/definitions/FiscalCode";
 import { IsInboxEnabled } from "../api/definitions/IsInboxEnabled";
@@ -31,6 +32,10 @@ export const Profile = t.intersection([
     fiscalCode: FiscalCode
   }),
   t.partial({
+    // Notification channels blocked by the user;
+    // each channel is related to a specific Service (sender)
+    blockedChannels: BlockedChannels,
+
     // the preferred email for receiving email notifications
     // if defined, will override the default email provided by the API client
     // if defined, will enable email notifications for the citizen
