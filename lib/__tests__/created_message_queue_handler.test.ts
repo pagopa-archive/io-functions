@@ -27,7 +27,8 @@ import {
   EmailNotification,
   NewNotification,
   NotificationAddressSourceEnum,
-  NotificationModel
+  NotificationModel,
+  WebhookNotification
 } from "../models/notification";
 import { ProfileModel, RetrievedProfile } from "../models/profile";
 
@@ -62,16 +63,28 @@ afterEach(() => {
 const aCorrectFiscalCode = "FRLFRC74E04B157I" as FiscalCode;
 const aWrongFiscalCode = "FRLFRC74E04B157" as FiscalCode;
 const anEmail = "x@example.com" as EmailString;
+const aUrl = "http://aUrl.com" as HttpsUrl;
 
 const anEmailNotification: EmailNotification = {
-  channel: {
-    addressSource: NotificationAddressSourceEnum.PROFILE_ADDRESS,
-    // fromAddress: anEmail,
-    toAddress: anEmail
+  channels: {
+    [NotificationChannelEnum.EMAIL]: {
+      addressSource: NotificationAddressSourceEnum.PROFILE_ADDRESS,
+      // fromAddress: anEmail,
+      toAddress: anEmail
+    }
   },
   fiscalCode: aCorrectFiscalCode,
-  messageId: "m123" as NonEmptyString,
-  type: NotificationChannelEnum.EMAIL
+  messageId: "m123" as NonEmptyString
+};
+
+const aWebhookNotification: WebhookNotification = {
+  channels: {
+    [NotificationChannelEnum.WEBHOOK]: {
+      url: aUrl
+    }
+  },
+  fiscalCode: aCorrectFiscalCode,
+  messageId: "m123" as NonEmptyString
 };
 
 const aMessageBodyMarkdown = "test".repeat(80) as MessageBodyMarkdown;
@@ -147,8 +160,6 @@ const anAttachmentMeta = {
   contentType: "application/json",
   media: "media.json"
 };
-
-const aUrl = "http://aUrl.com" as HttpsUrl;
 
 describe("createdMessageQueueIndex", () => {
   it("should return failure if createdMessage is undefined", async () => {
@@ -313,7 +324,7 @@ describe("handleMessage", () => {
     }
   });
 
-  it("should return an empty object if no channels can be resolved", async () => {
+  it("should fail with a permanent error if no channel can be resolved", async () => {
     const profileModelMock = {
       findOneProfileByFiscalCode: jest.fn(() => {
         return Promise.resolve(right(none));
@@ -332,9 +343,10 @@ describe("handleMessage", () => {
     expect(profileModelMock.findOneProfileByFiscalCode).toHaveBeenCalledWith(
       aCorrectFiscalCode
     );
-    expect(isRight(response)).toBeTruthy();
-    if (isRight(response)) {
-      expect(response.value).toEqual({});
+
+    expect(isLeft(response)).toBeTruthy();
+    if (isLeft(response)) {
+      expect(response.value.kind).toEqual("PermanentError");
     }
   });
 
@@ -366,9 +378,10 @@ describe("handleMessage", () => {
       expect(profileModelMock.findOneProfileByFiscalCode).toHaveBeenCalledWith(
         aCorrectFiscalCode
       );
-      expect(isRight(response)).toBeTruthy();
-      if (isRight(response)) {
-        expect(response.value).toEqual({});
+
+      expect(isLeft(response)).toBeTruthy();
+      if (isLeft(response)) {
+        expect(response.value.kind).toEqual("PermanentError");
       }
     }
   );
@@ -420,6 +433,59 @@ describe("handleMessage", () => {
   );
 
   it(
+    "should create a webhook notification if a profile exists for " +
+      "fiscal code and the webhook is enabled",
+    async () => {
+      const profileModelMock = {
+        findOneProfileByFiscalCode: jest.fn(() => {
+          return Promise.resolve(
+            right(
+              some({
+                ...aRetrievedProfileWithoutEmail,
+                isWebhookEnabled: true
+              })
+            )
+          );
+        })
+      };
+
+      const notificationModelMock = {
+        create: jest.fn((document, _) => {
+          return Promise.resolve(right(document));
+        })
+      };
+
+      const response = await handleMessage(
+        profileModelMock as any,
+        {} as any,
+        notificationModelMock as any,
+        {} as any,
+        aUrl,
+        aMessageEvent
+      );
+
+      expect(profileModelMock.findOneProfileByFiscalCode).toHaveBeenCalledWith(
+        aCorrectFiscalCode
+      );
+
+      expect(notificationModelMock.create).toHaveBeenCalledWith(
+        {
+          ...aWebhookNotification,
+          id: expect.anything(),
+          kind: "INewNotification"
+        },
+        anEmailNotification.messageId
+      );
+
+      expect(isRight(response)).toBeTruthy();
+      if (isRight(response)) {
+        expect(response.value).not.toBeUndefined();
+        expect(response.value.webhookNotification).not.toBeUndefined();
+      }
+    }
+  );
+
+  it(
     "should create a notification with an email if a profile exists for " +
       "fiscal code, the email field is empty but a default email was provided",
     async () => {
@@ -461,13 +527,14 @@ describe("handleMessage", () => {
       expect(notificationModelMock.create).toHaveBeenCalledWith(
         {
           ...anEmailNotification,
-          channel: {
-            ...anEmailNotification.channel,
-            addressSource: NotificationAddressSourceEnum.DEFAULT_ADDRESS
+          channels: {
+            [NotificationChannelEnum.EMAIL]: {
+              ...anEmailNotification.channels.EMAIL,
+              addressSource: NotificationAddressSourceEnum.DEFAULT_ADDRESS
+            }
           },
           id: expect.anything(),
-          kind: "INewNotification",
-          type: "EMAIL"
+          kind: "INewNotification"
         },
         anEmailNotification.messageId
       );
@@ -514,13 +581,14 @@ describe("handleMessage", () => {
       expect(notificationModelMock.create).toHaveBeenCalledWith(
         {
           ...anEmailNotification,
-          channel: {
-            ...anEmailNotification.channel,
-            addressSource: NotificationAddressSourceEnum.DEFAULT_ADDRESS
+          channels: {
+            [NotificationChannelEnum.EMAIL]: {
+              ...anEmailNotification.channels.EMAIL,
+              addressSource: NotificationAddressSourceEnum.DEFAULT_ADDRESS
+            }
           },
           id: expect.anything(),
-          kind: "INewNotification",
-          type: "EMAIL"
+          kind: "INewNotification"
         },
         anEmailNotification.messageId
       );

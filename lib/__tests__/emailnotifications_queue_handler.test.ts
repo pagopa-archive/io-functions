@@ -133,13 +133,14 @@ const getMockNotificationEvent = (
 };
 
 const aNotification: Notification = {
-  channel: {
-    addressSource: NotificationAddressSourceEnum.DEFAULT_ADDRESS,
-    toAddress: "pinco@pallino.com" as EmailString
+  channels: {
+    [NotificationChannelEnum.EMAIL]: {
+      addressSource: NotificationAddressSourceEnum.DEFAULT_ADDRESS,
+      toAddress: "pinco@pallino.com" as EmailString
+    }
   },
   fiscalCode: aFiscalCode,
-  messageId: aMessageId,
-  type: NotificationChannelEnum.EMAIL
+  messageId: aMessageId
 };
 
 const aRetrievedNotificationStatus: RetrievedNotificationStatus = {
