@@ -48,7 +48,11 @@ import {
   NotificationModel
 } from "./models/notification";
 import { NotificationEvent } from "./models/notification_event";
-import { ProfileModel, RetrievedProfile } from "./models/profile";
+import {
+  IProfileBlockedChannels,
+  ProfileModel,
+  RetrievedProfile
+} from "./models/profile";
 
 import { Either, isLeft, left, right } from "fp-ts/lib/Either";
 import { readableReport } from "italia-ts-commons/lib/reporters";
@@ -258,15 +262,14 @@ export async function handleMessage(
   const maybeProfile = errorOrMaybeProfile.value;
 
   // channels ther user has blocked for this sender service
-  const blockedChannels = new Set(
-    maybeProfile
-      .chain(profile =>
-        fromNullable(profile.blockedChannels).map(
-          bc => bc[newMessageWithContent.senderServiceId]
-        )
+  const blockedChannels = maybeProfile
+    .chain(profile =>
+      fromNullable(profile.blockedChannels).map(
+        (bc: IProfileBlockedChannels) =>
+          bc[newMessageWithContent.senderServiceId]
       )
-      .getOrElse([])
-  );
+    )
+    .getOrElse(new Set());
 
   winston.debug(
     "handleMessage|Blocked Channels(%s): %s",
