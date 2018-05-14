@@ -30,7 +30,7 @@
     "@types/node": "^6.0.0",
     "@types/nodemailer": "^4.6.0",
     "@types/superagent": "^3.5.8",
-    "@types/validator": "^6.3.0",
+    "@types/validator": "^9.4.1",
     "@types/vfile": "^2.2.1",
     "@types/winston": "^2.3.9",
     "applicationinsights": "^0.22.0",

@@ -127,9 +127,9 @@
   version "1.0.0"
   resolved "https://registry.yarnpkg.com/@types/unist/-/unist-1.0.0.tgz#a05df966d9b4b8191f04bf5109056a1848fcb9dd"
 
-"@types/validator@^6.3.0":
-  version "6.3.0"
-  resolved "https://registry.yarnpkg.com/@types/validator/-/validator-6.3.0.tgz#d7454bd67c6a933a9dbe939ae16edbf0f6894e70"
+"@types/validator@^9.4.1":
+  version "9.4.1"
+  resolved "https://registry.yarnpkg.com/@types/validator/-/validator-9.4.1.tgz#bea5a290e61f1cbf12af3fd878706aeec2ba0087"
 
 "@types/vfile@^2.2.1":
   version "2.2.2"
