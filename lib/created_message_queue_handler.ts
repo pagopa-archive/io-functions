@@ -278,7 +278,7 @@ export async function handleMessage(
   //  Inbox storage
   //
 
-  // check if the user has blocked webhook notifications sent from this service
+  // check if the user has blocked inbox message storage from this service
   const userHasBlockedMessageStorage = blockedChannels.has(
     BlockedChannelEnum.INBOX
   );
