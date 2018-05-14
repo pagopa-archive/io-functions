@@ -17,7 +17,16 @@ import { configureAzureContextTransport } from "./utils/logging";
 
 import * as documentDbUtils from "./utils/documentdb";
 
-import { fromNullable, isNone, none, Option, some } from "fp-ts/lib/Option";
+import { Set } from "json-set-map";
+
+import {
+  fromNullable,
+  fromPredicate,
+  isNone,
+  none,
+  Option,
+  some
+} from "fp-ts/lib/Option";
 
 import {
   BlobService,
@@ -51,6 +60,7 @@ import { MessageStatusValueEnum } from "./api/definitions/MessageStatusValue";
 import { NotificationChannelEnum } from "./api/definitions/NotificationChannel";
 
 import { withoutUndefinedValues } from "italia-ts-commons/lib/types";
+import { BlockedChannelEnum } from "./api/definitions/BlockedChannel";
 import { HttpsUrl } from "./api/definitions/HttpsUrl";
 import { CreatedMessageEventSenderMetadata } from "./models/created_message_sender_metadata";
 import {
@@ -247,14 +257,36 @@ export async function handleMessage(
   // query succeeded, we may have a profile
   const maybeProfile = errorOrMaybeProfile.value;
 
-  // whether the recipient wants us to store the message content
-  const isMessageStorageEnabled = maybeProfile.exists(
-    profile => profile.isInboxEnabled === true
+  // channels ther user has blocked for this sender service
+  const blockedChannels = new Set(
+    maybeProfile
+      .chain(profile =>
+        fromNullable(profile.blockedChannels).map(
+          bc => bc[newMessageWithContent.senderServiceId]
+        )
+      )
+      .getOrElse([])
+  );
+
+  winston.debug(
+    "handleMessage|Blocked Channels(%s): %s",
+    newMessageWithContent.fiscalCode,
+    JSON.stringify(blockedChannels)
   );
 
   //
   //  Inbox storage
   //
+
+  // check if the user has blocked webhook notifications sent from this service
+  const userHasBlockedMessageStorage = blockedChannels.has(
+    BlockedChannelEnum.INBOX
+  );
+
+  // whether the recipient wants us to store the message content
+  const isMessageStorageEnabled =
+    !userHasBlockedMessageStorage &&
+    maybeProfile.exists(profile => profile.isInboxEnabled === true);
 
   if (isMessageStorageEnabled) {
     // If the recipient wants to store the messages
@@ -276,6 +308,21 @@ export async function handleMessage(
   //  Email notification
   //
 
+  // check if the user has blocked emails sent from this service
+  // 'some(true)' in case we must send the notification by email
+  // 'none' in case the user has blocked the email channel
+  const maybeIsUnblockedEmail = fromPredicate(
+    (hasBlockedEmail: boolean) => !hasBlockedEmail
+  )(blockedChannels.has(BlockedChannelEnum.EMAIL));
+
+  if (isNone(maybeIsUnblockedEmail)) {
+    winston.warn(
+      `User has blocked email notifications for this serviceId|${
+        newMessageWithContent.fiscalCode
+      }:${newMessageWithContent.senderServiceId}`
+    );
+  }
+
   const maybeEmailNotification = maybeProfile
     // try to get the destination email address from the user's profile
     .chain(getEmailAddressFromProfile)
@@ -291,22 +338,40 @@ export async function handleMessage(
     );
   }
 
+  const maybeUnblockedEmailNotification = maybeIsUnblockedEmail.chain(
+    _ => maybeEmailNotification
+  );
+
   //
   //  Webhook notification
   //
 
-  // whether the recipient wants us to send notifications to the app backend
-  const isWebhookEnabled = maybeProfile.exists(
-    profile => profile.isWebhookEnabled === true
-  );
+  // check if the user has blocked webhook notifications sent from this service
+  const isBlockedWebhook = blockedChannels.has(BlockedChannelEnum.WEBHOOK);
 
-  const maybeWebhookNotification = isWebhookEnabled
+  if (isBlockedWebhook) {
+    winston.warn(
+      `User has blocked webhook notifications for this serviceId|${
+        newMessageWithContent.fiscalCode
+      }:${newMessageWithContent.senderServiceId}`
+    );
+  }
+
+  // whether the recipient wants us to send notifications to the app backend
+  const isWebhookEnabled =
+    !isBlockedWebhook &&
+    maybeProfile.exists(profile => profile.isWebhookEnabled === true);
+
+  const maybeUnblockedWebhookNotification = isWebhookEnabled
     ? some({
         url: lDefaultWebhookUrl
       })
     : none;
 
-  if (isNone(maybeEmailNotification) && isNone(maybeWebhookNotification)) {
+  if (
+    isNone(maybeUnblockedEmailNotification) &&
+    isNone(maybeUnblockedWebhookNotification)
+  ) {
     return left(
       PermanentError(
         `No channels configured for the user ${
@@ -323,8 +388,8 @@ export async function handleMessage(
       newMessageWithContent.id
     ),
     channels: withoutUndefinedValues({
-      [NotificationChannelEnum.EMAIL]: maybeEmailNotification.toUndefined(),
-      [NotificationChannelEnum.WEBHOOK]: maybeWebhookNotification.toUndefined()
+      [NotificationChannelEnum.EMAIL]: maybeUnblockedEmailNotification.toUndefined(),
+      [NotificationChannelEnum.WEBHOOK]: maybeUnblockedWebhookNotification.toUndefined()
     })
   };
 
@@ -345,10 +410,10 @@ export async function handleMessage(
   //  Return notification events (one for each channel)
   //
   const outputBindings: OutputBindings = {
-    emailNotification: maybeEmailNotification
+    emailNotification: maybeUnblockedEmailNotification
       .map(() => notificationEvent)
       .toUndefined(),
-    webhookNotification: maybeWebhookNotification
+    webhookNotification: maybeUnblockedWebhookNotification
       .map(() => notificationEvent)
       .toUndefined()
   };
