@@ -16,7 +16,7 @@
     "lint": "tslint -p . -c tslint.json -t verbose",
     "prettify": "prettier --write './**/*.ts'",
     "test": "gulp test",
-    "generate:models:clean": "rimraf lib/api/definitions/* && ls lib/api",
+    "generate:models:clean": "rimraf lib/api/definitions/*",
     "generate:models:public_api_v1": "gen-api-models --api-spec ./api/public_api_v1.yaml --out-dir ./lib/api/definitions --ts-spec-file ./lib/api/public_api_v1.ts",
     "generate:models:admin_api": "gen-api-models --api-spec ./api/admin_api.yaml --out-dir ./lib/api/definitions --ts-spec-file ./lib/api/admin_api.ts",
     "generate:models": "npm-run-all -s generate:models:*",
