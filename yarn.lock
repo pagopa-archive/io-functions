@@ -3700,9 +3700,9 @@ italia-ts-commons@^1.0.0:
     json-set-map "^1.0.2"
     validator "^9.4.1"
 
-italia-utils@^3.7.0:
-  version "3.7.0"
-  resolved "https://registry.yarnpkg.com/italia-utils/-/italia-utils-3.7.0.tgz#5f6bd5d9442840b1bcdea155afb8c398e16ed6c8"
+italia-utils@^3.7.1:
+  version "3.7.1"
+  resolved "https://registry.yarnpkg.com/italia-utils/-/italia-utils-3.7.1.tgz#7e6f550744edf2552644945d927d85b798ddaa72"
   dependencies:
     fs-extra "^6.0.0"
     nunjucks "^3.1.2"
