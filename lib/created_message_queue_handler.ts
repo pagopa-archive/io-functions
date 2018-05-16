@@ -19,14 +19,7 @@ import * as documentDbUtils from "./utils/documentdb";
 
 import { Set } from "json-set-map";
 
-import {
-  fromNullable,
-  fromPredicate,
-  isNone,
-  none,
-  Option,
-  some
-} from "fp-ts/lib/Option";
+import { fromNullable, isNone, none, Option, some } from "fp-ts/lib/Option";
 
 import {
   BlobService,
@@ -49,7 +42,7 @@ import {
 } from "./models/notification";
 import { NotificationEvent } from "./models/notification_event";
 import {
-  IProfileBlockedChannels,
+  IProfileBlockedInboxOrChannels,
   ProfileModel,
   RetrievedProfile
 } from "./models/profile";
@@ -64,7 +57,7 @@ import { MessageStatusValueEnum } from "./api/definitions/MessageStatusValue";
 import { NotificationChannelEnum } from "./api/definitions/NotificationChannel";
 
 import { withoutUndefinedValues } from "italia-ts-commons/lib/types";
-import { BlockedChannelEnum } from "./api/definitions/BlockedChannel";
+import { BlockedInboxOrChannelEnum } from "./api/definitions/BlockedInboxOrChannel";
 import { HttpsUrl } from "./api/definitions/HttpsUrl";
 import { CreatedMessageEventSenderMetadata } from "./models/created_message_sender_metadata";
 import {
@@ -262,10 +255,10 @@ export async function handleMessage(
   const maybeProfile = errorOrMaybeProfile.value;
 
   // channels ther user has blocked for this sender service
-  const blockedChannels = maybeProfile
+  const blockedInboxOrChannels = maybeProfile
     .chain(profile =>
-      fromNullable(profile.blockedChannels).map(
-        (bc: IProfileBlockedChannels) =>
+      fromNullable(profile.blockedInboxOrChannels).map(
+        (bc: IProfileBlockedInboxOrChannels) =>
           bc[newMessageWithContent.senderServiceId]
       )
     )
@@ -274,7 +267,7 @@ export async function handleMessage(
   winston.debug(
     "handleMessage|Blocked Channels(%s): %s",
     newMessageWithContent.fiscalCode,
-    JSON.stringify(blockedChannels)
+    JSON.stringify(blockedInboxOrChannels)
   );
 
   //
@@ -282,16 +275,16 @@ export async function handleMessage(
   //
 
   // check if the user has blocked inbox message storage from this service
-  const userHasBlockedMessageStorage = blockedChannels.has(
-    BlockedChannelEnum.INBOX
+  const isMessageStorageBlockedForService = blockedInboxOrChannels.has(
+    BlockedInboxOrChannelEnum.INBOX
   );
 
   // whether the recipient wants us to store the message content
-  const isMessageStorageEnabled =
-    !userHasBlockedMessageStorage &&
+  const isMessageStorageEnabledAndAllowed =
+    !isMessageStorageBlockedForService &&
     maybeProfile.exists(profile => profile.isInboxEnabled === true);
 
-  if (isMessageStorageEnabled) {
+  if (isMessageStorageEnabledAndAllowed) {
     // If the recipient wants to store the messages
     // we add the content of the message to the blob storage for later retrieval.
     // In case of a retry this operation will overwrite the message content with itself
@@ -314,46 +307,46 @@ export async function handleMessage(
   // check if the user has blocked emails sent from this service
   // 'some(true)' in case we must send the notification by email
   // 'none' in case the user has blocked the email channel
-  const maybeIsUnblockedEmail = fromPredicate(
-    (hasBlockedEmail: boolean) => !hasBlockedEmail
-  )(blockedChannels.has(BlockedChannelEnum.EMAIL));
+  const isEmailBlockedForService = blockedInboxOrChannels.has(
+    BlockedInboxOrChannelEnum.EMAIL
+  );
 
-  if (isNone(maybeIsUnblockedEmail)) {
-    winston.warn(
+  if (isEmailBlockedForService) {
+    winston.debug(
       `User has blocked email notifications for this serviceId|${
         newMessageWithContent.fiscalCode
       }:${newMessageWithContent.senderServiceId}`
     );
   }
 
-  const maybeEmailNotification = maybeProfile
-    // try to get the destination email address from the user's profile
-    .chain(getEmailAddressFromProfile)
-    // if it's not set, or we don't have a profile for this fiscal code,
-    // try to get the default email address from the request payload
-    .alt(defaultAddresses.chain(getEmailAddressFromDefaultAddresses));
+  const maybeAllowedEmailNotification = isEmailBlockedForService
+    ? none
+    : maybeProfile
+        // try to get the destination email address from the user's profile
+        .chain(getEmailAddressFromProfile)
+        // if it's not set, or we don't have a profile for this fiscal code,
+        // try to get the default email address from the request payload
+        .alt(defaultAddresses.chain(getEmailAddressFromDefaultAddresses));
 
-  if (isNone(maybeEmailNotification)) {
-    winston.warn(
+  if (!isEmailBlockedForService && isNone(maybeAllowedEmailNotification)) {
+    winston.debug(
       `Fiscal code has no associated email address and no default email address was provided|${
         newMessageWithContent.fiscalCode
       }`
     );
   }
 
-  const maybeUnblockedEmailNotification = maybeIsUnblockedEmail.chain(
-    _ => maybeEmailNotification
-  );
-
   //
   //  Webhook notification
   //
 
   // check if the user has blocked webhook notifications sent from this service
-  const isBlockedWebhook = blockedChannels.has(BlockedChannelEnum.WEBHOOK);
+  const isWebhookBlockedForService = blockedInboxOrChannels.has(
+    BlockedInboxOrChannelEnum.WEBHOOK
+  );
 
-  if (isBlockedWebhook) {
-    winston.warn(
+  if (isWebhookBlockedForService) {
+    winston.debug(
       `User has blocked webhook notifications for this serviceId|${
         newMessageWithContent.fiscalCode
       }:${newMessageWithContent.senderServiceId}`
@@ -362,18 +355,18 @@ export async function handleMessage(
 
   // whether the recipient wants us to send notifications to the app backend
   const isWebhookEnabled =
-    !isBlockedWebhook &&
+    !isWebhookBlockedForService &&
     maybeProfile.exists(profile => profile.isWebhookEnabled === true);
 
-  const maybeUnblockedWebhookNotification = isWebhookEnabled
+  const maybeAllowedWebhookNotification = isWebhookEnabled
     ? some({
         url: lDefaultWebhookUrl
       })
     : none;
 
   if (
-    isNone(maybeUnblockedEmailNotification) &&
-    isNone(maybeUnblockedWebhookNotification)
+    isNone(maybeAllowedEmailNotification) &&
+    isNone(maybeAllowedWebhookNotification)
   ) {
     return left(
       PermanentError(
@@ -391,8 +384,8 @@ export async function handleMessage(
       newMessageWithContent.id
     ),
     channels: withoutUndefinedValues({
-      [NotificationChannelEnum.EMAIL]: maybeUnblockedEmailNotification.toUndefined(),
-      [NotificationChannelEnum.WEBHOOK]: maybeUnblockedWebhookNotification.toUndefined()
+      [NotificationChannelEnum.EMAIL]: maybeAllowedEmailNotification.toUndefined(),
+      [NotificationChannelEnum.WEBHOOK]: maybeAllowedWebhookNotification.toUndefined()
     })
   };
 
@@ -413,10 +406,10 @@ export async function handleMessage(
   //  Return notification events (one for each channel)
   //
   const outputBindings: OutputBindings = {
-    emailNotification: maybeUnblockedEmailNotification
+    emailNotification: maybeAllowedEmailNotification
       .map(() => notificationEvent)
       .toUndefined(),
-    webhookNotification: maybeUnblockedWebhookNotification
+    webhookNotification: maybeAllowedWebhookNotification
       .map(() => notificationEvent)
       .toUndefined()
   };

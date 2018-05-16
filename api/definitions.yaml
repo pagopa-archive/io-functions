@@ -38,7 +38,7 @@ NotificationChannel:
     - EMAIL
     - WEBHOOK
   example: EMAIL
-BlockedChannel:
+BlockedInboxOrChannel:
   type: string
   description: |-
     All notification channels plus the message inbox.
@@ -238,12 +238,12 @@ PaginationResponse:
         retrieved collection of items.
       format: uri
       example: https://example.com/?p=0XXX2
-BlockedChannels:
+BlockedInboxOrChannels:
   type: object
   additionalProperties:
     type: array
     items:
-      $ref: "#/BlockedChannel"
+      $ref: "#/BlockedInboxOrChannel"
   description: |-
     All the notification channels blocked by the user.
     Each channel is related to a specific service (sender).
@@ -263,8 +263,8 @@ ExtendedProfile:
   properties:
     email:
       $ref: "#/EmailAddress"
-    blocked_channels:
-      $ref: "#/BlockedChannels"
+    blocked_inbox_or_channels:
+      $ref: "#/BlockedInboxOrChannels"
     preferred_languages:
       $ref: "#/PreferredLanguages"
     is_inbox_enabled:

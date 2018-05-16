@@ -15,7 +15,7 @@ import { Option } from "fp-ts/lib/Option";
 
 import { NonNegativeNumber } from "italia-ts-commons/lib/numbers";
 import { NonEmptyString } from "italia-ts-commons/lib/strings";
-import { BlockedChannel } from "../api/definitions/BlockedChannel";
+import { BlockedInboxOrChannel } from "../api/definitions/BlockedInboxOrChannel";
 import { EmailAddress } from "../api/definitions/EmailAddress";
 import { FiscalCode } from "../api/definitions/FiscalCode";
 import { IsInboxEnabled } from "../api/definitions/IsInboxEnabled";
@@ -24,15 +24,15 @@ import { PreferredLanguages } from "../api/definitions/PreferredLanguages";
 import { ServiceId } from "../api/definitions/ServiceId";
 import { fiscalCodeToModelId } from "../utils/conversions";
 
-const ProfileBlockedChannels = t.dictionary(
+const ProfileBlockedInboxOrChannels = t.dictionary(
   ServiceId,
-  readonlySetType(BlockedChannel, "ProfileBlockedChannel"),
-  "ProfileBlockedChannels"
+  readonlySetType(BlockedInboxOrChannel, "ProfileBlockedInboxOrChannel"),
+  "ProfileBlockedInboxOrChannels"
 );
 
 // typescript does not allow to have ServiceId as key type here
-export interface IProfileBlockedChannels {
-  readonly [serviceId: string]: ReadonlySet<BlockedChannel>;
+export interface IProfileBlockedInboxOrChannels {
+  readonly [serviceId: string]: ReadonlySet<BlockedInboxOrChannel>;
 }
 
 /**
@@ -46,7 +46,7 @@ export const Profile = t.intersection([
   t.partial({
     // Notification channels blocked by the user;
     // each channel is related to a specific Service (sender)
-    blockedChannels: ProfileBlockedChannels,
+    blockedInboxOrChannels: ProfileBlockedInboxOrChannels,
 
     // the preferred email for receiving email notifications
     // if defined, will override the default email provided by the API client
