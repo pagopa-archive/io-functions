@@ -226,6 +226,7 @@ async function createNotification(
  *          a TransientError in case of recoverable errors
  *          a PermanentError in case of unrecoverable error
  */
+// tslint:disable-next-line:cognitive-complexity
 export async function handleMessage(
   lProfileModel: ProfileModel,
   lMessageModel: MessageModel,
@@ -313,7 +314,7 @@ export async function handleMessage(
 
   if (isEmailBlockedForService) {
     winston.debug(
-      `User has blocked email notifications for this serviceId|${
+      `handleMessage|User has blocked email notifications for this serviceId|${
         newMessageWithContent.fiscalCode
       }:${newMessageWithContent.senderServiceId}`
     );
@@ -333,7 +334,7 @@ export async function handleMessage(
 
   if (noEmailAddressFound) {
     winston.debug(
-      `Fiscal code has no associated email address and no default email address was provided|${
+      `handleMessage|User profile has no email address set and no default address was provided|${
         newMessageWithContent.fiscalCode
       }`
     );
@@ -350,7 +351,7 @@ export async function handleMessage(
 
   if (isWebhookBlockedForService) {
     winston.debug(
-      `User has blocked webhook notifications for this serviceId|${
+      `handleMessage|User has blocked webhook notifications for this serviceId|${
         newMessageWithContent.fiscalCode
       }:${newMessageWithContent.senderServiceId}`
     );
@@ -377,7 +378,7 @@ export async function handleMessage(
       PermanentError(
         `No channels configured for the user ${
           newMessageWithContent.fiscalCode
-        }`
+        } and no default address provided`
       )
     );
   }
