@@ -307,9 +307,9 @@ export async function handleMessage(
   // check if the user has blocked emails sent from this service
   // 'some(true)' in case we must send the notification by email
   // 'none' in case the user has blocked the email channel
-  const isEmailBlockedForService = blockedInboxOrChannels.has(
-    BlockedInboxOrChannelEnum.EMAIL
-  );
+  const isEmailBlockedForService =
+    isMessageStorageBlockedForService ||
+    blockedInboxOrChannels.has(BlockedInboxOrChannelEnum.EMAIL);
 
   if (isEmailBlockedForService) {
     winston.debug(
@@ -341,9 +341,9 @@ export async function handleMessage(
   //
 
   // check if the user has blocked webhook notifications sent from this service
-  const isWebhookBlockedForService = blockedInboxOrChannels.has(
-    BlockedInboxOrChannelEnum.WEBHOOK
-  );
+  const isWebhookBlockedForService =
+    isMessageStorageBlockedForService ||
+    blockedInboxOrChannels.has(BlockedInboxOrChannelEnum.WEBHOOK);
 
   if (isWebhookBlockedForService) {
     winston.debug(
