@@ -280,11 +280,11 @@ export async function handleMessage(
   );
 
   // whether the recipient wants us to store the message content
-  const isMessageStorageEnabledAndAllowed =
+  const isMessageStorageEnabledAndAllowedForService =
     !isMessageStorageBlockedForService &&
     maybeProfile.exists(profile => profile.isInboxEnabled === true);
 
-  if (isMessageStorageEnabledAndAllowed) {
+  if (isMessageStorageEnabledAndAllowedForService) {
     // If the recipient wants to store the messages
     // we add the content of the message to the blob storage for later retrieval.
     // In case of a retry this operation will overwrite the message content with itself
@@ -328,7 +328,10 @@ export async function handleMessage(
         // try to get the default email address from the request payload
         .alt(defaultAddresses.chain(getEmailAddressFromDefaultAddresses));
 
-  if (!isEmailBlockedForService && isNone(maybeAllowedEmailNotification)) {
+  const noEmailAddressFound =
+    maybeAllowedEmailNotification.isNone() && !isEmailBlockedForService;
+
+  if (noEmailAddressFound) {
     winston.debug(
       `Fiscal code has no associated email address and no default email address was provided|${
         newMessageWithContent.fiscalCode
@@ -364,10 +367,12 @@ export async function handleMessage(
       })
     : none;
 
-  if (
-    isNone(maybeAllowedEmailNotification) &&
-    isNone(maybeAllowedWebhookNotification)
-  ) {
+  const noChannelsConfigured = [
+    maybeAllowedEmailNotification,
+    maybeAllowedWebhookNotification
+  ].every(isNone);
+
+  if (noChannelsConfigured) {
     return left(
       PermanentError(
         `No channels configured for the user ${
