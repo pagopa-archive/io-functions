@@ -356,9 +356,12 @@ export async function handleMessage(
   }
 
   // whether the recipient wants us to send notifications to the app backend
+  const isWebhookBlockedInProfile = maybeProfile.exists(
+    profile => profile.isWebhookEnabled === true
+  );
+
   const isWebhookEnabled =
-    !isWebhookBlockedForService &&
-    maybeProfile.exists(profile => profile.isWebhookEnabled === true);
+    !isWebhookBlockedForService && isWebhookBlockedInProfile;
 
   const maybeAllowedWebhookNotification = isWebhookEnabled
     ? some({

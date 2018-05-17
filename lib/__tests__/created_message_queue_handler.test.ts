@@ -53,6 +53,7 @@ import {
 } from "../created_message_queue_handler";
 
 import { HttpsUrl } from "../api/definitions/HttpsUrl";
+import { ServiceId } from "../api/definitions/ServiceId";
 import { MessageStatusModel } from "../models/message_status";
 
 afterEach(() => {
@@ -89,6 +90,7 @@ const aWebhookNotification: WebhookNotification = {
 
 const aMessageBodyMarkdown = "test".repeat(80) as MessageBodyMarkdown;
 const aMessageId = "m123" as NonEmptyString;
+const aServiceId = "s123" as ServiceId;
 
 const aMessage: NewMessageWithContent = {
   content: {
@@ -98,7 +100,7 @@ const aMessage: NewMessageWithContent = {
   fiscalCode: aCorrectFiscalCode,
   id: aMessageId,
   kind: "INewMessageWithContent",
-  senderServiceId: "",
+  senderServiceId: aServiceId,
   senderUserId: "u123" as NonEmptyString,
   timeToLiveSeconds: 3600 as TimeToLiveSeconds
 };
@@ -385,6 +387,140 @@ describe("handleMessage", () => {
       }
     }
   );
+
+  it(
+    "should not create an email notification if a profile exists " +
+      "with an email field but the email channel is blocked for this service",
+    async () => {
+      const profileModelMock = {
+        findOneProfileByFiscalCode: jest.fn(() => {
+          return Promise.resolve(
+            right(
+              some({
+                ...aRetrievedProfileWithEmail,
+                blockedInboxOrChannels: {
+                  [aServiceId]: new Set(["EMAIL"])
+                }
+              })
+            )
+          );
+        })
+      };
+
+      const notificationModelMock = {
+        create: jest.fn(() => {
+          return Promise.resolve(right(none));
+        })
+      };
+
+      const response = await handleMessage(
+        profileModelMock as any,
+        {} as any,
+        notificationModelMock as any,
+        {} as any,
+        aUrl,
+        aMessageEvent
+      );
+
+      expect(profileModelMock.findOneProfileByFiscalCode).toHaveBeenCalledWith(
+        aCorrectFiscalCode
+      );
+
+      expect(isLeft(response)).toBeTruthy();
+      if (isLeft(response)) {
+        expect(response.value.kind).toEqual("PermanentError");
+      }
+    }
+  );
+
+  it(
+    "should not create a webhook notification if a profile exists " +
+      "with is_webhook_enabled but the channel is blocked for this service",
+    async () => {
+      const profileModelMock = {
+        findOneProfileByFiscalCode: jest.fn(() => {
+          return Promise.resolve(
+            right(
+              some({
+                ...aRetrievedProfileWithoutEmail,
+                blockedInboxOrChannels: {
+                  [aServiceId]: new Set(["WEBHOOK"])
+                },
+                isWebhookEnabled: true
+              })
+            )
+          );
+        })
+      };
+
+      const notificationModelMock = {
+        create: jest.fn(() => {
+          return Promise.resolve(right(none));
+        })
+      };
+
+      const response = await handleMessage(
+        profileModelMock as any,
+        {} as any,
+        notificationModelMock as any,
+        {} as any,
+        aUrl,
+        aMessageEvent
+      );
+
+      expect(profileModelMock.findOneProfileByFiscalCode).toHaveBeenCalledWith(
+        aCorrectFiscalCode
+      );
+
+      expect(isLeft(response)).toBeTruthy();
+      if (isLeft(response)) {
+        expect(response.value.kind).toEqual("PermanentError");
+      }
+    }
+  );
+
+  it("should not create a webhook or email notification if the inbox is disabled", async () => {
+    const profileModelMock = {
+      findOneProfileByFiscalCode: jest.fn(() => {
+        return Promise.resolve(
+          right(
+            some({
+              ...aRetrievedProfileWithEmail,
+              blockedInboxOrChannels: {
+                [aServiceId]: new Set(["INBOX"])
+              },
+              isInboxEnabled: true,
+              isWebhookEnabled: true
+            })
+          )
+        );
+      })
+    };
+
+    const notificationModelMock = {
+      create: jest.fn(() => {
+        return Promise.resolve(right(none));
+      })
+    };
+
+    const response = await handleMessage(
+      profileModelMock as any,
+      {} as any,
+      notificationModelMock as any,
+      {} as any,
+      aUrl,
+      aMessageEvent
+    );
+
+    expect(profileModelMock.findOneProfileByFiscalCode).toHaveBeenCalledWith(
+      aCorrectFiscalCode
+    );
+
+    expect(isLeft(response)).toBeTruthy();
+    if (isLeft(response)) {
+      expect(response.value.kind).toEqual("PermanentError");
+    }
+  });
 
   it(
     "should create a notification with an email if a profile exists for " +
