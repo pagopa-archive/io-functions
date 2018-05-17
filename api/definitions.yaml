@@ -32,10 +32,22 @@ ProblemJson:
         It may or may not yield further information if dereferenced.
 NotificationChannel:
   type: string
+  description: |-
+    All notification channels.
   x-extensible-enum:
     - EMAIL
     - WEBHOOK
   example: EMAIL
+BlockedInboxOrChannel:
+  type: string
+  description: |-
+    All notification channels plus the message inbox.
+    These represent all the possible channels a user could block.
+  x-extensible-enum:
+    - EMAIL
+    - INBOX
+    - WEBHOOK
+  example: INBOX
 NotificationChannelStatusValue:
   type: string
   description: |-
@@ -226,6 +238,15 @@ PaginationResponse:
         retrieved collection of items.
       format: uri
       example: https://example.com/?p=0XXX2
+BlockedInboxOrChannels:
+  type: object
+  additionalProperties:
+    type: array
+    items:
+      $ref: "#/BlockedInboxOrChannel"
+  description: |-
+    All the notification channels blocked by the user.
+    Each channel is related to a specific service (sender).
 LimitedProfile:
   description: |-
     Describes the citizen's profile, mostly interesting for preferences
@@ -242,6 +263,8 @@ ExtendedProfile:
   properties:
     email:
       $ref: "#/EmailAddress"
+    blocked_inbox_or_channels:
+      $ref: "#/BlockedInboxOrChannels"
     preferred_languages:
       $ref: "#/PreferredLanguages"
     is_inbox_enabled:
