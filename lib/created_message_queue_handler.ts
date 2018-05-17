@@ -226,7 +226,6 @@ async function createNotification(
  *          a TransientError in case of recoverable errors
  *          a PermanentError in case of unrecoverable error
  */
-// tslint:disable-next-line:cognitive-complexity
 export async function handleMessage(
   lProfileModel: ProfileModel,
   lMessageModel: MessageModel,
@@ -327,18 +326,17 @@ export async function handleMessage(
         .chain(getEmailAddressFromProfile)
         // if it's not set, or we don't have a profile for this fiscal code,
         // try to get the default email address from the request payload
-        .alt(defaultAddresses.chain(getEmailAddressFromDefaultAddresses));
-
-  const noEmailAddressFound =
-    maybeAllowedEmailNotification.isNone() && !isEmailBlockedForService;
-
-  if (noEmailAddressFound) {
-    winston.debug(
-      `handleMessage|User profile has no email address set and no default address was provided|${
-        newMessageWithContent.fiscalCode
-      }`
-    );
-  }
+        .alt(defaultAddresses.chain(getEmailAddressFromDefaultAddresses))
+        .alt(
+          (() => {
+            winston.debug(
+              `handleMessage|User profile has no email address set and no default address was provided|${
+                newMessageWithContent.fiscalCode
+              }`
+            );
+            return none;
+          })()
+        );
 
   //
   //  Webhook notification
