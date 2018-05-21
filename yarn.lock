@@ -2538,9 +2538,9 @@ forwarded@~0.1.2:
   version "0.1.2"
   resolved "https://registry.yarnpkg.com/forwarded/-/forwarded-0.1.2.tgz#98c23dab1175657b8c0573e8ceccd91b0ff18c84"
 
-fp-ts@^1.0.0:
-  version "1.0.1"
-  resolved "https://registry.yarnpkg.com/fp-ts/-/fp-ts-1.0.1.tgz#4d0fc9ab24c6c6cd0381e5eefc684a6eb8321b41"
+fp-ts@^1.0.0, fp-ts@^1.5.0:
+  version "1.5.0"
+  resolved "https://registry.yarnpkg.com/fp-ts/-/fp-ts-1.5.0.tgz#f1f6498d44ecedd38465728012da549932aa4ef0"
 
 fragment-cache@^0.2.1:
   version "0.2.1"
