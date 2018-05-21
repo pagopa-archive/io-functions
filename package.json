@@ -36,7 +36,7 @@
     "applicationinsights": "^0.22.0",
     "azure-function-express": "^1.2.2",
     "azure-functions-types": "^0.1.1",
-    "azure-storage": "^2.8.0",
+    "azure-storage": "^2.8.2",
     "cidr-matcher": "^1.0.5",
     "documentdb": "^1.12.2",
     "dotenv": "^5.0.1",
