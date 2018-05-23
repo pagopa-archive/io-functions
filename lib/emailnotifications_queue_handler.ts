@@ -18,7 +18,7 @@ import { DocumentClient as DocumentDBClient } from "documentdb";
 import * as documentDbUtils from "./utils/documentdb";
 
 import { Either, isLeft, left, right } from "fp-ts/lib/Either";
-import { isNone } from "fp-ts/lib/Option";
+import { fromNullable, isNone } from "fp-ts/lib/Option";
 import { readableReport } from "italia-ts-commons/lib/reporters";
 import { getRequiredStringEnv } from "./utils/env";
 
@@ -50,10 +50,10 @@ import {
 import { handleQueueProcessingFailure } from "./utils/azure_queues";
 
 import { createQueueService } from "azure-storage";
+import { NonEmptyString } from "italia-ts-commons/lib/strings";
+import { UrlFromString } from "italia-ts-commons/lib/url";
 import { NotificationChannelEnum } from "./api/definitions/NotificationChannel";
 import { NotificationChannelStatusValueEnum } from "./api/definitions/NotificationChannelStatusValue";
-
-import { NonEmptyString } from "italia-ts-commons/lib/strings";
 import { ActiveMessage } from "./models/message";
 import {
   getNotificationStatusUpdater,
@@ -115,6 +115,12 @@ const queueService = createQueueService(queueConnectionString);
 const mailupUsername = getRequiredStringEnv("MAILUP_USERNAME");
 const mailupSecret = getRequiredStringEnv("MAILUP_SECRET");
 
+// Wheter we want to override MailupTransport with an SMTP one (useful for debugging).
+// When set, notifications are sent through the SMTP server specified by this URL.
+// Just leave this undefined when using the Mailup transport
+// ie. smtps://user:password@smtp.example.com:587
+const errorOrSmtpUrl = UrlFromString.decode(process.env.SMTP_URL);
+
 //
 // options used when converting an HTML message to pure text
 // see https://www.npmjs.com/package/html-to-text#options
@@ -150,6 +156,25 @@ const ContextWithBindings = t.interface({
 type ContextWithBindings = t.TypeOf<typeof ContextWithBindings> & IContext;
 
 type OutputBindings = never;
+
+function getSmtpTransport(
+  smtpTransportUrl: UrlFromString
+): NodeMailer.Transporter {
+  return NodeMailer.createTransport({
+    url: smtpTransportUrl.href
+  });
+}
+
+function getMailupTransport(): NodeMailer.Transporter {
+  return NodeMailer.createTransport(
+    MailUpTransport({
+      creds: {
+        Secret: mailupSecret,
+        Username: mailupUsername
+      }
+    })
+  );
+}
 
 /**
  * Generates the HTML for the email from the Markdown content and the subject
@@ -391,14 +416,11 @@ export async function index(
     emailNotificationEvent.notificationId
   );
 
-  const mailerTransporter = NodeMailer.createTransport(
-    MailUpTransport({
-      creds: {
-        Secret: mailupSecret,
-        Username: mailupUsername
-      }
-    })
-  );
+  // use SMTP if the SMTP url is set in the environment
+  const mailerTransporter = errorOrSmtpUrl
+    .map(getSmtpTransport)
+    // otherwise use Mailup
+    .getOrElseL(_ => getMailupTransport());
 
   return handleNotification(
     mailerTransporter,
