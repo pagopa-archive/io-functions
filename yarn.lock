@@ -86,8 +86,8 @@
   resolved "https://registry.yarnpkg.com/@types/node/-/node-9.4.6.tgz#d8176d864ee48753d053783e4e463aec86b8d82e"
 
 "@types/node@^6.0.0":
-  version "6.0.101"
-  resolved "https://registry.yarnpkg.com/@types/node/-/node-6.0.101.tgz#0c5911cfb434af4a51c0a499931fe6423207d921"
+  version "6.0.111"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-6.0.111.tgz#85f880a1bab78d395a5de9bcb5319e73a0c31400"
 
 "@types/nodemailer@^4.6.0":
   version "4.6.0"
@@ -3692,13 +3692,13 @@ istanbul-reports@^1.1.4:
   dependencies:
     handlebars "^4.0.3"
 
-italia-ts-commons@^1.0.0:
-  version "1.0.0"
-  resolved "https://registry.yarnpkg.com/italia-ts-commons/-/italia-ts-commons-1.0.0.tgz#472619ab402802be3e412e9454901665abf6271c"
+italia-ts-commons@^1.7.0:
+  version "1.7.0"
+  resolved "https://registry.yarnpkg.com/italia-ts-commons/-/italia-ts-commons-1.7.0.tgz#682ad228ca1d9b516c75386ea1a6823229c76e1b"
   dependencies:
     io-ts "^1.0.5"
     json-set-map "^1.0.2"
-    validator "^9.4.1"
+    validator "^10.1.0"
 
 italia-utils@^3.7.1:
   version "3.7.1"
@@ -7855,6 +7855,10 @@ validate-npm-package-license@^3.0.1:
   dependencies:
     spdx-correct "~1.0.0"
     spdx-expression-parse "~1.0.0"
+
+validator@^10.1.0:
+  version "10.2.0"
+  resolved "https://registry.yarnpkg.com/validator/-/validator-10.2.0.tgz#61d6b10c3d5c9f368c75c2ce8ca2b792522eaafa"
 
 validator@^9.0.0, validator@^9.4.1:
   version "9.4.1"
