@@ -1,67 +1,47 @@
 <mjml>
-
+  
   <mj-head>
     <mj-title>${title}</mj-title>
-    <mj-font name="Roboto" href="https://fonts.googleapis.com/css?family=Montserrat:300,400,500" />
+    <mj-font name="Roboto" href="https://fonts.googleapis.com/css?family=Montserrat:300,400,500"></mj-font>
     <mj-attributes>
-      <mj-all font-family="Montserrat, Helvetica, Arial, sans-serif" />
-      <mj-text font-weight="400" font-size="16" color="#000000" line-height="24px" />
-      <mj-section padding="0" />
+      <mj-all font-family="Montserrat, Helvetica, Arial, sans-serif"></mj-all>
+      <mj-text font-weight="400" font-size="16px" color="#000000" line-height="24px"></mj-text>
+      <mj-section padding="0px"></mj-section>
     </mj-attributes>
   </mj-head>
-
-  <mj-body>
-    <mj-container background-color="#F2F2F2">
-
-      <mj-section padding="10px 0 10px 0">
-        <mj-column>
-          <mj-text align="center" color="#9B9B9B" font-size="11px">${headlineText}</mj-text>
-        </mj-column>
-      </mj-section>
-
-      <mj-section padding="20px 20px 0 20px" background-color="#FFFFFF">
-        <mj-column width="40%">
-          <mj-text align="left" font-size="20" font-weight="500">
-            ${senderOrganizationName}
-          </mj-text>
-        </mj-column>
-        <mj-column width="60%">
-          <mj-text align="right" font-size="11">
-            ${senderServiceName}
-          </mj-text>
-        </mj-column>
-      </mj-section>
-
-      <mj-section padding="0 20px 20px 20px" background-color="#FFFFFF">
-        <mj-column>
-          <mj-text align="center" font-weight="300" padding="10px 40px 10px 40px" font-size="30px" line-height="35x" color="#06C">
-            ${titleText}
-          </mj-text>
-        </mj-column>
-      </mj-section>
-
-      <mj-section vertical-align="middle" background-color="#FFFFFF">
-        <mj-column width="100%">
-          <mj-text padding="10px 40px 10px 40px" font-weight="300" padding="0">
-            ${contentHtml}
-          </mj-text>
-        </mj-column>
-      </mj-section>
-
-      <mj-section padding="50px 0 0 0" background-color="#FFFFFF">
-        <mj-column>
-          <mj-image src="http://nimus.de/share/tpl-card/bottom.png" alt="bottom border" align="center" border="none" padding="0"></mj-image>
-        </mj-column>
-      </mj-section>
-
-      <mj-section padding="10px 0 20px 0">
-        <mj-column>
-          <mj-text align="center" color="#9B9B9B" font-size="11px">
-            ${footerHtml}
-          </mj-text>
-        </mj-column>
-      </mj-section>
-
-    </mj-container>
+  <mj-body background-color="#F2F2F2">
+    <mj-section padding="10px 0 10px 0">
+      <mj-column>
+        <mj-text align="center" color="#9B9B9B" font-size="11px">${headlineText}</mj-text>
+      </mj-column>
+    </mj-section>
+    <mj-section padding="20px 20px 0 20px" background-color="#FFFFFF">
+      <mj-column width="40%">
+        <mj-text align="left" font-size="20px" font-weight="500">${senderOrganizationName}</mj-text>
+      </mj-column>
+      <mj-column width="60%">
+        <mj-text align="right" font-size="11px">${senderServiceName}</mj-text>
+      </mj-column>
+    </mj-section>
+    <mj-section padding="0 20px 20px 20px" background-color="#FFFFFF">
+      <mj-column>
+        <mj-text align="center" font-weight="300" padding="10px 40px 10px 40px" font-size="30px" line-height="35x" color="#06C">${titleText}</mj-text>
+      </mj-column>
+    </mj-section>
+    <mj-section vertical-align="middle" background-color="#FFFFFF">
+      <mj-column width="100%">
+        <mj-text padding="10px 40px 10px 40px" font-weight="300">${contentHtml}</mj-text>
+      </mj-column>
+    </mj-section>
+    <mj-section padding="50px 0 0 0" background-color="#FFFFFF">
+      <mj-column>
+        <mj-image src="http://nimus.de/share/tpl-card/bottom.png" alt="bottom border" align="center" border="none" padding="0px"></mj-image>
+      </mj-column>
+    </mj-section>
+    <mj-section padding="10px 0 20px 0">
+      <mj-column>
+        <mj-text align="center" color="#9B9B9B" font-size="11px">${footerHtml}</mj-text>
+      </mj-column>
+    </mj-section>
   </mj-body>
 </mjml>

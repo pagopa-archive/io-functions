@@ -17,7 +17,7 @@ const run = require("gulp-run");
 const jsonEditor = require("gulp-json-editor");
 
 const semver = require("semver");
-const mjml = require("mjml");
+const mjml2html = require("mjml");
 
 const TYPESCRIPT_SOURCE_DIR = "lib";
 
@@ -81,7 +81,7 @@ const toMjml = (content, options) => {
     `  footerHtml: string`,
     `): string {`,
     `  return \``,
-    `${mjml.mjml2html(content, { minify: true }).html}\`;`,
+    `${mjml2html(content, { minify: true }).html}\`;`,
     `}`,
     ""
   ].join("\n");
