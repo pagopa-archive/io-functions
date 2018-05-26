@@ -36,16 +36,15 @@ import {
   IResponseErrorConflict,
   IResponseErrorInternal,
   IResponseErrorNotFound,
-  IResponseErrorQuery,
   IResponseErrorValidation,
   IResponseSuccessJson,
   ResponseErrorConflict,
   ResponseErrorFromValidationErrors,
   ResponseErrorInternal,
   ResponseErrorNotFound,
-  ResponseErrorQuery,
   ResponseSuccessJson
-} from "../utils/response";
+} from "italia-ts-commons/lib/responses";
+import { IResponseErrorQuery, ResponseErrorQuery } from "../utils/response";
 
 import {
   checkSourceIpForHandler,

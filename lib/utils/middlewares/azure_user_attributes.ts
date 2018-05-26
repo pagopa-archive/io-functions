@@ -11,11 +11,12 @@ import { EmailString, NonEmptyString } from "italia-ts-commons/lib/strings";
 
 import { Service, ServiceModel } from "../../models/service";
 import { IRequestMiddleware } from "../request_middleware";
+import { ResponseErrorQuery } from "../response";
+
 import {
   ResponseErrorForbiddenNotAuthorized,
-  ResponseErrorInternal,
-  ResponseErrorQuery
-} from "../response";
+  ResponseErrorInternal
+} from "italia-ts-commons/lib/responses";
 
 // The user email will be passed in this header by the API Gateway
 const HEADER_USER_EMAIL = "x-user-email";
