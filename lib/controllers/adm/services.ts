@@ -37,16 +37,15 @@ import {
 import {
   IResponseErrorInternal,
   IResponseErrorNotFound,
-  IResponseErrorQuery,
   IResponseErrorValidation,
   IResponseSuccessJson,
   ResponseErrorFromValidationErrors,
   ResponseErrorInternal,
   ResponseErrorNotFound,
-  ResponseErrorQuery,
   ResponseErrorValidation,
   ResponseSuccessJson
-} from "../../utils/response";
+} from "italia-ts-commons/lib/responses";
+import { IResponseErrorQuery, ResponseErrorQuery } from "../../utils/response";
 
 import { isLeft, isRight } from "fp-ts/lib/Either";
 import { isNone } from "fp-ts/lib/Option";

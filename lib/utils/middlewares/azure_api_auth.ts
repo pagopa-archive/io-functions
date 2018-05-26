@@ -1,8 +1,6 @@
 import { isLeft, left, right } from "fp-ts/lib/Either";
 import { fromNullable, isSome, Option, Some } from "fp-ts/lib/Option";
 
-import { NonEmptyString } from "italia-ts-commons/lib/strings";
-import { IRequestMiddleware } from "../request_middleware";
 import {
   IResponseErrorForbiddenAnonymousUser,
   IResponseErrorForbiddenNoAuthorizationGroups,
@@ -10,7 +8,9 @@ import {
   ResponseErrorForbiddenAnonymousUser,
   ResponseErrorForbiddenNoAuthorizationGroups,
   ResponseErrorForbiddenNotAuthorized
-} from "../response";
+} from "italia-ts-commons/lib/responses";
+import { NonEmptyString } from "italia-ts-commons/lib/strings";
+import { IRequestMiddleware } from "../request_middleware";
 
 /*
  * A middle ware that extracts authentication information from the

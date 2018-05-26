@@ -15,7 +15,7 @@ import {
   IResponseErrorInternal,
   ResponseErrorForbiddenNotAuthorized,
   ResponseErrorInternal
-} from "./response";
+} from "italia-ts-commons/lib/responses";
 
 /**
  * Whether IP is contained in the provided CIDRs

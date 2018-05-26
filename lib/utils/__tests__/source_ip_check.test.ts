@@ -1,8 +1,8 @@
+import { ResponseSuccessJson } from "italia-ts-commons/lib/responses";
 import { IPString } from "italia-ts-commons/lib/strings";
 import { ITuple2, Tuple2 } from "italia-ts-commons/lib/tuples";
 import { toAuthorizedCIDRs } from "../../models/service";
 import { ClientIp } from "../middlewares/client_ip_middleware";
-import { ResponseSuccessJson } from "../response";
 
 import { fromEither as OptionFromEither } from "fp-ts/lib/Option";
 import { checkSourceIpForHandler } from "../source_ip_check";

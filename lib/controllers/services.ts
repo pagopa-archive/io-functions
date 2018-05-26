@@ -28,12 +28,11 @@ import {
 
 import {
   IResponseErrorNotFound,
-  IResponseErrorQuery,
   IResponseSuccessJson,
   ResponseErrorNotFound,
-  ResponseErrorQuery,
   ResponseSuccessJson
-} from "../utils/response";
+} from "italia-ts-commons/lib/responses";
+import { IResponseErrorQuery, ResponseErrorQuery } from "../utils/response";
 
 import { NonEmptyString } from "italia-ts-commons/lib/strings";
 

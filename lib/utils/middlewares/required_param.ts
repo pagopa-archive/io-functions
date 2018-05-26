@@ -1,7 +1,7 @@
 import * as t from "io-ts";
 
+import { ResponseErrorFromValidationErrors } from "italia-ts-commons/lib/responses";
 import { IRequestMiddleware } from "../request_middleware";
-import { ResponseErrorFromValidationErrors } from "../response";
 
 /**
  * Returns a request middleware that validates the presence of a required

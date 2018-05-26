@@ -5,7 +5,10 @@ import { fromNullable, Option } from "fp-ts/lib/Option";
 
 import { IRequestMiddleware } from "../request_middleware";
 
-import { IResponseErrorInternal, ResponseErrorInternal } from "../response";
+import {
+  IResponseErrorInternal,
+  ResponseErrorInternal
+} from "italia-ts-commons/lib/responses";
 
 import { IContext } from "azure-function-express";
 
