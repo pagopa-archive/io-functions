@@ -60,6 +60,7 @@ import {
   NOTIFICATION_STATUS_COLLECTION_NAME,
   NotificationStatusModel
 } from "./models/notification_status";
+import { getApplicationInsightsTelemetryClient } from "./utils/application_insights";
 
 // Whether we're in a production environment
 const isProduction = process.env.NODE_ENV === "production";
@@ -101,8 +102,6 @@ const notificationModel = new NotificationModel(
   documentClient,
   notificationsCollectionUrl
 );
-
-const appInsightsClient = new ApplicationInsights.TelemetryClient();
 
 // As we cannot use Functions bindings to do retries,
 // we resort to update the message visibility timeout
@@ -406,16 +405,21 @@ export async function index(
     })
   );
 
+  const serviceId = emailNotificationEvent.message.senderServiceId;
+
   const eventName = "handler.notification.email";
 
-  // tslint:disable-next-line:no-object-mutation
-  appInsightsClient.commonProperties = {
-    messageId: emailNotificationEvent.message.id,
-    notificationId: emailNotificationEvent.notificationId
-  };
-  // tslint:disable-next-line:no-object-mutation
-  appInsightsClient.context.keys.operationParentId =
-    emailNotificationEvent.message.id;
+  const appInsightsClient = getApplicationInsightsTelemetryClient(
+    {
+      operationId: emailNotificationEvent.notificationId,
+      operationParentId: emailNotificationEvent.message.id,
+      serviceId: NonEmptyString.is(serviceId) ? serviceId : undefined
+    },
+    {
+      messageId: emailNotificationEvent.message.id,
+      notificationId: emailNotificationEvent.notificationId
+    }
+  );
 
   return handleNotification(
     mailerTransporter,

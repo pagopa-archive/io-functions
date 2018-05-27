@@ -7,7 +7,6 @@
 
 import * as t from "io-ts";
 
-import * as ApplicationInsights from "applicationinsights";
 import * as winston from "winston";
 
 import { IContext } from "azure-functions-types";
@@ -57,6 +56,7 @@ import { PermanentError, RuntimeError, TransientError } from "./utils/errors";
 import { MessageStatusValueEnum } from "./api/definitions/MessageStatusValue";
 import { NotificationChannelEnum } from "./api/definitions/NotificationChannel";
 
+import { NonEmptyString } from "italia-ts-commons/lib/strings";
 import { withoutUndefinedValues } from "italia-ts-commons/lib/types";
 import { BlockedInboxOrChannelEnum } from "./api/definitions/BlockedInboxOrChannel";
 import { HttpsUrl } from "./api/definitions/HttpsUrl";
@@ -66,12 +66,11 @@ import {
   MESSAGE_STATUS_COLLECTION_NAME,
   MessageStatusModel
 } from "./models/message_status";
+import { getApplicationInsightsTelemetryClient } from "./utils/application_insights";
 import { ulidGenerator } from "./utils/strings";
 
 // Whether we're in a production environment
 const isProduction = process.env.NODE_ENV === "production";
-
-const appInsightsClient = new ApplicationInsights.TelemetryClient();
 
 // Setup DocumentDB
 const cosmosDbUri = getRequiredStringEnv("CUSTOMCONNSTR_COSMOSDB_URI");
@@ -473,12 +472,18 @@ export async function index(
 
   const eventName = "handler.message.process";
 
-  // tslint:disable-next-line:no-object-mutation
-  appInsightsClient.commonProperties = {
-    messageId: newMessageWithContent.id
-  };
-  // tslint:disable-next-line:no-object-mutation
-  appInsightsClient.context.keys.operationParentId = newMessageWithContent.id;
+  const appInsightsClient = getApplicationInsightsTelemetryClient(
+    {
+      operationId: newMessageWithContent.id,
+      operationParentId: newMessageWithContent.id,
+      serviceId: NonEmptyString.is(newMessageWithContent.senderServiceId)
+        ? newMessageWithContent.senderServiceId
+        : undefined
+    },
+    {
+      messageId: newMessageWithContent.id
+    }
+  );
 
   // now we can trigger the notifications for the message
   return handleMessage(

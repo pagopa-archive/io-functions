@@ -44,6 +44,7 @@ import { createQueueService } from "azure-storage";
 import { NotificationChannelEnum } from "./api/definitions/NotificationChannel";
 import { NotificationChannelStatusValueEnum } from "./api/definitions/NotificationChannelStatusValue";
 
+import { NonEmptyString } from "italia-ts-commons/lib/strings";
 import { UrlFromString } from "italia-ts-commons/lib/url";
 import { CreatedMessageWithContent } from "./api/definitions/CreatedMessageWithContent";
 import { HttpsUrl } from "./api/definitions/HttpsUrl";
@@ -55,6 +56,7 @@ import {
   NOTIFICATION_STATUS_COLLECTION_NAME,
   NotificationStatusModel
 } from "./models/notification_status";
+import { getApplicationInsightsTelemetryClient } from "./utils/application_insights";
 
 // Whether we're in a production environment
 const isProduction = process.env.NODE_ENV === "production";
@@ -96,8 +98,6 @@ const notificationModel = new NotificationModel(
   documentClient,
   notificationsCollectionUrl
 );
-
-const appInsightsClient = new ApplicationInsights.TelemetryClient();
 
 // As we cannot use Functions bindings to do retries,
 // we resort to update the message visibility timeout
@@ -360,16 +360,21 @@ export async function index(
     webhookNotificationEvent.notificationId
   );
 
+  const serviceId = webhookNotificationEvent.message.senderServiceId;
+
   const eventName = "handler.notification.webhook";
 
-  // tslint:disable-next-line:no-object-mutation
-  appInsightsClient.commonProperties = {
-    messageId: webhookNotificationEvent.message.id,
-    notificationId: webhookNotificationEvent.notificationId
-  };
-  // tslint:disable-next-line:no-object-mutation
-  appInsightsClient.context.keys.operationParentId =
-    webhookNotificationEvent.message.id;
+  const appInsightsClient = getApplicationInsightsTelemetryClient(
+    {
+      operationId: webhookNotificationEvent.notificationId,
+      operationParentId: webhookNotificationEvent.message.id,
+      serviceId: NonEmptyString.is(serviceId) ? serviceId : undefined
+    },
+    {
+      messageId: webhookNotificationEvent.message.id,
+      notificationId: webhookNotificationEvent.notificationId
+    }
+  );
 
   return handleNotification(
     appInsightsClient,

@@ -5,8 +5,6 @@ import * as express from "express";
 import * as t from "io-ts";
 import * as winston from "winston";
 
-import * as ApplicationInsights from "applicationinsights";
-
 import {
   ClientIp,
   ClientIpMiddleware
@@ -109,6 +107,7 @@ import { NotificationChannelStatusValueEnum } from "../api/definitions/Notificat
 import { TimeToLiveSeconds } from "../api/definitions/TimeToLiveSeconds";
 import { MessageStatusModel } from "../models/message_status";
 import { NotificationStatusModel } from "../models/notification_status";
+import { getApplicationInsightsTelemetryClient } from "../utils/application_insights";
 
 /**
  * Input and output bindings for this function
@@ -322,7 +321,6 @@ async function getMessageNotificationStatuses(
  * Returns a type safe CreateMessage handler.
  */
 export function CreateMessageHandler(
-  applicationInsightsClient: ApplicationInsights.TelemetryClient,
   messageModel: MessageModel,
   generateObjectId: ObjectIdGenerator
 ): ICreateMessageHandler {
@@ -401,11 +399,21 @@ export function CreateMessageHandler(
       newMessageWithoutContent.fiscalCode
     );
 
+    const appInsightsClient = getApplicationInsightsTelemetryClient(
+      {
+        operationId: newMessageWithoutContent.id,
+        serviceId: userService.serviceId
+      },
+      {
+        messageId: newMessageWithoutContent.id
+      }
+    );
+
     if (isLeft(errorOrMessage)) {
       // we got an error while creating the message
 
       // track the event that a message has failed to be created
-      applicationInsightsClient.trackEvent({
+      appInsightsClient.trackEvent({
         name: appInsightsEventName,
         properties: {
           ...appInsightsEventProps,
@@ -465,16 +473,12 @@ export function CreateMessageHandler(
     // tslint:disable-next-line:no-object-mutation
     context.bindings.createdMessage = createdMessageEvent;
 
-    // tslint:disable-next-line:no-object-mutation
-    applicationInsightsClient.context.keys.operationId =
-      newMessageWithContent.id;
-
     //
     // generate appinsights event
     //
 
     // track the event that a message has been created
-    applicationInsightsClient.trackEvent({
+    appInsightsClient.trackEvent({
       measurements: {
         duration: Date.now() - startRequestTime
       },
@@ -502,15 +506,10 @@ export function CreateMessageHandler(
  * Wraps a CreateMessage handler inside an Express request handler.
  */
 export function CreateMessage(
-  applicationInsightsClient: ApplicationInsights.TelemetryClient,
   serviceModel: ServiceModel,
   messageModel: MessageModel
 ): express.RequestHandler {
-  const handler = CreateMessageHandler(
-    applicationInsightsClient,
-    messageModel,
-    ulidGenerator
-  );
+  const handler = CreateMessageHandler(messageModel, ulidGenerator);
   const middlewaresWrap = withRequestMiddlewares(
     // extract Azure Functions bindings
     ContextMiddleware<IBindings>(),

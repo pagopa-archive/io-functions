@@ -7,8 +7,6 @@ import { IContext } from "azure-function-express";
 
 import * as winston from "winston";
 
-import * as ApplicationInsights from "applicationinsights";
-
 import { setAppContext } from "./utils/middlewares/context_middleware";
 
 import { configureAzureContextTransport } from "./utils/logging";
@@ -112,10 +110,6 @@ const notificationStatusModel = new NotificationStatusModel(
 const storageConnectionString = getRequiredStringEnv("QueueStorageConnection");
 const blobService = createBlobService(storageConnectionString);
 
-// Setup ApplicationInsights
-
-const appInsightsClient = new ApplicationInsights.TelemetryClient();
-
 // Setup handlers
 
 const debugHandler = GetDebug(serviceModel);
@@ -148,7 +142,7 @@ app.get(
 );
 app.post(
   "/api/v1/messages/:fiscalcode",
-  CreateMessage(appInsightsClient, serviceModel, messageModel)
+  CreateMessage(serviceModel, messageModel)
 );
 
 app.get("/api/v1/info", GetInfo(serviceModel));
