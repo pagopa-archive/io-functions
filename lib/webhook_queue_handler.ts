@@ -190,7 +190,7 @@ export async function sendToWebhook(
             : // Fail with a permanent error in case any exception
               // is thrown during the HTTP request
               PermanentError(
-                `Permanent error calling API Proxy API: ${JSON.stringify(err)}`
+                `Permanent error calling API Proxy API: ${err.response.text}`
               )
         );
       }
