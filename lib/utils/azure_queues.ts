@@ -92,7 +92,9 @@ export function updateMessageVisibilityTimeout<T extends IQueueMessage>(
 ): Promise<boolean> {
   return new Promise(resolve => {
     winston.debug(
-      `Retry to handle message ${queueMessageToString(queueMessage)}`
+      `Retry to handle message ${queueName}:${queueMessageToString(
+        queueMessage
+      )}`
     );
 
     if (!queueMessage.dequeueCount) {
