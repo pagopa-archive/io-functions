@@ -44,6 +44,7 @@ import { createQueueService } from "azure-storage";
 import { NotificationChannelEnum } from "./api/definitions/NotificationChannel";
 import { NotificationChannelStatusValueEnum } from "./api/definitions/NotificationChannelStatusValue";
 
+import { UrlFromString } from "italia-ts-commons/lib/url";
 import { CreatedMessageWithContent } from "./api/definitions/CreatedMessageWithContent";
 import { HttpsUrl } from "./api/definitions/HttpsUrl";
 import { SenderMetadata } from "./api/definitions/SenderMetadata";
@@ -120,13 +121,6 @@ type OutputBindings = never;
 // request timeout in milliseconds
 const DEFAULT_REQUEST_TIMEOUT_MS = 10000;
 
-const ApiProxyResponse = t.interface({
-  Code: t.string,
-  Message: t.string,
-  Status: t.string
-});
-type ApiProxyResponse = t.TypeOf<typeof ApiProxyResponse>;
-
 /**
  * Convert the internal representation of the message
  * to the one of the public API
@@ -164,7 +158,7 @@ export async function sendToWebhook(
   webhookEndpoint: HttpsUrl,
   message: NewMessageWithContent,
   senderMetadata: CreatedMessageEventSenderMetadata
-): Promise<Either<RuntimeError, {}>> {
+): Promise<Either<RuntimeError, request.Response>> {
   return request("POST", webhookEndpoint)
     .timeout(DEFAULT_REQUEST_TIMEOUT_MS)
     .set("Content-Type", "application/json")
@@ -176,7 +170,7 @@ export async function sendToWebhook(
     .then(
       response => {
         if (response.error) {
-          return left<RuntimeError, ApiProxyResponse>(
+          return left<RuntimeError, request.Response>(
             // in case of server HTTP 5xx errors we trigger a retry
             response.serverError
               ? TransientError(
@@ -187,10 +181,10 @@ export async function sendToWebhook(
                 )
           );
         }
-        return right<RuntimeError, ApiProxyResponse>(response.body);
+        return right<RuntimeError, request.Response>(response);
       },
       err => {
-        return left<RuntimeError, ApiProxyResponse>(
+        return left<RuntimeError, request.Response>(
           err.timeout
             ? TransientError(`Timeout calling API Proxy API`)
             : // Fail with a permanent error in case any exception
@@ -277,39 +271,52 @@ export async function handleNotification(
 
   const webhookNotification = errorOrWebhookNotification.value.channels.WEBHOOK;
 
+  const startWebhookCallTime = Date.now();
+
   const sendResult = await sendToWebhook(
     webhookNotification.url,
     message,
     senderMetadata
   );
 
+  const webhookCallDuration = Date.now() - startWebhookCallTime;
+
   const eventName = "notification.webhook.delivery";
+
+  // hide backend secret token in logs
+  const hostName = UrlFromString.decode(webhookNotification.url).fold(
+    _ => "invalid url",
+    url => url.hostname || "invalid hostname"
+  );
+
   const eventContent = {
-    messageId: message.id,
-    notificationId,
-    url: webhookNotification.url
+    data: hostName,
+    dependencyTypeName: "HTTP",
+    duration: webhookCallDuration,
+    name: eventName
   };
 
   if (isLeft(sendResult)) {
-    // track the event of failed delivery
-    lAppInsightsClient.trackEvent({
-      name: eventName,
-      properties: {
-        ...eventContent,
-        success: "false"
-      }
-    });
     const error = sendResult.value;
+    // track the event of failed delivery
+    lAppInsightsClient.trackDependency({
+      ...eventContent,
+      properties: {
+        error: error.message
+      },
+      resultCode: error.kind,
+      success: false
+    });
     return left(error);
   }
 
+  const apiMessageResponse = sendResult.value;
+
   // track the event of successful delivery
-  lAppInsightsClient.trackEvent({
-    name: eventName,
-    properties: {
-      ...eventContent,
-      success: "true"
-    }
+  lAppInsightsClient.trackDependency({
+    ...eventContent,
+    resultCode: apiMessageResponse.status,
+    success: true
   });
 
   return right(webhookNotificationEvent);
@@ -323,8 +330,6 @@ export async function index(
 ): Promise<OutputBindings | Error | void> {
   const logLevel = isProduction ? "info" : "debug";
   configureAzureContextTransport(context, winston, logLevel);
-
-  winston.debug(`STARTED|${context.invocationId}`);
 
   winston.debug(
     `WebhookNotificationsHandlerIndex|Dequeued webhook notification|${JSON.stringify(
@@ -354,6 +359,17 @@ export async function index(
     webhookNotificationEvent.message.id,
     webhookNotificationEvent.notificationId
   );
+
+  const eventName = "handler.notification.webhook";
+
+  // tslint:disable-next-line:no-object-mutation
+  appInsightsClient.commonProperties = {
+    messageId: webhookNotificationEvent.message.id,
+    notificationId: webhookNotificationEvent.notificationId
+  };
+  // tslint:disable-next-line:no-object-mutation
+  appInsightsClient.context.keys.operationParentId =
+    webhookNotificationEvent.message.id;
 
   return handleNotification(
     appInsightsClient,
@@ -394,11 +410,23 @@ export async function index(
               errorOrUpdatedNotificationStatus.value.message
             );
           }
-          winston.info(
+          winston.debug(
             `WebhookNotificationsHandler|Webhook notification succeeded|notification=${
               webhookNotificationEvent.notificationId
             }|message=${webhookNotificationEvent.message.id}`
           );
+
+          appInsightsClient.trackEvent({
+            measurements: {
+              elapsed:
+                Date.now() -
+                webhookNotificationEvent.message.createdAt.getTime()
+            },
+            name: eventName,
+            properties: {
+              success: "true"
+            }
+          });
         }
       )
     )
@@ -408,13 +436,43 @@ export async function index(
         context.bindingData,
         WEBHOOK_NOTIFICATION_QUEUE_NAME,
         // execute in case of transient errors
-        () =>
-          notificationStatusUpdater(
+        () => {
+          appInsightsClient.trackEvent({
+            measurements: {
+              elapsed:
+                Date.now() -
+                webhookNotificationEvent.message.createdAt.getTime()
+            },
+            name: eventName,
+            properties: {
+              error: JSON.stringify(error),
+              success: "false",
+              transient: "true"
+            }
+          });
+          return notificationStatusUpdater(
             NotificationChannelStatusValueEnum.THROTTLED
-          ),
+          );
+        },
         // execute in case of permanent errors
-        () =>
-          notificationStatusUpdater(NotificationChannelStatusValueEnum.FAILED),
+        () => {
+          appInsightsClient.trackEvent({
+            measurements: {
+              elapsed:
+                Date.now() -
+                webhookNotificationEvent.message.createdAt.getTime()
+            },
+            name: eventName,
+            properties: {
+              error: JSON.stringify(error),
+              success: "false",
+              transient: "false"
+            }
+          });
+          return notificationStatusUpdater(
+            NotificationChannelStatusValueEnum.FAILED
+          );
+        },
         error
       )
     );

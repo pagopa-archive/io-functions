@@ -337,6 +337,8 @@ export function CreateMessageHandler(
     // extract the user service
     const userService = userAttributes.service;
 
+    const startRequestTime = Date.now();
+
     // base appinsights event attributes for convenience (used later)
     const appInsightsEventName = "api.messages.create";
     const appInsightsEventProps = {
@@ -463,12 +465,19 @@ export function CreateMessageHandler(
     // tslint:disable-next-line:no-object-mutation
     context.bindings.createdMessage = createdMessageEvent;
 
+    // tslint:disable-next-line:no-object-mutation
+    applicationInsightsClient.context.keys.operationId =
+      newMessageWithContent.id;
+
     //
     // generate appinsights event
     //
 
     // track the event that a message has been created
     applicationInsightsClient.trackEvent({
+      measurements: {
+        duration: Date.now() - startRequestTime
+      },
       name: appInsightsEventName,
       properties: {
         ...appInsightsEventProps,

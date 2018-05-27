@@ -7,6 +7,7 @@
 
 import * as t from "io-ts";
 
+import * as ApplicationInsights from "applicationinsights";
 import * as winston from "winston";
 
 import { IContext } from "azure-functions-types";
@@ -69,6 +70,8 @@ import { ulidGenerator } from "./utils/strings";
 
 // Whether we're in a production environment
 const isProduction = process.env.NODE_ENV === "production";
+
+const appInsightsClient = new ApplicationInsights.TelemetryClient();
 
 // Setup DocumentDB
 const cosmosDbUri = getRequiredStringEnv("CUSTOMCONNSTR_COSMOSDB_URI");
@@ -327,16 +330,14 @@ export async function handleMessage(
         // if it's not set, or we don't have a profile for this fiscal code,
         // try to get the default email address from the request payload
         .alt(defaultAddresses.chain(getEmailAddressFromDefaultAddresses))
-        .alt(
-          (() => {
-            winston.debug(
-              `handleMessage|User profile has no email address set and no default address was provided|${
-                newMessageWithContent.fiscalCode
-              }`
-            );
-            return none;
-          })()
-        );
+        .orElse(() => {
+          winston.debug(
+            `handleMessage|User profile has no email address set and no default address was provided|${
+              newMessageWithContent.fiscalCode
+            }`
+          );
+          return none;
+        });
 
   //
   //  Webhook notification
@@ -470,6 +471,15 @@ export async function index(
     newMessageWithContent.id
   );
 
+  const eventName = "handler.message.process";
+
+  // tslint:disable-next-line:no-object-mutation
+  appInsightsClient.commonProperties = {
+    messageId: newMessageWithContent.id
+  };
+  // tslint:disable-next-line:no-object-mutation
+  appInsightsClient.context.keys.operationParentId = newMessageWithContent.id;
+
   // now we can trigger the notifications for the message
   return handleMessage(
     profileModel,
@@ -492,6 +502,17 @@ export async function index(
               newMessageWithContent.id
             }`
           );
+
+          appInsightsClient.trackEvent({
+            measurements: {
+              elapsed: Date.now() - newMessageWithContent.createdAt.getTime()
+            },
+            name: eventName,
+            properties: {
+              success: "true"
+            }
+          });
+
           return outputBindings;
         }
       )
@@ -502,9 +523,35 @@ export async function index(
         context.bindingData,
         MESSAGE_QUEUE_NAME,
         // execute in case of transient errors
-        () => messageStatusUpdater(MessageStatusValueEnum.THROTTLED),
+        () => {
+          appInsightsClient.trackEvent({
+            measurements: {
+              elapsed: Date.now() - newMessageWithContent.createdAt.getTime()
+            },
+            name: eventName,
+            properties: {
+              error: JSON.stringify(error),
+              success: "false",
+              transient: "true"
+            }
+          });
+          return messageStatusUpdater(MessageStatusValueEnum.THROTTLED);
+        },
         // execute in case of permanent errors
-        () => messageStatusUpdater(MessageStatusValueEnum.FAILED),
+        () => {
+          appInsightsClient.trackEvent({
+            measurements: {
+              elapsed: Date.now() - newMessageWithContent.createdAt.getTime()
+            },
+            name: eventName,
+            properties: {
+              error: JSON.stringify(error),
+              success: "false",
+              transient: "false"
+            }
+          });
+          return messageStatusUpdater(MessageStatusValueEnum.FAILED);
+        },
         error
       )
     );
