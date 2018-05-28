@@ -66,7 +66,7 @@ import {
   MESSAGE_STATUS_COLLECTION_NAME,
   MessageStatusModel
 } from "./models/message_status";
-import { getApplicationInsightsTelemetryClient } from "./utils/application_insights";
+import { createApplicationInsightsTelemetryClient } from "./utils/application_insights";
 import { ulidGenerator } from "./utils/strings";
 
 // Whether we're in a production environment
@@ -472,7 +472,7 @@ export async function index(
 
   const eventName = "handler.message.process";
 
-  const appInsightsClient = getApplicationInsightsTelemetryClient(
+  const appInsightsClient = createApplicationInsightsTelemetryClient(
     isProduction,
     {
       operationId: newMessageWithContent.id,

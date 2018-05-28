@@ -107,7 +107,7 @@ import { NotificationChannelStatusValueEnum } from "../api/definitions/Notificat
 import { TimeToLiveSeconds } from "../api/definitions/TimeToLiveSeconds";
 import { MessageStatusModel } from "../models/message_status";
 import { NotificationStatusModel } from "../models/notification_status";
-import { getApplicationInsightsTelemetryClient } from "../utils/application_insights";
+import { createApplicationInsightsTelemetryClient } from "../utils/application_insights";
 
 const isProduction = process.env.NODE_ENV === "production";
 
@@ -401,7 +401,7 @@ export function CreateMessageHandler(
       newMessageWithoutContent.fiscalCode
     );
 
-    const appInsightsClient = getApplicationInsightsTelemetryClient(
+    const appInsightsClient = createApplicationInsightsTelemetryClient(
       isProduction,
       {
         operationId: newMessageWithoutContent.id,

@@ -17,21 +17,23 @@ export interface ITelemetryParams {
  * a new instance every time we want to set common values
  * which are valid only for one run.
  */
-export function getApplicationInsightsTelemetryClient(
+export function createApplicationInsightsTelemetryClient(
   isProduction: boolean,
   params: ITelemetryParams,
   commonProperties?: Record<string, string>
 ): ApplicationInsights.TelemetryClient {
   const telemetryClient = new ApplicationInsights.TelemetryClient();
+  const tags = telemetryClient.context.tags;
+  const keys = telemetryClient.context.keys;
   // tslint:disable-next-line:no-object-mutation
-  telemetryClient.context.keys.operationId = params.operationId;
+  tags[keys.operationId] = params.operationId;
   if (params.serviceId) {
     // tslint:disable-next-line:no-object-mutation
-    telemetryClient.context.keys.userAccountId = params.serviceId;
+    tags[keys.userAccountId] = params.serviceId;
   }
   if (params.operationParentId) {
     // tslint:disable-next-line:no-object-mutation
-    telemetryClient.context.keys.operationParentId = params.operationParentId;
+    tags[keys.operationParentId] = params.operationParentId;
   }
   if (commonProperties) {
     // tslint:disable-next-line:no-object-mutation

@@ -60,7 +60,7 @@ import {
   NOTIFICATION_STATUS_COLLECTION_NAME,
   NotificationStatusModel
 } from "./models/notification_status";
-import { getApplicationInsightsTelemetryClient } from "./utils/application_insights";
+import { createApplicationInsightsTelemetryClient } from "./utils/application_insights";
 
 // Whether we're in a production environment
 const isProduction = process.env.NODE_ENV === "production";
@@ -409,7 +409,7 @@ export async function index(
 
   const eventName = "handler.notification.email";
 
-  const appInsightsClient = getApplicationInsightsTelemetryClient(
+  const appInsightsClient = createApplicationInsightsTelemetryClient(
     isProduction,
     {
       operationId: emailNotificationEvent.notificationId,
