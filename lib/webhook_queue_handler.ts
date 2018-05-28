@@ -198,7 +198,7 @@ export async function sendToWebhook(
           err.timeout
             ? TransientError(`Timeout calling API Proxy`)
             : // when the server returns an HTTP 5xx error
-              err.status && Math.floor(err.status / 100) === 5
+              err.status && err.status % 500 < 100
               ? TransientError(`Transient error calling API proxy: ${errorMsg}`)
               : // when the server returns some other type of HTTP error
                 PermanentError(`Permanent error calling API Proxy: ${errorMsg}`)
