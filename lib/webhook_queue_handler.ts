@@ -121,6 +121,9 @@ type OutputBindings = never;
 // request timeout in milliseconds
 const DEFAULT_REQUEST_TIMEOUT_MS = 10000;
 
+// nanoseconds in a millisecond
+const NANOSEC_PER_MILLISEC = 1e6;
+
 /**
  * Convert the internal representation of the message
  * to the one of the public API
@@ -271,7 +274,7 @@ export async function handleNotification(
 
   const webhookNotification = errorOrWebhookNotification.value.channels.WEBHOOK;
 
-  const startWebhookCallTime = Date.now();
+  const startWebhookCallTime = process.hrtime();
 
   const sendResult = await sendToWebhook(
     webhookNotification.url,
@@ -279,7 +282,8 @@ export async function handleNotification(
     senderMetadata
   );
 
-  const webhookCallDuration = Date.now() - startWebhookCallTime;
+  const webhookCallDuration =
+    process.hrtime(startWebhookCallTime)[0] / NANOSEC_PER_MILLISEC;
 
   const eventName = "notification.webhook.delivery";
 

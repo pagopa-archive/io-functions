@@ -132,6 +132,9 @@ export interface INotificationDefaults {
   readonly MAIL_FROM: NonEmptyString;
 }
 
+// nanoseconds in a millisecond
+const NANOSEC_PER_MILLISEC = 1e6;
+
 //
 // Main function
 //
@@ -289,7 +292,7 @@ export async function handleNotification(
     notificationDefaultParams.HTML_TO_TEXT_OPTIONS
   );
 
-  const startSendMailCallTime = Date.now();
+  const startSendMailCallTime = process.hrtime();
 
   // trigger email delivery
   // see https://nodemailer.com/message/
@@ -309,13 +312,14 @@ export async function handleNotification(
     // disableUrlAccess: true,
   });
 
-  const sendMailCallDuration = Date.now() - startSendMailCallTime;
+  const sendMailCallDurationMs =
+    process.hrtime(startSendMailCallTime)[0] / NANOSEC_PER_MILLISEC;
 
   const eventName = "notification.email.delivery";
 
   const eventContent = {
     dependencyTypeName: "HTTP",
-    duration: sendMailCallDuration,
+    duration: sendMailCallDurationMs,
     name: eventName,
     properties: {
       addressSource: emailNotification.addressSource,
