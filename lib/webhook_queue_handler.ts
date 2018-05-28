@@ -180,10 +180,10 @@ export async function sendToWebhook(
             // in case of server HTTP 5xx errors we trigger a retry
             response.serverError
               ? TransientError(
-                  `Transient HTTP error calling API Proxy API: ${response.text}`
+                  `Transient HTTP error calling API Proxy: ${response.text}`
                 )
               : PermanentError(
-                  `Permanent HTTP error calling API Proxy API: ${response.text}`
+                  `Permanent HTTP error calling API Proxy: ${response.text}`
                 )
           );
         }
@@ -192,12 +192,15 @@ export async function sendToWebhook(
       err => {
         return left<RuntimeError, ApiProxyResponse>(
           err.timeout
-            ? TransientError(`Timeout calling API Proxy API`)
-            : // Fail with a permanent error in case any exception
-              // is thrown during the HTTP request
-              PermanentError(
-                `Permanent error calling API Proxy API: ${JSON.stringify(err)}`
-              )
+            ? TransientError(`Timeout calling API Proxy`)
+            : // in case of server HTTP 5xx errors we trigger a retry
+              err.status && Math.floor(err.status / 100) === 5
+              ? TransientError(`Transient error calling API proxy: `)
+              : // Fail with a permanent error in case any exception
+                // is thrown during the HTTP request
+                PermanentError(
+                  `Permanent error calling API Proxy: ${err.response.text}`
+                )
         );
       }
     );
