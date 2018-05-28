@@ -25,7 +25,6 @@ export function getApplicationInsightsTelemetryClientCreator(
 ) => ApplicationInsights.TelemetryClient {
   // TODO: [#157915000] the following call is expensive, refactor using correlation context:
   // see https://github.com/Microsoft/ApplicationInsights-node.js/issues/387#issuecomment-383648111
-  const telemetryClient = new ApplicationInsights.TelemetryClient();
   if (isProduction) {
     // this won't disable manual calls to trackEvent / trackDependency
     ApplicationInsights.Configuration.setAutoCollectConsole(false)
@@ -35,6 +34,7 @@ export function getApplicationInsightsTelemetryClientCreator(
       .setInternalLogging(false);
   }
   return (params, commonProperties) => {
+    const telemetryClient = new ApplicationInsights.TelemetryClient();
     const tags = telemetryClient.context.tags;
     const keys = telemetryClient.context.keys;
     // tslint:disable-next-line:no-object-mutation
