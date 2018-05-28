@@ -1,5 +1,5 @@
 {
- "scriptFile": "../lib/index.js",
+ "scriptFile": "../.funcpack/index.js",
  "disabled": false,
  "bindings": [
   {
@@ -18,5 +18,7 @@
    "name": "res"
   }
  ],
- "entryPoint": "Openapi"
+ "entryPoint": "Openapi",
+ "_originalEntryPoint": "Openapi",
+ "_originalScriptFile": "../lib/index.js"
 }
