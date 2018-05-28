@@ -49,3 +49,17 @@ export function createApplicationInsightsTelemetryClient(
   }
   return telemetryClient;
 }
+
+const NANOSEC_PER_MILLISEC = 1e6;
+const MILLISEC_PER_SEC = 1e3;
+
+/**
+ * Small helper function that gets the difference in milliseconds
+ * from an initial time obtained calling process.hrtime().
+ * Used when profiling code.
+ */
+export function diffInMilliseconds(startHrtime: [number, number]): number {
+  return (
+    startHrtime[0] / NANOSEC_PER_MILLISEC + startHrtime[1] * MILLISEC_PER_SEC
+  );
+}

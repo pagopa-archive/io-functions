@@ -56,7 +56,10 @@ import {
   NOTIFICATION_STATUS_COLLECTION_NAME,
   NotificationStatusModel
 } from "./models/notification_status";
-import { createApplicationInsightsTelemetryClient } from "./utils/application_insights";
+import {
+  createApplicationInsightsTelemetryClient,
+  diffInMilliseconds
+} from "./utils/application_insights";
 
 // Whether we're in a production environment
 const isProduction = process.env.NODE_ENV === "production";
@@ -120,9 +123,6 @@ type OutputBindings = never;
 
 // request timeout in milliseconds
 const DEFAULT_REQUEST_TIMEOUT_MS = 10000;
-
-// nanoseconds in a millisecond
-const NANOSEC_PER_MILLISEC = 1e6;
 
 /**
  * Convert the internal representation of the message
@@ -282,8 +282,7 @@ export async function handleNotification(
     senderMetadata
   );
 
-  const webhookCallDurationMs =
-    process.hrtime(startWebhookCallTime)[0] / NANOSEC_PER_MILLISEC;
+  const webhookCallDurationMs = diffInMilliseconds(startWebhookCallTime);
 
   const eventName = "notification.webhook.delivery";
 

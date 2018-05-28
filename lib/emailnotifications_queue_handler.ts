@@ -60,7 +60,10 @@ import {
   NOTIFICATION_STATUS_COLLECTION_NAME,
   NotificationStatusModel
 } from "./models/notification_status";
-import { createApplicationInsightsTelemetryClient } from "./utils/application_insights";
+import {
+  createApplicationInsightsTelemetryClient,
+  diffInMilliseconds
+} from "./utils/application_insights";
 
 // Whether we're in a production environment
 const isProduction = process.env.NODE_ENV === "production";
@@ -131,9 +134,6 @@ export interface INotificationDefaults {
   readonly HTML_TO_TEXT_OPTIONS: HtmlToTextOptions;
   readonly MAIL_FROM: NonEmptyString;
 }
-
-// nanoseconds in a millisecond
-const NANOSEC_PER_MILLISEC = 1e6;
 
 //
 // Main function
@@ -312,8 +312,7 @@ export async function handleNotification(
     // disableUrlAccess: true,
   });
 
-  const sendMailCallDurationMs =
-    process.hrtime(startSendMailCallTime)[0] / NANOSEC_PER_MILLISEC;
+  const sendMailCallDurationMs = diffInMilliseconds(startSendMailCallTime);
 
   const eventName = "notification.email.delivery";
 
