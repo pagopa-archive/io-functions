@@ -59,7 +59,6 @@ const MILLISEC_PER_SEC = 1e3;
  * Used when profiling code.
  */
 export function diffInMilliseconds(startHrtime: [number, number]): number {
-  return (
-    startHrtime[0] / NANOSEC_PER_MILLISEC + startHrtime[1] * MILLISEC_PER_SEC
-  );
+  const diff = process.hrtime(startHrtime);
+  return diff[0] * MILLISEC_PER_SEC + diff[1] / NANOSEC_PER_MILLISEC;
 }
