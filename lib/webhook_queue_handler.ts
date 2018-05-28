@@ -282,7 +282,7 @@ export async function handleNotification(
     senderMetadata
   );
 
-  const webhookCallDuration =
+  const webhookCallDurationMs =
     process.hrtime(startWebhookCallTime)[0] / NANOSEC_PER_MILLISEC;
 
   const eventName = "notification.webhook.delivery";
@@ -296,7 +296,7 @@ export async function handleNotification(
   const eventContent = {
     data: hostName,
     dependencyTypeName: "HTTP",
-    duration: webhookCallDuration,
+    duration: webhookCallDurationMs,
     name: eventName
   };
 
