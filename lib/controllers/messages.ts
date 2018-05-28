@@ -107,7 +107,10 @@ import { NotificationChannelStatusValueEnum } from "../api/definitions/Notificat
 import { TimeToLiveSeconds } from "../api/definitions/TimeToLiveSeconds";
 import { MessageStatusModel } from "../models/message_status";
 import { NotificationStatusModel } from "../models/notification_status";
-import { createApplicationInsightsTelemetryClient } from "../utils/application_insights";
+import {
+  createApplicationInsightsTelemetryClient,
+  diffInMilliseconds
+} from "../utils/application_insights";
 
 const isProduction = process.env.NODE_ENV === "production";
 
@@ -337,7 +340,7 @@ export function CreateMessageHandler(
     // extract the user service
     const userService = userAttributes.service;
 
-    const startRequestTime = Date.now();
+    const startRequestTime = process.hrtime();
 
     // base appinsights event attributes for convenience (used later)
     const appInsightsEventName = "api.messages.create";
@@ -483,7 +486,7 @@ export function CreateMessageHandler(
     // track the event that a message has been created
     appInsightsClient.trackEvent({
       measurements: {
-        duration: Date.now() - startRequestTime
+        duration: diffInMilliseconds(startRequestTime)
       },
       name: appInsightsEventName,
       properties: {
