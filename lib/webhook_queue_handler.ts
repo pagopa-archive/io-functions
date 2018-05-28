@@ -190,17 +190,18 @@ export async function sendToWebhook(
         return right<RuntimeError, ApiProxyResponse>(response.body);
       },
       err => {
+        const errorMsg =
+          err.response && err.response.text
+            ? err.response.text
+            : "unknown error";
         return left<RuntimeError, ApiProxyResponse>(
           err.timeout
             ? TransientError(`Timeout calling API Proxy`)
-            : // in case of server HTTP 5xx errors we trigger a retry
+            : // when the server returns an HTTP 5xx error
               err.status && Math.floor(err.status / 100) === 5
-              ? TransientError(`Transient error calling API proxy: `)
-              : // Fail with a permanent error in case any exception
-                // is thrown during the HTTP request
-                PermanentError(
-                  `Permanent error calling API Proxy: ${err.response.text}`
-                )
+              ? TransientError(`Transient error calling API proxy: ${errorMsg}`)
+              : // when the server returns some other type of HTTP error
+                PermanentError(`Permanent error calling API Proxy: ${errorMsg}`)
         );
       }
     );

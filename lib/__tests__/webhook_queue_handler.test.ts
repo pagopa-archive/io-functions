@@ -178,6 +178,34 @@ describe("sendToWebhook", () => {
       expect(isTransient(ret.value)).toBeTruthy();
     }
   });
+  it("should return a transient error in case the webhook returns HTTP status 5xx", async () => {
+    const sendMock = jest.fn();
+    sendMock.mockImplementation(() => {
+      return Promise.reject({ status: 555 });
+    });
+    // tslint:disable-next-line:no-object-mutation
+    (superagent as any).Request.prototype.send = sendMock;
+    const ret = await sendToWebhook({} as any, {} as any, {} as any);
+    expect(sendMock).toHaveBeenCalledTimes(1);
+    expect(isLeft(ret)).toBeTruthy();
+    if (isLeft(ret)) {
+      expect(isTransient(ret.value)).toBeTruthy();
+    }
+  });
+  it("should return a permanent error in case the webhook returns HTTP status 4xx", async () => {
+    const sendMock = jest.fn();
+    sendMock.mockImplementation(() => {
+      return Promise.reject({ status: 444 });
+    });
+    // tslint:disable-next-line:no-object-mutation
+    (superagent as any).Request.prototype.send = sendMock;
+    const ret = await sendToWebhook({} as any, {} as any, {} as any);
+    expect(sendMock).toHaveBeenCalledTimes(1);
+    expect(isLeft(ret)).toBeTruthy();
+    if (isLeft(ret)) {
+      expect(isTransient(ret.value)).toBeFalsy();
+    }
+  });
 });
 
 describe("handleNotification", () => {
