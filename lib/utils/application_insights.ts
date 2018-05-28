@@ -17,28 +17,15 @@ export interface ITelemetryParams {
  * a new instance every time we want to set common values
  * which are valid only for one run.
  */
-export function createApplicationInsightsTelemetryClient(
-  isProduction: boolean,
+export function getApplicationInsightsTelemetryClientCreator(
+  isProduction: boolean
+): (
   params: ITelemetryParams,
   commonProperties?: Record<string, string>
-): ApplicationInsights.TelemetryClient {
+) => ApplicationInsights.TelemetryClient {
+  // TODO: [#157915000] the following call is expensive, refactor using correlation context:
+  // see https://github.com/Microsoft/ApplicationInsights-node.js/issues/387#issuecomment-383648111
   const telemetryClient = new ApplicationInsights.TelemetryClient();
-  const tags = telemetryClient.context.tags;
-  const keys = telemetryClient.context.keys;
-  // tslint:disable-next-line:no-object-mutation
-  tags[keys.operationId] = params.operationId;
-  if (params.serviceId) {
-    // tslint:disable-next-line:no-object-mutation
-    tags[keys.userAccountId] = params.serviceId;
-  }
-  if (params.operationParentId) {
-    // tslint:disable-next-line:no-object-mutation
-    tags[keys.operationParentId] = params.operationParentId;
-  }
-  if (commonProperties) {
-    // tslint:disable-next-line:no-object-mutation
-    telemetryClient.commonProperties = commonProperties;
-  }
   if (isProduction) {
     // this won't disable manual calls to trackEvent / trackDependency
     ApplicationInsights.Configuration.setAutoCollectConsole(false)
@@ -47,7 +34,25 @@ export function createApplicationInsightsTelemetryClient(
       .setAutoCollectRequests(false)
       .setInternalLogging(false);
   }
-  return telemetryClient;
+  return (params, commonProperties) => {
+    const tags = telemetryClient.context.tags;
+    const keys = telemetryClient.context.keys;
+    // tslint:disable-next-line:no-object-mutation
+    tags[keys.operationId] = params.operationId;
+    if (params.serviceId) {
+      // tslint:disable-next-line:no-object-mutation
+      tags[keys.userAccountId] = params.serviceId;
+    }
+    if (params.operationParentId) {
+      // tslint:disable-next-line:no-object-mutation
+      tags[keys.operationParentId] = params.operationParentId;
+    }
+    if (commonProperties) {
+      // tslint:disable-next-line:no-object-mutation
+      telemetryClient.commonProperties = commonProperties;
+    }
+    return telemetryClient;
+  };
 }
 
 const NANOSEC_PER_MILLISEC = 1e6;

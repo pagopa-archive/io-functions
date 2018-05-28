@@ -108,11 +108,15 @@ import { TimeToLiveSeconds } from "../api/definitions/TimeToLiveSeconds";
 import { MessageStatusModel } from "../models/message_status";
 import { NotificationStatusModel } from "../models/notification_status";
 import {
-  createApplicationInsightsTelemetryClient,
-  diffInMilliseconds
+  diffInMilliseconds,
+  getApplicationInsightsTelemetryClientCreator
 } from "../utils/application_insights";
 
 const isProduction = process.env.NODE_ENV === "production";
+
+const createApplicationInsightsTelemetryClient = getApplicationInsightsTelemetryClientCreator(
+  isProduction
+);
 
 /**
  * Input and output bindings for this function
@@ -405,7 +409,6 @@ export function CreateMessageHandler(
     );
 
     const appInsightsClient = createApplicationInsightsTelemetryClient(
-      isProduction,
       {
         operationId: newMessageWithoutContent.id,
         serviceId: userService.serviceId

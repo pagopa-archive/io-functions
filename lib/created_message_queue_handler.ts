@@ -66,11 +66,15 @@ import {
   MESSAGE_STATUS_COLLECTION_NAME,
   MessageStatusModel
 } from "./models/message_status";
-import { createApplicationInsightsTelemetryClient } from "./utils/application_insights";
+import { getApplicationInsightsTelemetryClientCreator } from "./utils/application_insights";
 import { ulidGenerator } from "./utils/strings";
 
 // Whether we're in a production environment
 const isProduction = process.env.NODE_ENV === "production";
+
+const createApplicationInsightsTelemetryClient = getApplicationInsightsTelemetryClientCreator(
+  isProduction
+);
 
 // Setup DocumentDB
 const cosmosDbUri = getRequiredStringEnv("CUSTOMCONNSTR_COSMOSDB_URI");
@@ -473,7 +477,6 @@ export async function index(
   const eventName = "handler.message.process";
 
   const appInsightsClient = createApplicationInsightsTelemetryClient(
-    isProduction,
     {
       operationId: newMessageWithContent.id,
       operationParentId: newMessageWithContent.id,

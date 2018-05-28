@@ -57,12 +57,16 @@ import {
   NotificationStatusModel
 } from "./models/notification_status";
 import {
-  createApplicationInsightsTelemetryClient,
-  diffInMilliseconds
+  diffInMilliseconds,
+  getApplicationInsightsTelemetryClientCreator
 } from "./utils/application_insights";
 
 // Whether we're in a production environment
 const isProduction = process.env.NODE_ENV === "production";
+
+const createApplicationInsightsTelemetryClient = getApplicationInsightsTelemetryClientCreator(
+  isProduction
+);
 
 // Setup DocumentDB
 
@@ -368,7 +372,6 @@ export async function index(
   const eventName = "handler.notification.webhook";
 
   const appInsightsClient = createApplicationInsightsTelemetryClient(
-    isProduction,
     {
       operationId: webhookNotificationEvent.notificationId,
       operationParentId: webhookNotificationEvent.message.id,
