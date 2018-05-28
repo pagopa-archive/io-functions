@@ -8,7 +8,17 @@ export interface ITelemetryParams {
   readonly serviceId?: ServiceId;
 }
 
+/**
+ * Get a new ApplicationInsights TelemetryClient.
+ *
+ * When using context and/or commonProperties
+ * the TelemetryClient shares them between all threads
+ * (ie. function handlers runs). That's why we must obtain
+ * a new instance every time we want to set common values
+ * which are valid only for one run.
+ */
 export function getApplicationInsightsTelemetryClient(
+  isProduction: boolean,
   params: ITelemetryParams,
   commonProperties?: Record<string, string>
 ): ApplicationInsights.TelemetryClient {
@@ -26,6 +36,14 @@ export function getApplicationInsightsTelemetryClient(
   if (commonProperties) {
     // tslint:disable-next-line:no-object-mutation
     telemetryClient.commonProperties = commonProperties;
+  }
+  if (isProduction) {
+    // this won't disable manual calls to trackEvent / trackDependency
+    ApplicationInsights.Configuration.setAutoCollectConsole(false)
+      .setAutoCollectDependencies(false)
+      .setAutoCollectPerformance(false)
+      .setAutoCollectRequests(false)
+      .setInternalLogging(false);
   }
   return telemetryClient;
 }
