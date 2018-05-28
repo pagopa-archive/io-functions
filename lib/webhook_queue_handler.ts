@@ -365,6 +365,7 @@ export async function index(
   const eventName = "handler.notification.webhook";
 
   const appInsightsClient = getApplicationInsightsTelemetryClient(
+    isProduction,
     {
       operationId: webhookNotificationEvent.notificationId,
       operationParentId: webhookNotificationEvent.message.id,

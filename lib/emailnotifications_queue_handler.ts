@@ -410,6 +410,7 @@ export async function index(
   const eventName = "handler.notification.email";
 
   const appInsightsClient = getApplicationInsightsTelemetryClient(
+    isProduction,
     {
       operationId: emailNotificationEvent.notificationId,
       operationParentId: emailNotificationEvent.message.id,

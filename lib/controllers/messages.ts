@@ -109,6 +109,8 @@ import { MessageStatusModel } from "../models/message_status";
 import { NotificationStatusModel } from "../models/notification_status";
 import { getApplicationInsightsTelemetryClient } from "../utils/application_insights";
 
+const isProduction = process.env.NODE_ENV === "production";
+
 /**
  * Input and output bindings for this function
  * see CreatedMessageQueueHandler/function.json
@@ -400,6 +402,7 @@ export function CreateMessageHandler(
     );
 
     const appInsightsClient = getApplicationInsightsTelemetryClient(
+      isProduction,
       {
         operationId: newMessageWithoutContent.id,
         serviceId: userService.serviceId

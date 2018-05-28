@@ -473,6 +473,7 @@ export async function index(
   const eventName = "handler.message.process";
 
   const appInsightsClient = getApplicationInsightsTelemetryClient(
+    isProduction,
     {
       operationId: newMessageWithContent.id,
       operationParentId: newMessageWithContent.id,
