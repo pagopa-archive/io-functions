@@ -1,0 +1,61 @@
+#
+# Compose file to run tests.
+#
+# To lint local files:
+#
+#  $ docker-compose up lint
+#
+# Just run all the test in a node:6 environment:
+#
+#  $ docker-compose up test
+#
+# To try the actual code with latest node, run:
+#
+#  $ docker-compose up test-latest
+#
+dev:
+  image: "node:6"
+  volumes:
+  - .:/code:z
+  command: /usr/bin/tail -f /etc/hosts
+
+
+lint:
+  image: "node:6"
+  volumes:
+  - .:/code:z
+  working_dir: /code
+  command: |-
+    bash -c '
+      yarn install
+      yarn build
+      yarn global add  prettier tslint typescript
+      tslint -p . -c tslint.json -t verbose --fix
+      find lib -name \*.ts | xargs prettier --write
+    '
+
+
+test:
+  image: "node:6"
+  volumes:
+  - .:/code:z
+  working_dir: /code
+  command: |-
+    bash -c '
+      yarn install
+      yarn build
+      yarn test
+    '
+
+
+test-latest:
+  image: "node:latest"
+  volumes:
+  - .:/code:z
+  working_dir: /code
+  command: |-
+    bash -c '
+      yarn install
+      yarn build
+      yarn test
+    '
