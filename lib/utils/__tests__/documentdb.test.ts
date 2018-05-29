@@ -121,7 +121,7 @@ describe("createDocument", () => {
       (clientMock as any) as DocumentDb.DocumentClient,
       collectionUriFixture,
       documentFixture,
-      "fiscalCode"
+      "taxCode"
     );
     expect(clientMock.createDocument).toHaveBeenCalledTimes(1);
     expect(isRight(result)).toBeTruthy();
@@ -138,7 +138,7 @@ describe("createDocument", () => {
       (clientMock as any) as DocumentDb.DocumentClient,
       collectionUriFixture,
       documentFixture,
-      "fiscalCode"
+      "taxCode"
     );
     expect(clientMock.createDocument).toHaveBeenCalledTimes(1);
     expect(isLeft(result)).toBeTruthy();

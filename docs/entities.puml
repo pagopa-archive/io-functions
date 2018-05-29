@@ -10,7 +10,7 @@ class Message {
   +id uuid
   +senderServiceId uuid
   +senderUserId uuid
-  +fiscalCode string
+  +taxCode string
   +subject string
   +content string
 }
@@ -18,13 +18,13 @@ class Message {
 class Notification {
   +id uuid
   +messageId uuid
-  +fiscalCode string
+  +taxCode string
 }
 
 class EmailNotification {
   +id uuid
   +notificationId uuid
-  +fiscalCode string
+  +taxCode string
   +fromAddress string
   +toAddress string
   +status string
@@ -38,7 +38,7 @@ class Service {
 }
 
 class Profile {
-  +fiscalCode string
+  +taxCode string
   +Email string
 }
 

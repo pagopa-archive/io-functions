@@ -124,14 +124,14 @@ app.post("/api/v1/debug", debugHandler);
 
 app.get("/api/v1/services/:serviceid", GetService(serviceModel));
 
-app.get("/api/v1/profiles/:fiscalcode", GetProfile(serviceModel, profileModel));
+app.get("/api/v1/profiles/:taxcode", GetProfile(serviceModel, profileModel));
 app.post(
-  "/api/v1/profiles/:fiscalcode",
+  "/api/v1/profiles/:taxcode",
   UpsertProfile(serviceModel, profileModel)
 );
 
 app.get(
-  "/api/v1/messages/:fiscalcode/:id",
+  "/api/v1/messages/:taxcode/:id",
   GetMessage(
     serviceModel,
     messageModel,
@@ -143,11 +143,11 @@ app.get(
 );
 
 app.get(
-  "/api/v1/messages/:fiscalcode",
+  "/api/v1/messages/:taxcode",
   GetMessages(serviceModel, messageModel)
 );
 app.post(
-  "/api/v1/messages/:fiscalcode",
+  "/api/v1/messages/:taxcode",
   CreateMessage(appInsightsClient, serviceModel, messageModel)
 );
 

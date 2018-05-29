@@ -6,7 +6,7 @@ import * as DocumentDb from "documentdb";
 
 import * as DocumentDbUtils from "../../utils/documentdb";
 
-import { FiscalCode } from "../../api/definitions/FiscalCode";
+import { TaxCode } from "../../api/definitions/TaxCode";
 
 import { NonEmptyString } from "italia-ts-commons/lib/strings";
 
@@ -25,7 +25,7 @@ const aNotificationsCollectionUri = DocumentDbUtils.getCollectionUri(
   "notifications"
 );
 
-const aFiscalCode = "FRLFRC74E04B157I" as FiscalCode;
+const aTaxCode = "FRLFRC74E04B157I" as TaxCode;
 
 const aNewEmailNotification: NewNotification = {
   channels: {
@@ -34,10 +34,10 @@ const aNewEmailNotification: NewNotification = {
       toAddress: "to@example.com" as EmailAddress
     }
   },
-  fiscalCode: aFiscalCode,
   id: "A_NOTIFICATION_ID" as NonEmptyString,
   kind: "INewNotification",
-  messageId: "A_MESSAGE_ID" as NonEmptyString
+  messageId: "A_MESSAGE_ID" as NonEmptyString,
+  taxCode: aTaxCode
 };
 
 const aRetrievedNotification: RetrievedNotification = {
@@ -149,7 +149,7 @@ describe("find", () => {
 
     const result = await model.find(
       aRetrievedNotification.id,
-      aRetrievedNotification.fiscalCode
+      aRetrievedNotification.taxCode
     );
 
     expect(isLeft(result)).toBeTruthy();

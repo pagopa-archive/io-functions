@@ -20,8 +20,8 @@ import { NewMessageWithContent } from "../models/message";
 import * as functionConfig from "../../CreatedMessageQueueHandler/function.json";
 
 import { none, some } from "fp-ts/lib/Option";
-import { FiscalCode } from "../api/definitions/FiscalCode";
 import { MessageBodyMarkdown } from "../api/definitions/MessageBodyMarkdown";
+import { TaxCode } from "../api/definitions/TaxCode";
 
 import {
   EmailNotification,
@@ -61,8 +61,8 @@ afterEach(() => {
   jest.restoreAllMocks();
 });
 
-const aCorrectFiscalCode = "FRLFRC74E04B157I" as FiscalCode;
-const aWrongFiscalCode = "FRLFRC74E04B157" as FiscalCode;
+const aCorrectTaxCode = "FRLFRC74E04B157I" as TaxCode;
+const aWrongTaxCode = "FRLFRC74E04B157" as TaxCode;
 const anEmail = "x@example.com" as EmailString;
 const aUrl = "http://aUrl.com" as HttpsUrl;
 
@@ -74,8 +74,8 @@ const anEmailNotification: EmailNotification = {
       toAddress: anEmail
     }
   },
-  fiscalCode: aCorrectFiscalCode,
-  messageId: "m123" as NonEmptyString
+  messageId: "m123" as NonEmptyString,
+  taxCode: aCorrectTaxCode
 };
 
 const aWebhookNotification: WebhookNotification = {
@@ -84,8 +84,8 @@ const aWebhookNotification: WebhookNotification = {
       url: aUrl
     }
   },
-  fiscalCode: aCorrectFiscalCode,
-  messageId: "m123" as NonEmptyString
+  messageId: "m123" as NonEmptyString,
+  taxCode: aCorrectTaxCode
 };
 
 const aMessageBodyMarkdown = "test".repeat(80) as MessageBodyMarkdown;
@@ -97,11 +97,11 @@ const aMessage: NewMessageWithContent = {
     markdown: aMessageBodyMarkdown
   },
   createdAt: new Date(),
-  fiscalCode: aCorrectFiscalCode,
   id: aMessageId,
   kind: "INewMessageWithContent",
   senderServiceId: aServiceId,
   senderUserId: "u123" as NonEmptyString,
+  taxCode: aCorrectTaxCode,
   timeToLiveSeconds: 3600 as TimeToLiveSeconds
 };
 
@@ -118,26 +118,26 @@ const aRetrievedProfileWithEmail: RetrievedProfile = {
   _self: "123",
   _ts: 123,
   email: anEmail,
-  fiscalCode: aCorrectFiscalCode,
   id: "123" as NonEmptyString,
   kind: "IRetrievedProfile",
+  taxCode: aCorrectTaxCode,
   version: 1 as NonNegativeNumber
 };
 
 const aRetrievedProfileWithoutEmail: RetrievedProfile = {
   _self: "123",
   _ts: 123,
-  fiscalCode: aCorrectFiscalCode,
   id: "123" as NonEmptyString,
   kind: "IRetrievedProfile",
+  taxCode: aCorrectTaxCode,
   version: 1 as NonNegativeNumber
 };
 
 const aCreatedNotificationWithoutEmail = {
-  fiscalCode: aCorrectFiscalCode,
   id: "123" as NonEmptyString,
   kind: "INewNotification",
-  messageId: aMessageId
+  messageId: aMessageId,
+  taxCode: aCorrectTaxCode
 };
 
 const aCreatedNotificationWithEmail: NewNotification = {
@@ -195,9 +195,9 @@ describe("createdMessageQueueIndex", () => {
     };
 
     jest
-      .spyOn(ProfileModel.prototype, "findOneProfileByFiscalCode")
+      .spyOn(ProfileModel.prototype, "findOneProfileByTaxCode")
       .mockImplementationOnce(() => {
-        throw new Error("findOneProfileByFiscalCodeError");
+        throw new Error("findOneProfileByTaxCodeError");
       });
 
     const ret = await index(contextMock as any);
@@ -208,16 +208,16 @@ describe("createdMessageQueueIndex", () => {
       "createdmessages",
       expect.any(Function),
       expect.any(Function),
-      expect.objectContaining({ message: "findOneProfileByFiscalCodeError" })
+      expect.objectContaining({ message: "findOneProfileByTaxCodeError" })
     );
   });
 
-  it("should stop processing if createdMessage is invalid (wrong fiscal code)", async () => {
+  it("should stop processing if createdMessage is invalid (wrong tax code)", async () => {
     const contextMock = {
       bindings: {
         createdMessage: {
           aMessageEvent,
-          message: { ...aMessage, fiscalCode: aWrongFiscalCode }
+          message: { ...aMessage, taxCode: aWrongTaxCode }
         },
         emailNotification: undefined
       },
@@ -253,7 +253,7 @@ describe("createdMessageQueueIndex", () => {
       .mockReturnValue(Promise.resolve(right(none)));
 
     const profileSpy = jest
-      .spyOn(ProfileModel.prototype, "findOneProfileByFiscalCode")
+      .spyOn(ProfileModel.prototype, "findOneProfileByTaxCode")
       .mockImplementationOnce(() =>
         Promise.resolve(right(some(aRetrievedProfileWithEmail)))
       );
@@ -281,7 +281,7 @@ describe("createdMessageQueueIndex", () => {
     };
 
     const profileSpy = jest
-      .spyOn(ProfileModel.prototype, "findOneProfileByFiscalCode")
+      .spyOn(ProfileModel.prototype, "findOneProfileByTaxCode")
       .mockImplementationOnce(() => Promise.resolve(left(none)));
 
     const ret = await index(contextMock as any);
@@ -304,7 +304,7 @@ describe("createdMessageQueueIndex", () => {
 describe("handleMessage", () => {
   it("should return TRANSIENT error if fetching user profile returns error", async () => {
     const profileModelMock = {
-      findOneProfileByFiscalCode: jest.fn(() => {
+      findOneProfileByTaxCode: jest.fn(() => {
         return Promise.resolve(left(none));
       })
     };
@@ -317,8 +317,8 @@ describe("handleMessage", () => {
       aUrl,
       aMessageEvent
     );
-    expect(profileModelMock.findOneProfileByFiscalCode).toHaveBeenCalledWith(
-      aCorrectFiscalCode
+    expect(profileModelMock.findOneProfileByTaxCode).toHaveBeenCalledWith(
+      aCorrectTaxCode
     );
     expect(isLeft(response)).toBeTruthy();
     if (isLeft(response)) {
@@ -328,7 +328,7 @@ describe("handleMessage", () => {
 
   it("should fail with a permanent error if no channel can be resolved", async () => {
     const profileModelMock = {
-      findOneProfileByFiscalCode: jest.fn(() => {
+      findOneProfileByTaxCode: jest.fn(() => {
         return Promise.resolve(right(none));
       })
     };
@@ -342,8 +342,8 @@ describe("handleMessage", () => {
       aMessageEvent
     );
 
-    expect(profileModelMock.findOneProfileByFiscalCode).toHaveBeenCalledWith(
-      aCorrectFiscalCode
+    expect(profileModelMock.findOneProfileByTaxCode).toHaveBeenCalledWith(
+      aCorrectTaxCode
     );
 
     expect(isLeft(response)).toBeTruthy();
@@ -357,7 +357,7 @@ describe("handleMessage", () => {
       "but the email field is empty and no default email was provided",
     async () => {
       const profileModelMock = {
-        findOneProfileByFiscalCode: jest.fn(() => {
+        findOneProfileByTaxCode: jest.fn(() => {
           return Promise.resolve(right(some(aRetrievedProfileWithoutEmail)));
         })
       };
@@ -377,8 +377,8 @@ describe("handleMessage", () => {
         aMessageEvent
       );
 
-      expect(profileModelMock.findOneProfileByFiscalCode).toHaveBeenCalledWith(
-        aCorrectFiscalCode
+      expect(profileModelMock.findOneProfileByTaxCode).toHaveBeenCalledWith(
+        aCorrectTaxCode
       );
 
       expect(isLeft(response)).toBeTruthy();
@@ -393,7 +393,7 @@ describe("handleMessage", () => {
       "with an email field but the email channel is blocked for this service",
     async () => {
       const profileModelMock = {
-        findOneProfileByFiscalCode: jest.fn(() => {
+        findOneProfileByTaxCode: jest.fn(() => {
           return Promise.resolve(
             right(
               some({
@@ -422,8 +422,8 @@ describe("handleMessage", () => {
         aMessageEvent
       );
 
-      expect(profileModelMock.findOneProfileByFiscalCode).toHaveBeenCalledWith(
-        aCorrectFiscalCode
+      expect(profileModelMock.findOneProfileByTaxCode).toHaveBeenCalledWith(
+        aCorrectTaxCode
       );
 
       expect(isLeft(response)).toBeTruthy();
@@ -438,7 +438,7 @@ describe("handleMessage", () => {
       "with is_webhook_enabled but the channel is blocked for this service",
     async () => {
       const profileModelMock = {
-        findOneProfileByFiscalCode: jest.fn(() => {
+        findOneProfileByTaxCode: jest.fn(() => {
           return Promise.resolve(
             right(
               some({
@@ -468,8 +468,8 @@ describe("handleMessage", () => {
         aMessageEvent
       );
 
-      expect(profileModelMock.findOneProfileByFiscalCode).toHaveBeenCalledWith(
-        aCorrectFiscalCode
+      expect(profileModelMock.findOneProfileByTaxCode).toHaveBeenCalledWith(
+        aCorrectTaxCode
       );
 
       expect(isLeft(response)).toBeTruthy();
@@ -481,7 +481,7 @@ describe("handleMessage", () => {
 
   it("should not create a webhook or email notification if the inbox is disabled", async () => {
     const profileModelMock = {
-      findOneProfileByFiscalCode: jest.fn(() => {
+      findOneProfileByTaxCode: jest.fn(() => {
         return Promise.resolve(
           right(
             some({
@@ -512,8 +512,8 @@ describe("handleMessage", () => {
       aMessageEvent
     );
 
-    expect(profileModelMock.findOneProfileByFiscalCode).toHaveBeenCalledWith(
-      aCorrectFiscalCode
+    expect(profileModelMock.findOneProfileByTaxCode).toHaveBeenCalledWith(
+      aCorrectTaxCode
     );
 
     expect(isLeft(response)).toBeTruthy();
@@ -524,10 +524,10 @@ describe("handleMessage", () => {
 
   it(
     "should create a notification with an email if a profile exists for " +
-      "fiscal code and the email field isn't empty",
+      "tax code and the email field isn't empty",
     async () => {
       const profileModelMock = {
-        findOneProfileByFiscalCode: jest.fn(() => {
+        findOneProfileByTaxCode: jest.fn(() => {
           return Promise.resolve(right(some(aRetrievedProfileWithEmail)));
         })
       };
@@ -547,8 +547,8 @@ describe("handleMessage", () => {
         aMessageEvent
       );
 
-      expect(profileModelMock.findOneProfileByFiscalCode).toHaveBeenCalledWith(
-        aCorrectFiscalCode
+      expect(profileModelMock.findOneProfileByTaxCode).toHaveBeenCalledWith(
+        aCorrectTaxCode
       );
 
       expect(notificationModelMock.create).toHaveBeenCalledWith(
@@ -570,10 +570,10 @@ describe("handleMessage", () => {
 
   it(
     "should create a webhook notification if a profile exists for " +
-      "fiscal code and the webhook is enabled",
+      "tax code and the webhook is enabled",
     async () => {
       const profileModelMock = {
-        findOneProfileByFiscalCode: jest.fn(() => {
+        findOneProfileByTaxCode: jest.fn(() => {
           return Promise.resolve(
             right(
               some({
@@ -600,8 +600,8 @@ describe("handleMessage", () => {
         aMessageEvent
       );
 
-      expect(profileModelMock.findOneProfileByFiscalCode).toHaveBeenCalledWith(
-        aCorrectFiscalCode
+      expect(profileModelMock.findOneProfileByTaxCode).toHaveBeenCalledWith(
+        aCorrectTaxCode
       );
 
       expect(notificationModelMock.create).toHaveBeenCalledWith(
@@ -623,10 +623,10 @@ describe("handleMessage", () => {
 
   it(
     "should create a notification with an email if a profile exists for " +
-      "fiscal code, the email field is empty but a default email was provided",
+      "tax code, the email field is empty but a default email was provided",
     async () => {
       const profileModelMock = {
-        findOneProfileByFiscalCode: jest.fn(() => {
+        findOneProfileByTaxCode: jest.fn(() => {
           return Promise.resolve(
             right(
               some({
@@ -656,8 +656,8 @@ describe("handleMessage", () => {
         }
       );
 
-      expect(profileModelMock.findOneProfileByFiscalCode).toHaveBeenCalledWith(
-        aCorrectFiscalCode
+      expect(profileModelMock.findOneProfileByTaxCode).toHaveBeenCalledWith(
+        aCorrectTaxCode
       );
 
       expect(notificationModelMock.create).toHaveBeenCalledWith(
@@ -685,10 +685,10 @@ describe("handleMessage", () => {
 
   it(
     "should create a notification with an email if a profile does not exists for " +
-      "fiscal code but a default email was provided",
+      "tax code but a default email was provided",
     async () => {
       const profileModelMock = {
-        findOneProfileByFiscalCode: jest.fn(() => {
+        findOneProfileByTaxCode: jest.fn(() => {
           return Promise.resolve(right(none));
         })
       };
@@ -711,8 +711,8 @@ describe("handleMessage", () => {
         }
       );
 
-      expect(profileModelMock.findOneProfileByFiscalCode).toHaveBeenCalledWith(
-        aCorrectFiscalCode
+      expect(profileModelMock.findOneProfileByTaxCode).toHaveBeenCalledWith(
+        aCorrectTaxCode
       );
       expect(notificationModelMock.create).toHaveBeenCalledWith(
         {
@@ -739,7 +739,7 @@ describe("handleMessage", () => {
 
   it("should save the message content if the user enabled the feature in its profile", async () => {
     const profileModelMock = {
-      findOneProfileByFiscalCode: jest.fn(() => {
+      findOneProfileByTaxCode: jest.fn(() => {
         return Promise.resolve(
           right(
             some({
@@ -752,8 +752,8 @@ describe("handleMessage", () => {
     };
 
     const retrievedMessageMock = {
-      fiscalCode: aCorrectFiscalCode,
-      id: aMessageEvent.message.id
+      id: aMessageEvent.message.id,
+      taxCode: aCorrectTaxCode
     };
 
     const messageModelMock = {
@@ -780,8 +780,8 @@ describe("handleMessage", () => {
       }
     );
 
-    expect(profileModelMock.findOneProfileByFiscalCode).toHaveBeenCalledWith(
-      aCorrectFiscalCode
+    expect(profileModelMock.findOneProfileByTaxCode).toHaveBeenCalledWith(
+      aCorrectTaxCode
     );
 
     expect(messageModelMock.attachStoredContent.mock.calls[0][0]).toBe(
@@ -791,7 +791,7 @@ describe("handleMessage", () => {
       retrievedMessageMock.id
     );
     expect(messageModelMock.attachStoredContent.mock.calls[0][2]).toEqual(
-      retrievedMessageMock.fiscalCode
+      retrievedMessageMock.taxCode
     );
 
     expect(notificationModelMock.create).toHaveBeenCalledWith(
@@ -812,7 +812,7 @@ describe("handleMessage", () => {
 
   it("should return a TRANSIENT error if saving the message content errors", async () => {
     const profileModelMock = {
-      findOneProfileByFiscalCode: jest.fn(() => {
+      findOneProfileByTaxCode: jest.fn(() => {
         return Promise.resolve(
           right(
             some({
@@ -825,8 +825,8 @@ describe("handleMessage", () => {
     };
 
     const retrievedMessageMock = {
-      fiscalCode: aCorrectFiscalCode,
-      id: aMessageEvent.message.id
+      id: aMessageEvent.message.id,
+      taxCode: aCorrectTaxCode
     };
 
     const messageModelMock = {
@@ -853,8 +853,8 @@ describe("handleMessage", () => {
       }
     );
 
-    expect(profileModelMock.findOneProfileByFiscalCode).toHaveBeenCalledWith(
-      aCorrectFiscalCode
+    expect(profileModelMock.findOneProfileByTaxCode).toHaveBeenCalledWith(
+      aCorrectTaxCode
     );
 
     expect(messageModelMock.attachStoredContent.mock.calls[0][0]).toBe(
@@ -864,7 +864,7 @@ describe("handleMessage", () => {
       retrievedMessageMock.id
     );
     expect(messageModelMock.attachStoredContent.mock.calls[0][2]).toEqual(
-      retrievedMessageMock.fiscalCode
+      retrievedMessageMock.taxCode
     );
 
     expect(isLeft(response)).toBeTruthy();
@@ -876,7 +876,7 @@ describe("handleMessage", () => {
 
   it("should return TRANSIENT error if saving notification returns error", async () => {
     const profileModelMock = {
-      findOneProfileByFiscalCode: jest.fn(() => {
+      findOneProfileByTaxCode: jest.fn(() => {
         return Promise.resolve(right(some(aRetrievedProfileWithEmail)));
       })
     };
@@ -896,8 +896,8 @@ describe("handleMessage", () => {
       aMessageEvent
     );
 
-    expect(profileModelMock.findOneProfileByFiscalCode).toHaveBeenCalledWith(
-      aCorrectFiscalCode
+    expect(profileModelMock.findOneProfileByTaxCode).toHaveBeenCalledWith(
+      aCorrectTaxCode
     );
     expect(isLeft(response)).toBeTruthy();
     if (isLeft(response)) {

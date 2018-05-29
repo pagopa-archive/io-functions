@@ -14,7 +14,7 @@ import * as DocumentDbUtils from "../utils/documentdb";
 import { DocumentDbModel } from "../utils/documentdb_model";
 
 import { EmailAddress } from "../api/definitions/EmailAddress";
-import { FiscalCode } from "../api/definitions/FiscalCode";
+import { TaxCode } from "../api/definitions/TaxCode";
 
 import { Either } from "fp-ts/lib/Either";
 import { Option } from "fp-ts/lib/Option";
@@ -43,8 +43,8 @@ export type NotificationAddressSource = NotificationAddressSourceEnum;
  * Base interface for Notification objects
  */
 export const NotificationBase = t.interface({
-  fiscalCode: FiscalCode,
-  messageId: NonEmptyString
+  messageId: NonEmptyString,
+  taxCode: TaxCode
 });
 
 // Email Notification
@@ -120,15 +120,15 @@ export type NewNotification = t.TypeOf<typeof NewNotification>;
  */
 export function createNewNotification(
   ulidGenerator: ObjectIdGenerator,
-  fiscalCode: FiscalCode,
+  taxCode: TaxCode,
   messageId: NonEmptyString
 ): NewNotification {
   return {
     channels: {},
-    fiscalCode,
     id: ulidGenerator(),
     kind: "INewNotification",
-    messageId
+    messageId,
+    taxCode
   };
 }
 
@@ -148,7 +148,7 @@ export type RetrievedNotification = t.TypeOf<typeof RetrievedNotification>;
 
 /* istanbul ignore next */
 function toBaseType(o: RetrievedNotification): Notification {
-  return pick(["fiscalCode", "messageId", "channels"], o);
+  return pick(["taxCode", "messageId", "channels"], o);
 }
 
 function toRetrieved(

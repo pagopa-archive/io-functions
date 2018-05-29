@@ -25,11 +25,11 @@ const aMessageContent: MessageContent = {
 const aMessage = {
   content: aMessageContent,
   createdAt: new Date().toISOString(),
-  fiscalCode: "FRLFRC74E04B157I",
   id: aMessageId,
   kind: "INewMessageWithoutContent",
   senderServiceId: "",
   senderUserId: "u123" as NonEmptyString,
+  taxCode: "FRLFRC74E04B157I",
   timeToLive: 3600 as TimeToLiveSeconds
 };
 

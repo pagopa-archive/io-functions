@@ -17,8 +17,8 @@ import {
 } from "../../models/service";
 
 import { CIDR } from "../../api/definitions/CIDR";
-import { FiscalCode } from "../../api/definitions/FiscalCode";
 import { Service as ApiService } from "../../api/definitions/Service";
+import { TaxCode } from "../../api/definitions/TaxCode";
 
 import {
   AzureApiAuthMiddleware,
@@ -105,7 +105,7 @@ function retrievedServiceToPublic(
     ),
     authorized_recipients: Array.from(
       retrievedService.authorizedRecipients
-    ).filter(FiscalCode.is),
+    ).filter(TaxCode.is),
     department_name: retrievedService.departmentName,
     id: retrievedService.id,
     organization_name: retrievedService.organizationName,

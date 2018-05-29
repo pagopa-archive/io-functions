@@ -137,9 +137,9 @@ function newMessageToPublic(
   return {
     content: newMessage.content,
     created_at: newMessage.createdAt,
-    fiscal_code: newMessage.fiscalCode,
     id: newMessage.id,
-    sender_service_id: newMessage.senderServiceId
+    sender_service_id: newMessage.senderServiceId,
+    tax_code: newMessage.taxCode
   };
 }
 

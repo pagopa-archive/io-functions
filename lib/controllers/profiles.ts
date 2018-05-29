@@ -6,8 +6,8 @@ import * as express from "express";
 import { isLeft, isRight } from "fp-ts/lib/Either";
 import { isNone, isSome } from "fp-ts/lib/Option";
 import { ExtendedProfile } from "../api/definitions/ExtendedProfile";
-import { FiscalCode } from "../api/definitions/FiscalCode";
 import { LimitedProfile } from "../api/definitions/LimitedProfile";
+import { TaxCode } from "../api/definitions/TaxCode";
 
 import {
   AzureUserAttributesMiddleware,
@@ -24,7 +24,7 @@ import {
   IAzureApiAuthorization,
   UserGroup
 } from "../utils/middlewares/azure_api_auth";
-import { FiscalCodeMiddleware } from "../utils/middlewares/fiscalcode";
+import { TaxCodeMiddleware } from "../utils/middlewares/taxcode";
 
 import {
   IRequestMiddleware,
@@ -72,14 +72,14 @@ function toLimitedProfile(_: RetrievedProfile): LimitedProfile {
 /**
  * Type of a GetProfile handler.
  *
- * GetProfile expects a FiscalCode as input and returns a Profile or
+ * GetProfile expects a TaxCode as input and returns a Profile or
  * a Not Found error.
  */
 type IGetProfileHandler = (
   auth: IAzureApiAuthorization,
   clientIp: ClientIp,
   attrs: IAzureUserAttributes,
-  fiscalCode: FiscalCode
+  taxCode: TaxCode
 ) => Promise<
   | IResponseSuccessJson<LimitedProfile>
   | IResponseSuccessJson<ExtendedProfile>
@@ -90,14 +90,14 @@ type IGetProfileHandler = (
 /**
  * Type of an UpsertProfile handler.
  *
- * UpsertProfile expects a FiscalCode and a Profile as input and
+ * UpsertProfile expects a TaxCode and a Profile as input and
  * returns a Profile or a Validation or a Generic error.
  */
 type IUpsertProfileHandler = (
   auth: IAzureApiAuthorization,
   clientIp: ClientIp,
   attrs: IAzureUserAttributes,
-  fiscalCode: FiscalCode,
+  taxCode: TaxCode,
   profileModelPayload: ExtendedProfile
 ) => Promise<
   | IResponseSuccessJson<ExtendedProfile>
@@ -113,9 +113,9 @@ type IUpsertProfileHandler = (
 export function GetProfileHandler(
   profileModel: ProfileModel
 ): IGetProfileHandler {
-  return async (auth, _, __, fiscalCode) => {
-    const errorOrMaybeProfile = await profileModel.findOneProfileByFiscalCode(
-      fiscalCode
+  return async (auth, _, __, taxCode) => {
+    const errorOrMaybeProfile = await profileModel.findOneProfileByTaxCode(
+      taxCode
     );
     if (isRight(errorOrMaybeProfile)) {
       const maybeProfile = errorOrMaybeProfile.value;
@@ -161,7 +161,7 @@ export function GetProfile(
     ),
     ClientIpMiddleware,
     azureUserAttributesMiddleware,
-    FiscalCodeMiddleware
+    TaxCodeMiddleware
   );
   return wrapRequestHandler(
     middlewaresWrap(
@@ -187,19 +187,19 @@ export const ProfilePayloadMiddleware: IRequestMiddleware<
 
 async function createNewProfileFromPayload(
   profileModel: ProfileModel,
-  fiscalCode: FiscalCode,
+  taxCode: TaxCode,
   profileModelPayload: ExtendedProfile
 ): Promise<IResponseSuccessJson<ExtendedProfile> | IResponseErrorQuery> {
   // create a new profile
   const profile: Profile = {
     blockedInboxOrChannels: profileModelPayload.blocked_inbox_or_channels,
     email: profileModelPayload.email,
-    fiscalCode,
     isInboxEnabled: profileModelPayload.is_inbox_enabled,
     isWebhookEnabled: profileModelPayload.is_webhook_enabled,
-    preferredLanguages: profileModelPayload.preferred_languages
+    preferredLanguages: profileModelPayload.preferred_languages,
+    taxCode
   };
-  const errorOrProfile = await profileModel.create(profile, profile.fiscalCode);
+  const errorOrProfile = await profileModel.create(profile, profile.taxCode);
   const errorOrProfileAsPublicExtendedProfile = errorOrProfile.map(
     toExtendedProfile
   );
@@ -224,7 +224,7 @@ async function updateExistingProfileFromPayload(
 > {
   const errorOrMaybeProfile = await profileModel.update(
     existingProfile.id,
-    existingProfile.fiscalCode,
+    existingProfile.taxCode,
     p => {
       return {
         ...p,
@@ -269,9 +269,9 @@ async function updateExistingProfileFromPayload(
 export function UpsertProfileHandler(
   profileModel: ProfileModel
 ): IUpsertProfileHandler {
-  return async (_, __, ___, fiscalCode, profileModelPayload) => {
-    const errorOrMaybeProfile = await profileModel.findOneProfileByFiscalCode(
-      fiscalCode
+  return async (_, __, ___, taxCode, profileModelPayload) => {
+    const errorOrMaybeProfile = await profileModel.findOneProfileByTaxCode(
+      taxCode
     );
     if (isRight(errorOrMaybeProfile)) {
       const maybeProfile = errorOrMaybeProfile.value;
@@ -279,7 +279,7 @@ export function UpsertProfileHandler(
         // create a new profile
         return createNewProfileFromPayload(
           profileModel,
-          fiscalCode,
+          taxCode,
           profileModelPayload
         );
       } else {
@@ -318,7 +318,7 @@ export function UpsertProfile(
     AzureApiAuthMiddleware(new Set([UserGroup.ApiProfileWrite])),
     ClientIpMiddleware,
     azureUserAttributesMiddleware,
-    FiscalCodeMiddleware,
+    TaxCodeMiddleware,
     ProfilePayloadMiddleware
   );
   return wrapRequestHandler(
