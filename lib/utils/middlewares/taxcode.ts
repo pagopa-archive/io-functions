@@ -7,7 +7,4 @@ import { RequiredParamMiddleware } from "./required_param";
  * in the request. In case the parameter is missing or is not valid, the middleware
  * returns an `IResponseErrorValidation`.
  */
-export const TaxCodeMiddleware = RequiredParamMiddleware(
-  "taxcode",
-  TaxCode
-);
+export const TaxCodeMiddleware = RequiredParamMiddleware("taxcode", TaxCode);

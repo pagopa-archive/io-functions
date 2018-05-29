@@ -326,14 +326,7 @@ export function CreateMessageHandler(
   messageModel: MessageModel,
   generateObjectId: ObjectIdGenerator
 ): ICreateMessageHandler {
-  return async (
-    context,
-    auth,
-    _,
-    userAttributes,
-    taxCode,
-    messagePayload
-  ) => {
+  return async (context, auth, _, userAttributes, taxCode, messagePayload) => {
     // extract the user service
     const userService = userAttributes.service;
 

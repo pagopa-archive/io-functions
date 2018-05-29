@@ -142,10 +142,7 @@ app.get(
   )
 );
 
-app.get(
-  "/api/v1/messages/:taxcode",
-  GetMessages(serviceModel, messageModel)
-);
+app.get("/api/v1/messages/:taxcode", GetMessages(serviceModel, messageModel));
 app.post(
   "/api/v1/messages/:taxcode",
   CreateMessage(appInsightsClient, serviceModel, messageModel)
