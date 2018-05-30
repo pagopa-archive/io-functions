@@ -23,7 +23,7 @@ import { none, some } from "fp-ts/lib/Option";
 import { isLeft, isRight, left, right } from "fp-ts/lib/Either";
 import { NonEmptyString } from "italia-ts-commons/lib/strings";
 
-import { FiscalCode } from "../api/definitions/FiscalCode";
+import { TaxCode } from "../api/definitions/TaxCode";
 
 import {
   handleNotification,
@@ -75,17 +75,17 @@ afterEach(() => {
   jest.resetAllMocks();
 });
 
-const aFiscalCode = "FRLFRC74E04B157I" as FiscalCode;
+const aTaxCode = "FRLFRC74E04B157I" as TaxCode;
 
 const aMessageId = "A_MESSAGE_ID" as NonEmptyString;
 
 const aMessage = {
   createdAt: new Date().toISOString(),
-  fiscalCode: aFiscalCode,
   id: aMessageId,
   kind: "INewMessageWithoutContent",
   senderServiceId: "",
   senderUserId: "u123" as NonEmptyString,
+  taxCode: aTaxCode,
   timeToLiveSeconds: 3600 as TimeToLiveSeconds
 };
 
@@ -145,8 +145,8 @@ const aNotification: Notification = {
       url: process.env.WEBHOOK_CHANNEL_URL
     }
   },
-  fiscalCode: aFiscalCode,
-  messageId: aMessageId
+  messageId: aMessageId,
+  taxCode: aTaxCode
 };
 
 const aRetrievedNotificationStatus: RetrievedNotificationStatus = {

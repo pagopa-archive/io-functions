@@ -15,7 +15,7 @@ import { Option } from "fp-ts/lib/Option";
 import { Set } from "json-set-map";
 
 import { CIDR } from "../api/definitions/CIDR";
-import { FiscalCode } from "../api/definitions/FiscalCode";
+import { TaxCode } from "../api/definitions/TaxCode";
 
 import { NonNegativeNumber } from "italia-ts-commons/lib/numbers";
 import { NonEmptyString } from "italia-ts-commons/lib/strings";
@@ -29,8 +29,8 @@ import { readonlySetType, tag } from "italia-ts-commons/lib/types";
 export const Service = t.interface({
   // authorized source CIDRs
   authorizedCIDRs: readonlySetType(CIDR, "CIDRs"),
-  // list of authorized fiscal codes
-  authorizedRecipients: readonlySetType(FiscalCode, "fiscal codes"),
+  // list of authorized tax codes
+  authorizedRecipients: readonlySetType(TaxCode, "tax codes"),
   // the name of the department within the service
   departmentName: NonEmptyString,
   // the name of the organization
@@ -73,7 +73,7 @@ export const RetrievedService = tag<IRetrievedServiceTag>()(
 export type RetrievedService = t.TypeOf<typeof RetrievedService>;
 
 /**
- * Converts an Array or a Set of strings to a ReadonlySet of fiscalCodes.
+ * Converts an Array or a Set of strings to a ReadonlySet of taxCodes.
  *
  * We need to handle Arrays as this method is called by database finders
  * who retrieve a plain json object.
@@ -81,15 +81,15 @@ export type RetrievedService = t.TypeOf<typeof RetrievedService>;
  * We need to handle Sets as this method is called on Service objects
  * passed to create(Service) and update(Service) model methods.
  *
- * @param authorizedRecipients  Array or Set of authorized fiscal codes
+ * @param authorizedRecipients  Array or Set of authorized tax codes
  *                              for this service.
  *
  * @deprecated Use the Service validation to do the conversion.
  */
 export function toAuthorizedRecipients(
   authorizedRecipients: ReadonlyArray<string> | ReadonlySet<string> | undefined
-): ReadonlySet<FiscalCode> {
-  return new Set(Array.from(authorizedRecipients || []).filter(FiscalCode.is));
+): ReadonlySet<TaxCode> {
+  return new Set(Array.from(authorizedRecipients || []).filter(TaxCode.is));
 }
 
 /**

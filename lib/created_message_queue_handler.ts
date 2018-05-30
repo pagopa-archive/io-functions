@@ -238,10 +238,10 @@ export async function handleMessage(
   const defaultAddresses = fromNullable(createdMessageEvent.defaultAddresses);
   const senderMetadata = createdMessageEvent.senderMetadata;
 
-  // async fetch of profile data associated to the fiscal code the message
+  // async fetch of profile data associated to the tax code the message
   // should be delivered to
-  const errorOrMaybeProfile = await lProfileModel.findOneProfileByFiscalCode(
-    newMessageWithContent.fiscalCode
+  const errorOrMaybeProfile = await lProfileModel.findOneProfileByTaxCode(
+    newMessageWithContent.taxCode
   );
 
   if (isLeft(errorOrMaybeProfile)) {
@@ -266,7 +266,7 @@ export async function handleMessage(
 
   winston.debug(
     "handleMessage|Blocked Channels(%s): %s",
-    newMessageWithContent.fiscalCode,
+    newMessageWithContent.taxCode,
     JSON.stringify(blockedInboxOrChannels)
   );
 
@@ -292,7 +292,7 @@ export async function handleMessage(
     const errorOrAttachment = await lMessageModel.attachStoredContent(
       lBlobService,
       newMessageWithContent.id,
-      newMessageWithContent.fiscalCode,
+      newMessageWithContent.taxCode,
       newMessageWithContent.content
     );
     if (isLeft(errorOrAttachment)) {
@@ -314,7 +314,7 @@ export async function handleMessage(
   if (isEmailBlockedForService) {
     winston.debug(
       `handleMessage|User has blocked email notifications for this serviceId|${
-        newMessageWithContent.fiscalCode
+        newMessageWithContent.taxCode
       }:${newMessageWithContent.senderServiceId}`
     );
   }
@@ -324,14 +324,14 @@ export async function handleMessage(
     : maybeProfile
         // try to get the destination email address from the user's profile
         .chain(getEmailAddressFromProfile)
-        // if it's not set, or we don't have a profile for this fiscal code,
+        // if it's not set, or we don't have a profile for this tax code,
         // try to get the default email address from the request payload
         .alt(defaultAddresses.chain(getEmailAddressFromDefaultAddresses))
         .alt(
           (() => {
             winston.debug(
               `handleMessage|User profile has no email address set and no default address was provided|${
-                newMessageWithContent.fiscalCode
+                newMessageWithContent.taxCode
               }`
             );
             return none;
@@ -350,7 +350,7 @@ export async function handleMessage(
   if (isWebhookBlockedForService) {
     winston.debug(
       `handleMessage|User has blocked webhook notifications for this serviceId|${
-        newMessageWithContent.fiscalCode
+        newMessageWithContent.taxCode
       }:${newMessageWithContent.senderServiceId}`
     );
   }
@@ -378,7 +378,7 @@ export async function handleMessage(
     return left(
       PermanentError(
         `No channels configured for the user ${
-          newMessageWithContent.fiscalCode
+          newMessageWithContent.taxCode
         } and no default address provided`
       )
     );
@@ -387,7 +387,7 @@ export async function handleMessage(
   const newNotification: NewNotification = {
     ...createNewNotification(
       ulidGenerator,
-      newMessageWithContent.fiscalCode,
+      newMessageWithContent.taxCode,
       newMessageWithContent.id
     ),
     channels: withoutUndefinedValues({
@@ -462,7 +462,7 @@ export async function index(
   winston.info(
     `CreatedMessageQueueHandler|A new message was created|${
       newMessageWithContent.id
-    }|${newMessageWithContent.fiscalCode}`
+    }|${newMessageWithContent.taxCode}`
   );
 
   const messageStatusUpdater = getMessageStatusUpdater(

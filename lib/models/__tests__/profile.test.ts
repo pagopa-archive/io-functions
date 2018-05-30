@@ -10,7 +10,7 @@ import * as DocumentDbUtils from "../../utils/documentdb";
 
 import { NonNegativeNumber } from "italia-ts-commons/lib/numbers";
 import { EmailString, NonEmptyString } from "italia-ts-commons/lib/strings";
-import { FiscalCode } from "../../api/definitions/FiscalCode";
+import { TaxCode } from "../../api/definitions/TaxCode";
 
 import { Profile, ProfileModel, RetrievedProfile } from "../profile";
 
@@ -20,20 +20,20 @@ const profilesCollectionUrl = DocumentDbUtils.getCollectionUri(
   "profiles"
 );
 
-const aFiscalCode = "FRLFRC74E04B157I" as FiscalCode;
+const aTaxCode = "FRLFRC74E04B157I" as TaxCode;
 
 const aRetrievedProfile: RetrievedProfile = {
   _self: "xyz",
   _ts: 123,
-  fiscalCode: aFiscalCode,
   id: "xyz" as NonEmptyString,
   isInboxEnabled: false,
   isWebhookEnabled: false,
   kind: "IRetrievedProfile",
+  taxCode: aTaxCode,
   version: 0 as NonNegativeNumber
 };
 
-describe("findOneProfileByFiscalCode", () => {
+describe("findOneProfileByTaxCode", () => {
   it("should resolve a promise to an existing profile", async () => {
     const iteratorMock = {
       executeNext: jest.fn(cb => cb(undefined, [aRetrievedProfile], undefined))
@@ -48,7 +48,7 @@ describe("findOneProfileByFiscalCode", () => {
       profilesCollectionUrl
     );
 
-    const result = await model.findOneProfileByFiscalCode(aFiscalCode);
+    const result = await model.findOneProfileByTaxCode(aTaxCode);
 
     expect(isRight(result)).toBeTruthy();
     if (isRight(result)) {
@@ -71,7 +71,7 @@ describe("findOneProfileByFiscalCode", () => {
       profilesCollectionUrl
     );
 
-    const result = await model.findOneProfileByFiscalCode(aFiscalCode);
+    const result = await model.findOneProfileByTaxCode(aTaxCode);
 
     expect(isRight(result)).toBeTruthy();
     if (isRight(result)) {
@@ -95,21 +95,21 @@ describe("createProfile", () => {
     const model = new ProfileModel(clientMock, profilesCollectionUrl);
 
     const newProfile: Profile = {
-      fiscalCode: aFiscalCode
+      taxCode: aTaxCode
     };
 
-    const result = await model.create(newProfile, newProfile.fiscalCode);
+    const result = await model.create(newProfile, newProfile.taxCode);
 
     expect(clientMock.createDocument).toHaveBeenCalledTimes(1);
     expect(clientMock.createDocument.mock.calls[0][1].kind).toBeUndefined();
     expect(clientMock.createDocument.mock.calls[0][2]).toHaveProperty(
       "partitionKey",
-      aFiscalCode
+      aTaxCode
     );
     expect(isRight(result)).toBeTruthy();
     if (isRight(result)) {
-      expect(result.value.fiscalCode).toEqual(newProfile.fiscalCode);
-      expect(result.value.id).toEqual(`${aFiscalCode}-${"0".repeat(16)}`);
+      expect(result.value.taxCode).toEqual(newProfile.taxCode);
+      expect(result.value.id).toEqual(`${aTaxCode}-${"0".repeat(16)}`);
       expect(result.value.version).toEqual(0);
     }
   });
@@ -124,10 +124,10 @@ describe("createProfile", () => {
     const model = new ProfileModel(clientMock, profilesCollectionUrl);
 
     const newProfile: Profile = {
-      fiscalCode: aFiscalCode
+      taxCode: aTaxCode
     };
 
-    const result = await model.create(newProfile, newProfile.fiscalCode);
+    const result = await model.create(newProfile, newProfile.taxCode);
 
     expect(clientMock.createDocument).toHaveBeenCalledTimes(1);
 
@@ -154,8 +154,8 @@ describe("update", () => {
     const model = new ProfileModel(clientMock, profilesCollectionUrl);
 
     const result = await model.update(
-      aRetrievedProfile.fiscalCode,
-      aRetrievedProfile.fiscalCode,
+      aRetrievedProfile.taxCode,
+      aRetrievedProfile.taxCode,
       p => {
         return {
           ...p,
@@ -168,15 +168,15 @@ describe("update", () => {
     expect(clientMock.createDocument.mock.calls[0][1].kind).toBeUndefined();
     expect(clientMock.createDocument.mock.calls[0][2]).toHaveProperty(
       "partitionKey",
-      aFiscalCode
+      aTaxCode
     );
     expect(isRight(result)).toBeTruthy();
     if (isRight(result)) {
       expect(result.value.isSome()).toBeTruthy();
       if (isSome(result.value)) {
         const updatedProfile = result.value.value;
-        expect(updatedProfile.fiscalCode).toEqual(aRetrievedProfile.fiscalCode);
-        expect(updatedProfile.id).toEqual(`${aFiscalCode}-${"0".repeat(15)}1`);
+        expect(updatedProfile.taxCode).toEqual(aRetrievedProfile.taxCode);
+        expect(updatedProfile.id).toEqual(`${aTaxCode}-${"0".repeat(15)}1`);
         expect(updatedProfile.version).toEqual(1);
         expect(updatedProfile.email).toEqual("new@example.com");
       }
@@ -191,7 +191,7 @@ describe("update", () => {
 
     const model = new ProfileModel(clientMock, profilesCollectionUrl);
 
-    const result = await model.update(aFiscalCode, aFiscalCode, o => o);
+    const result = await model.update(aTaxCode, aTaxCode, o => o);
 
     expect(clientMock.readDocument).toHaveBeenCalledTimes(1);
     expect(clientMock.createDocument).not.toHaveBeenCalled();
@@ -210,7 +210,7 @@ describe("update", () => {
 
     const model = new ProfileModel(clientMock, profilesCollectionUrl);
 
-    const result = await model.update(aFiscalCode, aFiscalCode, o => o);
+    const result = await model.update(aTaxCode, aTaxCode, o => o);
 
     expect(clientMock.readDocument).toHaveBeenCalledTimes(1);
     expect(clientMock.createDocument).toHaveBeenCalledTimes(1);

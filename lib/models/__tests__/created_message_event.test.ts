@@ -23,11 +23,11 @@ describe("", () => {
             markdown: aMessageBodyMarkdown
           },
           createdAt: new Date().toISOString(),
-          fiscalCode: "FRLFRC73E04B157I",
           id: "01BTAZ2HS1PWDJERA510FDXYV4",
           kind: "RetrievedMessage",
           senderServiceId: "test",
-          senderUserId: "u123"
+          senderUserId: "u123",
+          taxCode: "FRLFRC73E04B157I"
         },
         senderMetadata: {
           departmentName: "IT",

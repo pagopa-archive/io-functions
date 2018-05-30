@@ -13,7 +13,7 @@ import { NonEmptyString } from "italia-ts-commons/lib/strings";
 
 import { MessageContent } from "../api/definitions/MessageContent";
 
-import { FiscalCode } from "../api/definitions/FiscalCode";
+import { TaxCode } from "../api/definitions/TaxCode";
 
 import { BlobService } from "azure-storage";
 import { readableReport } from "italia-ts-commons/lib/reporters";
@@ -26,8 +26,8 @@ const MESSAGE_BLOB_STORAGE_SUFFIX = ".json";
 
 const MessageBase = t.interface(
   {
-    // the fiscal code of the recipient
-    fiscalCode: FiscalCode,
+    // the tax code of the recipient
+    taxCode: TaxCode,
 
     // the identifier of the service of the sender
     senderServiceId: t.string,
@@ -175,7 +175,7 @@ export type RetrievedMessage = t.TypeOf<typeof RetrievedMessage>;
 
 function toBaseType(o: RetrievedMessage): Message {
   const props: ReadonlyArray<keyof Message> = [
-    "fiscalCode",
+    "taxCode",
     "senderServiceId",
     "senderUserId",
     "timeToLiveSeconds",
@@ -222,38 +222,38 @@ export class MessageModel extends DocumentDbModel<
   }
 
   /**
-   * Returns the message for the provided fiscal code and message ID
+   * Returns the message for the provided tax code and message ID
    *
-   * @param fiscalCode The fiscal code of the recipient
+   * @param taxCode The tax code of the recipient
    * @param messageId The ID of the message
    */
   public async findMessageForRecipient(
-    fiscalCode: FiscalCode,
+    taxCode: TaxCode,
     messageId: string
   ): Promise<Either<DocumentDb.QueryError, Option<RetrievedMessage>>> {
-    const errorOrMaybeMessage = await this.find(messageId, fiscalCode);
+    const errorOrMaybeMessage = await this.find(messageId, taxCode);
 
     return errorOrMaybeMessage.map(maybeMessage =>
-      maybeMessage.filter(m => m.fiscalCode === fiscalCode)
+      maybeMessage.filter(m => m.taxCode === taxCode)
     );
   }
 
   /**
-   * Returns the messages for the provided fiscal code
+   * Returns the messages for the provided tax code
    *
-   * @param fiscalCode The fiscal code of the recipient
+   * @param taxCode The tax code of the recipient
    */
   public findMessages(
-    fiscalCode: FiscalCode
+    taxCode: TaxCode
   ): DocumentDbUtils.IResultIterator<RetrievedMessageWithContent> {
     return DocumentDbUtils.queryDocuments(this.dbClient, this.collectionUri, {
       parameters: [
         {
-          name: "@fiscalCode",
-          value: fiscalCode
+          name: "@taxCode",
+          value: taxCode
         }
       ],
-      query: "SELECT * FROM messages m WHERE (m.fiscalCode = @fiscalCode)"
+      query: "SELECT * FROM messages m WHERE (m.taxCode = @taxCode)"
     });
   }
 
@@ -310,12 +310,12 @@ export class MessageModel extends DocumentDbModel<
   public async getStoredContent(
     blobService: BlobService,
     messageId: string,
-    fiscalCode: FiscalCode
+    taxCode: TaxCode
   ): Promise<Either<Error, Option<MessageContent>>> {
     // get link to attached blob(s)
     const media = await iteratorToArray(
       await this.getAttachments(messageId, {
-        partitionKey: fiscalCode
+        partitionKey: taxCode
       })
     );
 

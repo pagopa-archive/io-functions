@@ -186,7 +186,7 @@ for implementing shared functionalities exposed to the domain layer:
 |[Azure API Authentication](https://github.com/teamdigitale/digital-citizenship-functions/blob/master/lib/utils/middlewares/azure_api_auth.ts)|Extracts and validates authentication information from the request|
 |[Azure User Attributes](https://github.com/teamdigitale/digital-citizenship-functions/blob/master/lib/utils/middlewares/azure_user_attributes.ts)|Extracts and validates metadata related to the API user|
 |[Azure Context](https://github.com/teamdigitale/digital-citizenship-functions/blob/master/lib/utils/middlewares/context.ts)|Extracts the [Azure Functions context](https://docs.microsoft.com/en-us/azure/azure-functions/functions-reference-node#context-object) from the request|
-|[Fiscal Code](https://github.com/teamdigitale/digital-citizenship-functions/blob/master/lib/utils/middlewares/fiscalcode.ts)|Extracts and validates the Fiscal Code parameter of the request|
+|[Tax Code](https://github.com/teamdigitale/digital-citizenship-functions/blob/master/lib/utils/middlewares/taxcode.ts)|Extracts and validates the Tax Code parameter of the request|
 |[Required Parameter](https://github.com/teamdigitale/digital-citizenship-functions/blob/master/lib/utils/middlewares/required_param.ts)|Checks the presence of a certain required parameter in the request and extracts its value|
 
 The middlewares can be configured to be executed before each request and will

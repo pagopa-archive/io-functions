@@ -6,9 +6,9 @@ import * as DocumentDb from "documentdb";
 
 import * as DocumentDbUtils from "../../utils/documentdb";
 
-import { FiscalCode } from "../../api/definitions/FiscalCode";
 import { MessageBodyMarkdown } from "../../api/definitions/MessageBodyMarkdown";
 import { MessageContent } from "../../api/definitions/MessageContent";
+import { TaxCode } from "../../api/definitions/TaxCode";
 
 import { NonEmptyString } from "italia-ts-commons/lib/strings";
 
@@ -40,15 +40,15 @@ const aMessageContent: MessageContent = {
   markdown: aMessageBodyMarkdown
 };
 
-const aFiscalCode = "FRLFRC74E04B157I" as FiscalCode;
+const aTaxCode = "FRLFRC74E04B157I" as TaxCode;
 
 const aSerializedNewMessageWithContent = {
   content: aMessageContent,
   createdAt: new Date().toISOString(),
-  fiscalCode: aFiscalCode,
   id: "A_MESSAGE_ID" as NonEmptyString,
   senderServiceId: "agid" as ModelId,
   senderUserId: "u123" as NonEmptyString,
+  taxCode: aTaxCode,
   timeToLiveSeconds: 3600 as TimeToLiveSeconds
 };
 
@@ -88,7 +88,7 @@ describe("createMessage", () => {
 
     const result = await model.create(
       aNewMessageWithContent,
-      aNewMessageWithContent.fiscalCode
+      aNewMessageWithContent.taxCode
     );
 
     expect(clientMock.createDocument.mock.calls[0][1].kind).toBeUndefined();
@@ -115,7 +115,7 @@ describe("createMessage", () => {
 
     const result = await model.create(
       aNewMessageWithContent,
-      aNewMessageWithContent.fiscalCode
+      aNewMessageWithContent.taxCode
     );
 
     expect(clientMock.createDocument).toHaveBeenCalledTimes(1);
@@ -127,7 +127,7 @@ describe("createMessage", () => {
       kind: undefined
     });
     expect(clientMock.createDocument.mock.calls[0][2]).toEqual({
-      partitionKey: aNewMessageWithContent.fiscalCode
+      partitionKey: aNewMessageWithContent.taxCode
     });
     expect(isLeft(result)).toBeTruthy();
     if (isLeft(result)) {
@@ -152,7 +152,7 @@ describe("find", () => {
 
     const result = await model.find(
       aRetrievedMessageWithContent.id,
-      aRetrievedMessageWithContent.fiscalCode
+      aRetrievedMessageWithContent.taxCode
     );
 
     expect(clientMock.readDocument).toHaveBeenCalledTimes(1);
@@ -160,7 +160,7 @@ describe("find", () => {
       "dbs/mockdb/colls/messages/docs/A_MESSAGE_ID"
     );
     expect(clientMock.readDocument.mock.calls[0][1]).toEqual({
-      partitionKey: aRetrievedMessageWithContent.fiscalCode
+      partitionKey: aRetrievedMessageWithContent.taxCode
     });
     expect(isRight(result)).toBeTruthy();
     if (isRight(result)) {
@@ -185,7 +185,7 @@ describe("find", () => {
 
     const result = await model.find(
       aRetrievedMessageWithContent.id,
-      aRetrievedMessageWithContent.fiscalCode
+      aRetrievedMessageWithContent.taxCode
     );
 
     expect(isLeft(result)).toBeTruthy();
@@ -207,7 +207,7 @@ describe("find", () => {
 
     const result = await model.find(
       aRetrievedMessageWithContent.id,
-      aRetrievedMessageWithContent.fiscalCode
+      aRetrievedMessageWithContent.taxCode
     );
 
     expect(isRight(result)).toBeTruthy();
@@ -218,7 +218,7 @@ describe("find", () => {
 });
 
 describe("findMessages", () => {
-  it("should return the messages for a fiscal code", async () => {
+  it("should return the messages for a tax code", async () => {
     const iteratorMock = {
       executeNext: jest.fn(cb => cb(undefined, ["result"], undefined))
     };
@@ -234,7 +234,7 @@ describe("findMessages", () => {
     );
 
     const resultIterator = model.findMessages(
-      aRetrievedMessageWithContent.fiscalCode
+      aRetrievedMessageWithContent.taxCode
     );
 
     expect(clientMock.queryDocuments).toHaveBeenCalledTimes(1);
@@ -264,7 +264,7 @@ describe("findMessageForRecipient", () => {
     );
 
     const result = await model.findMessageForRecipient(
-      aRetrievedMessageWithContent.fiscalCode,
+      aRetrievedMessageWithContent.taxCode,
       aRetrievedMessageWithContent.id
     );
 
@@ -273,7 +273,7 @@ describe("findMessageForRecipient", () => {
       "dbs/mockdb/colls/messages/docs/A_MESSAGE_ID"
     );
     expect(clientMock.readDocument.mock.calls[0][1]).toEqual({
-      partitionKey: aRetrievedMessageWithContent.fiscalCode
+      partitionKey: aRetrievedMessageWithContent.taxCode
     });
     expect(isRight(result)).toBeTruthy();
     if (isRight(result)) {
@@ -299,7 +299,7 @@ describe("findMessageForRecipient", () => {
     );
 
     const result = await model.findMessageForRecipient(
-      "FRLFRC73E04B157I" as FiscalCode,
+      "FRLFRC73E04B157I" as TaxCode,
       aRetrievedMessageWithContent.id
     );
 
@@ -322,7 +322,7 @@ describe("findMessageForRecipient", () => {
     );
 
     const result = await model.findMessageForRecipient(
-      "FRLFRC73E04B157I" as FiscalCode,
+      "FRLFRC73E04B157I" as TaxCode,
       aRetrievedMessageWithContent.id
     );
 
@@ -387,7 +387,7 @@ describe("attachStoredContent", () => {
 
 describe("getStoredContent", () => {
   const aMessageId = "MESSAGE_ID";
-  const aPartitionKey = "SPNDNL80R13Y555Z" as FiscalCode;
+  const aPartitionKey = "SPNDNL80R13Y555Z" as TaxCode;
   const anAttachmentMeta = { name: "attachmentMeta" };
   it("should get message content from blob text", async () => {
     const aBlobService = {

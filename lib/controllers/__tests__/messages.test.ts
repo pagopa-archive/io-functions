@@ -13,9 +13,9 @@ import { ModelId } from "../../utils/documentdb_model_versioned";
 
 import { CreatedMessageWithoutContent } from "../../api/definitions/CreatedMessageWithoutContent";
 import { EmailAddress } from "../../api/definitions/EmailAddress";
-import { FiscalCode } from "../../api/definitions/FiscalCode";
 import { MessageBodyMarkdown } from "../../api/definitions/MessageBodyMarkdown";
 import { MessageSubject } from "../../api/definitions/MessageSubject";
+import { TaxCode } from "../../api/definitions/TaxCode";
 
 import { EmailString, NonEmptyString } from "italia-ts-commons/lib/strings";
 import {
@@ -75,7 +75,7 @@ function lookup(h: IHeaders): (k: string) => string | undefined {
   return (k: string) => h[k];
 }
 
-const aFiscalCode = "FRLFRC74E04B157I" as FiscalCode;
+const aTaxCode = "FRLFRC74E04B157I" as TaxCode;
 const anEmail = "test@example.com" as EmailString;
 const aMessageBodyMarkdown = "test".repeat(80) as MessageBodyMarkdown;
 
@@ -119,11 +119,11 @@ const aMessageId = "A_MESSAGE_ID" as NonEmptyString;
 
 const aNewMessageWithoutContent: NewMessageWithoutContent = {
   createdAt: new Date(),
-  fiscalCode: aFiscalCode,
   id: "A_MESSAGE_ID" as NonEmptyString,
   kind: "INewMessageWithoutContent",
   senderServiceId: "test" as ModelId,
   senderUserId: "u123" as NonEmptyString,
+  taxCode: aTaxCode,
   timeToLiveSeconds: 3600 as TimeToLiveSeconds
 };
 
@@ -136,9 +136,9 @@ const aRetrievedMessageWithoutContent: RetrievedMessageWithoutContent = {
 
 const aPublicExtendedMessage: CreatedMessageWithoutContent = {
   created_at: new Date(),
-  fiscal_code: aNewMessageWithoutContent.fiscalCode,
   id: "A_MESSAGE_ID",
-  sender_service_id: aNewMessageWithoutContent.senderServiceId
+  sender_service_id: aNewMessageWithoutContent.senderServiceId,
+  tax_code: aNewMessageWithoutContent.taxCode
 };
 
 const aPublicExtendedMessageResponse: MessageResponseWithoutContent = {
@@ -224,7 +224,7 @@ describe("CreateMessageHandler", () => {
       },
       undefined as any, // not used
       { ...someUserAttributes },
-      aFiscalCode,
+      aTaxCode,
       aMessagePayload
     );
 
@@ -262,7 +262,7 @@ describe("CreateMessageHandler", () => {
       },
       undefined as any, // not used
       someUserAttributes,
-      aFiscalCode,
+      aTaxCode,
       aMessagePayload
     );
 
@@ -272,7 +272,7 @@ describe("CreateMessageHandler", () => {
     expect(NewMessage.is(messageDocument)).toBeTruthy();
     expect(NewMessageWithContent.is(messageDocument.content)).toBeFalsy();
 
-    expect(mockMessageModel.create.mock.calls[0][1]).toEqual(aFiscalCode);
+    expect(mockMessageModel.create.mock.calls[0][1]).toEqual(aTaxCode);
 
     expect(mockContext.bindings).toEqual({
       createdMessage: {
@@ -310,7 +310,7 @@ describe("CreateMessageHandler", () => {
       result.apply(response);
       expect(response.set).toBeCalledWith(
         "Location",
-        `/api/v1/messages/${aFiscalCode}/${messageDocument.id}`
+        `/api/v1/messages/${aTaxCode}/${messageDocument.id}`
       );
     }
   });
@@ -337,7 +337,7 @@ describe("CreateMessageHandler", () => {
 
     const anAuthorizedService = {
       ...someUserAttributes.service,
-      authorizedRecipients: new Set([aFiscalCode])
+      authorizedRecipients: new Set([aTaxCode])
     };
 
     const someAuthorizedUserAttributes = {
@@ -353,7 +353,7 @@ describe("CreateMessageHandler", () => {
       },
       undefined as any, // not used
       someAuthorizedUserAttributes,
-      aFiscalCode,
+      aTaxCode,
       aMessagePayload
     );
 
@@ -363,7 +363,7 @@ describe("CreateMessageHandler", () => {
     expect(NewMessage.is(messageDocument)).toBeTruthy();
     expect(NewMessageWithContent.is(messageDocument.content)).toBeFalsy();
 
-    expect(mockMessageModel.create.mock.calls[0][1]).toEqual(aFiscalCode);
+    expect(mockMessageModel.create.mock.calls[0][1]).toEqual(aTaxCode);
 
     expect(mockContext.bindings).toEqual({
       createdMessage: {
@@ -401,7 +401,7 @@ describe("CreateMessageHandler", () => {
       result.apply(response);
       expect(response.set).toBeCalledWith(
         "Location",
-        `/api/v1/messages/${aFiscalCode}/${messageDocument.id}`
+        `/api/v1/messages/${aTaxCode}/${messageDocument.id}`
       );
     }
   });
@@ -434,7 +434,7 @@ describe("CreateMessageHandler", () => {
       },
       undefined as any, // not used
       someUserAttributes,
-      aFiscalCode,
+      aTaxCode,
       {
         ...aMessagePayload,
         content: {
@@ -450,7 +450,7 @@ describe("CreateMessageHandler", () => {
     expect(NewMessage.is(messageDocument)).toBeTruthy();
     expect(NewMessageWithContent.is(messageDocument.content)).toBeFalsy();
 
-    expect(mockMessageModel.create.mock.calls[0][1]).toEqual(aFiscalCode);
+    expect(mockMessageModel.create.mock.calls[0][1]).toEqual(aTaxCode);
 
     expect(mockContext.bindings).toEqual({
       createdMessage: {
@@ -489,7 +489,7 @@ describe("CreateMessageHandler", () => {
       result.apply(response);
       expect(response.set).toBeCalledWith(
         "Location",
-        `/api/v1/messages/${aFiscalCode}/${messageDocument.id}`
+        `/api/v1/messages/${aTaxCode}/${messageDocument.id}`
       );
     }
   });
@@ -534,7 +534,7 @@ describe("CreateMessageHandler", () => {
       },
       undefined as any, // not used
       someUserAttributes,
-      aFiscalCode,
+      aTaxCode,
       messagePayload
     );
 
@@ -545,7 +545,7 @@ describe("CreateMessageHandler", () => {
     expect(NewMessageWithoutContent.is(messageDocument)).toBeTruthy();
     expect(MessageContent.is(messageDocument.content)).toBeFalsy();
 
-    expect(mockMessageModel.create.mock.calls[0][1]).toEqual(aFiscalCode);
+    expect(mockMessageModel.create.mock.calls[0][1]).toEqual(aTaxCode);
 
     expect(mockContext.bindings).toEqual({
       createdMessage: {
@@ -586,7 +586,7 @@ describe("CreateMessageHandler", () => {
       result.apply(response);
       expect(response.set).toBeCalledWith(
         "Location",
-        `/api/v1/messages/${aFiscalCode}/${messageDocument.id}`
+        `/api/v1/messages/${aTaxCode}/${messageDocument.id}`
       );
     }
   });
@@ -623,7 +623,7 @@ describe("CreateMessageHandler", () => {
       aUserAuthenticationDeveloper,
       undefined as any, // not used
       someUserAttributes,
-      aFiscalCode,
+      aTaxCode,
       messagePayload
     );
 
@@ -668,7 +668,7 @@ describe("CreateMessageHandler", () => {
       },
       undefined as any, // not used
       someUserAttributes,
-      aFiscalCode,
+      aTaxCode,
       aMessagePayload
     );
 
@@ -707,7 +707,7 @@ describe("CreateMessageHandler", () => {
       },
       undefined as any, // not used
       someUserAttributes,
-      aFiscalCode,
+      aTaxCode,
       aMessagePayload
     );
 
@@ -751,14 +751,14 @@ describe("GetMessageHandler", () => {
       aUserAuthenticationDeveloper,
       undefined as any, // not used
       someUserAttributes,
-      aFiscalCode,
+      aTaxCode,
       aRetrievedMessageWithoutContent.id
     );
 
     expect(mockMessageModel.getStoredContent).toHaveBeenCalledTimes(1);
     expect(mockMessageModel.findMessageForRecipient).toHaveBeenCalledTimes(1);
     expect(mockMessageModel.findMessageForRecipient).toHaveBeenCalledWith(
-      aRetrievedMessageWithoutContent.fiscalCode,
+      aRetrievedMessageWithoutContent.taxCode,
       aRetrievedMessageWithoutContent.id
     );
 
@@ -788,14 +788,14 @@ describe("GetMessageHandler", () => {
       aUserAuthenticationDeveloper,
       undefined as any, // not used
       someUserAttributes,
-      aFiscalCode,
+      aTaxCode,
       aRetrievedMessageWithoutContent.id
     );
 
     expect(mockMessageModel.getStoredContent).toHaveBeenCalledTimes(1);
     expect(mockMessageModel.findMessageForRecipient).toHaveBeenCalledTimes(1);
     expect(mockMessageModel.findMessageForRecipient).toHaveBeenCalledWith(
-      aRetrievedMessageWithoutContent.fiscalCode,
+      aRetrievedMessageWithoutContent.taxCode,
       aRetrievedMessageWithoutContent.id
     );
 
@@ -822,14 +822,14 @@ describe("GetMessageHandler", () => {
       aUserAuthenticationTrustedApplication,
       undefined as any, // not used
       someUserAttributes,
-      aFiscalCode,
+      aTaxCode,
       aRetrievedMessageWithoutContent.id
     );
 
     expect(mockMessageModel.getStoredContent).toHaveBeenCalledTimes(1);
     expect(mockMessageModel.findMessageForRecipient).toHaveBeenCalledTimes(1);
     expect(mockMessageModel.findMessageForRecipient).toHaveBeenCalledWith(
-      aRetrievedMessageWithoutContent.fiscalCode,
+      aRetrievedMessageWithoutContent.taxCode,
       aRetrievedMessageWithoutContent.id
     );
 
@@ -862,13 +862,13 @@ describe("GetMessageHandler", () => {
       aUserAuthenticationDeveloper,
       undefined as any, // not used
       someUserAttributes,
-      aFiscalCode,
+      aTaxCode,
       aRetrievedMessageWithoutContent.id
     );
 
     expect(mockMessageModel.findMessageForRecipient).toHaveBeenCalledTimes(1);
     expect(mockMessageModel.findMessageForRecipient).toHaveBeenCalledWith(
-      aRetrievedMessageWithoutContent.fiscalCode,
+      aRetrievedMessageWithoutContent.taxCode,
       aRetrievedMessageWithoutContent.id
     );
 
@@ -893,7 +893,7 @@ describe("GetMessageHandler", () => {
       aUserAuthenticationDeveloper,
       undefined as any, // not used
       someUserAttributes,
-      aFiscalCode,
+      aTaxCode,
       aRetrievedMessageWithoutContent.id
     );
 
@@ -912,10 +912,10 @@ describe("GetMessageHandler", () => {
           toAddress: "x@example.com" as EmailString
         }
       },
-      fiscalCode: aFiscalCode,
       id: "A_NOTIFICATION_ID" as NonEmptyString,
       kind: "IRetrievedNotification",
-      messageId: "A_MESSAGE_ID" as NonEmptyString
+      messageId: "A_MESSAGE_ID" as NonEmptyString,
+      taxCode: aTaxCode
     };
 
     const mockMessageModel = {
@@ -937,14 +937,14 @@ describe("GetMessageHandler", () => {
       aUserAuthenticationTrustedApplication,
       undefined as any, // not used
       someUserAttributes,
-      aFiscalCode,
+      aTaxCode,
       aRetrievedMessageWithoutContent.id
     );
 
     expect(mockMessageModel.getStoredContent).toHaveBeenCalledTimes(1);
     expect(mockMessageModel.findMessageForRecipient).toHaveBeenCalledTimes(1);
     expect(mockMessageModel.findMessageForRecipient).toHaveBeenCalledWith(
-      aRetrievedMessageWithoutContent.fiscalCode,
+      aRetrievedMessageWithoutContent.taxCode,
       aRetrievedMessageWithoutContent.id
     );
 
@@ -979,7 +979,7 @@ describe("GetMessageHandler", () => {
       aUserAuthenticationDeveloper,
       undefined as any, // not used
       someUserAttributes,
-      aFiscalCode,
+      aTaxCode,
       aRetrievedMessageWithoutContent.id
     );
 
@@ -1014,7 +1014,7 @@ describe("GetMessageHandler", () => {
       aUserAuthenticationDeveloper,
       undefined as any, // not used
       someUserAttributes,
-      aFiscalCode,
+      aTaxCode,
       aRetrievedMessageWithoutContent.id
     );
 
@@ -1045,7 +1045,7 @@ describe("GetMessagesHandler", () => {
       aUserAuthenticationDeveloper,
       undefined as any, // not used
       undefined as any, // not used
-      aFiscalCode
+      aTaxCode
     );
 
     expect(result.kind).toBe("IResponseSuccessJsonIterator");
@@ -1174,7 +1174,7 @@ describe("CreateMessage", () => {
       },
       body: {},
       header: jest.fn(lookup(headers)),
-      params: { fiscalcode: "x" }
+      params: { taxcode: "x" }
     };
     await createMessage(request as any, mockResponse, _ => _);
     expect(request.app.get).toHaveBeenCalledWith("context");
@@ -1199,7 +1199,7 @@ describe("CreateMessage", () => {
       },
       body: {},
       header: jest.fn(lookup(headers)),
-      params: { fiscalcode: "x" }
+      params: { taxcode: "x" }
     };
     await createMessage(request as any, mockResponse, _ => _);
     expect(mockResponse.set).toHaveBeenCalledWith(
@@ -1224,7 +1224,7 @@ describe("CreateMessage", () => {
       },
       body: {},
       header: jest.fn(lookup(headers)),
-      params: { fiscalcode: "x" }
+      params: { taxcode: "x" }
     };
     await createMessage(request as any, mockResponse, _ => _);
     expect(mockResponse.set).toHaveBeenCalledWith(

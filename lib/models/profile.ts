@@ -17,12 +17,12 @@ import { NonNegativeNumber } from "italia-ts-commons/lib/numbers";
 import { NonEmptyString } from "italia-ts-commons/lib/strings";
 import { BlockedInboxOrChannel } from "../api/definitions/BlockedInboxOrChannel";
 import { EmailAddress } from "../api/definitions/EmailAddress";
-import { FiscalCode } from "../api/definitions/FiscalCode";
 import { IsInboxEnabled } from "../api/definitions/IsInboxEnabled";
 import { IsWebhookEnabled } from "../api/definitions/IsWebhookEnabled";
 import { PreferredLanguages } from "../api/definitions/PreferredLanguages";
 import { ServiceId } from "../api/definitions/ServiceId";
-import { fiscalCodeToModelId } from "../utils/conversions";
+import { TaxCode } from "../api/definitions/TaxCode";
+import { taxCodeToModelId } from "../utils/conversions";
 
 const ProfileBlockedInboxOrChannels = t.dictionary(
   ServiceId,
@@ -40,8 +40,8 @@ export interface IProfileBlockedInboxOrChannels {
  */
 export const Profile = t.intersection([
   t.interface({
-    // the fiscal code of the citized associated to this profile
-    fiscalCode: FiscalCode
+    // the tax code of the citized associated to this profile
+    taxCode: TaxCode
   }),
   t.partial({
     // Notification channels blocked by the user;
@@ -103,7 +103,7 @@ function toRetrieved(result: DocumentDb.RetrievedDocument): RetrievedProfile {
 }
 
 function getModelId(o: Profile): ModelId {
-  return fiscalCodeToModelId(o.fiscalCode);
+  return taxCodeToModelId(o.taxCode);
 }
 
 function updateModelId(
@@ -122,7 +122,7 @@ function updateModelId(
 function toBaseType(o: RetrievedProfile): Profile {
   return {
     email: o.email,
-    fiscalCode: o.fiscalCode
+    taxCode: o.taxCode
   };
 }
 
@@ -155,13 +155,13 @@ export class ProfileModel extends DocumentDbModelVersioned<
   }
 
   /**
-   * Searches for one profile associated to the provided fiscal code
+   * Searches for one profile associated to the provided tax code
    *
-   * @param fiscalCode
+   * @param taxCode
    */
-  public findOneProfileByFiscalCode(
-    fiscalCode: FiscalCode
+  public findOneProfileByTaxCode(
+    taxCode: TaxCode
   ): Promise<Either<DocumentDb.QueryError, Option<RetrievedProfile>>> {
-    return super.findLastVersionByModelId("fiscalCode", fiscalCode);
+    return super.findLastVersionByModelId("taxCode", taxCode);
   }
 }

@@ -15,7 +15,7 @@ import {
 import { IContext } from "azure-function-express";
 
 import { CreatedMessageWithoutContent } from "../api/definitions/CreatedMessageWithoutContent";
-import { FiscalCode } from "../api/definitions/FiscalCode";
+import { TaxCode } from "../api/definitions/TaxCode";
 
 import { MessageResponseWithContent } from "../api/definitions/MessageResponseWithContent";
 import { NewMessage as ApiNewMessage } from "../api/definitions/NewMessage";
@@ -62,7 +62,7 @@ import {
   IAzureUserAttributes
 } from "../utils/middlewares/azure_user_attributes";
 import { ContextMiddleware } from "../utils/middlewares/context_middleware";
-import { FiscalCodeMiddleware } from "../utils/middlewares/fiscalcode";
+import { TaxCodeMiddleware } from "../utils/middlewares/taxcode";
 import {
   IRequestMiddleware,
   withRequestMiddlewares,
@@ -150,16 +150,16 @@ function retrievedMessageToPublic(
 ): CreatedMessageWithoutContent {
   return {
     created_at: retrievedMessage.createdAt,
-    fiscal_code: retrievedMessage.fiscalCode,
     id: retrievedMessage.id,
-    sender_service_id: retrievedMessage.senderServiceId
+    sender_service_id: retrievedMessage.senderServiceId,
+    tax_code: retrievedMessage.taxCode
   };
 }
 
 /**
  * Type of a CreateMessage handler.
  *
- * CreateMessage expects an Azure Function Context and FiscalCode as input
+ * CreateMessage expects an Azure Function Context and TaxCode as input
  * and returns the created Message as output.
  * The Context is needed to output the created Message to a queue for
  * further processing.
@@ -169,7 +169,7 @@ type ICreateMessageHandler = (
   auth: IAzureApiAuthorization,
   clientIp: ClientIp,
   attrs: IAzureUserAttributes,
-  fiscalCode: FiscalCode,
+  taxCode: TaxCode,
   messagePayload: ApiNewMessageWithDefaults
 ) => Promise<
   | IResponseSuccessRedirectToResource<Message, {}>
@@ -184,7 +184,7 @@ type ICreateMessageHandler = (
 /**
  * Type of a GetMessage handler.
  *
- * GetMessage expects a FiscalCode and a Message ID as input
+ * GetMessage expects a TaxCode and a Message ID as input
  * and returns a Message as output or a Not Found or Validation
  * errors.
  */
@@ -192,7 +192,7 @@ type IGetMessageHandler = (
   auth: IAzureApiAuthorization,
   clientIp: ClientIp,
   attrs: IAzureUserAttributes,
-  fiscalCode: FiscalCode,
+  taxCode: TaxCode,
   messageId: string
 ) => Promise<
   | IResponseSuccessJson<
@@ -208,7 +208,7 @@ type IGetMessageHandler = (
 /**
  * Type of a GetMessages handler.
  *
- * GetMessages expects a FiscalCode as input and returns the Messages
+ * GetMessages expects a TaxCode as input and returns the Messages
  * as output or a Validation error.
  *
  * TODO: add full results and paging
@@ -217,7 +217,7 @@ type IGetMessagesHandler = (
   auth: IAzureApiAuthorization,
   clientIp: ClientIp,
   attrs: IAzureUserAttributes,
-  fiscalCode: FiscalCode
+  taxCode: TaxCode
 ) => Promise<
   | IResponseSuccessJsonIterator<CreatedMessageWithoutContent>
   | IResponseErrorValidation
@@ -326,14 +326,7 @@ export function CreateMessageHandler(
   messageModel: MessageModel,
   generateObjectId: ObjectIdGenerator
 ): ICreateMessageHandler {
-  return async (
-    context,
-    auth,
-    _,
-    userAttributes,
-    fiscalCode,
-    messagePayload
-  ) => {
+  return async (context, auth, _, userAttributes, taxCode, messagePayload) => {
     // extract the user service
     const userService = userAttributes.service;
 
@@ -358,7 +351,7 @@ export function CreateMessageHandler(
     if (auth.groups.has(UserGroup.ApiLimitedMessageWrite)) {
       // user is in limited message creation mode, check whether he's sending
       // the message to an authorized recipient
-      if (!userAttributes.service.authorizedRecipients.has(fiscalCode)) {
+      if (!userAttributes.service.authorizedRecipients.has(taxCode)) {
         return ResponseErrorForbiddenNotAuthorizedForRecipient;
       }
     } else if (!auth.groups.has(UserGroup.ApiMessageWrite)) {
@@ -381,11 +374,11 @@ export function CreateMessageHandler(
     // message is handled separately (see below).
     const newMessageWithoutContent: NewMessageWithoutContent = {
       createdAt: new Date(),
-      fiscalCode,
       id: generateObjectId(),
       kind: "INewMessageWithoutContent",
       senderServiceId: userService.serviceId,
       senderUserId: auth.userId,
+      taxCode,
       timeToLiveSeconds: messagePayload.time_to_live
     };
 
@@ -396,7 +389,7 @@ export function CreateMessageHandler(
     // attempt to create the message
     const errorOrMessage = await messageModel.create(
       newMessageWithoutContent,
-      newMessageWithoutContent.fiscalCode
+      newMessageWithoutContent.taxCode
     );
 
     if (isLeft(errorOrMessage)) {
@@ -483,7 +476,7 @@ export function CreateMessageHandler(
     // redirect the client to the message resource
     return ResponseSuccessRedirectToResource(
       newMessageWithoutContent,
-      `/api/v1/messages/${fiscalCode}/${newMessageWithoutContent.id}`,
+      `/api/v1/messages/${taxCode}/${newMessageWithoutContent.id}`,
       { id: newMessageWithoutContent.id }
     );
   };
@@ -513,8 +506,8 @@ export function CreateMessage(
     ClientIpMiddleware,
     // extracts custom user attributes from the request
     AzureUserAttributesMiddleware(serviceModel),
-    // extracts the fiscal code from the request params
-    FiscalCodeMiddleware,
+    // extracts the tax code from the request params
+    TaxCodeMiddleware,
     // extracts the create message payload from the request body
     MessagePayloadMiddleware
   );
@@ -537,9 +530,9 @@ export function GetMessageHandler(
   notificationStatusModel: NotificationStatusModel,
   blobService: BlobService
 ): IGetMessageHandler {
-  return async (userAuth, _, userAttributes, fiscalCode, messageId) => {
+  return async (userAuth, _, userAttributes, taxCode, messageId) => {
     const errorOrMaybeDocument = await messageModel.findMessageForRecipient(
-      fiscalCode,
+      taxCode,
       messageId
     );
 
@@ -579,7 +572,7 @@ export function GetMessageHandler(
     const errorOrMaybeContent = await messageModel.getStoredContent(
       blobService,
       retrievedMessage.id,
-      retrievedMessage.fiscalCode
+      retrievedMessage.taxCode
     );
 
     if (isLeft(errorOrMaybeContent)) {
@@ -670,7 +663,7 @@ export function GetMessage(
     ),
     ClientIpMiddleware,
     AzureUserAttributesMiddleware(serviceModel),
-    FiscalCodeMiddleware,
+    TaxCodeMiddleware,
     RequiredParamMiddleware("id", NonEmptyString)
   );
   return wrapRequestHandler(
@@ -686,8 +679,8 @@ export function GetMessage(
 export function GetMessagesHandler(
   messageModel: MessageModel
 ): IGetMessagesHandler {
-  return async (_, __, ___, fiscalCode) => {
-    const retrievedMessagesIterator = messageModel.findMessages(fiscalCode);
+  return async (_, __, ___, taxCode) => {
+    const retrievedMessagesIterator = messageModel.findMessages(taxCode);
     const publicExtendedMessagesIterator = mapResultIterator(
       retrievedMessagesIterator,
       retrievedMessageToPublic
@@ -708,7 +701,7 @@ export function GetMessages(
     AzureApiAuthMiddleware(new Set([UserGroup.ApiMessageList])),
     ClientIpMiddleware,
     AzureUserAttributesMiddleware(serviceModel),
-    FiscalCodeMiddleware
+    TaxCodeMiddleware
   );
   return wrapRequestHandler(
     middlewaresWrap(

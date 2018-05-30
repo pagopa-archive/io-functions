@@ -35,9 +35,9 @@ paths:
         '404':
           description: No service found for the provided ID.
       parameters: []
-  "/messages/{fiscal_code}/{id}":
+  "/messages/{tax_code}/{id}":
     parameters:
-    - $ref: "#/parameters/FiscalCode"
+    - $ref: "#/parameters/TaxCode"
     - name: id
       in: path
       type: string
@@ -58,7 +58,7 @@ paths:
             application/json:
               message:
                 id: 01BX9NSMKAAAS5PSP2FATZM6BQ
-                fiscal_code: QXJNTX9RCRVD6V4O
+                tax_code: QXJNTX9RCRVD6V4O
                 time_to_live: 3600
                 content:
                   subject: message subject, aliquip sint nulla in estinut
@@ -75,14 +75,14 @@ paths:
           description: No message found for the provided ID.
           schema:
             $ref: "#/definitions/ProblemJson"
-  "/messages/{fiscal_code}":
+  "/messages/{tax_code}":
     parameters:
-    - $ref: "#/parameters/FiscalCode"
+    - $ref: "#/parameters/TaxCode"
     get:
       operationId: getMessagesByUser
       summary: Get messages by user
       description: |-
-        Returns the messages for the user identified by the provided fiscal code.
+        Returns the messages for the user identified by the provided tax code.
         Messages will be returned in inverse acceptance order (from last to first).
         The "next" field, when present, contains an URL pointing to the next page of results.
       responses:
@@ -101,7 +101,7 @@ paths:
             application/json:
               items:
               - id: 01BX9NSMKVXXS5PSP2FATZMYYY
-                fiscal_code: PUPFHK4TD3MWL20W
+                tax_code: PUPFHK4TD3MWL20W
                 time_to_live: 3600
                 content:
                   subject: amet sunt dolor nulla esseesseanim
@@ -113,7 +113,7 @@ paths:
                     laoreet nibh. Aenean feugiat lectus ut nisl eleifend gravida.
                 sender_service_id: 01BX9NSMKVXXS5PSP2FATZMZZZ
               - id: 01BX9NSMKVXXS5PSP2FATZM123
-                fiscal_code: PKTINH4QDQUV696L
+                tax_code: PKTINH4QDQUV696L
                 time_to_live: 3600
                 content:
                   subject: idUt quis tempor esseesseanim
@@ -173,13 +173,13 @@ paths:
           description: The message cannot be delivered.
           schema:
             $ref: "#/definitions/ProblemJson"
-  "/profiles/{fiscal_code}":
+  "/profiles/{tax_code}":
     get:
       operationId: getProfile
       summary: Get User's Preferences
       description:  |-
         Returns the preferences for the user identified by the provided
-        fiscal code.
+        tax code.
       responses:
         '200':
           description: Found.
@@ -192,11 +192,11 @@ paths:
               email: foobar@example.com
               version: 1
         '404':
-          description: No user found for the provided fiscal code.
+          description: No user found for the provided tax code.
           schema:
             $ref: "#/definitions/ProblemJson"
     parameters:
-    - $ref: "#/parameters/FiscalCode"
+    - $ref: "#/parameters/TaxCode"
     post:
       responses:
         '200':
@@ -219,7 +219,7 @@ paths:
             $ref: "#/definitions/ProblemJson"
       description:  |-
         Create or update the preferences for the user identified by the
-        provided fiscal code.
+        provided tax code.
       operationId: upsertProfile
       summary: Set User's Preferences
       parameters:
@@ -254,14 +254,14 @@ parameters:
     minimum: 1
     description: An opaque identifier that points to the next item in the collection.
     x-example: 01BX9NSMKVXXS5PSP2FATZM123
-  FiscalCode:
-    name: fiscal_code
+  TaxCode:
+    name: tax_code
     in: path
     type: string
     maxLength: 16
     minLength: 16
     required: true
-    description: The fiscal code of the user, all upper case.
+    description: The tax code of the user, all upper case.
     pattern: "[A-Z]{6}[0-9LMNPQRSTUV]{2}[ABCDEHLMPRST][0-9LMNPQRSTUV]{2}[A-Z][0-9LMNPQRSTUV]{3}[A-Z]"
     x-example: SPNDNL80R13C555X
 consumes:

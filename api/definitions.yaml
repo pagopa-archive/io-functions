@@ -133,8 +133,8 @@ CreatedMessageWithContent:
   properties:
     id:
       type: string
-    fiscal_code:
-      $ref: "#/FiscalCode"
+    tax_code:
+      $ref: "#/TaxCode"
     time_to_live:
       $ref: "#/TimeToLiveSeconds"
     created_at:
@@ -145,7 +145,7 @@ CreatedMessageWithContent:
       type: string
   required:
     - id
-    - fiscal_code
+    - tax_code
     - created_at
     - content
     - sender_service_id
@@ -154,8 +154,8 @@ CreatedMessageWithoutContent:
   properties:
     id:
       type: string
-    fiscal_code:
-      $ref: "#/FiscalCode"
+    tax_code:
+      $ref: "#/TaxCode"
     time_to_live:
       $ref: "#/TimeToLiveSeconds"
     created_at:
@@ -164,7 +164,7 @@ CreatedMessageWithoutContent:
       type: string
   required:
     - id
-    - fiscal_code
+    - tax_code
     - created_at
     - sender_service_id
 MessageResponseNotificationStatus:
@@ -194,9 +194,9 @@ MessageResponseWithoutContent:
       $ref: "#/MessageStatusValue"
   required:
     - message
-FiscalCode:
+TaxCode:
   type: string
-  description: User's fiscal code.
+  description: User's tax code.
   pattern: "^[A-Z]{6}[0-9LMNPQRSTUV]{2}[ABCDEHLMPRST][0-9LMNPQRSTUV]{2}[A-Z][0-9LMNPQRSTUV]{3}[A-Z]$"
   example: SPNDNL80R13C555X
 MessageSubject:
@@ -367,7 +367,7 @@ Service:
     authorized_recipients:
       type: array
       items:
-        $ref: "#/FiscalCode"
+        $ref: "#/TaxCode"
     version:
       type: integer
     id:
