@@ -144,6 +144,79 @@ describe("create", () => {
   });
 });
 
+describe("createOrUpdate", () => {
+  it("should create a document", async () => {
+    (DocumentDbUtils.upsertDocument as any).mockReturnValueOnce(
+      Promise.resolve(right({}))
+    );
+    const model = new MyModel(aDbClient, aCollectionUri);
+    await model.createOrUpdate(
+      {
+        id: "test-id-1",
+        kind: "INewMyDocument",
+        test: "test"
+      },
+      "test-partition"
+    );
+    expect(DocumentDbUtils.upsertDocument).toHaveBeenCalledWith(
+      aDbClient,
+      aCollectionUri,
+      {
+        id: "test-id-1",
+        test: "test"
+      },
+      "test-partition"
+    );
+  });
+
+  it("should return the query error", async () => {
+    const model = new MyModel(aDbClient, aCollectionUri);
+    (DocumentDbUtils.upsertDocument as any).mockReturnValueOnce(
+      Promise.resolve(left("error"))
+    );
+    const result = await model.createOrUpdate(
+      {
+        id: "test-id-1",
+        kind: "INewMyDocument",
+        test: "test"
+      },
+      "test-partition"
+    );
+    expect(isLeft(result));
+    if (isLeft(result)) {
+      expect(result.value).toBe("error");
+    }
+  });
+
+  it("should return the created document as retrieved type", async () => {
+    const model = new MyModel(aDbClient, aCollectionUri);
+    (DocumentDbUtils.upsertDocument as any).mockReturnValueOnce(
+      Promise.resolve(
+        right({
+          id: "test-id-1",
+          test: "test"
+        })
+      )
+    );
+    const result = await model.createOrUpdate(
+      {
+        id: "test-id-1",
+        kind: "INewMyDocument",
+        test: "test"
+      },
+      "test-partition"
+    );
+    expect(isRight(result));
+    if (isRight(result)) {
+      expect(result.value).toEqual({
+        id: "test-id-1",
+        kind: "IRetrievedMyDocument",
+        test: "test"
+      });
+    }
+  });
+});
+
 describe("find", () => {
   it("should retrieve an existing document", async () => {
     const model = new MyModel(aDbClient, aCollectionUri);
