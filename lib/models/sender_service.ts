@@ -132,14 +132,19 @@ export class SenderServiceModel extends DocumentDbModel<
   public findSenderServicesForRecipient(
     recipient: FiscalCode
   ): DocumentDbUtils.IResultIterator<RetrievedSenderService> {
-    return DocumentDbUtils.queryDocuments(this.dbClient, this.collectionUri, {
-      parameters: [
-        {
-          name: "@fiscalCode",
-          value: recipient
-        }
-      ],
-      query: `SELECT * FROM n WHERE n.${SENDER_SERVICE_MODEL_PK_FIELD} = @fiscalCode`
-    });
+    return DocumentDbUtils.queryDocuments(
+      this.dbClient,
+      this.collectionUri,
+      {
+        parameters: [
+          {
+            name: "@fiscalCode",
+            value: recipient
+          }
+        ],
+        query: `SELECT * FROM n WHERE n.${SENDER_SERVICE_MODEL_PK_FIELD} = @fiscalCode`
+      },
+      recipient
+    );
   }
 }
