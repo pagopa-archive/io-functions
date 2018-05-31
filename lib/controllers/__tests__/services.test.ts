@@ -28,10 +28,10 @@ import { ServicePublic as ApiService } from "../../api/definitions/ServicePublic
 
 import { FiscalCode } from "../../api/definitions/FiscalCode";
 import {
-  GetSenderServices,
-  GetSenderServicesHandler,
   GetService,
-  GetServiceHandler
+  GetServiceHandler,
+  GetServicesByRecipient,
+  GetServicesByRecipientHandler
 } from "../services";
 
 afterEach(() => {
@@ -151,7 +151,7 @@ describe("GetServiceHandler", () => {
   });
 });
 
-describe("GetSenderServices", () => {
+describe("GetServicesByRecipientHandler", () => {
   it("should get id of the services that notified an existing recipient", async () => {
     const mockIterator = {
       executeNext: jest.fn()
@@ -167,7 +167,7 @@ describe("GetSenderServices", () => {
       findSenderServicesForRecipient: jest.fn(() => mockIterator)
     };
 
-    const getSenderServiceHandler = GetSenderServicesHandler(
+    const getSenderServiceHandler = GetServicesByRecipientHandler(
       senderServiceModelMock as any
     );
     const response = await getSenderServiceHandler(
@@ -187,7 +187,7 @@ describe("GetSenderServices", () => {
   });
 });
 
-describe("GetSenderServices", () => {
+describe("GetServicesByRecipient", () => {
   it("should set up authentication middleware", async () => {
     const withRequestMiddlewaresSpy = jest
       .spyOn(middlewares, "withRequestMiddlewares")
@@ -195,10 +195,10 @@ describe("GetSenderServices", () => {
     const authMiddlewaresSpy = jest
       .spyOn(authMiddleware, "AzureApiAuthMiddleware")
       .mockReturnValueOnce(jest.fn());
-    GetSenderServices({} as any, {} as any);
+    GetServicesByRecipient({} as any, {} as any);
     expect(withRequestMiddlewaresSpy).toHaveBeenCalledTimes(1);
     expect(authMiddlewaresSpy).toHaveBeenCalledWith(
-      new Set([UserGroup.ApiFullProfileRead])
+      new Set([UserGroup.ApiServiceByRecipientQuery])
     );
   });
 });

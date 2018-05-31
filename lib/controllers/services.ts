@@ -152,7 +152,7 @@ export function GetService(serviceModel: ServiceModel): express.RequestHandler {
  * Returns the serviceId for all the Services that have sent
  * at least one notification to the recipient with the provided fiscalCode.
  */
-export function GetSenderServicesHandler(
+export function GetServicesByRecipientHandler(
   senderServiceModel: SenderServiceModel
 ): IGetSenderServicesHandler {
   return async (_, __, ___, fiscalCode) => {
@@ -172,16 +172,16 @@ export function GetSenderServicesHandler(
 /**
  * Wraps a GetSenderServices handler inside an Express request handler.
  */
-export function GetSenderServices(
+export function GetServicesByRecipient(
   serviceModel: ServiceModel,
   senderServiceModel: SenderServiceModel
 ): express.RequestHandler {
-  const handler = GetSenderServicesHandler(senderServiceModel);
+  const handler = GetServicesByRecipientHandler(senderServiceModel);
   const azureUserAttributesMiddleware = AzureUserAttributesMiddleware(
     serviceModel
   );
   const middlewaresWrap = withRequestMiddlewares(
-    AzureApiAuthMiddleware(new Set([UserGroup.ApiFullProfileRead])),
+    AzureApiAuthMiddleware(new Set([UserGroup.ApiServiceByRecipientQuery])),
     ClientIpMiddleware,
     azureUserAttributesMiddleware,
     RequiredQueryParamMiddleware("recipient", FiscalCode)

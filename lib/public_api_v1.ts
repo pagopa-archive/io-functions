@@ -37,7 +37,7 @@ import { secureExpressApp } from "./utils/express";
 
 import { createBlobService } from "azure-storage";
 
-import { GetSenderServices, GetService } from "./controllers/services";
+import { GetService, GetServicesByRecipient } from "./controllers/services";
 import {
   MESSAGE_STATUS_COLLECTION_NAME,
   MessageStatusModel
@@ -146,7 +146,7 @@ app.get(
   // This endpoint requires a "recipient" query parameter:
   // "/api/v1/services?recipient=fiscalCode"
   "/api/v1/services",
-  GetSenderServices(serviceModel, senderServiceModel)
+  GetServicesByRecipient(serviceModel, senderServiceModel)
 );
 
 app.get("/api/v1/profiles/:fiscalcode", GetProfile(serviceModel, profileModel));
