@@ -28,7 +28,7 @@ const aMessage = {
   fiscalCode: "FRLFRC74E04B157I",
   id: aMessageId,
   kind: "INewMessageWithoutContent",
-  senderServiceId: "",
+  senderServiceId: "s123",
   senderUserId: "u123" as NonEmptyString,
   timeToLive: 3600 as TimeToLiveSeconds
 };

@@ -11,6 +11,10 @@ The format of this file is loosely based on [Keep a Changelog](http://keepachang
 
 ## [Unreleased]
 
+### Added
+- [getSenderServices] Added a new endpoint to get the list of services
+  that have sent at least one message to some specific user
+
 ## [v0.40.0] - 2018-05-10
 
 ### Added

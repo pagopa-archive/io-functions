@@ -17,6 +17,7 @@ import { FiscalCode } from "../api/definitions/FiscalCode";
 
 import { BlobService } from "azure-storage";
 import { readableReport } from "italia-ts-commons/lib/reporters";
+import { ServiceId } from "../api/definitions/ServiceId";
 import { Timestamp } from "../api/definitions/Timestamp";
 import { TimeToLiveSeconds } from "../api/definitions/TimeToLiveSeconds";
 import { getBlobAsText, upsertBlobFromObject } from "../utils/azure_storage";
@@ -30,7 +31,7 @@ const MessageBase = t.interface(
     fiscalCode: FiscalCode,
 
     // the identifier of the service of the sender
-    senderServiceId: t.string,
+    senderServiceId: ServiceId,
 
     // the userId of the sender (this is opaque and depends on the API gateway)
     senderUserId: NonEmptyString,

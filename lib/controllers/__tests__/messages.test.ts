@@ -9,8 +9,6 @@ import { response as MockResponse } from "jest-mock-express";
 import { Either, isLeft, isRight, left, right } from "fp-ts/lib/Either";
 import { none, Option, some } from "fp-ts/lib/Option";
 
-import { ModelId } from "../../utils/documentdb_model_versioned";
-
 import { CreatedMessageWithoutContent } from "../../api/definitions/CreatedMessageWithoutContent";
 import { EmailAddress } from "../../api/definitions/EmailAddress";
 import { FiscalCode } from "../../api/definitions/FiscalCode";
@@ -57,6 +55,7 @@ import {
 } from "../messages";
 
 import * as lolex from "lolex";
+import { ServiceId } from "../../api/definitions/ServiceId";
 
 // mock time (ie. created_at)
 const clock = lolex.install();
@@ -122,7 +121,7 @@ const aNewMessageWithoutContent: NewMessageWithoutContent = {
   fiscalCode: aFiscalCode,
   id: "A_MESSAGE_ID" as NonEmptyString,
   kind: "INewMessageWithoutContent",
-  senderServiceId: "test" as ModelId,
+  senderServiceId: "test" as ServiceId,
   senderUserId: "u123" as NonEmptyString,
   timeToLiveSeconds: 3600 as TimeToLiveSeconds
 };

@@ -55,6 +55,10 @@ import {
 import { HttpsUrl } from "../api/definitions/HttpsUrl";
 import { ServiceId } from "../api/definitions/ServiceId";
 import { MessageStatusModel } from "../models/message_status";
+import {
+  RetrievedSenderService,
+  SenderServiceModel
+} from "../models/sender_service";
 
 afterEach(() => {
   jest.resetAllMocks();
@@ -163,6 +167,28 @@ const anAttachmentMeta = {
   media: "media.json"
 };
 
+const aRetrivedSenderService: RetrievedSenderService = {
+  _self: "a",
+  _ts: Date.now(),
+  id: "123" as NonEmptyString,
+  kind: "IRetrievedSenderService",
+  lastNotificationAt: new Date(),
+  recipient: aCorrectFiscalCode,
+  serviceId: aServiceId
+};
+
+const getSenderServicesModelMock = (
+  senderService: RetrievedSenderService = aRetrivedSenderService
+) => ({
+  createOrUpdate: jest.fn(async (_, __) => right(senderService)),
+  findSenderServicesForRecipient: jest.fn(async (_, __) =>
+    right({
+      items: [{ serviceId: senderService }],
+      page_size: 1
+    })
+  )
+});
+
 describe("createdMessageQueueIndex", () => {
   it("should return failure if createdMessage is undefined", async () => {
     const contextMock = {
@@ -249,6 +275,10 @@ describe("createdMessageQueueIndex", () => {
       );
 
     jest
+      .spyOn(SenderServiceModel.prototype, "createOrUpdate")
+      .mockReturnValue(Promise.resolve(right(none)));
+
+    jest
       .spyOn(MessageStatusModel.prototype, "upsert")
       .mockReturnValue(Promise.resolve(right(none)));
 
@@ -313,6 +343,7 @@ describe("handleMessage", () => {
       profileModelMock as any,
       {} as any,
       {} as any,
+      getSenderServicesModelMock() as any,
       {} as any,
       aUrl,
       aMessageEvent
@@ -337,6 +368,7 @@ describe("handleMessage", () => {
       profileModelMock as any,
       {} as any,
       {} as any,
+      getSenderServicesModelMock() as any,
       {} as any,
       aUrl,
       aMessageEvent
@@ -372,6 +404,7 @@ describe("handleMessage", () => {
         profileModelMock as any,
         {} as any,
         notificationModelMock as any,
+        getSenderServicesModelMock() as any,
         {} as any,
         aUrl,
         aMessageEvent
@@ -417,6 +450,7 @@ describe("handleMessage", () => {
         profileModelMock as any,
         {} as any,
         notificationModelMock as any,
+        getSenderServicesModelMock() as any,
         {} as any,
         aUrl,
         aMessageEvent
@@ -463,6 +497,7 @@ describe("handleMessage", () => {
         profileModelMock as any,
         {} as any,
         notificationModelMock as any,
+        getSenderServicesModelMock() as any,
         {} as any,
         aUrl,
         aMessageEvent
@@ -507,6 +542,7 @@ describe("handleMessage", () => {
       profileModelMock as any,
       {} as any,
       notificationModelMock as any,
+      getSenderServicesModelMock() as any,
       {} as any,
       aUrl,
       aMessageEvent
@@ -542,6 +578,7 @@ describe("handleMessage", () => {
         profileModelMock as any,
         {} as any,
         notificationModelMock as any,
+        getSenderServicesModelMock() as any,
         {} as any,
         aUrl,
         aMessageEvent
@@ -595,6 +632,7 @@ describe("handleMessage", () => {
         profileModelMock as any,
         {} as any,
         notificationModelMock as any,
+        getSenderServicesModelMock() as any,
         {} as any,
         aUrl,
         aMessageEvent
@@ -648,6 +686,7 @@ describe("handleMessage", () => {
         profileModelMock as any,
         {} as any,
         notificationModelMock as any,
+        getSenderServicesModelMock() as any,
         {} as any,
         aUrl,
         {
@@ -703,6 +742,7 @@ describe("handleMessage", () => {
         profileModelMock as any,
         {} as any,
         notificationModelMock as any,
+        getSenderServicesModelMock() as any,
         {} as any,
         aUrl,
         {
@@ -772,6 +812,7 @@ describe("handleMessage", () => {
       profileModelMock as any,
       messageModelMock as any,
       notificationModelMock as any,
+      getSenderServicesModelMock() as any,
       aBlobService as any,
       aUrl,
       {
@@ -845,6 +886,7 @@ describe("handleMessage", () => {
       profileModelMock as any,
       messageModelMock as any,
       notificationModelMock as any,
+      getSenderServicesModelMock() as any,
       aBlobService as any,
       aUrl,
       {
@@ -891,6 +933,7 @@ describe("handleMessage", () => {
       profileModelMock as any,
       {} as any,
       notificationModelMock as any,
+      getSenderServicesModelMock() as any,
       {} as any,
       aUrl,
       aMessageEvent

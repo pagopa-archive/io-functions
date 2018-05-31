@@ -34,7 +34,7 @@ import { secureExpressApp } from "./utils/express";
 
 import { createBlobService } from "azure-storage";
 
-import { GetService } from "./controllers/services";
+import { GetSenderServices, GetService } from "./controllers/services";
 import {
   MESSAGE_STATUS_COLLECTION_NAME,
   MessageStatusModel
@@ -43,6 +43,10 @@ import {
   NOTIFICATION_STATUS_COLLECTION_NAME,
   NotificationStatusModel
 } from "./models/notification_status";
+import {
+  SENDER_SERVICE_COLLECTION_NAME,
+  SenderServiceModel
+} from "./models/sender_service";
 
 // Whether we're in a production environment
 const isProduction = process.env.NODE_ENV === "production";
@@ -75,6 +79,10 @@ const servicesCollectionUrl = documentDbUtils.getCollectionUri(
   documentDbDatabaseUrl,
   "services"
 );
+const senderServicesCollectionUrl = documentDbUtils.getCollectionUri(
+  documentDbDatabaseUrl,
+  SENDER_SERVICE_COLLECTION_NAME
+);
 const notificationsCollectionUrl = documentDbUtils.getCollectionUri(
   documentDbDatabaseUrl,
   "notifications"
@@ -98,7 +106,14 @@ const messageStatusModel = new MessageStatusModel(
   documentClient,
   messageStatusCollectionUrl
 );
+
 const serviceModel = new ServiceModel(documentClient, servicesCollectionUrl);
+
+const senderServiceModel = new SenderServiceModel(
+  documentClient,
+  senderServicesCollectionUrl
+);
+
 const notificationModel = new NotificationModel(
   documentClient,
   notificationsCollectionUrl
@@ -123,6 +138,13 @@ app.get("/api/v1/debug", debugHandler);
 app.post("/api/v1/debug", debugHandler);
 
 app.get("/api/v1/services/:serviceid", GetService(serviceModel));
+
+app.get(
+  // This endpoint requires a "recipient" query parameter:
+  // "/api/v1/services?recipient=fiscalCode"
+  "/api/v1/services",
+  GetSenderServices(serviceModel, senderServiceModel)
+);
 
 app.get("/api/v1/profiles/:fiscalcode", GetProfile(serviceModel, profileModel));
 app.post(
