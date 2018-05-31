@@ -51,7 +51,7 @@ import { Either, isLeft, left, right } from "fp-ts/lib/Either";
 import { readableReport } from "italia-ts-commons/lib/reporters";
 
 import { handleQueueProcessingFailure } from "./utils/azure_queues";
-import { PermanentError, RuntimeError, TransientError } from "./utils/errors";
+import { RuntimeError, TransientError } from "./utils/errors";
 
 import { MessageStatusValueEnum } from "./api/definitions/MessageStatusValue";
 import { NotificationChannelEnum } from "./api/definitions/NotificationChannel";
@@ -238,8 +238,8 @@ export async function handleMessage(
   const defaultAddresses = fromNullable(createdMessageEvent.defaultAddresses);
   const senderMetadata = createdMessageEvent.senderMetadata;
 
-  // async fetch of profile data associated to the fiscal code the message
-  // should be delivered to
+  // fetch user's profile associated to the fiscal code
+  // of the recipient of the message
   const errorOrMaybeProfile = await lProfileModel.findOneProfileByFiscalCode(
     newMessageWithContent.fiscalCode
   );
@@ -251,7 +251,6 @@ export async function handleMessage(
     return left(TransientError("Cannot get user's profile"));
   }
 
-  // query succeeded, we may have a profile
   const maybeProfile = errorOrMaybeProfile.value;
 
   // channels ther user has blocked for this sender service
@@ -285,8 +284,7 @@ export async function handleMessage(
     maybeProfile.exists(profile => profile.isInboxEnabled === true);
 
   if (isMessageStorageEnabledAndAllowedForService) {
-    // If the recipient wants to store the messages
-    // we add the content of the message to the blob storage for later retrieval.
+    // Save the content of the message to the blob storage.
     // In case of a retry this operation will overwrite the message content with itself
     // (this is fine as we don't know if the operation succeeded at first)
     const errorOrAttachment = await lMessageModel.attachStoredContent(
@@ -310,14 +308,6 @@ export async function handleMessage(
   const isEmailBlockedForService =
     isMessageStorageBlockedForService ||
     blockedInboxOrChannels.has(BlockedInboxOrChannelEnum.EMAIL);
-
-  if (isEmailBlockedForService) {
-    winston.debug(
-      `handleMessage|User has blocked email notifications for this serviceId|${
-        newMessageWithContent.fiscalCode
-      }:${newMessageWithContent.senderServiceId}`
-    );
-  }
 
   const maybeAllowedEmailNotification = isEmailBlockedForService
     ? none
@@ -347,14 +337,6 @@ export async function handleMessage(
     isMessageStorageBlockedForService ||
     blockedInboxOrChannels.has(BlockedInboxOrChannelEnum.WEBHOOK);
 
-  if (isWebhookBlockedForService) {
-    winston.debug(
-      `handleMessage|User has blocked webhook notifications for this serviceId|${
-        newMessageWithContent.fiscalCode
-      }:${newMessageWithContent.senderServiceId}`
-    );
-  }
-
   // whether the recipient wants us to send notifications to the app backend
   const isWebhookBlockedInProfile = maybeProfile.exists(
     profile => profile.isWebhookEnabled === true
@@ -375,15 +357,16 @@ export async function handleMessage(
   ].every(isNone);
 
   if (noChannelsConfigured) {
-    return left(
-      PermanentError(
-        `No channels configured for the user ${
-          newMessageWithContent.fiscalCode
-        } and no default address provided`
-      )
+    winston.debug(
+      `handleMessage|No channels configured for the user ${
+        newMessageWithContent.fiscalCode
+      } and no default address provided`
     );
+    // return no notifications
+    return right({});
   }
 
+  // create and save notification object
   const newNotification: NewNotification = {
     ...createNewNotification(
       ulidGenerator,
@@ -409,9 +392,7 @@ export async function handleMessage(
 
   const notificationEvent = errorOrNotificationEvent.value;
 
-  //
-  //  Return notification events (one for each channel)
-  //
+  // output notification events (one for each channel)
   const outputBindings: OutputBindings = {
     emailNotification: maybeAllowedEmailNotification
       .map(() => notificationEvent)
