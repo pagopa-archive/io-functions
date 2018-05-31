@@ -139,7 +139,7 @@ export class SenderServiceModel extends DocumentDbModel<
           value: recipient
         }
       ],
-      query: "SELECT * FROM n WHERE n.recipient = @fiscalCode"
+      query: `SELECT * FROM n WHERE n.${SENDER_SERVICE_MODEL_PK_FIELD} = @fiscalCode`
     });
   }
 }

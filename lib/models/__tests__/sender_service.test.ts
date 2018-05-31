@@ -114,7 +114,7 @@ describe("find", () => {
 
     const result = await model.find(
       aRetrievedSenderService.id,
-      aRetrievedSenderService.messageId
+      aRetrievedSenderService.serviceId
     );
 
     expect(clientMock.readDocument).toHaveBeenCalledTimes(1);
@@ -122,7 +122,7 @@ describe("find", () => {
       "dbs/mockdb/colls/SenderServices/docs/A_SenderService_ID"
     );
     expect(clientMock.readDocument.mock.calls[0][1]).toEqual({
-      partitionKey: aRetrievedSenderService.messageId
+      partitionKey: aRetrievedSenderService.serviceId
     });
     expect(isRight(result)).toBeTruthy();
     if (isRight(result)) {
@@ -143,7 +143,7 @@ describe("find", () => {
 
     const result = await model.find(
       aRetrievedSenderService.id,
-      aRetrievedSenderService.fiscalCode
+      aRetrievedSenderService.recipientFiscalCode
     );
 
     expect(isLeft(result)).toBeTruthy();

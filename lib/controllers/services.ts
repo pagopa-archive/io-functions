@@ -46,7 +46,6 @@ import {
   IAzureUserAttributes
 } from "../utils/middlewares/azure_user_attributes";
 
-import { pick } from "italia-ts-commons/lib/types";
 import { FiscalCode } from "../api/definitions/FiscalCode";
 import { ServiceId } from "../api/definitions/ServiceId";
 import { SenderServiceModel } from "../models/sender_service";
@@ -72,7 +71,7 @@ type IGetServiceHandler = (
 
 type IGetSenderServicesHandlerRet =
   | IResponseSuccessJsonIterator<{
-      readonly serviceId: ServiceId;
+      readonly service_id: ServiceId;
     }>
   | IResponseErrorQuery;
 
@@ -162,7 +161,9 @@ export function GetSenderServicesHandler(
     );
     const senderServicesIterator = mapResultIterator(
       retrievedServicesIterator,
-      service => pick(["serviceId"], service)
+      service => ({
+        service_id: service.serviceId
+      })
     );
     return ResponseSuccessJsonIterator(senderServicesIterator);
   };
