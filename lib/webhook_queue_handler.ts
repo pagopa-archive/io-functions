@@ -27,7 +27,11 @@ import { getRequiredStringEnv } from "./utils/env";
 
 import { IContext } from "azure-functions-types";
 
-import { NotificationModel, WebhookNotification } from "./models/notification";
+import {
+  NOTIFICATION_COLLECTION_NAME,
+  NotificationModel,
+  WebhookNotification
+} from "./models/notification";
 import { NotificationEvent } from "./models/notification_event";
 
 import {
@@ -68,7 +72,7 @@ const documentDbDatabaseUrl = documentDbUtils.getDatabaseUri(cosmosDbName);
 
 const notificationsCollectionUrl = documentDbUtils.getCollectionUri(
   documentDbDatabaseUrl,
-  "notifications"
+  NOTIFICATION_COLLECTION_NAME
 );
 
 const notificationStatusCollectionUrl = documentDbUtils.getCollectionUri(

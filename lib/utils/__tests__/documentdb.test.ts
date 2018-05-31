@@ -258,12 +258,14 @@ describe("queryDocuments", () => {
     const iterator = DocumentDbUtils.queryDocuments(
       (clientMock as any) as DocumentDb.DocumentClient,
       collectionUriFixture,
-      "QUERY"
+      "QUERY",
+      "PARTITIONKEY"
     );
     expect(clientMock.queryDocuments).toHaveBeenCalledTimes(1);
     expect(clientMock.queryDocuments).toBeCalledWith(
       collectionUriFixture.uri,
-      "QUERY"
+      "QUERY",
+      { partitionKey: "PARTITIONKEY" }
     );
     const result = await iterator.executeNext();
     expect(iteratorMock.executeNext).toBeCalled();
@@ -284,12 +286,14 @@ describe("queryDocuments", () => {
     const iterator = DocumentDbUtils.queryDocuments(
       (clientMock as any) as DocumentDb.DocumentClient,
       collectionUriFixture,
-      "QUERY"
+      "QUERY",
+      "PARTITIONKEY"
     );
     expect(clientMock.queryDocuments).toHaveBeenCalledTimes(1);
     expect(clientMock.queryDocuments).toBeCalledWith(
       collectionUriFixture.uri,
-      "QUERY"
+      "QUERY",
+      { partitionKey: "PARTITIONKEY" }
     );
     const result = await iterator.executeNext();
     expect(iteratorMock.executeNext).toBeCalled();
@@ -319,12 +323,14 @@ describe("queryOneDocument", () => {
     const result = await DocumentDbUtils.queryOneDocument(
       (clientMock as any) as DocumentDb.DocumentClient,
       collectionUriFixture,
-      "QUERY"
+      "QUERY",
+      "PARTITIONKEY"
     );
     expect(clientMock.queryDocuments).toHaveBeenCalledTimes(1);
     expect(clientMock.queryDocuments).toBeCalledWith(
       collectionUriFixture.uri,
-      "QUERY"
+      "QUERY",
+      { partitionKey: "PARTITIONKEY" }
     );
     expect(iteratorMock.executeNext).toBeCalled();
     expect(isRight(result)).toBeTruthy();
@@ -344,12 +350,14 @@ describe("queryOneDocument", () => {
     const result = await DocumentDbUtils.queryOneDocument(
       (clientMock as any) as DocumentDb.DocumentClient,
       collectionUriFixture,
-      "QUERY"
+      "QUERY",
+      "PARTITIONKEY"
     );
     expect(clientMock.queryDocuments).toHaveBeenCalledTimes(1);
     expect(clientMock.queryDocuments).toBeCalledWith(
       collectionUriFixture.uri,
-      "QUERY"
+      "QUERY",
+      { partitionKey: "PARTITIONKEY" }
     );
     expect(iteratorMock.executeNext).toBeCalled();
     expect(isRight(result)).toBeTruthy();
@@ -368,12 +376,14 @@ describe("queryOneDocument", () => {
     const result = await DocumentDbUtils.queryOneDocument(
       (clientMock as any) as DocumentDb.DocumentClient,
       collectionUriFixture,
-      "QUERY"
+      "QUERY",
+      "PARTITIONKEY"
     );
     expect(clientMock.queryDocuments).toHaveBeenCalledTimes(1);
     expect(clientMock.queryDocuments).toBeCalledWith(
       collectionUriFixture.uri,
-      "QUERY"
+      "QUERY",
+      { partitionKey: "PARTITIONKEY" }
     );
     expect(iteratorMock.executeNext).toBeCalled();
     expect(isLeft(result)).toBeTruthy();

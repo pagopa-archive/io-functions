@@ -24,6 +24,9 @@ import { PreferredLanguages } from "../api/definitions/PreferredLanguages";
 import { ServiceId } from "../api/definitions/ServiceId";
 import { fiscalCodeToModelId } from "../utils/conversions";
 
+export const PROFILE_COLLECTION_NAME = "profiles";
+export const PROFILE_MODEL_PK_FIELD = "fiscalCode";
+
 const ProfileBlockedInboxOrChannels = t.dictionary(
   ServiceId,
   readonlySetType(BlockedInboxOrChannel, "ProfileBlockedInboxOrChannel"),
@@ -162,6 +165,11 @@ export class ProfileModel extends DocumentDbModelVersioned<
   public findOneProfileByFiscalCode(
     fiscalCode: FiscalCode
   ): Promise<Either<DocumentDb.QueryError, Option<RetrievedProfile>>> {
-    return super.findLastVersionByModelId("fiscalCode", fiscalCode);
+    return super.findLastVersionByModelId(
+      PROFILE_MODEL_PK_FIELD,
+      fiscalCode,
+      PROFILE_MODEL_PK_FIELD,
+      fiscalCode
+    );
   }
 }

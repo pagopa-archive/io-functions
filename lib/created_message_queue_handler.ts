@@ -32,10 +32,15 @@ import { NewMessageDefaultAddresses } from "./api/definitions/NewMessageDefaultA
 import { getRequiredStringEnv } from "./utils/env";
 
 import { CreatedMessageEvent } from "./models/created_message_event";
-import { MessageModel, NewMessageWithContent } from "./models/message";
+import {
+  MESSAGE_COLLECTION_NAME,
+  MessageModel,
+  NewMessageWithContent
+} from "./models/message";
 import {
   createNewNotification,
   NewNotification,
+  NOTIFICATION_COLLECTION_NAME,
   NotificationAddressSourceEnum,
   NotificationChannelEmail,
   NotificationModel
@@ -43,6 +48,7 @@ import {
 import { NotificationEvent } from "./models/notification_event";
 import {
   IProfileBlockedInboxOrChannels,
+  PROFILE_COLLECTION_NAME,
   ProfileModel,
   RetrievedProfile
 } from "./models/profile";
@@ -83,15 +89,15 @@ const cosmosDbName = getRequiredStringEnv("COSMOSDB_NAME");
 const documentDbDatabaseUrl = documentDbUtils.getDatabaseUri(cosmosDbName);
 const profilesCollectionUrl = documentDbUtils.getCollectionUri(
   documentDbDatabaseUrl,
-  "profiles"
+  PROFILE_COLLECTION_NAME
 );
 const messagesCollectionUrl = documentDbUtils.getCollectionUri(
   documentDbDatabaseUrl,
-  "messages"
+  MESSAGE_COLLECTION_NAME
 );
 const notificationsCollectionUrl = documentDbUtils.getCollectionUri(
   documentDbDatabaseUrl,
-  "notifications"
+  NOTIFICATION_COLLECTION_NAME
 );
 const messageStatusCollectionUrl = documentDbUtils.getCollectionUri(
   documentDbDatabaseUrl,
