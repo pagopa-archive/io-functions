@@ -18,16 +18,19 @@ import { DateFromString } from "italia-ts-commons/lib/dates";
 import { NonEmptyString } from "italia-ts-commons/lib/strings";
 import { ServiceId } from "../api/definitions/ServiceId";
 
-export const SENDER_SERVICE_COLLECTION_NAME = "sender-services";
-export const SENDER_SERVICE_MODEL_ID_FIELD = "fiscalCode";
-export const SENDER_SERVICE_MODEL_PK_FIELD = "fiscalCode";
+// partition the CosmosDB collection by this field
+export const SENDER_SERVICE_MODEL_PK_FIELD = "recipientFiscalCode";
 
 export const SenderService = t.interface({
   lastNotificationAt: DateFromString,
-  recipient: FiscalCode,
+  // fiscal code of the user that has received at least
+  // one message from the service identified by the serviceId
+  [SENDER_SERVICE_MODEL_PK_FIELD]: FiscalCode,
   serviceId: ServiceId
 });
 export type SenderService = t.TypeOf<typeof SenderService>;
+
+export const SENDER_SERVICE_COLLECTION_NAME = "sender-services";
 
 /**
  * Interface for new SenderService objects
@@ -58,9 +61,13 @@ export type RetrievedSenderService = t.TypeOf<typeof RetrievedSenderService>;
 
 /* istanbul ignore next */
 function toBaseType(o: RetrievedSenderService): SenderService {
-  return pick(["lastNotificationAt", "recipient", "serviceId"], o);
+  return pick(
+    ["lastNotificationAt", SENDER_SERVICE_MODEL_PK_FIELD, "serviceId"],
+    o
+  );
 }
 
+/* istanbul ignore next */
 function toRetrieved(
   result: DocumentDb.RetrievedDocument
 ): RetrievedSenderService {
@@ -70,11 +77,14 @@ function toRetrieved(
   } as RetrievedSenderService;
 }
 
+/* istanbul ignore next */
 export function makeSenderServiceId(
-  fiscalCode: FiscalCode,
+  recipientFiscalCode: FiscalCode,
   serviceId: ServiceId
 ): NonEmptyString {
-  return NonEmptyString.decode(`${fiscalCode}:${serviceId}`).getOrElseL(() => {
+  return NonEmptyString.decode(
+    `${recipientFiscalCode}:${serviceId}`
+  ).getOrElseL(() => {
     throw new Error("Invalid sender service id");
   });
 }
@@ -87,7 +97,7 @@ export function newSenderService(
     id: makeSenderServiceId(fiscalCode, senderServiceId),
     kind: "INewSenderService",
     lastNotificationAt: new Date(),
-    recipient: fiscalCode,
+    recipientFiscalCode: fiscalCode,
     serviceId: senderServiceId
   };
 }

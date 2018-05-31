@@ -173,7 +173,7 @@ const aRetrivedSenderService: RetrievedSenderService = {
   id: "123" as NonEmptyString,
   kind: "IRetrievedSenderService",
   lastNotificationAt: new Date(),
-  recipient: aCorrectFiscalCode,
+  recipientFiscalCode: aCorrectFiscalCode,
   serviceId: aServiceId
 };
 
