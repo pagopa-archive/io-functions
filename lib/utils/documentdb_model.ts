@@ -82,7 +82,7 @@ export abstract class DocumentDbModel<
     });
 
     // attempt to persist the document
-    const maybeCreatedDocument = await DocumentDbUtils.upsertDocument(
+    const maybeCreatedOrUpdatedDocument = await DocumentDbUtils.upsertDocument(
       this.dbClient,
       this.collectionUri,
       kindlessDocument,
@@ -90,7 +90,7 @@ export abstract class DocumentDbModel<
     );
 
     // if the result is successful we map it to a TR type
-    return maybeCreatedDocument.map(this.toRetrieved);
+    return maybeCreatedOrUpdatedDocument.map(this.toRetrieved);
   }
 
   /**
