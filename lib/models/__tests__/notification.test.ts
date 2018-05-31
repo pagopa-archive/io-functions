@@ -14,6 +14,7 @@ import { EmailAddress } from "../../api/definitions/EmailAddress";
 import { NotificationChannelEnum } from "../../api/definitions/NotificationChannel";
 import {
   NewNotification,
+  NOTIFICATION_COLLECTION_NAME,
   NotificationAddressSourceEnum,
   NotificationModel,
   RetrievedNotification
@@ -22,7 +23,7 @@ import {
 const aDatabaseUri = DocumentDbUtils.getDatabaseUri("mockdb" as NonEmptyString);
 const aNotificationsCollectionUri = DocumentDbUtils.getCollectionUri(
   aDatabaseUri,
-  "notifications"
+  NOTIFICATION_COLLECTION_NAME
 );
 
 const aFiscalCode = "FRLFRC74E04B157I" as FiscalCode;

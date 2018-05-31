@@ -12,12 +12,17 @@ import { NonNegativeNumber } from "italia-ts-commons/lib/numbers";
 import { EmailString, NonEmptyString } from "italia-ts-commons/lib/strings";
 import { FiscalCode } from "../../api/definitions/FiscalCode";
 
-import { Profile, ProfileModel, RetrievedProfile } from "../profile";
+import {
+  Profile,
+  PROFILE_COLLECTION_NAME,
+  ProfileModel,
+  RetrievedProfile
+} from "../profile";
 
 const aDatabaseUri = DocumentDbUtils.getDatabaseUri("mockdb" as NonEmptyString);
 const profilesCollectionUrl = DocumentDbUtils.getCollectionUri(
   aDatabaseUri,
-  "profiles"
+  PROFILE_COLLECTION_NAME
 );
 
 const aFiscalCode = "FRLFRC74E04B157I" as FiscalCode;

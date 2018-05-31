@@ -23,6 +23,9 @@ import { nonEmptyStringToModelId } from "../utils/conversions";
 
 import { readonlySetType, tag } from "italia-ts-commons/lib/types";
 
+export const SERVICE_COLLECTION_NAME = "services";
+export const SERVICE_MODEL_PK_FIELD = "serviceId";
+
 /**
  * Base interface for Service objects
  */
@@ -170,6 +173,11 @@ export class ServiceModel extends DocumentDbModelVersioned<
   public findOneByServiceId(
     serviceId: NonEmptyString
   ): Promise<Either<DocumentDb.QueryError, Option<RetrievedService>>> {
-    return super.findLastVersionByModelId("serviceId", serviceId);
+    return super.findLastVersionByModelId(
+      SERVICE_MODEL_PK_FIELD,
+      serviceId,
+      SERVICE_MODEL_PK_FIELD,
+      serviceId
+    );
   }
 }

@@ -19,10 +19,13 @@ import * as documentDbUtils from "./utils/documentdb";
 
 import { createAzureFunctionHandler } from "azure-function-express";
 
-import { MessageModel } from "./models/message";
-import { NotificationModel } from "./models/notification";
-import { ProfileModel } from "./models/profile";
-import { ServiceModel } from "./models/service";
+import { MESSAGE_COLLECTION_NAME, MessageModel } from "./models/message";
+import {
+  NOTIFICATION_COLLECTION_NAME,
+  NotificationModel
+} from "./models/notification";
+import { PROFILE_COLLECTION_NAME, ProfileModel } from "./models/profile";
+import { SERVICE_COLLECTION_NAME, ServiceModel } from "./models/service";
 
 import { GetDebug } from "./controllers/debug";
 import { GetInfo } from "./controllers/info";
@@ -61,7 +64,7 @@ const messageContainerName = getRequiredStringEnv("MESSAGE_CONTAINER_NAME");
 const documentDbDatabaseUrl = documentDbUtils.getDatabaseUri(cosmosDbName);
 const messagesCollectionUrl = documentDbUtils.getCollectionUri(
   documentDbDatabaseUrl,
-  "messages"
+  MESSAGE_COLLECTION_NAME
 );
 const messageStatusCollectionUrl = documentDbUtils.getCollectionUri(
   documentDbDatabaseUrl,
@@ -69,15 +72,15 @@ const messageStatusCollectionUrl = documentDbUtils.getCollectionUri(
 );
 const profilesCollectionUrl = documentDbUtils.getCollectionUri(
   documentDbDatabaseUrl,
-  "profiles"
+  PROFILE_COLLECTION_NAME
 );
 const servicesCollectionUrl = documentDbUtils.getCollectionUri(
   documentDbDatabaseUrl,
-  "services"
+  SERVICE_COLLECTION_NAME
 );
 const notificationsCollectionUrl = documentDbUtils.getCollectionUri(
   documentDbDatabaseUrl,
-  "notifications"
+  NOTIFICATION_COLLECTION_NAME
 );
 const notificationsStatusCollectionUrl = documentDbUtils.getCollectionUri(
   documentDbDatabaseUrl,
