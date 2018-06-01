@@ -4,6 +4,7 @@ import {
   EventData
 } from "applicationinsights/out/Declarations/Contracts";
 import { NonEmptyString } from "italia-ts-commons/lib/strings";
+import { Millisecond } from "italia-ts-commons/lib/units";
 import { ServiceId } from "../api/definitions/ServiceId";
 
 export interface ITelemetryParams {
@@ -74,7 +75,8 @@ const MILLISEC_PER_SEC = 1e3;
  * from an initial time obtained calling process.hrtime().
  * Used when profiling code.
  */
-export function diffInMilliseconds(startHrtime: [number, number]): number {
+export function diffInMilliseconds(startHrtime: [number, number]): Millisecond {
   const diff = process.hrtime(startHrtime);
-  return diff[0] * MILLISEC_PER_SEC + diff[1] / NANOSEC_PER_MILLISEC;
+  return (diff[0] * MILLISEC_PER_SEC +
+    diff[1] / NANOSEC_PER_MILLISEC) as Millisecond;
 }
