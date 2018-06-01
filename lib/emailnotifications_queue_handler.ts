@@ -32,7 +32,11 @@ import * as HtmlToText from "html-to-text";
 import { MessageBodyMarkdown } from "./api/definitions/MessageBodyMarkdown";
 
 import { CreatedMessageEventSenderMetadata } from "./models/created_message_sender_metadata";
-import { EmailNotification, NotificationModel } from "./models/notification";
+import {
+  EmailNotification,
+  NOTIFICATION_COLLECTION_NAME,
+  NotificationModel
+} from "./models/notification";
 import { NotificationEvent } from "./models/notification_event";
 
 import { markdownToHtml } from "./utils/markdown";
@@ -74,7 +78,7 @@ const documentDbDatabaseUrl = documentDbUtils.getDatabaseUri(cosmosDbName);
 
 const notificationsCollectionUrl = documentDbUtils.getCollectionUri(
   documentDbDatabaseUrl,
-  "notifications"
+  NOTIFICATION_COLLECTION_NAME
 );
 
 const notificationStatusCollectionUrl = documentDbUtils.getCollectionUri(
