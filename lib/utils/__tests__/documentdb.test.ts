@@ -148,6 +148,51 @@ describe("createDocument", () => {
   });
 });
 
+describe("upsertDocument", () => {
+  const dbUriFixture = DocumentDbUtils.getDatabaseUri("mydb" as NonEmptyString);
+  const collectionUriFixture = DocumentDbUtils.getCollectionUri(
+    dbUriFixture,
+    "mycollection"
+  );
+  const documentFixture = {} as DocumentDb.NewDocument;
+
+  it("should resolve a promise with the upserted document", async () => {
+    const clientMock = {
+      upsertDocument: jest.fn((_, __, ___, cb) =>
+        cb(undefined, documentFixture)
+      )
+    };
+    const result = await DocumentDbUtils.upsertDocument(
+      (clientMock as any) as DocumentDb.DocumentClient,
+      collectionUriFixture,
+      documentFixture,
+      "fiscalCode"
+    );
+    expect(clientMock.upsertDocument).toHaveBeenCalledTimes(1);
+    expect(isRight(result)).toBeTruthy();
+    if (isRight(result)) {
+      expect(result.value).toEqual(documentFixture);
+    }
+  });
+
+  it("should reject a promise with the error", async () => {
+    const clientMock = {
+      upsertDocument: jest.fn((_, __, ___, cb) => cb("error"))
+    };
+    const result = await DocumentDbUtils.upsertDocument(
+      (clientMock as any) as DocumentDb.DocumentClient,
+      collectionUriFixture,
+      documentFixture,
+      "fiscalCode"
+    );
+    expect(clientMock.upsertDocument).toHaveBeenCalledTimes(1);
+    expect(isLeft(result)).toBeTruthy();
+    if (isLeft(result)) {
+      expect(result.value).toEqual("error");
+    }
+  });
+});
+
 describe("readDocument", () => {
   const dbUriFixture = DocumentDbUtils.getDatabaseUri("mydb" as NonEmptyString);
   const collectionUriFixture = DocumentDbUtils.getCollectionUri(
