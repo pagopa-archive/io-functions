@@ -109,16 +109,9 @@ import { TimeToLiveSeconds } from "../api/definitions/TimeToLiveSeconds";
 import { MessageStatusModel } from "../models/message_status";
 import { NotificationStatusModel } from "../models/notification_status";
 import {
-  diffInMilliseconds,
-  wrapCustomTelemetryClient
+  CustomTelemetryClient,
+  diffInMilliseconds
 } from "../utils/application_insights";
-
-const isProduction = process.env.NODE_ENV === "production";
-
-const getCustomTelemetryClient = wrapCustomTelemetryClient(
-  isProduction,
-  new TelemetryClient()
-);
 
 /**
  * Input and output bindings for this function
@@ -332,6 +325,7 @@ async function getMessageNotificationStatuses(
  * Returns a type safe CreateMessage handler.
  */
 export function CreateMessageHandler(
+  getCustomTelemetryClient: CustomTelemetryClient,
   messageModel: MessageModel,
   generateObjectId: ObjectIdGenerator
 ): ICreateMessageHandler {
@@ -517,10 +511,15 @@ export function CreateMessageHandler(
  * Wraps a CreateMessage handler inside an Express request handler.
  */
 export function CreateMessage(
+  getCustomTelemetryClient: CustomTelemetryClient,
   serviceModel: ServiceModel,
   messageModel: MessageModel
 ): express.RequestHandler {
-  const handler = CreateMessageHandler(messageModel, ulidGenerator);
+  const handler = CreateMessageHandler(
+    getCustomTelemetryClient,
+    messageModel,
+    ulidGenerator
+  );
   const middlewaresWrap = withRequestMiddlewares(
     // extract Azure Functions bindings
     ContextMiddleware<IBindings>(),

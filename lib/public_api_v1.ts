@@ -49,8 +49,16 @@ import {
   SenderServiceModel
 } from "./models/sender_service";
 
+import { TelemetryClient } from "applicationinsights";
+import { wrapCustomTelemetryClient } from "./utils/application_insights";
+
 // Whether we're in a production environment
 const isProduction = process.env.NODE_ENV === "production";
+
+const getCustomTelemetryClient = wrapCustomTelemetryClient(
+  isProduction,
+  new TelemetryClient()
+);
 
 // Setup Express
 const app = express();
@@ -167,7 +175,7 @@ app.get(
 );
 app.post(
   "/api/v1/messages/:fiscalcode",
-  CreateMessage(serviceModel, messageModel)
+  CreateMessage(getCustomTelemetryClient, serviceModel, messageModel)
 );
 
 app.get("/api/v1/info", GetInfo(serviceModel));

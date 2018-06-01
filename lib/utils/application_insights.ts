@@ -62,6 +62,10 @@ export function wrapCustomTelemetryClient(
   };
 }
 
+export type CustomTelemetryClient = ReturnType<
+  typeof wrapCustomTelemetryClient
+>;
+
 const NANOSEC_PER_MILLISEC = 1e6;
 const MILLISEC_PER_SEC = 1e3;
 
