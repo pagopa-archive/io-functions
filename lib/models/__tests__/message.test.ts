@@ -21,9 +21,8 @@ import {
   RetrievedMessageWithContent
 } from "../message";
 
-import { ModelId } from "../../utils/documentdb_model_versioned";
-
 jest.mock("../../utils/azure_storage");
+import { ServiceId } from "../../api/definitions/ServiceId";
 import { TimeToLiveSeconds } from "../../api/definitions/TimeToLiveSeconds";
 import * as azureStorageUtils from "../../utils/azure_storage";
 
@@ -48,7 +47,7 @@ const aSerializedNewMessageWithContent = {
   createdAt: new Date().toISOString(),
   fiscalCode: aFiscalCode,
   id: "A_MESSAGE_ID" as NonEmptyString,
-  senderServiceId: "agid" as ModelId,
+  senderServiceId: "agid" as ServiceId,
   senderUserId: "u123" as NonEmptyString,
   timeToLiveSeconds: 3600 as TimeToLiveSeconds
 };

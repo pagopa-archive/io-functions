@@ -83,7 +83,7 @@ const aMessage = {
   fiscalCode: aFiscalCode,
   id: aMessageId,
   kind: "INewMessageWithoutContent",
-  senderServiceId: "",
+  senderServiceId: "s123",
   senderUserId: "u123" as NonEmptyString,
   timeToLiveSeconds: 3600 as TimeToLiveSeconds
 };

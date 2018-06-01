@@ -71,6 +71,11 @@ import {
   MESSAGE_STATUS_COLLECTION_NAME,
   MessageStatusModel
 } from "./models/message_status";
+import {
+  newSenderService,
+  SENDER_SERVICE_COLLECTION_NAME,
+  SenderServiceModel
+} from "./models/sender_service";
 import { ulidGenerator } from "./utils/strings";
 
 // Whether we're in a production environment
@@ -97,6 +102,10 @@ const notificationsCollectionUrl = documentDbUtils.getCollectionUri(
 const messageStatusCollectionUrl = documentDbUtils.getCollectionUri(
   documentDbDatabaseUrl,
   MESSAGE_STATUS_COLLECTION_NAME
+);
+const senderServicesCollectionUrl = documentDbUtils.getCollectionUri(
+  documentDbDatabaseUrl,
+  SENDER_SERVICE_COLLECTION_NAME
 );
 
 const defaultWebhookUrl = HttpsUrl.decode(
@@ -142,6 +151,11 @@ const messageModel = new MessageModel(
 const notificationModel = new NotificationModel(
   documentClient,
   notificationsCollectionUrl
+);
+
+const senderServiceModel = new SenderServiceModel(
+  documentClient,
+  senderServicesCollectionUrl
 );
 
 const blobService = createBlobService(storageConnectionString);
@@ -236,6 +250,7 @@ export async function handleMessage(
   lProfileModel: ProfileModel,
   lMessageModel: MessageModel,
   lNotificationModel: NotificationModel,
+  lSenderServiceModel: SenderServiceModel,
   lBlobService: BlobService,
   lDefaultWebhookUrl: HttpsUrl,
   createdMessageEvent: CreatedMessageEvent
@@ -357,6 +372,24 @@ export async function handleMessage(
       })
     : none;
 
+  // store fiscalCode -> serviceId
+  const errorOrSenderService = await lSenderServiceModel.createOrUpdate(
+    newSenderService(
+      newMessageWithContent.fiscalCode,
+      newMessageWithContent.senderServiceId
+    ),
+    // partition key
+    newMessageWithContent.fiscalCode
+  );
+
+  if (isLeft(errorOrSenderService)) {
+    return left(
+      TransientError(
+        `Cannot save sender service id: ${errorOrSenderService.value.body}`
+      )
+    );
+  }
+
   const noChannelsConfigured = [
     maybeAllowedEmailNotification,
     maybeAllowedWebhookNotification
@@ -462,6 +495,7 @@ export async function index(
     profileModel,
     messageModel,
     notificationModel,
+    senderServiceModel,
     blobService,
     defaultWebhookUrl,
     createdMessageEvent
