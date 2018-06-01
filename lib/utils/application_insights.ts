@@ -62,7 +62,7 @@ export function wrapCustomTelemetryClient(
   };
 }
 
-export type CustomTelemetryClient = ReturnType<
+export type CustomTelemetryClientFactory = ReturnType<
   typeof wrapCustomTelemetryClient
 >;
 

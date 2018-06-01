@@ -108,7 +108,7 @@ import { TimeToLiveSeconds } from "../api/definitions/TimeToLiveSeconds";
 import { MessageStatusModel } from "../models/message_status";
 import { NotificationStatusModel } from "../models/notification_status";
 import {
-  CustomTelemetryClient,
+  CustomTelemetryClientFactory,
   diffInMilliseconds
 } from "../utils/application_insights";
 
@@ -324,7 +324,7 @@ async function getMessageNotificationStatuses(
  * Returns a type safe CreateMessage handler.
  */
 export function CreateMessageHandler(
-  getCustomTelemetryClient: CustomTelemetryClient,
+  getCustomTelemetryClient: CustomTelemetryClientFactory,
   messageModel: MessageModel,
   generateObjectId: ObjectIdGenerator
 ): ICreateMessageHandler {
@@ -510,7 +510,7 @@ export function CreateMessageHandler(
  * Wraps a CreateMessage handler inside an Express request handler.
  */
 export function CreateMessage(
-  getCustomTelemetryClient: CustomTelemetryClient,
+  getCustomTelemetryClient: CustomTelemetryClientFactory,
   serviceModel: ServiceModel,
   messageModel: MessageModel
 ): express.RequestHandler {
