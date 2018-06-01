@@ -23,6 +23,9 @@ import { HttpsUrl } from "../api/definitions/HttpsUrl";
 import { NotificationChannelEnum } from "../api/definitions/NotificationChannel";
 import { ObjectIdGenerator } from "../utils/strings";
 
+export const NOTIFICATION_COLLECTION_NAME = "notifications";
+export const NOTIFICATION_MODEL_PK_FIELD = "messageId";
+
 /**
  * All possible sources that can provide the address of the recipient.
  */
@@ -190,14 +193,19 @@ export class NotificationModel extends DocumentDbModel<
   public findNotificationForMessage(
     messageId: string
   ): Promise<Either<DocumentDb.QueryError, Option<RetrievedNotification>>> {
-    return DocumentDbUtils.queryOneDocument(this.dbClient, this.collectionUri, {
-      parameters: [
-        {
-          name: "@messageId",
-          value: messageId
-        }
-      ],
-      query: "SELECT * FROM notifications n WHERE (n.messageId = @messageId)"
-    });
+    return DocumentDbUtils.queryOneDocument(
+      this.dbClient,
+      this.collectionUri,
+      {
+        parameters: [
+          {
+            name: "@messageId",
+            value: messageId
+          }
+        ],
+        query: `SELECT * FROM n WHERE (n.${NOTIFICATION_MODEL_PK_FIELD} = @messageId)`
+      },
+      messageId
+    );
   }
 }

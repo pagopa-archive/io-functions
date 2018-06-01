@@ -273,9 +273,12 @@ export function readDocument<T>(
 export function queryDocuments<T>(
   client: DocumentDb.DocumentClient,
   collectionUri: IDocumentDbCollectionUri,
-  query: DocumentDb.DocumentQuery
+  query: DocumentDb.DocumentQuery,
+  partitionKey: string
 ): IResultIterator<T & DocumentDb.RetrievedDocument> {
-  const documentIterator = client.queryDocuments(collectionUri.uri, query);
+  const documentIterator = client.queryDocuments(collectionUri.uri, query, {
+    partitionKey
+  });
   return {
     executeNext: () => {
       return new Promise(resolve => {
@@ -325,12 +328,18 @@ export function queryDocuments<T>(
 export function queryOneDocument<T>(
   client: DocumentDb.DocumentClient,
   collectionUrl: IDocumentDbCollectionUri,
-  query: DocumentDb.DocumentQuery
+  query: DocumentDb.DocumentQuery,
+  partitionKey: string
 ): Promise<
   Either<DocumentDb.QueryError, Option<T & DocumentDb.RetrievedDocument>>
 > {
   // get a result iterator for the query
-  const iterator = queryDocuments<T>(client, collectionUrl, query);
+  const iterator = queryDocuments<T>(
+    client,
+    collectionUrl,
+    query,
+    partitionKey
+  );
   return new Promise((resolve, reject) => {
     // fetch the first batch of results, since we're looking for just the
     // first result, we should go no further
@@ -447,6 +456,45 @@ export async function iteratorToArray<T>(
     return iterate(a.concat(...result));
   }
   return iterate([]);
+}
+
+/**
+ * Replaces an existing document with a new one
+ *
+ * @param client        The DocumentDB client
+ * @param documentUrl   The existing document URL
+ * @param document      The new document
+ * @param partitionKey  The partitionKey
+ */
+export function upsertDocument<T>(
+  client: DocumentDb.DocumentClient,
+  collectionUri: IDocumentDbCollectionUri,
+  document: T & DocumentDb.NewDocument,
+  partitionKey: string
+): Promise<Either<DocumentDb.QueryError, T & DocumentDb.RetrievedDocument>> {
+  return new Promise(resolve => {
+    client.upsertDocument(
+      collectionUri.uri,
+      document,
+      {
+        partitionKey
+      },
+      /* tslint:disable-next-line:no-identical-functions */
+      (err, created) => {
+        if (err) {
+          resolve(
+            left<DocumentDb.QueryError, T & DocumentDb.RetrievedDocument>(err)
+          );
+        } else {
+          resolve(
+            right<DocumentDb.QueryError, T & DocumentDb.RetrievedDocument>(
+              created as T & DocumentDb.RetrievedDocument
+            )
+          );
+        }
+      }
+    );
+  });
 }
 
 /**

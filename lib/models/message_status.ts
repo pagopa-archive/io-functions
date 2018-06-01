@@ -164,6 +164,8 @@ export class MessageStatusModel extends DocumentDbModelVersioned<
   ): Promise<Either<DocumentDb.QueryError, Option<RetrievedMessageStatus>>> {
     return super.findLastVersionByModelId(
       MESSAGE_STATUS_MODEL_ID_FIELD,
+      messageId,
+      MESSAGE_STATUS_MODEL_PK_FIELD,
       messageId
     );
   }

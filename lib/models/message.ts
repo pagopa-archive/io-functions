@@ -22,6 +22,9 @@ import { TimeToLiveSeconds } from "../api/definitions/TimeToLiveSeconds";
 import { getBlobAsText, upsertBlobFromObject } from "../utils/azure_storage";
 import { iteratorToArray } from "../utils/documentdb";
 
+export const MESSAGE_COLLECTION_NAME = "messages";
+export const MESSAGE_MODEL_PK_FIELD = "fiscalCode";
+
 const MESSAGE_BLOB_STORAGE_SUFFIX = ".json";
 
 const MessageBase = t.interface(
@@ -246,15 +249,20 @@ export class MessageModel extends DocumentDbModel<
   public findMessages(
     fiscalCode: FiscalCode
   ): DocumentDbUtils.IResultIterator<RetrievedMessageWithContent> {
-    return DocumentDbUtils.queryDocuments(this.dbClient, this.collectionUri, {
-      parameters: [
-        {
-          name: "@fiscalCode",
-          value: fiscalCode
-        }
-      ],
-      query: "SELECT * FROM messages m WHERE (m.fiscalCode = @fiscalCode)"
-    });
+    return DocumentDbUtils.queryDocuments(
+      this.dbClient,
+      this.collectionUri,
+      {
+        parameters: [
+          {
+            name: "@fiscalCode",
+            value: fiscalCode
+          }
+        ],
+        query: `SELECT * FROM m WHERE (m.${MESSAGE_MODEL_PK_FIELD} = @fiscalCode)`
+      },
+      fiscalCode
+    );
   }
 
   /**

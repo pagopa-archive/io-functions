@@ -326,7 +326,7 @@ describe("handleMessage", () => {
     }
   });
 
-  it("should fail with a permanent error if no channel can be resolved", async () => {
+  it("should exit with no output bindings if no channel can be resolved", async () => {
     const profileModelMock = {
       findOneProfileByFiscalCode: jest.fn(() => {
         return Promise.resolve(right(none));
@@ -346,9 +346,9 @@ describe("handleMessage", () => {
       aCorrectFiscalCode
     );
 
-    expect(isLeft(response)).toBeTruthy();
-    if (isLeft(response)) {
-      expect(response.value.kind).toEqual("PermanentError");
+    expect(isRight(response)).toBeTruthy();
+    if (isRight(response)) {
+      expect(response.value).toEqual({});
     }
   });
 
@@ -381,9 +381,9 @@ describe("handleMessage", () => {
         aCorrectFiscalCode
       );
 
-      expect(isLeft(response)).toBeTruthy();
-      if (isLeft(response)) {
-        expect(response.value.kind).toEqual("PermanentError");
+      expect(isRight(response)).toBeTruthy();
+      if (isRight(response)) {
+        expect(response.value).toEqual({});
       }
     }
   );
@@ -426,9 +426,9 @@ describe("handleMessage", () => {
         aCorrectFiscalCode
       );
 
-      expect(isLeft(response)).toBeTruthy();
-      if (isLeft(response)) {
-        expect(response.value.kind).toEqual("PermanentError");
+      expect(isRight(response)).toBeTruthy();
+      if (isRight(response)) {
+        expect(response.value).toEqual({});
       }
     }
   );
@@ -472,9 +472,9 @@ describe("handleMessage", () => {
         aCorrectFiscalCode
       );
 
-      expect(isLeft(response)).toBeTruthy();
-      if (isLeft(response)) {
-        expect(response.value.kind).toEqual("PermanentError");
+      expect(isRight(response)).toBeTruthy();
+      if (isRight(response)) {
+        expect(response.value).toEqual({});
       }
     }
   );
@@ -516,9 +516,9 @@ describe("handleMessage", () => {
       aCorrectFiscalCode
     );
 
-    expect(isLeft(response)).toBeTruthy();
-    if (isLeft(response)) {
-      expect(response.value.kind).toEqual("PermanentError");
+    expect(isRight(response)).toBeTruthy();
+    if (isRight(response)) {
+      expect(response.value).toEqual({});
     }
   });
 

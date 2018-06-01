@@ -195,8 +195,8 @@ export abstract class DocumentDbModelVersioned<
   >(
     modelIdField: K1,
     modelIdValue: V,
-    partitionKeyField?: K2,
-    partitionKeyValue?: string
+    partitionKeyField: K2,
+    partitionKeyValue: string
   ): Promise<Either<DocumentDb.QueryError, Option<TR>>> {
     const errorOrMaybeDocument = await DocumentDbUtils.queryOneDocument(
       this.dbClient,
@@ -213,10 +213,10 @@ export abstract class DocumentDbModelVersioned<
           }
         ],
         // do not use ${collectionName} here as it may contain special characters
-        query: `SELECT TOP 1 * FROM m WHERE (m.${modelIdField} = @modelId ${
-          partitionKeyField ? `AND m.${partitionKeyField} = @partitionKey` : ``
-        }) ORDER BY m.version DESC`
-      }
+        query: `SELECT TOP 1 * FROM m WHERE (m.${modelIdField} = @modelId
+          AND m.${partitionKeyField} = @partitionKey) ORDER BY m.version DESC`
+      },
+      partitionKeyValue
     );
 
     if (
