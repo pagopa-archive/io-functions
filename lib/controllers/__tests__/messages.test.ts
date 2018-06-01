@@ -57,6 +57,8 @@ import {
 import * as lolex from "lolex";
 import { ServiceId } from "../../api/definitions/ServiceId";
 
+jest.mock("applicationinsights");
+
 // mock time (ie. created_at)
 const clock = lolex.install();
 afterAll(() => clock.uninstall());
@@ -64,6 +66,12 @@ afterAll(() => clock.uninstall());
 afterEach(() => {
   jest.resetAllMocks();
   jest.restoreAllMocks();
+});
+
+const trackEventMock = jest.fn();
+
+const getCustomTelemetryClient = () => ({
+  trackEvent: trackEventMock
 });
 
 interface IHeaders {
@@ -205,7 +213,7 @@ describe("CreateMessageHandler", () => {
     };
 
     const createMessageHandler = CreateMessageHandler(
-      {} as any,
+      getCustomTelemetryClient as any,
       mockMessageModel as any,
       {} as any
     );
@@ -234,16 +242,12 @@ describe("CreateMessageHandler", () => {
   });
 
   it("should create a new message", async () => {
-    const mockAppInsights = {
-      trackEvent: jest.fn()
-    };
-
     const mockMessageModel = {
       create: jest.fn(() => right(aRetrievedMessageWithoutContent))
     };
 
     const createMessageHandler = CreateMessageHandler(
-      mockAppInsights as any,
+      getCustomTelemetryClient as any,
       mockMessageModel as any,
       () => aMessageId
     );
@@ -291,17 +295,19 @@ describe("CreateMessageHandler", () => {
       }
     });
 
-    expect(mockAppInsights.trackEvent).toHaveBeenCalledTimes(1);
-    expect(mockAppInsights.trackEvent).toHaveBeenCalledWith({
-      name: "api.messages.create",
-      properties: {
-        hasCustomSubject: "false",
-        hasDefaultEmail: "false",
-        senderServiceId: "test",
-        senderUserId: "u123",
-        success: "true"
-      }
-    });
+    expect(trackEventMock).toHaveBeenCalledTimes(1);
+    expect(trackEventMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        name: "api.messages.create",
+        properties: {
+          hasCustomSubject: "false",
+          hasDefaultEmail: "false",
+          senderServiceId: "test",
+          senderUserId: "u123",
+          success: "true"
+        }
+      })
+    );
 
     expect(result.kind).toBe("IResponseSuccessRedirectToResource");
     if (result.kind === "IResponseSuccessRedirectToResource") {
@@ -315,16 +321,12 @@ describe("CreateMessageHandler", () => {
   });
 
   it("should create a new message for a limited auhorization recipient", async () => {
-    const mockAppInsights = {
-      trackEvent: jest.fn()
-    };
-
     const mockMessageModel = {
       create: jest.fn(() => right(aRetrievedMessageWithoutContent))
     };
 
     const createMessageHandler = CreateMessageHandler(
-      mockAppInsights as any,
+      getCustomTelemetryClient as any,
       mockMessageModel as any,
       () => aMessageId
     );
@@ -382,17 +384,19 @@ describe("CreateMessageHandler", () => {
       }
     });
 
-    expect(mockAppInsights.trackEvent).toHaveBeenCalledTimes(1);
-    expect(mockAppInsights.trackEvent).toHaveBeenCalledWith({
-      name: "api.messages.create",
-      properties: {
-        hasCustomSubject: "false",
-        hasDefaultEmail: "false",
-        senderServiceId: "test",
-        senderUserId: "u123",
-        success: "true"
-      }
-    });
+    expect(trackEventMock).toHaveBeenCalledTimes(1);
+    expect(trackEventMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        name: "api.messages.create",
+        properties: {
+          hasCustomSubject: "false",
+          hasDefaultEmail: "false",
+          senderServiceId: "test",
+          senderUserId: "u123",
+          success: "true"
+        }
+      })
+    );
 
     expect(result.kind).toBe("IResponseSuccessRedirectToResource");
     if (result.kind === "IResponseSuccessRedirectToResource") {
@@ -406,16 +410,12 @@ describe("CreateMessageHandler", () => {
   });
 
   it("should handle custom subject", async () => {
-    const mockAppInsights = {
-      trackEvent: jest.fn()
-    };
-
     const mockMessageModel = {
       create: jest.fn(() => right(aRetrievedMessageWithoutContent))
     };
 
     const createMessageHandler = CreateMessageHandler(
-      mockAppInsights as any,
+      getCustomTelemetryClient as any,
       mockMessageModel as any,
       () => aMessageId
     );
@@ -470,17 +470,19 @@ describe("CreateMessageHandler", () => {
       }
     });
 
-    expect(mockAppInsights.trackEvent).toHaveBeenCalledTimes(1);
-    expect(mockAppInsights.trackEvent).toHaveBeenCalledWith({
-      name: "api.messages.create",
-      properties: {
-        hasCustomSubject: "true",
-        hasDefaultEmail: "false",
-        senderServiceId: "test",
-        senderUserId: "u123",
-        success: "true"
-      }
-    });
+    expect(trackEventMock).toHaveBeenCalledTimes(1);
+    expect(trackEventMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        name: "api.messages.create",
+        properties: {
+          hasCustomSubject: "true",
+          hasDefaultEmail: "false",
+          senderServiceId: "test",
+          senderUserId: "u123",
+          success: "true"
+        }
+      })
+    );
 
     expect(result.kind).toBe("IResponseSuccessRedirectToResource");
     if (result.kind === "IResponseSuccessRedirectToResource") {
@@ -494,10 +496,6 @@ describe("CreateMessageHandler", () => {
   });
 
   it("should handle default addresses when creating a new message", async () => {
-    const mockAppInsights = {
-      trackEvent: jest.fn()
-    };
-
     const mockMessageModel = {
       create: jest.fn(() =>
         Promise.resolve(right(aRetrievedMessageWithoutContent))
@@ -505,7 +503,7 @@ describe("CreateMessageHandler", () => {
     };
 
     const createMessageHandler = CreateMessageHandler(
-      mockAppInsights as any,
+      getCustomTelemetryClient as any,
       mockMessageModel as any,
       () => aMessageId
     );
@@ -567,17 +565,19 @@ describe("CreateMessageHandler", () => {
       }
     });
 
-    expect(mockAppInsights.trackEvent).toHaveBeenCalledTimes(1);
-    expect(mockAppInsights.trackEvent).toHaveBeenCalledWith({
-      name: "api.messages.create",
-      properties: {
-        hasCustomSubject: "false",
-        hasDefaultEmail: "true",
-        senderServiceId: "test",
-        senderUserId: "u123",
-        success: "true"
-      }
-    });
+    expect(trackEventMock).toHaveBeenCalledTimes(1);
+    expect(trackEventMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        name: "api.messages.create",
+        properties: {
+          hasCustomSubject: "false",
+          hasDefaultEmail: "true",
+          senderServiceId: "test",
+          senderUserId: "u123",
+          success: "true"
+        }
+      })
+    );
 
     expect(result.kind).toBe("IResponseSuccessRedirectToResource");
     if (result.kind === "IResponseSuccessRedirectToResource") {
@@ -591,16 +591,12 @@ describe("CreateMessageHandler", () => {
   });
 
   it("should require the user to be enabled for providing default addresses when creating a new message", async () => {
-    const mockAppInsights = {
-      trackEvent: jest.fn()
-    };
-
     const mockMessageModel = {
       create: jest.fn(() => right(aRetrievedMessageWithoutContent))
     };
 
     const createMessageHandler = CreateMessageHandler(
-      mockAppInsights as any,
+      getCustomTelemetryClient as any,
       mockMessageModel as any,
       () => aMessageId
     );
@@ -632,7 +628,7 @@ describe("CreateMessageHandler", () => {
       createdMessage: undefined
     });
 
-    expect(mockAppInsights.trackEvent).not.toHaveBeenCalled();
+    expect(trackEventMock).not.toHaveBeenCalled();
 
     expect(result.kind).toBe(
       "IResponseErrorForbiddenNotAuthorizedForDefaultAddresses"
@@ -640,16 +636,12 @@ describe("CreateMessageHandler", () => {
   });
 
   it("should require the user to be enable for production to create a new message", async () => {
-    const mockAppInsights = {
-      trackEvent: jest.fn()
-    };
-
     const mockMessageModel = {
       create: jest.fn(() => right(aRetrievedMessageWithoutContent))
     };
 
     const createMessageHandler = CreateMessageHandler(
-      mockAppInsights as any,
+      getCustomTelemetryClient as any,
       mockMessageModel as any,
       () => aMessageId
     );
@@ -679,16 +671,12 @@ describe("CreateMessageHandler", () => {
   });
 
   it("should return failure if creation fails", async () => {
-    const mockAppInsights = {
-      trackEvent: jest.fn()
-    };
-
     const mockMessageModel = {
       create: jest.fn(() => left("error"))
     };
 
     const createMessageHandler = CreateMessageHandler(
-      mockAppInsights as any,
+      getCustomTelemetryClient as any,
       mockMessageModel as any,
       () => aMessageId
     );
@@ -711,18 +699,20 @@ describe("CreateMessageHandler", () => {
     );
 
     expect(mockMessageModel.create).toHaveBeenCalledTimes(1);
-    expect(mockAppInsights.trackEvent).toHaveBeenCalledTimes(1);
-    expect(mockAppInsights.trackEvent).toHaveBeenCalledWith({
-      name: "api.messages.create",
-      properties: {
-        error: "IResponseErrorQuery",
-        hasCustomSubject: "false",
-        hasDefaultEmail: "false",
-        senderServiceId: "test",
-        senderUserId: "u123",
-        success: "false"
-      }
-    });
+    expect(trackEventMock).toHaveBeenCalledTimes(1);
+    expect(trackEventMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        name: "api.messages.create",
+        properties: {
+          error: "IResponseErrorQuery",
+          hasCustomSubject: "false",
+          hasDefaultEmail: "false",
+          senderServiceId: "test",
+          senderUserId: "u123",
+          success: "false"
+        }
+      })
+    );
 
     expect(mockContext.bindings).toEqual({});
     expect(result.kind).toBe("IResponseErrorQuery");

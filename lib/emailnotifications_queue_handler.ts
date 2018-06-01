@@ -9,8 +9,6 @@ import * as t from "io-ts";
 
 import * as winston from "winston";
 
-import * as ApplicationInsights from "applicationinsights";
-
 import { configureAzureContextTransport } from "./utils/logging";
 
 import { DocumentClient as DocumentDBClient } from "documentdb";
@@ -57,6 +55,7 @@ import { createQueueService } from "azure-storage";
 import { NotificationChannelEnum } from "./api/definitions/NotificationChannel";
 import { NotificationChannelStatusValueEnum } from "./api/definitions/NotificationChannelStatusValue";
 
+import { TelemetryClient } from "applicationinsights";
 import { NonEmptyString } from "italia-ts-commons/lib/strings";
 import { ActiveMessage } from "./models/message";
 import {
@@ -64,9 +63,18 @@ import {
   NOTIFICATION_STATUS_COLLECTION_NAME,
   NotificationStatusModel
 } from "./models/notification_status";
+import {
+  diffInMilliseconds,
+  wrapCustomTelemetryClient
+} from "./utils/application_insights";
 
 // Whether we're in a production environment
 const isProduction = process.env.NODE_ENV === "production";
+
+const getCustomTelemetryClient = wrapCustomTelemetryClient(
+  isProduction,
+  new TelemetryClient()
+);
 
 // Setup DocumentDB
 
@@ -105,8 +113,6 @@ const notificationModel = new NotificationModel(
   documentClient,
   notificationsCollectionUrl
 );
-
-const appInsightsClient = new ApplicationInsights.TelemetryClient();
 
 // As we cannot use Functions bindings to do retries,
 // we resort to update the message visibility timeout
@@ -208,7 +214,7 @@ export async function sendMail(
  */
 export async function handleNotification(
   lMailerTransporter: NodeMailer.Transporter,
-  lAppInsightsClient: ApplicationInsights.TelemetryClient,
+  lAppInsightsClient: TelemetryClient,
   lNotificationModel: NotificationModel,
   emailNotificationEvent: NotificationEvent,
   notificationDefaultParams: INotificationDefaults
@@ -294,6 +300,8 @@ export async function handleNotification(
     notificationDefaultParams.HTML_TO_TEXT_OPTIONS
   );
 
+  const startSendMailCallTime = process.hrtime();
+
   // trigger email delivery
   // see https://nodemailer.com/message/
   const sendResult = await sendMail(lMailerTransporter, {
@@ -312,24 +320,29 @@ export async function handleNotification(
     // disableUrlAccess: true,
   });
 
+  const sendMailCallDurationMs = diffInMilliseconds(startSendMailCallTime);
+
   const eventName = "notification.email.delivery";
+
   const eventContent = {
-    addressSource: emailNotification.addressSource,
-    messageId: message.id,
-    notificationId,
-    transport: "mailup"
+    dependencyTypeName: "HTTP",
+    duration: sendMailCallDurationMs,
+    name: eventName,
+    properties: {
+      addressSource: emailNotification.addressSource,
+      transport: "mailup"
+    }
   };
 
   if (isLeft(sendResult)) {
-    // track the event of failed delivery
-    lAppInsightsClient.trackEvent({
-      name: eventName,
-      properties: {
-        ...eventContent,
-        success: "false"
-      }
-    });
     const error = sendResult.value;
+    // track the event of failed delivery
+    lAppInsightsClient.trackDependency({
+      ...eventContent,
+      data: error.message,
+      resultCode: error.name,
+      success: false
+    });
     return left(
       TransientError(
         `Error while sending email|notification=${notificationId}|message=${
@@ -340,12 +353,11 @@ export async function handleNotification(
   }
 
   // track the event of successful delivery
-  lAppInsightsClient.trackEvent({
-    name: eventName,
-    properties: {
-      ...eventContent,
-      success: "true"
-    }
+  lAppInsightsClient.trackDependency({
+    ...eventContent,
+    data: "OK",
+    resultCode: 200,
+    success: true
   });
 
   // TODO: handling bounces and delivery updates
@@ -404,6 +416,22 @@ export async function index(
     })
   );
 
+  const serviceId = emailNotificationEvent.message.senderServiceId;
+
+  const eventName = "handler.notification.email";
+
+  const appInsightsClient = getCustomTelemetryClient(
+    {
+      operationId: emailNotificationEvent.notificationId,
+      operationParentId: emailNotificationEvent.message.id,
+      serviceId: NonEmptyString.is(serviceId) ? serviceId : undefined
+    },
+    {
+      messageId: emailNotificationEvent.message.id,
+      notificationId: emailNotificationEvent.notificationId
+    }
+  );
+
   return handleNotification(
     mailerTransporter,
     appInsightsClient,
@@ -448,11 +476,23 @@ export async function index(
               errorOrUpdatedNotificationStatus.value.message
             );
           }
-          winston.info(
+
+          winston.debug(
             `EmailNotificationsHandler|Email notification succeeded|notification=${
               emailNotificationEvent.notificationId
             }|message=${emailNotificationEvent.message.id}`
           );
+
+          appInsightsClient.trackEvent({
+            measurements: {
+              elapsed:
+                Date.now() - emailNotificationEvent.message.createdAt.getTime()
+            },
+            name: eventName,
+            properties: {
+              success: "true"
+            }
+          });
         }
       )
     )
@@ -462,13 +502,41 @@ export async function index(
         context.bindingData,
         EMAIL_NOTIFICATION_QUEUE_NAME,
         // execute in case of transient errors
-        () =>
-          notificationStatusUpdater(
+        () => {
+          appInsightsClient.trackEvent({
+            measurements: {
+              elapsed:
+                Date.now() - emailNotificationEvent.message.createdAt.getTime()
+            },
+            name: eventName,
+            properties: {
+              error: JSON.stringify(error),
+              success: "false",
+              transient: "true"
+            }
+          });
+          return notificationStatusUpdater(
             NotificationChannelStatusValueEnum.THROTTLED
-          ),
+          );
+        },
         // execute in case of permanent errors
-        () =>
-          notificationStatusUpdater(NotificationChannelStatusValueEnum.FAILED),
+        () => {
+          appInsightsClient.trackEvent({
+            measurements: {
+              elapsed:
+                Date.now() - emailNotificationEvent.message.createdAt.getTime()
+            },
+            name: eventName,
+            properties: {
+              error: JSON.stringify(error),
+              success: "false",
+              transient: "false"
+            }
+          });
+          return notificationStatusUpdater(
+            NotificationChannelStatusValueEnum.FAILED
+          );
+        },
         error
       )
     );

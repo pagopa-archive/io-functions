@@ -43,6 +43,7 @@ import { TimeToLiveSeconds } from "../api/definitions/TimeToLiveSeconds";
 import { NotificationEvent } from "../models/notification_event";
 
 jest.mock("azure-storage");
+jest.mock("applicationinsights");
 jest.mock("../utils/azure_queues");
 import { handleQueueProcessingFailure } from "../utils/azure_queues";
 

@@ -62,6 +62,7 @@ import { RuntimeError, TransientError } from "./utils/errors";
 import { MessageStatusValueEnum } from "./api/definitions/MessageStatusValue";
 import { NotificationChannelEnum } from "./api/definitions/NotificationChannel";
 
+import { NonEmptyString } from "italia-ts-commons/lib/strings";
 import { withoutUndefinedValues } from "italia-ts-commons/lib/types";
 import { BlockedInboxOrChannelEnum } from "./api/definitions/BlockedInboxOrChannel";
 import { HttpsUrl } from "./api/definitions/HttpsUrl";
@@ -71,15 +72,25 @@ import {
   MESSAGE_STATUS_COLLECTION_NAME,
   MessageStatusModel
 } from "./models/message_status";
+
 import {
   newSenderService,
   SENDER_SERVICE_COLLECTION_NAME,
   SenderServiceModel
 } from "./models/sender_service";
+
+import { TelemetryClient } from "applicationinsights";
+import { wrapCustomTelemetryClient } from "./utils/application_insights";
+
 import { ulidGenerator } from "./utils/strings";
 
 // Whether we're in a production environment
 const isProduction = process.env.NODE_ENV === "production";
+
+const getCustomTelemetryClient = wrapCustomTelemetryClient(
+  isProduction,
+  new TelemetryClient()
+);
 
 // Setup DocumentDB
 const cosmosDbUri = getRequiredStringEnv("CUSTOMCONNSTR_COSMOSDB_URI");
@@ -338,16 +349,14 @@ export async function handleMessage(
         // if it's not set, or we don't have a profile for this fiscal code,
         // try to get the default email address from the request payload
         .alt(defaultAddresses.chain(getEmailAddressFromDefaultAddresses))
-        .alt(
-          (() => {
-            winston.debug(
-              `handleMessage|User profile has no email address set and no default address was provided|${
-                newMessageWithContent.fiscalCode
-              }`
-            );
-            return none;
-          })()
-        );
+        .orElse(() => {
+          winston.debug(
+            `handleMessage|User profile has no email address set and no default address was provided|${
+              newMessageWithContent.fiscalCode
+            }`
+          );
+          return none;
+        });
 
   //
   //  Webhook notification
@@ -479,7 +488,7 @@ export async function index(
   const createdMessageEvent = errorOrCreatedMessageEvent.value;
   const newMessageWithContent = createdMessageEvent.message;
 
-  winston.info(
+  winston.debug(
     `CreatedMessageQueueHandler|A new message was created|${
       newMessageWithContent.id
     }|${newMessageWithContent.fiscalCode}`
@@ -488,6 +497,21 @@ export async function index(
   const messageStatusUpdater = getMessageStatusUpdater(
     messageStatusModel,
     newMessageWithContent.id
+  );
+
+  const eventName = "handler.message.process";
+
+  const appInsightsClient = getCustomTelemetryClient(
+    {
+      operationId: newMessageWithContent.id,
+      operationParentId: newMessageWithContent.id,
+      serviceId: NonEmptyString.is(newMessageWithContent.senderServiceId)
+        ? newMessageWithContent.senderServiceId
+        : undefined
+    },
+    {
+      messageId: newMessageWithContent.id
+    }
   );
 
   // now we can trigger the notifications for the message
@@ -513,6 +537,18 @@ export async function index(
               newMessageWithContent.id
             }`
           );
+
+          appInsightsClient.trackEvent({
+            measurements: {
+              elapsed: Date.now() - newMessageWithContent.createdAt.getTime()
+            },
+            name: eventName,
+            properties: {
+              channels: Object.keys(outputBindings).length.toString(),
+              success: "true"
+            }
+          });
+
           return outputBindings;
         }
       )
@@ -523,9 +559,35 @@ export async function index(
         context.bindingData,
         MESSAGE_QUEUE_NAME,
         // execute in case of transient errors
-        () => messageStatusUpdater(MessageStatusValueEnum.THROTTLED),
+        () => {
+          appInsightsClient.trackEvent({
+            measurements: {
+              elapsed: Date.now() - newMessageWithContent.createdAt.getTime()
+            },
+            name: eventName,
+            properties: {
+              error: JSON.stringify(error),
+              success: "false",
+              transient: "true"
+            }
+          });
+          return messageStatusUpdater(MessageStatusValueEnum.THROTTLED);
+        },
         // execute in case of permanent errors
-        () => messageStatusUpdater(MessageStatusValueEnum.FAILED),
+        () => {
+          appInsightsClient.trackEvent({
+            measurements: {
+              elapsed: Date.now() - newMessageWithContent.createdAt.getTime()
+            },
+            name: eventName,
+            properties: {
+              error: JSON.stringify(error),
+              success: "false",
+              transient: "false"
+            }
+          });
+          return messageStatusUpdater(MessageStatusValueEnum.FAILED);
+        },
         error
       )
     );

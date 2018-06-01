@@ -5,8 +5,6 @@ import * as express from "express";
 import * as t from "io-ts";
 import * as winston from "winston";
 
-import * as ApplicationInsights from "applicationinsights";
-
 import {
   ClientIp,
   ClientIpMiddleware
@@ -109,6 +107,10 @@ import { NotificationChannelStatusValueEnum } from "../api/definitions/Notificat
 import { TimeToLiveSeconds } from "../api/definitions/TimeToLiveSeconds";
 import { MessageStatusModel } from "../models/message_status";
 import { NotificationStatusModel } from "../models/notification_status";
+import {
+  CustomTelemetryClientFactory,
+  diffInMilliseconds
+} from "../utils/application_insights";
 
 /**
  * Input and output bindings for this function
@@ -274,7 +276,7 @@ async function getMessageNotificationStatuses(
     // due to some latency, so it's better to not fail here but return an empty object
     const maybeNotification = errorOrMaybeNotification.value;
     if (isNone(maybeNotification)) {
-      winston.info(
+      winston.debug(
         `getMessageNotificationStatuses|Notification not found|messageId=${
           retrievedMessage.id
         }`
@@ -322,7 +324,7 @@ async function getMessageNotificationStatuses(
  * Returns a type safe CreateMessage handler.
  */
 export function CreateMessageHandler(
-  applicationInsightsClient: ApplicationInsights.TelemetryClient,
+  getCustomTelemetryClient: CustomTelemetryClientFactory,
   messageModel: MessageModel,
   generateObjectId: ObjectIdGenerator
 ): ICreateMessageHandler {
@@ -336,6 +338,8 @@ export function CreateMessageHandler(
   ) => {
     // extract the user service
     const userService = userAttributes.service;
+
+    const startRequestTime = process.hrtime();
 
     // base appinsights event attributes for convenience (used later)
     const appInsightsEventName = "api.messages.create";
@@ -399,11 +403,21 @@ export function CreateMessageHandler(
       newMessageWithoutContent.fiscalCode
     );
 
+    const appInsightsClient = getCustomTelemetryClient(
+      {
+        operationId: newMessageWithoutContent.id,
+        serviceId: userService.serviceId
+      },
+      {
+        messageId: newMessageWithoutContent.id
+      }
+    );
+
     if (isLeft(errorOrMessage)) {
       // we got an error while creating the message
 
       // track the event that a message has failed to be created
-      applicationInsightsClient.trackEvent({
+      appInsightsClient.trackEvent({
         name: appInsightsEventName,
         properties: {
           ...appInsightsEventProps,
@@ -468,7 +482,10 @@ export function CreateMessageHandler(
     //
 
     // track the event that a message has been created
-    applicationInsightsClient.trackEvent({
+    appInsightsClient.trackEvent({
+      measurements: {
+        duration: diffInMilliseconds(startRequestTime)
+      },
       name: appInsightsEventName,
       properties: {
         ...appInsightsEventProps,
@@ -493,12 +510,12 @@ export function CreateMessageHandler(
  * Wraps a CreateMessage handler inside an Express request handler.
  */
 export function CreateMessage(
-  applicationInsightsClient: ApplicationInsights.TelemetryClient,
+  getCustomTelemetryClient: CustomTelemetryClientFactory,
   serviceModel: ServiceModel,
   messageModel: MessageModel
 ): express.RequestHandler {
   const handler = CreateMessageHandler(
-    applicationInsightsClient,
+    getCustomTelemetryClient,
     messageModel,
     ulidGenerator
   );
