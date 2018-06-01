@@ -99,7 +99,6 @@ import {
   some
 } from "fp-ts/lib/Option";
 
-import { TelemetryClient } from "applicationinsights";
 import { CreatedMessageWithContent } from "../api/definitions/CreatedMessageWithContent";
 import { MessageResponseWithoutContent } from "../api/definitions/MessageResponseWithoutContent";
 import { MessageStatusValueEnum } from "../api/definitions/MessageStatusValue";
