@@ -1,3 +1,5 @@
+/* tslint:disable:no-any */
+
 jest.mock("applicationinsights");
 import * as applicationinsights from "applicationinsights";
 import { NonEmptyString } from "italia-ts-commons/lib/strings";
@@ -13,10 +15,11 @@ const AiConfiguration = {
 };
 
 describe("wrapCustomTelemetryClient", () => {
-  it("should return a telemetry client factory", () => {
+  it("should return a customized TelemetryClient with a TelemetryProcessor", () => {
+    const newTelemetryClient = new applicationinsights.TelemetryClient();
     const getTelemetryClient = wrapCustomTelemetryClient(
       false,
-      new applicationinsights.TelemetryClient()
+      newTelemetryClient
     );
     const telemetryClient = getTelemetryClient(
       {
@@ -24,9 +27,12 @@ describe("wrapCustomTelemetryClient", () => {
         operationParentId: "parentId" as NonEmptyString,
         serviceId: "serviceId" as NonEmptyString
       },
-      {}
+      { prop: "true" }
     );
+
     expect(telemetryClient).toBeInstanceOf(applicationinsights.TelemetryClient);
+    expect(telemetryClient).toBe(newTelemetryClient);
+    expect(telemetryClient.addTelemetryProcessor).toHaveBeenCalledTimes(1);
   });
   it("should change the default configuration when tracing is disable", () => {
     const configurationSpy = jest
