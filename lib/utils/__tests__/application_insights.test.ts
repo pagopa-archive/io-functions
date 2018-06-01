@@ -30,6 +30,25 @@ describe("wrapCustomTelemetryClient", () => {
       { prop: "true" }
     );
 
+    const mockEnv = { data: { baseData: { properties: {} } } } as any;
+
+    // tslint:disable-next-line:no-object-mutation
+    telemetryClient.context = {
+      keys: {
+        operationId: "operationId",
+        operationParentId: "oprationParentId",
+        userAccountId: "userAccountId"
+      } as any
+    } as any;
+
+    const processor = (telemetryClient.addTelemetryProcessor as jest.Mock).mock
+      .calls[0][0];
+
+    processor(mockEnv);
+
+    expect(mockEnv.data.baseData.properties.prop).toEqual("true");
+    expect(mockEnv.tags).toBeDefined();
+
     expect(telemetryClient).toBeInstanceOf(applicationinsights.TelemetryClient);
     expect(telemetryClient).toBe(newTelemetryClient);
     expect(telemetryClient.addTelemetryProcessor).toHaveBeenCalledTimes(1);
