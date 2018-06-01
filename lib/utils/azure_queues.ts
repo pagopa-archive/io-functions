@@ -92,7 +92,9 @@ export function updateMessageVisibilityTimeout<T extends IQueueMessage>(
 ): Promise<boolean> {
   return new Promise(resolve => {
     winston.debug(
-      `Retry to handle message ${queueMessageToString(queueMessage)}`
+      `updateMessageVisibilityTimeout|Retry to handle message ${queueName}:${queueMessageToString(
+        queueMessage
+      )}`
     );
 
     if (!queueMessage.dequeueCount) {
@@ -118,8 +120,8 @@ export function updateMessageVisibilityTimeout<T extends IQueueMessage>(
                 `updateMessageVisibilityTimeout|Error|${err.message}`
               );
             }
-            winston.info(
-              `Updated visibilityTimeout|retry=${numberOfRetries}|timeout=${visibilityTimeoutSec}|queueMessageId=${
+            winston.debug(
+              `updateMessageVisibilityTimeout|retry=${numberOfRetries}|timeout=${visibilityTimeoutSec}|queueMessageId=${
                 queueMessage.id
               }`
             );
@@ -129,8 +131,8 @@ export function updateMessageVisibilityTimeout<T extends IQueueMessage>(
         );
       })
       .getOrElseL(() => {
-        winston.info(
-          `Maximum number of retries reached|retries=${numberOfRetries}|${
+        winston.debug(
+          `updateMessageVisibilityTimeout|Maximum number of retries reached|retries=${numberOfRetries}|${
             queueMessage.id
           }`
         );
@@ -175,7 +177,9 @@ export async function handleQueueProcessingFailure(
       .catch(winston.error);
     if (shouldTriggerARetry) {
       // throws to trigger a retry in the caller handler
-      throw TransientError(`Retry|${queueName}|${runtimeError.message}`);
+      // must be an Error in order to be logged correctly
+      // by the Azure Functions runtime
+      throw new Error(`Retry|${queueName}|${runtimeError.message}`);
     } else {
       winston.error(
         `Maximum number of retries reached, stop processing|${queueName}|${

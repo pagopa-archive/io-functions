@@ -205,7 +205,6 @@ describe("CreateMessageHandler", () => {
     };
 
     const createMessageHandler = CreateMessageHandler(
-      {} as any,
       mockMessageModel as any,
       {} as any
     );
@@ -243,7 +242,6 @@ describe("CreateMessageHandler", () => {
     };
 
     const createMessageHandler = CreateMessageHandler(
-      mockAppInsights as any,
       mockMessageModel as any,
       () => aMessageId
     );
@@ -324,7 +322,6 @@ describe("CreateMessageHandler", () => {
     };
 
     const createMessageHandler = CreateMessageHandler(
-      mockAppInsights as any,
       mockMessageModel as any,
       () => aMessageId
     );
@@ -415,7 +412,6 @@ describe("CreateMessageHandler", () => {
     };
 
     const createMessageHandler = CreateMessageHandler(
-      mockAppInsights as any,
       mockMessageModel as any,
       () => aMessageId
     );
@@ -505,7 +501,6 @@ describe("CreateMessageHandler", () => {
     };
 
     const createMessageHandler = CreateMessageHandler(
-      mockAppInsights as any,
       mockMessageModel as any,
       () => aMessageId
     );
@@ -600,7 +595,6 @@ describe("CreateMessageHandler", () => {
     };
 
     const createMessageHandler = CreateMessageHandler(
-      mockAppInsights as any,
       mockMessageModel as any,
       () => aMessageId
     );
@@ -640,16 +634,11 @@ describe("CreateMessageHandler", () => {
   });
 
   it("should require the user to be enable for production to create a new message", async () => {
-    const mockAppInsights = {
-      trackEvent: jest.fn()
-    };
-
     const mockMessageModel = {
       create: jest.fn(() => right(aRetrievedMessageWithoutContent))
     };
 
     const createMessageHandler = CreateMessageHandler(
-      mockAppInsights as any,
       mockMessageModel as any,
       () => aMessageId
     );
@@ -688,7 +677,6 @@ describe("CreateMessageHandler", () => {
     };
 
     const createMessageHandler = CreateMessageHandler(
-      mockAppInsights as any,
       mockMessageModel as any,
       () => aMessageId
     );
@@ -1165,7 +1153,7 @@ describe("CreateMessage", () => {
       "x-subscription-id": "someId",
       "x-user-groups": "ApiMessageWrite"
     };
-    const createMessage = CreateMessage({} as any, {} as any, {} as any);
+    const createMessage = CreateMessage({} as any, {} as any);
     const mockResponse = MockResponse();
     const request = {
       app: {
@@ -1188,7 +1176,7 @@ describe("CreateMessage", () => {
     const headers: IHeaders = {
       "x-user-groups": ""
     };
-    const createMessage = CreateMessage({} as any, {} as any, {} as any);
+    const createMessage = CreateMessage({} as any, {} as any);
     const mockResponse = MockResponse();
     const request = {
       app: {
@@ -1213,7 +1201,7 @@ describe("CreateMessage", () => {
       "x-subscription-id": "someId",
       "x-user-groups": "ApiMessageWrite"
     };
-    const createMessage = CreateMessage({} as any, {} as any, {} as any);
+    const createMessage = CreateMessage({} as any, {} as any);
     const mockResponse = MockResponse();
     const request = {
       app: {

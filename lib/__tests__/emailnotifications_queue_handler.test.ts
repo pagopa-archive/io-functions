@@ -74,6 +74,11 @@ afterEach(() => {
   jest.restoreAllMocks();
 });
 
+const getAppinsightsMock = () => ({
+  trackDependency: jest.fn(),
+  trackEvent: jest.fn()
+});
+
 const aFiscalCode = "FRLFRC74E04B157I" as FiscalCode;
 
 const aMessageId = "A_MESSAGE_ID" as NonEmptyString;
@@ -263,9 +268,7 @@ describe("handleNotification", () => {
   });
 
   it("should send an email notification", async () => {
-    const mockAppinsights = {
-      trackEvent: jest.fn()
-    };
+    const mockAppinsights = getAppinsightsMock();
 
     const mockTransport = MockTransport();
     const mockTransporter = NodeMailer.createTransport(mockTransport);
@@ -311,25 +314,23 @@ describe("handleNotification", () => {
     );
     expect(emailBody.indexOf(aSenderMetadata.serviceName)).toBeGreaterThan(0);
 
-    expect(mockAppinsights.trackEvent).toHaveBeenCalledWith({
-      name: "notification.email.delivery",
-      properties: {
-        addressSource: NotificationAddressSourceEnum.DEFAULT_ADDRESS,
-        messageId: aMessageId,
-        notificationId: aNotificationId,
-        success: "true",
-        transport: "mailup"
-      }
-    });
+    expect(mockAppinsights.trackDependency).toHaveBeenCalledWith(
+      expect.objectContaining({
+        name: "notification.email.delivery",
+        properties: {
+          addressSource: NotificationAddressSourceEnum.DEFAULT_ADDRESS,
+          transport: "mailup"
+        },
+        success: true
+      })
+    );
 
     expect(isRight(result)).toBeTruthy();
     expect(result.value).toBeDefined();
   });
 
   it("should send an email notification with the text version of the message", async () => {
-    const mockAppinsights = {
-      trackEvent: jest.fn()
-    };
+    const mockAppinsights = getAppinsightsMock();
 
     const mockTransport = MockTransport();
     const mockTransporter = NodeMailer.createTransport(mockTransport);
@@ -380,9 +381,7 @@ This is a message from the future!`.replace(/[ \n]+/g, "|")
   });
 
   it("should send an email notification with the default subject", async () => {
-    const mockAppinsights = {
-      trackEvent: jest.fn()
-    };
+    const mockAppinsights = getAppinsightsMock();
 
     const mockTransport = MockTransport();
     const mockTransporter = NodeMailer.createTransport(mockTransport);
@@ -412,12 +411,9 @@ This is a message from the future!`.replace(/[ \n]+/g, "|")
   });
 
   it("should send an email notification with the provided subject", async () => {
-    const mockAppinsights = {
-      trackEvent: jest.fn()
-    };
-
     const mockTransport = MockTransport();
     const mockTransporter = NodeMailer.createTransport(mockTransport);
+    const mockAppinsights = getAppinsightsMock();
 
     const customSubject = "A custom subject" as MessageSubject;
 
@@ -446,9 +442,7 @@ This is a message from the future!`.replace(/[ \n]+/g, "|")
   });
 
   it("should respond with a transient error when email delivery fails", async () => {
-    const mockAppinsights = {
-      trackEvent: jest.fn()
-    };
+    const mockAppinsights = getAppinsightsMock();
 
     const mockTransport = {
       send: jest.fn((_, cb) => cb("error"))
@@ -468,16 +462,16 @@ This is a message from the future!`.replace(/[ \n]+/g, "|")
       notificationDefaults
     );
 
-    expect(mockAppinsights.trackEvent).toHaveBeenCalledWith({
-      name: "notification.email.delivery",
-      properties: {
-        addressSource: NotificationAddressSourceEnum.DEFAULT_ADDRESS,
-        messageId: aMessageId,
-        notificationId: aNotificationId,
-        success: "false",
-        transport: "mailup"
-      }
-    });
+    expect(mockAppinsights.trackDependency).toHaveBeenCalledWith(
+      expect.objectContaining({
+        name: "notification.email.delivery",
+        properties: {
+          addressSource: NotificationAddressSourceEnum.DEFAULT_ADDRESS,
+          transport: "mailup"
+        },
+        success: false
+      })
+    );
 
     expect(notificationModelMock.update).not.toHaveBeenCalled();
 

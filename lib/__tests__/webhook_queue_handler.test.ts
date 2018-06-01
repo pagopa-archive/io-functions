@@ -75,6 +75,11 @@ afterEach(() => {
   jest.resetAllMocks();
 });
 
+const getAppinsightsMock = () => ({
+  trackDependency: jest.fn(),
+  trackEvent: jest.fn()
+});
+
 const aFiscalCode = "FRLFRC74E04B157I" as FiscalCode;
 
 const aMessageId = "A_MESSAGE_ID" as NonEmptyString;
@@ -265,9 +270,7 @@ describe("handleNotification", () => {
   });
 
   it("should forward a notification", async () => {
-    const mockAppinsights = {
-      trackEvent: jest.fn()
-    };
+    const mockAppinsights = getAppinsightsMock();
 
     const notificationModelMock = {
       find: jest.fn(() => Promise.resolve(right(some(aNotification)))),
@@ -282,24 +285,20 @@ describe("handleNotification", () => {
       getMockNotificationEvent(aMessageContent)
     );
 
-    expect(mockAppinsights.trackEvent).toHaveBeenCalledWith({
-      name: "notification.webhook.delivery",
-      properties: {
-        messageId: aMessageId,
-        notificationId: aNotificationId,
-        success: "true",
-        url: process.env.WEBHOOK_CHANNEL_URL
-      }
-    });
+    expect(mockAppinsights.trackDependency).toHaveBeenCalledWith(
+      expect.objectContaining({
+        name: "notification.webhook.delivery",
+        resultCode: 200,
+        success: true
+      })
+    );
 
     expect(isRight(result)).toBeTruthy();
     expect(result.value).toBeDefined();
   });
 
   it("should forward a notification with the provided subject", async () => {
-    const mockAppinsights = {
-      trackEvent: jest.fn()
-    };
+    const mockAppinsights = getAppinsightsMock();
 
     const customSubject = "A custom subject" as MessageSubject;
 
@@ -326,12 +325,11 @@ describe("handleNotification", () => {
   });
 
   it("should respond with a permanent error when delivery fails", async () => {
-    const mockAppinsights = {
-      trackEvent: jest.fn()
-    };
+    const mockAppinsights = getAppinsightsMock();
 
     mockSuperagentResponse({
-      error: "some error"
+      error: true,
+      text: "some error"
     });
 
     const notificationModelMock = {
@@ -345,15 +343,16 @@ describe("handleNotification", () => {
       getMockNotificationEvent(aMessageContent)
     );
 
-    expect(mockAppinsights.trackEvent).toHaveBeenCalledWith({
-      name: "notification.webhook.delivery",
-      properties: {
-        messageId: aMessageId,
-        notificationId: aNotificationId,
-        success: "false",
-        url: process.env.WEBHOOK_CHANNEL_URL
-      }
-    });
+    expect(mockAppinsights.trackDependency).toHaveBeenCalledWith(
+      expect.objectContaining({
+        name: "notification.webhook.delivery",
+        properties: {
+          error: "Permanent HTTP error calling API Proxy: some error"
+        },
+        resultCode: "PermanentError",
+        success: false
+      })
+    );
 
     expect(notificationModelMock.update).not.toHaveBeenCalled();
 
