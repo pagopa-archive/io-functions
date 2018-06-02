@@ -260,7 +260,7 @@ export class MessageModel extends DocumentDbModel<
             value: fiscalCode
           }
         ],
-        query: `SELECT * FROM m WHERE (m.${MESSAGE_MODEL_PK_FIELD} = @fiscalCode)`
+        query: `SELECT * FROM m WHERE m.${MESSAGE_MODEL_PK_FIELD} = @fiscalCode ORDER BY m._ts DESC`
       },
       fiscalCode
     );
