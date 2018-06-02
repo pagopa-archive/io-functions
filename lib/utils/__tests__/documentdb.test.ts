@@ -5,7 +5,7 @@ import { NonEmptyString } from "italia-ts-commons/lib/strings";
 
 import * as DocumentDb from "documentdb";
 
-import { isLeft, isRight, right } from "fp-ts/lib/Either";
+import { isLeft, isRight, left, right } from "fp-ts/lib/Either";
 import { none, some } from "fp-ts/lib/Option";
 
 import * as DocumentDbUtils from "../documentdb";
@@ -446,7 +446,34 @@ describe("iteratorToArray", () => {
     const result = await DocumentDbUtils.iteratorToArray(iteratorMock);
 
     expect(iteratorMock.executeNext).toHaveBeenCalledTimes(3);
-    expect(result).toEqual([1, 2, 3, 4]);
+    expect(result).toEqual(right([1, 2, 3, 4]));
+  });
+  it("should fail in case of query error", async () => {
+    const iteratorMock = {
+      executeNext: jest.fn()
+    };
+    const queryError = {
+      body: "too many requests",
+      code: 429
+    };
+
+    iteratorMock.executeNext.mockImplementationOnce(() =>
+      Promise.resolve(right(some([1, 2])))
+    );
+    iteratorMock.executeNext.mockImplementationOnce(() =>
+      Promise.resolve(left(queryError))
+    );
+    iteratorMock.executeNext.mockImplementationOnce(() =>
+      Promise.resolve(right(some([3, 4])))
+    );
+    iteratorMock.executeNext.mockImplementationOnce(() =>
+      Promise.resolve(right(none))
+    );
+
+    const result = await DocumentDbUtils.iteratorToArray(iteratorMock);
+
+    expect(iteratorMock.executeNext).toHaveBeenCalledTimes(2);
+    expect(result).toEqual(left(queryError));
   });
 });
 
