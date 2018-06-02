@@ -27,6 +27,7 @@ const aMessage = {
   createdAt: new Date().toISOString(),
   fiscalCode: "FRLFRC74E04B157I",
   id: aMessageId,
+  indexedId: aMessageId,
   kind: "INewMessageWithoutContent",
   senderServiceId: "s123",
   senderUserId: "u123" as NonEmptyString,
