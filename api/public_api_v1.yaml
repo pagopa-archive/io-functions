@@ -52,8 +52,10 @@ paths:
                 items:
                   type: array
                   items:
-                    serviceId:
-                      $ref: "#/definitions/ServiceId"
+                    type: object
+                    properties:
+                      serviceId: 
+                        $ref: '#/definitions/ServiceId'
             - $ref: "#/definitions/PaginationResponse"
           examples:
             application/json:
@@ -63,9 +65,9 @@ paths:
       parameters:
       - name: recipient
         in: query
-        $ref: "#/definitions/FiscalCode"
+        type: string
         required: true
-        description: The ID of an existing Service.
+        description: The recipient's fiscal code.
   "/messages/{fiscal_code}/{id}":
     parameters:
     - $ref: "#/parameters/FiscalCode"
