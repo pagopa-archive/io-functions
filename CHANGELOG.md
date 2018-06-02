@@ -11,9 +11,14 @@ The format of this file is loosely based on [Keep a Changelog](http://keepachang
 
 ## [Unreleased]
 
+## [v0.41.0] - 2018-06-02
+
 ### Added
 - [getSenderServices] Added a new endpoint to get the list of services
   that have sent at least one message to some specific user
+
+### Changed
+- [getMessagesByUser] Return messages in inverse chronological order
 
 ## [v0.40.0] - 2018-05-10
 
@@ -64,7 +69,8 @@ The format of this file is loosely based on [Keep a Changelog](http://keepachang
 [upsertProfile]: https://teamdigitale.github.io/digital-citizenship/api/public.html#operation/upsertProfile
 [getInfo]: https://teamdigitale.github.io/digital-citizenship/api/public.html#operation/getInfo
 
-[Unreleased]: https://github.com/teamdigitale/digital-citizenship-functions/compare/v0.37.0...HEAD
+[Unreleased]: https://github.com/teamdigitale/digital-citizenship-functions/compare/v0.41.0...HEAD
+[v0.41.0]: https://github.com/teamdigitale/digital-citizenship-functions/compare/v0.40.0...v0.41.0
 [v0.40.0]: https://github.com/teamdigitale/digital-citizenship-functions/compare/v0.39.0...v0.40.0
 [v0.39.0]: https://github.com/teamdigitale/digital-citizenship-functions/compare/v0.38.0...v0.39.0
 [v0.38.0]: https://github.com/teamdigitale/digital-citizenship-functions/compare/v0.37.0...v0.38.0
