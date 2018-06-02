@@ -17,7 +17,17 @@ const isProduction = process.env.NODE_ENV === "production";
 
 const appInsightsClient = new TelemetryClient();
 
-export async function index(context: IContext): Promise<void> {
+/**
+ * A function to store the length of Azure Storage Queues
+ * into Application Insights Metrics.
+ *
+ * To query these values in the Analytics panel type:
+ *
+ * customMetrics
+ *   | where * has  "queue.length"
+ *   | order by timestamp desc
+ */
+export function index(context: IContext): void {
   const logLevel = isProduction ? "info" : "debug";
   configureAzureContextTransport(context, winston, logLevel);
 
@@ -28,11 +38,11 @@ export async function index(context: IContext): Promise<void> {
   ].map(queueName =>
     queueService.getQueueMetadata(queueName, (error, result) => {
       if (error) {
-        winston.error("Error in queue monitor: %s (%s)", error, queueName);
+        winston.error("Error in QueueMonitor: %s (%s)", error, queueName);
         return;
       }
       winston.debug(
-        "Queue %s count: %d",
+        "Queue '%s' length is: %d",
         queueName,
         result.approximateMessageCount
       );
