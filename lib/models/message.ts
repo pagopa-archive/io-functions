@@ -334,9 +334,7 @@ export class MessageModel extends DocumentDbModel<
 
     if (isLeft(errorOrMedia)) {
       const queryError = errorOrMedia.value;
-      return left<Error, Option<MessageContent>>(
-        new Error(`QueryError: ${queryError.code}: ${queryError.body}`)
-      );
+      return left<Error, Option<MessageContent>>(new Error(queryError.body));
     }
 
     const media = errorOrMedia.value;
