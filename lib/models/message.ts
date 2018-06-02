@@ -326,11 +326,20 @@ export class MessageModel extends DocumentDbModel<
     fiscalCode: FiscalCode
   ): Promise<Either<Error, Option<MessageContent>>> {
     // get link to attached blob(s)
-    const media = await iteratorToArray(
+    const errorOrMedia = await iteratorToArray(
       await this.getAttachments(messageId, {
         partitionKey: fiscalCode
       })
     );
+
+    if (isLeft(errorOrMedia)) {
+      const queryError = errorOrMedia.value;
+      return left<Error, Option<MessageContent>>(
+        new Error(`QueryError: ${queryError.code}: ${queryError.body}`)
+      );
+    }
+
+    const media = errorOrMedia.value;
 
     // no blob(s) attached to the message
     if (!media || !media[0]) {

@@ -36,7 +36,7 @@ import {
   IResponseErrorQuery,
   IResponseSuccessJsonIterator,
   ResponseErrorQuery,
-  ResponseSuccessJsonIterator
+  ResponseJsonIterator
 } from "../utils/response";
 
 import { NonEmptyString } from "italia-ts-commons/lib/strings";
@@ -165,7 +165,7 @@ export function GetServicesByRecipientHandler(
         service_id: service.serviceId
       })
     );
-    return ResponseSuccessJsonIterator(senderServicesIterator);
+    return ResponseJsonIterator(senderServicesIterator);
   };
 }
 

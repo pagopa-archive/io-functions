@@ -7,7 +7,7 @@ import { response as MockResponse } from "jest-mock-express";
 import { right } from "fp-ts/lib/Either";
 import { none, some } from "fp-ts/lib/Option";
 
-import { ResponseSuccessJsonIterator } from "../response";
+import { ResponseJsonIterator } from "../response";
 
 function flushPromises<T>(): Promise<T> {
   return new Promise(resolve => setImmediate(resolve));
@@ -23,7 +23,7 @@ describe("ResponseSuccessJsonIterator", () => {
       executeNext: jest.fn(() => Promise.resolve(right(some([]))))
     };
 
-    const streamingResponse = ResponseSuccessJsonIterator(mockIterator);
+    const streamingResponse = ResponseJsonIterator(mockIterator);
 
     const mockResponse = MockResponse() as Express.Response;
 
@@ -50,7 +50,7 @@ describe("ResponseSuccessJsonIterator", () => {
       Promise.resolve(right(none))
     );
 
-    const streamingResponse = ResponseSuccessJsonIterator(mockIterator);
+    const streamingResponse = ResponseJsonIterator(mockIterator);
 
     const mockResponse = MockResponse() as Express.Response;
 
@@ -78,7 +78,7 @@ describe("ResponseSuccessJsonIterator", () => {
       Promise.resolve(right(none))
     );
 
-    const streamingResponse = ResponseSuccessJsonIterator(mockIterator);
+    const streamingResponse = ResponseJsonIterator(mockIterator);
 
     const mockResponse = MockResponse() as Express.Response;
 
