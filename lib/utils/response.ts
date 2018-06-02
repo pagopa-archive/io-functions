@@ -29,7 +29,7 @@ export function ResponseJsonIterator<T>(
       iteratorToArray(i).then(errorOrDocuments => {
         if (isLeft(errorOrDocuments)) {
           const queryError = errorOrDocuments.value;
-          return ResponseErrorQuery(queryError.body, queryError);
+          return ResponseErrorQuery(queryError.body, queryError).apply(res);
         }
         const documents = errorOrDocuments.value;
         const kindlessDocuments = documents.map(d =>
