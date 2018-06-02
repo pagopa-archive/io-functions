@@ -380,13 +380,16 @@ export function CreateMessageHandler(
       return ResponseErrorForbiddenNotAuthorizedForDefaultAddresses;
     }
 
+    const id = generateObjectId();
+
     // create a new message from the payload
     // this object contains only the message metadata, the content of the
     // message is handled separately (see below).
     const newMessageWithoutContent: NewMessageWithoutContent = {
       createdAt: new Date(),
       fiscalCode,
-      id: generateObjectId(),
+      id,
+      indexedId: id,
       kind: "INewMessageWithoutContent",
       senderServiceId: userService.serviceId,
       senderUserId: auth.userId,
