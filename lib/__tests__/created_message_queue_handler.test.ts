@@ -104,6 +104,7 @@ const aMessage: NewMessageWithContent = {
   createdAt: new Date(),
   fiscalCode: aCorrectFiscalCode,
   id: aMessageId,
+  indexedId: aMessageId,
   kind: "INewMessageWithContent",
   senderServiceId: aServiceId,
   senderUserId: "u123" as NonEmptyString,

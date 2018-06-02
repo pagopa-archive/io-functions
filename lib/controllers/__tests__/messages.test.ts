@@ -128,6 +128,7 @@ const aNewMessageWithoutContent: NewMessageWithoutContent = {
   createdAt: new Date(),
   fiscalCode: aFiscalCode,
   id: "A_MESSAGE_ID" as NonEmptyString,
+  indexedId: "A_MESSAGE_ID" as NonEmptyString,
   kind: "INewMessageWithoutContent",
   senderServiceId: "test" as ServiceId,
   senderUserId: "u123" as NonEmptyString,

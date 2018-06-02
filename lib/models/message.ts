@@ -42,8 +42,12 @@ const MessageBase = t.interface(
     // time to live in seconds
     timeToLiveSeconds: TimeToLiveSeconds,
 
-    // timestamp: the message was accepted by the system
-    createdAt: Timestamp
+    // when the message was accepted by the system
+    createdAt: Timestamp,
+
+    // needed to order by id
+    // see https://stackoverflow.com/questions/48710600/azure-cosmosdb-how-to-order-by-id
+    indexedId: NonEmptyString
   },
   "MessageBase"
 );
@@ -260,7 +264,7 @@ export class MessageModel extends DocumentDbModel<
             value: fiscalCode
           }
         ],
-        query: `SELECT * FROM m WHERE (m.${MESSAGE_MODEL_PK_FIELD} = @fiscalCode)`
+        query: `SELECT * FROM m WHERE m.${MESSAGE_MODEL_PK_FIELD} = @fiscalCode ORDER BY m.indexedId DESC`
       },
       fiscalCode
     );

@@ -47,6 +47,7 @@ const aSerializedNewMessageWithContent = {
   createdAt: new Date().toISOString(),
   fiscalCode: aFiscalCode,
   id: "A_MESSAGE_ID" as NonEmptyString,
+  indexedId: "A_MESSAGE_ID" as NonEmptyString,
   senderServiceId: "agid" as ServiceId,
   senderUserId: "u123" as NonEmptyString,
   timeToLiveSeconds: 3600 as TimeToLiveSeconds
