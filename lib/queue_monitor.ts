@@ -3,8 +3,10 @@ import * as winston from "winston";
 import { TelemetryClient } from "applicationinsights";
 import { IContext } from "azure-functions-types";
 import { createQueueService } from "azure-storage";
+import { isLeft } from "fp-ts/lib/Either";
 import { MESSAGE_QUEUE_NAME } from "./created_message_queue_handler";
 import { EMAIL_NOTIFICATION_QUEUE_NAME } from "./emailnotifications_queue_handler";
+import { getQueueMetadata } from "./utils/azure_queues";
 import { getRequiredStringEnv } from "./utils/env";
 import { configureAzureContextTransport } from "./utils/logging";
 import { WEBHOOK_NOTIFICATION_QUEUE_NAME } from "./webhook_queue_handler";
@@ -33,29 +35,30 @@ appInsightsClient.config.maxBatchSize = 1;
  *   | order by timestamp desc
  */
 /* istanbul ignore next */
-export function index(context: IContext): void {
+export function index(context: IContext): Promise<ReadonlyArray<void>> {
   const logLevel = isProduction ? "info" : "debug";
   configureAzureContextTransport(context, winston, logLevel);
-
-  [
-    EMAIL_NOTIFICATION_QUEUE_NAME,
-    WEBHOOK_NOTIFICATION_QUEUE_NAME,
-    MESSAGE_QUEUE_NAME
-  ].forEach(queueName =>
-    queueService.getQueueMetadata(queueName, (error, result) => {
-      if (error) {
-        winston.error("Error in QueueMonitor: %s (%s)", error, queueName);
-        return;
-      }
-      winston.debug(
-        "Queue '%s' length is: %d",
-        queueName,
-        result.approximateMessageCount
+  return Promise.all(
+    [
+      EMAIL_NOTIFICATION_QUEUE_NAME,
+      WEBHOOK_NOTIFICATION_QUEUE_NAME,
+      MESSAGE_QUEUE_NAME
+    ].map(async queueName => {
+      (await getQueueMetadata(queueService, queueName)).bimap(
+        error =>
+          winston.error("Error in QueueMonitor: %s (%s)", error, queueName),
+        result => {
+          winston.debug(
+            "Queue '%s' length is: %d",
+            queueName,
+            result.approximateMessageCount
+          );
+          appInsightsClient.trackMetric({
+            name: `queue.length.${queueName}`,
+            value: result.approximateMessageCount || 0
+          });
+        }
       );
-      appInsightsClient.trackMetric({
-        name: `queue.length.${queueName}`,
-        value: result.approximateMessageCount || 0
-      });
     })
   );
 }
