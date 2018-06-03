@@ -17,6 +17,11 @@ const isProduction = process.env.NODE_ENV === "production";
 
 const appInsightsClient = new TelemetryClient();
 
+// needed otherwise AI will wait for the batching loop to end
+// see https://github.com/Microsoft/ApplicationInsights-node.js/issues/390
+// tslint:disable-next-line:no-object-mutation
+appInsightsClient.config.maxBatchSize = 1;
+
 /**
  * A function to store the length of Azure Storage Queues
  * into Application Insights Metrics.
@@ -51,9 +56,6 @@ export function index(context: IContext): void {
         name: `queue.length.${queueName}`,
         value: result.approximateMessageCount || 0
       });
-      // needed otherwise AI will wait for the batching loop to end
-      // see https://github.com/Microsoft/ApplicationInsights-node.js/issues/390
-      appInsightsClient.flush();
     })
   );
 }
