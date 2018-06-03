@@ -51,6 +51,9 @@ export function index(context: IContext): void {
         name: `queue.length.${queueName}`,
         value: result.approximateMessageCount || 0
       });
+      // needed otherwise AI will wait for the batching loop to end
+      // see https://github.com/Microsoft/ApplicationInsights-node.js/issues/390
+      appInsightsClient.flush();
     })
   );
 }
