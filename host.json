@@ -19,7 +19,8 @@
     "AdminApi",
     "CreatedMessageQueueHandler",
     "EmailNotificationsQueueHandler",
-    "WebhookNotificationsQueueHandler"
+    "WebhookNotificationsQueueHandler",
+    "QueueMonitor"
   ],
   "tracing": {
     "consoleLevel": "verbose",

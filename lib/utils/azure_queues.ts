@@ -5,7 +5,7 @@ import * as winston from "winston";
 
 import { QueueService } from "azure-storage";
 
-import { Either } from "fp-ts/lib/Either";
+import { Either, left, right } from "fp-ts/lib/Either";
 import { Option, some } from "fp-ts/lib/Option";
 import {
   isTransient,
@@ -211,4 +211,22 @@ export async function handleQueueProcessingFailure(
       // do not catch here, let it throw
     );
   }
+}
+
+/**
+ * Promisify queueService.getQueueMetadata
+ */
+/* istanbul ignore next */
+export function getQueueMetadata(
+  queueService: QueueService,
+  queueName: string
+): Promise<Either<Error, QueueService.QueueResult>> {
+  return new Promise(resolve =>
+    queueService.getQueueMetadata(queueName, (error, result) => {
+      if (error) {
+        return resolve(left<Error, QueueService.QueueResult>(error));
+      }
+      return resolve(right<Error, QueueService.QueueResult>(result));
+    })
+  );
 }
