@@ -27,6 +27,7 @@ const appInsightsClient = new TelemetryClient();
  *   | where * has  "queue.length"
  *   | order by timestamp desc
  */
+/* istanbul ignore next */
 export function index(context: IContext): void {
   const logLevel = isProduction ? "info" : "debug";
   configureAzureContextTransport(context, winston, logLevel);
@@ -35,7 +36,7 @@ export function index(context: IContext): void {
     EMAIL_NOTIFICATION_QUEUE_NAME,
     WEBHOOK_NOTIFICATION_QUEUE_NAME,
     MESSAGE_QUEUE_NAME
-  ].map(queueName =>
+  ].forEach(queueName =>
     queueService.getQueueMetadata(queueName, (error, result) => {
       if (error) {
         winston.error("Error in QueueMonitor: %s (%s)", error, queueName);
