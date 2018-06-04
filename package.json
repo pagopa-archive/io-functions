@@ -48,7 +48,7 @@
     "ulid": "^2.2.2",
     "unified": "^6.1.5",
     "validator": "^9.4.1",
-    "vfile": "^2.2.0",
+    "vfile": "^3.0.0",
     "winston": "^2.4.2"
   },
   "devDependencies": {
