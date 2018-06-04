@@ -60,7 +60,7 @@
     "@types/lolex": "^2.1.2",
     "@types/node": "^6.0.0",
     "@types/nodemailer": "^4.6.0",
-    "@types/prettier": "^1.12.1",
+    "@types/prettier": "^1.12.4",
     "@types/superagent": "^3.5.8",
     "@types/swagger-parser": "^4.0.2",
     "@types/validator": "^9.4.1",
