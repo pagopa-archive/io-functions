@@ -18,7 +18,9 @@
     "Openapi",
     "AdminApi",
     "CreatedMessageQueueHandler",
-    "EmailNotificationsQueueHandler"
+    "EmailNotificationsQueueHandler",
+    "WebhookNotificationsQueueHandler",
+    "QueueMonitor"
   ],
   "tracing": {
     "consoleLevel": "verbose",

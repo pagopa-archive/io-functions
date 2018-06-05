@@ -1,7 +1,6 @@
 import { isLeft, left, right } from "fp-ts/lib/Either";
 import { fromNullable, isSome, Option, Some } from "fp-ts/lib/Option";
 
-import { IRequestMiddleware } from "../request_middleware";
 import {
   IResponseErrorForbiddenAnonymousUser,
   IResponseErrorForbiddenNoAuthorizationGroups,
@@ -9,8 +8,9 @@ import {
   ResponseErrorForbiddenAnonymousUser,
   ResponseErrorForbiddenNoAuthorizationGroups,
   ResponseErrorForbiddenNotAuthorized
-} from "../response";
-import { NonEmptyString } from "../strings";
+} from "italia-ts-commons/lib/responses";
+import { NonEmptyString } from "italia-ts-commons/lib/strings";
+import { IRequestMiddleware } from "../request_middleware";
 
 /*
  * A middle ware that extracts authentication information from the
@@ -38,6 +38,9 @@ export enum UserGroup {
 
   // services: read services attributes (public API)
   ApiPublicServiceRead = "ApiPublicServiceRead",
+
+  // services: list services that notified a specific recipient
+  ApiServiceByRecipientQuery = "ApiServiceByRecipientQuery",
 
   // messages: read sent message
   ApiMessageRead = "ApiMessageRead",

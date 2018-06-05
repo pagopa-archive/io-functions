@@ -35,7 +35,10 @@ import {
 
 import { ServiceModel } from "../models/service";
 
-import { IResponseSuccessJson, ResponseSuccessJson } from "../utils/response";
+import {
+  IResponseSuccessJson,
+  ResponseSuccessJson
+} from "italia-ts-commons/lib/responses";
 
 // simle request middleware that passes the request object for debug purposes
 const ExpressRequestMiddleware: IRequestMiddleware<

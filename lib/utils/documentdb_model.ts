@@ -68,6 +68,32 @@ export abstract class DocumentDbModel<
   }
 
   /**
+   * Creates a new document or update an existing one
+   * with the provided id.
+   *
+   */
+  public async createOrUpdate(
+    document: TN,
+    partitionKey: string
+  ): Promise<Either<DocumentDb.QueryError, TR>> {
+    // we don't want to store the "kind" property, let's remove it
+    const kindlessDocument = Object.assign(Object.assign({}, document), {
+      kind: undefined
+    });
+
+    // attempt to persist the document
+    const maybeCreatedOrUpdatedDocument = await DocumentDbUtils.upsertDocument(
+      this.dbClient,
+      this.collectionUri,
+      kindlessDocument,
+      partitionKey
+    );
+
+    // if the result is successful we map it to a TR type
+    return maybeCreatedOrUpdatedDocument.map(this.toRetrieved);
+  }
+
+  /**
    * Retrieves a document from the document ID.
    *
    * @param documentId    The ID of the document to retrieve.

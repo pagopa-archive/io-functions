@@ -10,16 +10,12 @@ import { IRequestMiddleware } from "../request_middleware";
  * @param name  The name of the parameter
  * @param type  The io-ts Type for validating the parameter
  */
-export function RequiredParamMiddleware<S, A>(
+export function RequiredQueryParamMiddleware<S, A>(
   name: string,
   type: t.Type<A, S>
 ): IRequestMiddleware<"IResponseErrorValidation", A> {
-  return request =>
-    new Promise(resolve => {
-      const validation = type.decode(request.params[name]);
-      const result = validation.mapLeft(
-        ResponseErrorFromValidationErrors(type)
-      );
-      resolve(result);
-    });
+  return async request =>
+    type
+      .decode(request.query[name])
+      .mapLeft(ResponseErrorFromValidationErrors(type));
 }

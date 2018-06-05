@@ -36,16 +36,15 @@ import {
   IResponseErrorConflict,
   IResponseErrorInternal,
   IResponseErrorNotFound,
-  IResponseErrorQuery,
   IResponseErrorValidation,
   IResponseSuccessJson,
   ResponseErrorConflict,
   ResponseErrorFromValidationErrors,
   ResponseErrorInternal,
   ResponseErrorNotFound,
-  ResponseErrorQuery,
   ResponseSuccessJson
-} from "../utils/response";
+} from "italia-ts-commons/lib/responses";
+import { IResponseErrorQuery, ResponseErrorQuery } from "../utils/response";
 
 import {
   checkSourceIpForHandler,
@@ -57,6 +56,7 @@ import { ServiceModel } from "../models/service";
 
 function toExtendedProfile(profile: RetrievedProfile): ExtendedProfile {
   return {
+    blocked_inbox_or_channels: profile.blockedInboxOrChannels,
     email: profile.email,
     is_inbox_enabled: profile.isInboxEnabled,
     is_webhook_enabled: profile.isWebhookEnabled,
@@ -192,6 +192,7 @@ async function createNewProfileFromPayload(
 ): Promise<IResponseSuccessJson<ExtendedProfile> | IResponseErrorQuery> {
   // create a new profile
   const profile: Profile = {
+    blockedInboxOrChannels: profileModelPayload.blocked_inbox_or_channels,
     email: profileModelPayload.email,
     fiscalCode,
     isInboxEnabled: profileModelPayload.is_inbox_enabled,
@@ -227,6 +228,7 @@ async function updateExistingProfileFromPayload(
     p => {
       return {
         ...p,
+        blockedInboxOrChannels: profileModelPayload.blocked_inbox_or_channels,
         email: profileModelPayload.email,
         isInboxEnabled: profileModelPayload.is_inbox_enabled,
         isWebhookEnabled: profileModelPayload.is_webhook_enabled,

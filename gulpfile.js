@@ -17,7 +17,7 @@ const run = require("gulp-run");
 const jsonEditor = require("gulp-json-editor");
 
 const semver = require("semver");
-const mjml = require("mjml");
+const mjml2html = require("mjml");
 
 const TYPESCRIPT_SOURCE_DIR = "lib";
 
@@ -44,7 +44,19 @@ const currentVersion = semver.parse(currentPackageJson.version);
 const releaseVersionValue = `${currentVersion.major}.${currentVersion.minor}.${
   currentVersion.patch
 }`;
-const nextVersionValue = `${semver.inc(releaseVersionValue, "minor")}-SNAPSHOT`;
+
+if (
+  process.env.RELEASE &&
+  !["major", "minor", "patch"].includes(process.env.RELEASE)
+) {
+  throw new Error("RELEASE must be one between 'major', 'minor' or 'patch'");
+}
+
+const nextVersionValue = `${semver.inc(
+  releaseVersionValue,
+  // RELEASE can be "major", "minor" (default) or "patch"
+  process.env.RELEASE || "minor"
+)}-SNAPSHOT`;
 const funcpackBranchPrefix = "funcpack-release";
 const releaseVersionFuncpackBranchName = `${funcpackBranchPrefix}-v${releaseVersionValue}`;
 
@@ -69,7 +81,7 @@ const toMjml = (content, options) => {
     `  footerHtml: string`,
     `): string {`,
     `  return \``,
-    `${mjml.mjml2html(content, { minify: true }).html}\`;`,
+    `${mjml2html(content, { minify: true }).html}\`;`,
     `}`,
     ""
   ].join("\n");
@@ -211,7 +223,13 @@ gulp.task("git:push:origin", cb => {
  * Push the tags to origin
  */
 gulp.task("git:push:tags", cb => {
-  return git.push(GIT_ORIGIN, GIT_RELEASE_BRANCH, { args: "--tags" }, cb);
+  return git.push(
+    GIT_ORIGIN,
+    GIT_RELEASE_BRANCH,
+    // push only annotated tags
+    { args: "--follow-tags" },
+    cb
+  );
 });
 
 /**
@@ -320,6 +338,8 @@ gulp.task("release", function(cb) {
     // check that the working directory is a git repository and
     // the repository has no outstanding changes.
     "git:check:clean",
+    // generate models, templates and compile typescript
+    "yarn:build",
     // run tests
     "test",
     // bumps the version to the next release version:
@@ -331,8 +351,7 @@ gulp.task("release", function(cb) {
     "release:git:tag:release",
     // checkout a new branch funcpack-release-vx.x.x
     "release:git:checkout:funcpack",
-    // build and run funcpack
-    "yarn:build",
+    // run funcpack
     "yarn:funcpack",
     // commits and pushes funcpack branch
     "release:git:commit:funcpack",

@@ -17,11 +17,14 @@ import { Set } from "json-set-map";
 import { CIDR } from "../api/definitions/CIDR";
 import { FiscalCode } from "../api/definitions/FiscalCode";
 
+import { NonNegativeNumber } from "italia-ts-commons/lib/numbers";
+import { NonEmptyString } from "italia-ts-commons/lib/strings";
 import { nonEmptyStringToModelId } from "../utils/conversions";
-import { NonNegativeNumber } from "../utils/numbers";
-import { NonEmptyString } from "../utils/strings";
 
-import { readonlySetType, tag } from "../utils/types";
+import { readonlySetType, tag } from "italia-ts-commons/lib/types";
+
+export const SERVICE_COLLECTION_NAME = "services";
+export const SERVICE_MODEL_PK_FIELD = "serviceId";
 
 /**
  * Base interface for Service objects
@@ -170,6 +173,11 @@ export class ServiceModel extends DocumentDbModelVersioned<
   public findOneByServiceId(
     serviceId: NonEmptyString
   ): Promise<Either<DocumentDb.QueryError, Option<RetrievedService>>> {
-    return super.findLastVersionByModelId("serviceId", serviceId);
+    return super.findLastVersionByModelId(
+      SERVICE_MODEL_PK_FIELD,
+      serviceId,
+      SERVICE_MODEL_PK_FIELD,
+      serviceId
+    );
   }
 }

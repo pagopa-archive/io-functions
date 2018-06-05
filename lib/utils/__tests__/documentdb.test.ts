@@ -1,11 +1,11 @@
 /* tslint:disable:no-any */
 /* tslint:disable:no-duplicate-string */
 
-import { NonEmptyString } from "../strings";
+import { NonEmptyString } from "italia-ts-commons/lib/strings";
 
 import * as DocumentDb from "documentdb";
 
-import { isLeft, isRight, right } from "fp-ts/lib/Either";
+import { isLeft, isRight, left, right } from "fp-ts/lib/Either";
 import { none, some } from "fp-ts/lib/Option";
 
 import * as DocumentDbUtils from "../documentdb";
@@ -148,6 +148,51 @@ describe("createDocument", () => {
   });
 });
 
+describe("upsertDocument", () => {
+  const dbUriFixture = DocumentDbUtils.getDatabaseUri("mydb" as NonEmptyString);
+  const collectionUriFixture = DocumentDbUtils.getCollectionUri(
+    dbUriFixture,
+    "mycollection"
+  );
+  const documentFixture = {} as DocumentDb.NewDocument;
+
+  it("should resolve a promise with the upserted document", async () => {
+    const clientMock = {
+      upsertDocument: jest.fn((_, __, ___, cb) =>
+        cb(undefined, documentFixture)
+      )
+    };
+    const result = await DocumentDbUtils.upsertDocument(
+      (clientMock as any) as DocumentDb.DocumentClient,
+      collectionUriFixture,
+      documentFixture,
+      "fiscalCode"
+    );
+    expect(clientMock.upsertDocument).toHaveBeenCalledTimes(1);
+    expect(isRight(result)).toBeTruthy();
+    if (isRight(result)) {
+      expect(result.value).toEqual(documentFixture);
+    }
+  });
+
+  it("should reject a promise with the error", async () => {
+    const clientMock = {
+      upsertDocument: jest.fn((_, __, ___, cb) => cb("error"))
+    };
+    const result = await DocumentDbUtils.upsertDocument(
+      (clientMock as any) as DocumentDb.DocumentClient,
+      collectionUriFixture,
+      documentFixture,
+      "fiscalCode"
+    );
+    expect(clientMock.upsertDocument).toHaveBeenCalledTimes(1);
+    expect(isLeft(result)).toBeTruthy();
+    if (isLeft(result)) {
+      expect(result.value).toEqual("error");
+    }
+  });
+});
+
 describe("readDocument", () => {
   const dbUriFixture = DocumentDbUtils.getDatabaseUri("mydb" as NonEmptyString);
   const collectionUriFixture = DocumentDbUtils.getCollectionUri(
@@ -213,12 +258,14 @@ describe("queryDocuments", () => {
     const iterator = DocumentDbUtils.queryDocuments(
       (clientMock as any) as DocumentDb.DocumentClient,
       collectionUriFixture,
-      "QUERY"
+      "QUERY",
+      "PARTITIONKEY"
     );
     expect(clientMock.queryDocuments).toHaveBeenCalledTimes(1);
     expect(clientMock.queryDocuments).toBeCalledWith(
       collectionUriFixture.uri,
-      "QUERY"
+      "QUERY",
+      { partitionKey: "PARTITIONKEY" }
     );
     const result = await iterator.executeNext();
     expect(iteratorMock.executeNext).toBeCalled();
@@ -239,12 +286,14 @@ describe("queryDocuments", () => {
     const iterator = DocumentDbUtils.queryDocuments(
       (clientMock as any) as DocumentDb.DocumentClient,
       collectionUriFixture,
-      "QUERY"
+      "QUERY",
+      "PARTITIONKEY"
     );
     expect(clientMock.queryDocuments).toHaveBeenCalledTimes(1);
     expect(clientMock.queryDocuments).toBeCalledWith(
       collectionUriFixture.uri,
-      "QUERY"
+      "QUERY",
+      { partitionKey: "PARTITIONKEY" }
     );
     const result = await iterator.executeNext();
     expect(iteratorMock.executeNext).toBeCalled();
@@ -274,12 +323,14 @@ describe("queryOneDocument", () => {
     const result = await DocumentDbUtils.queryOneDocument(
       (clientMock as any) as DocumentDb.DocumentClient,
       collectionUriFixture,
-      "QUERY"
+      "QUERY",
+      "PARTITIONKEY"
     );
     expect(clientMock.queryDocuments).toHaveBeenCalledTimes(1);
     expect(clientMock.queryDocuments).toBeCalledWith(
       collectionUriFixture.uri,
-      "QUERY"
+      "QUERY",
+      { partitionKey: "PARTITIONKEY" }
     );
     expect(iteratorMock.executeNext).toBeCalled();
     expect(isRight(result)).toBeTruthy();
@@ -299,12 +350,14 @@ describe("queryOneDocument", () => {
     const result = await DocumentDbUtils.queryOneDocument(
       (clientMock as any) as DocumentDb.DocumentClient,
       collectionUriFixture,
-      "QUERY"
+      "QUERY",
+      "PARTITIONKEY"
     );
     expect(clientMock.queryDocuments).toHaveBeenCalledTimes(1);
     expect(clientMock.queryDocuments).toBeCalledWith(
       collectionUriFixture.uri,
-      "QUERY"
+      "QUERY",
+      { partitionKey: "PARTITIONKEY" }
     );
     expect(iteratorMock.executeNext).toBeCalled();
     expect(isRight(result)).toBeTruthy();
@@ -323,12 +376,14 @@ describe("queryOneDocument", () => {
     const result = await DocumentDbUtils.queryOneDocument(
       (clientMock as any) as DocumentDb.DocumentClient,
       collectionUriFixture,
-      "QUERY"
+      "QUERY",
+      "PARTITIONKEY"
     );
     expect(clientMock.queryDocuments).toHaveBeenCalledTimes(1);
     expect(clientMock.queryDocuments).toBeCalledWith(
       collectionUriFixture.uri,
-      "QUERY"
+      "QUERY",
+      { partitionKey: "PARTITIONKEY" }
     );
     expect(iteratorMock.executeNext).toBeCalled();
     expect(isLeft(result)).toBeTruthy();
@@ -391,7 +446,34 @@ describe("iteratorToArray", () => {
     const result = await DocumentDbUtils.iteratorToArray(iteratorMock);
 
     expect(iteratorMock.executeNext).toHaveBeenCalledTimes(3);
-    expect(result).toEqual([1, 2, 3, 4]);
+    expect(result).toEqual(right([1, 2, 3, 4]));
+  });
+  it("should fail in case of query error", async () => {
+    const iteratorMock = {
+      executeNext: jest.fn()
+    };
+    const queryError = {
+      body: "too many requests",
+      code: 429
+    };
+
+    iteratorMock.executeNext.mockImplementationOnce(() =>
+      Promise.resolve(right(some([1, 2])))
+    );
+    iteratorMock.executeNext.mockImplementationOnce(() =>
+      Promise.resolve(left(queryError))
+    );
+    iteratorMock.executeNext.mockImplementationOnce(() =>
+      Promise.resolve(right(some([3, 4])))
+    );
+    iteratorMock.executeNext.mockImplementationOnce(() =>
+      Promise.resolve(right(none))
+    );
+
+    const result = await DocumentDbUtils.iteratorToArray(iteratorMock);
+
+    expect(iteratorMock.executeNext).toHaveBeenCalledTimes(2);
+    expect(result).toEqual(left(queryError));
   });
 });
 

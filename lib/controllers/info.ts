@@ -30,7 +30,10 @@ import {
   clientIPAndCidrTuple as ipTuple
 } from "../utils/source_ip_check";
 
-import { IResponseSuccessJson, ResponseSuccessJson } from "../utils/response";
+import {
+  IResponseSuccessJson,
+  ResponseSuccessJson
+} from "italia-ts-commons/lib/responses";
 
 import { ServiceModel } from "../models/service";
 

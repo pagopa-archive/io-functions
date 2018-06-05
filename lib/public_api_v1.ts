@@ -7,8 +7,6 @@ import { IContext } from "azure-function-express";
 
 import * as winston from "winston";
 
-import * as ApplicationInsights from "applicationinsights";
-
 import { setAppContext } from "./utils/middlewares/context_middleware";
 
 import { configureAzureContextTransport } from "./utils/logging";
@@ -19,10 +17,13 @@ import * as documentDbUtils from "./utils/documentdb";
 
 import { createAzureFunctionHandler } from "azure-function-express";
 
-import { MessageModel } from "./models/message";
-import { NotificationModel } from "./models/notification";
-import { ProfileModel } from "./models/profile";
-import { ServiceModel } from "./models/service";
+import { MESSAGE_COLLECTION_NAME, MessageModel } from "./models/message";
+import {
+  NOTIFICATION_COLLECTION_NAME,
+  NotificationModel
+} from "./models/notification";
+import { PROFILE_COLLECTION_NAME, ProfileModel } from "./models/profile";
+import { SERVICE_COLLECTION_NAME, ServiceModel } from "./models/service";
 
 import { GetDebug } from "./controllers/debug";
 import { GetInfo } from "./controllers/info";
@@ -34,7 +35,7 @@ import { secureExpressApp } from "./utils/express";
 
 import { createBlobService } from "azure-storage";
 
-import { GetService } from "./controllers/services";
+import { GetService, GetServicesByRecipient } from "./controllers/services";
 import {
   MESSAGE_STATUS_COLLECTION_NAME,
   MessageStatusModel
@@ -43,9 +44,21 @@ import {
   NOTIFICATION_STATUS_COLLECTION_NAME,
   NotificationStatusModel
 } from "./models/notification_status";
+import {
+  SENDER_SERVICE_COLLECTION_NAME,
+  SenderServiceModel
+} from "./models/sender_service";
+
+import { TelemetryClient } from "applicationinsights";
+import { wrapCustomTelemetryClient } from "./utils/application_insights";
 
 // Whether we're in a production environment
 const isProduction = process.env.NODE_ENV === "production";
+
+const getCustomTelemetryClient = wrapCustomTelemetryClient(
+  isProduction,
+  new TelemetryClient()
+);
 
 // Setup Express
 const app = express();
@@ -61,7 +74,7 @@ const messageContainerName = getRequiredStringEnv("MESSAGE_CONTAINER_NAME");
 const documentDbDatabaseUrl = documentDbUtils.getDatabaseUri(cosmosDbName);
 const messagesCollectionUrl = documentDbUtils.getCollectionUri(
   documentDbDatabaseUrl,
-  "messages"
+  MESSAGE_COLLECTION_NAME
 );
 const messageStatusCollectionUrl = documentDbUtils.getCollectionUri(
   documentDbDatabaseUrl,
@@ -69,15 +82,19 @@ const messageStatusCollectionUrl = documentDbUtils.getCollectionUri(
 );
 const profilesCollectionUrl = documentDbUtils.getCollectionUri(
   documentDbDatabaseUrl,
-  "profiles"
+  PROFILE_COLLECTION_NAME
 );
 const servicesCollectionUrl = documentDbUtils.getCollectionUri(
   documentDbDatabaseUrl,
-  "services"
+  SERVICE_COLLECTION_NAME
+);
+const senderServicesCollectionUrl = documentDbUtils.getCollectionUri(
+  documentDbDatabaseUrl,
+  SENDER_SERVICE_COLLECTION_NAME
 );
 const notificationsCollectionUrl = documentDbUtils.getCollectionUri(
   documentDbDatabaseUrl,
-  "notifications"
+  NOTIFICATION_COLLECTION_NAME
 );
 const notificationsStatusCollectionUrl = documentDbUtils.getCollectionUri(
   documentDbDatabaseUrl,
@@ -98,7 +115,14 @@ const messageStatusModel = new MessageStatusModel(
   documentClient,
   messageStatusCollectionUrl
 );
+
 const serviceModel = new ServiceModel(documentClient, servicesCollectionUrl);
+
+const senderServiceModel = new SenderServiceModel(
+  documentClient,
+  senderServicesCollectionUrl
+);
+
 const notificationModel = new NotificationModel(
   documentClient,
   notificationsCollectionUrl
@@ -112,10 +136,6 @@ const notificationStatusModel = new NotificationStatusModel(
 const storageConnectionString = getRequiredStringEnv("QueueStorageConnection");
 const blobService = createBlobService(storageConnectionString);
 
-// Setup ApplicationInsights
-
-const appInsightsClient = new ApplicationInsights.TelemetryClient();
-
 // Setup handlers
 
 const debugHandler = GetDebug(serviceModel);
@@ -123,6 +143,13 @@ app.get("/api/v1/debug", debugHandler);
 app.post("/api/v1/debug", debugHandler);
 
 app.get("/api/v1/services/:serviceid", GetService(serviceModel));
+
+app.get(
+  // This endpoint requires a "recipient" query parameter:
+  // "/api/v1/services?recipient=fiscalCode"
+  "/api/v1/services",
+  GetServicesByRecipient(serviceModel, senderServiceModel)
+);
 
 app.get("/api/v1/profiles/:fiscalcode", GetProfile(serviceModel, profileModel));
 app.post(
@@ -148,7 +175,7 @@ app.get(
 );
 app.post(
   "/api/v1/messages/:fiscalcode",
-  CreateMessage(appInsightsClient, serviceModel, messageModel)
+  CreateMessage(getCustomTelemetryClient, serviceModel, messageModel)
 );
 
 app.get("/api/v1/info", GetInfo(serviceModel));

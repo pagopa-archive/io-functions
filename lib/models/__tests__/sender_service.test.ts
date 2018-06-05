@@ -10,66 +10,59 @@ import { FiscalCode } from "../../api/definitions/FiscalCode";
 
 import { NonEmptyString } from "italia-ts-commons/lib/strings";
 
-import { EmailAddress } from "../../api/definitions/EmailAddress";
-import { NotificationChannelEnum } from "../../api/definitions/NotificationChannel";
+import { ServiceId } from "../../api/definitions/ServiceId";
 import {
-  NewNotification,
-  NOTIFICATION_COLLECTION_NAME,
-  NotificationAddressSourceEnum,
-  NotificationModel,
-  RetrievedNotification
-} from "../notification";
+  NewSenderService,
+  RetrievedSenderService,
+  SenderServiceModel
+} from "../sender_service";
 
 const aDatabaseUri = DocumentDbUtils.getDatabaseUri("mockdb" as NonEmptyString);
-const aNotificationsCollectionUri = DocumentDbUtils.getCollectionUri(
+const aSenderServicesCollectionUri = DocumentDbUtils.getCollectionUri(
   aDatabaseUri,
-  NOTIFICATION_COLLECTION_NAME
+  "SenderServices"
 );
 
 const aFiscalCode = "FRLFRC74E04B157I" as FiscalCode;
+const aServiceId = "s123" as ServiceId;
 
-const aNewEmailNotification: NewNotification = {
-  channels: {
-    [NotificationChannelEnum.EMAIL]: {
-      addressSource: NotificationAddressSourceEnum.DEFAULT_ADDRESS,
-      toAddress: "to@example.com" as EmailAddress
-    }
-  },
-  fiscalCode: aFiscalCode,
-  id: "A_NOTIFICATION_ID" as NonEmptyString,
-  kind: "INewNotification",
-  messageId: "A_MESSAGE_ID" as NonEmptyString
+const aNewSenderService: NewSenderService = {
+  id: "A_SenderService_ID" as NonEmptyString,
+  kind: "INewSenderService",
+  lastNotificationAt: new Date(),
+  recipientFiscalCode: aFiscalCode,
+  serviceId: aServiceId
 };
 
-const aRetrievedNotification: RetrievedNotification = {
-  ...aNewEmailNotification,
+const aRetrievedSenderService: RetrievedSenderService = {
+  ...aNewSenderService,
   _self: "xyz",
   _ts: 123,
-  kind: "IRetrievedNotification"
+  kind: "IRetrievedSenderService"
 };
 
-describe("createNotification", () => {
-  it("should create a new Notification", async () => {
+describe("createSenderService", () => {
+  it("should createOrUpdate a new SenderService", async () => {
     const clientMock = {
-      createDocument: jest.fn((_, __, ___, cb) =>
-        cb(undefined, aRetrievedNotification)
+      upsertDocument: jest.fn((_, __, ___, cb) =>
+        cb(undefined, aRetrievedSenderService)
       )
     };
 
-    const model = new NotificationModel(
+    const model = new SenderServiceModel(
       (clientMock as any) as DocumentDb.DocumentClient,
-      aNotificationsCollectionUri
+      aSenderServicesCollectionUri
     );
 
-    const result = await model.create(
-      aNewEmailNotification,
-      aNewEmailNotification.messageId
+    const result = await model.createOrUpdate(
+      aNewSenderService,
+      aNewSenderService.recipientFiscalCode
     );
 
-    expect(clientMock.createDocument.mock.calls[0][1].kind).toBeUndefined();
+    expect(clientMock.upsertDocument.mock.calls[0][1].kind).toBeUndefined();
     expect(isRight(result)).toBeTruthy();
     if (isRight(result)) {
-      expect(result.value).toEqual(aRetrievedNotification);
+      expect(result.value).toEqual(aRetrievedSenderService);
     }
   });
 
@@ -78,26 +71,26 @@ describe("createNotification", () => {
       createDocument: jest.fn((_, __, ___, cb) => cb("error"))
     };
 
-    const model = new NotificationModel(
+    const model = new SenderServiceModel(
       (clientMock as any) as DocumentDb.DocumentClient,
-      aNotificationsCollectionUri
+      aSenderServicesCollectionUri
     );
 
     const result = await model.create(
-      aNewEmailNotification,
-      aNewEmailNotification.messageId
+      aNewSenderService,
+      aNewSenderService.recipientFiscalCode
     );
 
     expect(clientMock.createDocument).toHaveBeenCalledTimes(1);
     expect(clientMock.createDocument.mock.calls[0][0]).toEqual(
-      "dbs/mockdb/colls/notifications"
+      "dbs/mockdb/colls/SenderServices"
     );
     expect(clientMock.createDocument.mock.calls[0][1]).toEqual({
-      ...aNewEmailNotification,
+      ...aNewSenderService,
       kind: undefined
     });
     expect(clientMock.createDocument.mock.calls[0][2]).toEqual({
-      partitionKey: aNewEmailNotification.messageId
+      partitionKey: aNewSenderService.recipientFiscalCode
     });
     expect(isLeft(result)).toBeTruthy();
     if (isLeft(result)) {
@@ -110,31 +103,31 @@ describe("find", () => {
   it("should return an existing message", async () => {
     const clientMock = {
       readDocument: jest.fn((_, __, cb) =>
-        cb(undefined, aRetrievedNotification)
+        cb(undefined, aRetrievedSenderService)
       )
     };
 
-    const model = new NotificationModel(
+    const model = new SenderServiceModel(
       (clientMock as any) as DocumentDb.DocumentClient,
-      aNotificationsCollectionUri
+      aSenderServicesCollectionUri
     );
 
     const result = await model.find(
-      aRetrievedNotification.id,
-      aRetrievedNotification.messageId
+      aRetrievedSenderService.id,
+      aRetrievedSenderService.serviceId
     );
 
     expect(clientMock.readDocument).toHaveBeenCalledTimes(1);
     expect(clientMock.readDocument.mock.calls[0][0]).toEqual(
-      "dbs/mockdb/colls/notifications/docs/A_NOTIFICATION_ID"
+      "dbs/mockdb/colls/SenderServices/docs/A_SenderService_ID"
     );
     expect(clientMock.readDocument.mock.calls[0][1]).toEqual({
-      partitionKey: aRetrievedNotification.messageId
+      partitionKey: aRetrievedSenderService.serviceId
     });
     expect(isRight(result)).toBeTruthy();
     if (isRight(result)) {
       expect(result.value.isSome()).toBeTruthy();
-      expect(result.value.toUndefined()).toEqual(aRetrievedNotification);
+      expect(result.value.toUndefined()).toEqual(aRetrievedSenderService);
     }
   });
 
@@ -143,14 +136,14 @@ describe("find", () => {
       readDocument: jest.fn((_, __, cb) => cb("error"))
     };
 
-    const model = new NotificationModel(
+    const model = new SenderServiceModel(
       (clientMock as any) as DocumentDb.DocumentClient,
-      aNotificationsCollectionUri
+      aSenderServicesCollectionUri
     );
 
     const result = await model.find(
-      aRetrievedNotification.id,
-      aRetrievedNotification.fiscalCode
+      aRetrievedSenderService.id,
+      aRetrievedSenderService.recipientFiscalCode
     );
 
     expect(isLeft(result)).toBeTruthy();

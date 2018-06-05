@@ -1,6 +1,6 @@
 import * as t from "io-ts";
 
-import { tag } from "../utils/types";
+import { readonlySetType, tag } from "italia-ts-commons/lib/types";
 
 import * as DocumentDb from "documentdb";
 import * as DocumentDbUtils from "../utils/documentdb";
@@ -13,14 +13,30 @@ import {
 import { Either } from "fp-ts/lib/Either";
 import { Option } from "fp-ts/lib/Option";
 
+import { NonNegativeNumber } from "italia-ts-commons/lib/numbers";
+import { NonEmptyString } from "italia-ts-commons/lib/strings";
+import { BlockedInboxOrChannel } from "../api/definitions/BlockedInboxOrChannel";
 import { EmailAddress } from "../api/definitions/EmailAddress";
 import { FiscalCode } from "../api/definitions/FiscalCode";
 import { IsInboxEnabled } from "../api/definitions/IsInboxEnabled";
 import { IsWebhookEnabled } from "../api/definitions/IsWebhookEnabled";
 import { PreferredLanguages } from "../api/definitions/PreferredLanguages";
+import { ServiceId } from "../api/definitions/ServiceId";
 import { fiscalCodeToModelId } from "../utils/conversions";
-import { NonNegativeNumber } from "../utils/numbers";
-import { NonEmptyString } from "../utils/strings";
+
+export const PROFILE_COLLECTION_NAME = "profiles";
+export const PROFILE_MODEL_PK_FIELD = "fiscalCode";
+
+const ProfileBlockedInboxOrChannels = t.dictionary(
+  ServiceId,
+  readonlySetType(BlockedInboxOrChannel, "ProfileBlockedInboxOrChannel"),
+  "ProfileBlockedInboxOrChannels"
+);
+
+// typescript does not allow to have ServiceId as key type here
+export interface IProfileBlockedInboxOrChannels {
+  readonly [serviceId: string]: ReadonlySet<BlockedInboxOrChannel>;
+}
 
 /**
  * Base interface for Profile objects
@@ -31,6 +47,10 @@ export const Profile = t.intersection([
     fiscalCode: FiscalCode
   }),
   t.partial({
+    // Notification channels blocked by the user;
+    // each channel is related to a specific Service (sender)
+    blockedInboxOrChannels: ProfileBlockedInboxOrChannels,
+
     // the preferred email for receiving email notifications
     // if defined, will override the default email provided by the API client
     // if defined, will enable email notifications for the citizen
@@ -145,6 +165,11 @@ export class ProfileModel extends DocumentDbModelVersioned<
   public findOneProfileByFiscalCode(
     fiscalCode: FiscalCode
   ): Promise<Either<DocumentDb.QueryError, Option<RetrievedProfile>>> {
-    return super.findLastVersionByModelId("fiscalCode", fiscalCode);
+    return super.findLastVersionByModelId(
+      PROFILE_MODEL_PK_FIELD,
+      fiscalCode,
+      PROFILE_MODEL_PK_FIELD,
+      fiscalCode
+    );
   }
 }

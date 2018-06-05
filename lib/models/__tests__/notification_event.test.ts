@@ -1,7 +1,7 @@
 /* tslint:disable:no-any */
 /* tslint:disable:no-null-keyword */
 
-import { NonEmptyString } from "../../utils/strings";
+import { NonEmptyString } from "italia-ts-commons/lib/strings";
 
 import { MessageBodyMarkdown } from "../../api/definitions/MessageBodyMarkdown";
 
@@ -27,8 +27,9 @@ const aMessage = {
   createdAt: new Date().toISOString(),
   fiscalCode: "FRLFRC74E04B157I",
   id: aMessageId,
+  indexedId: aMessageId,
   kind: "INewMessageWithoutContent",
-  senderServiceId: "",
+  senderServiceId: "s123",
   senderUserId: "u123" as NonEmptyString,
   timeToLive: 3600 as TimeToLiveSeconds
 };

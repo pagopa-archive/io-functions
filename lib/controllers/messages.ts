@@ -5,8 +5,6 @@ import * as express from "express";
 import * as t from "io-ts";
 import * as winston from "winston";
 
-import * as ApplicationInsights from "applicationinsights";
-
 import {
   ClientIp,
   ClientIpMiddleware
@@ -25,6 +23,34 @@ import { CreatedMessageEvent } from "./../models/created_message_event";
 import { RequiredParamMiddleware } from "../utils/middlewares/required_param";
 
 import {
+  IResponseErrorQuery,
+  IResponseSuccessJsonIterator,
+  ResponseErrorQuery,
+  ResponseJsonIterator
+} from "../utils/response";
+
+import {
+  IResponseErrorForbiddenNotAuthorized,
+  IResponseErrorForbiddenNotAuthorizedForDefaultAddresses,
+  IResponseErrorForbiddenNotAuthorizedForProduction,
+  IResponseErrorForbiddenNotAuthorizedForRecipient,
+  IResponseErrorInternal,
+  IResponseErrorNotFound,
+  IResponseErrorValidation,
+  IResponseSuccessJson,
+  IResponseSuccessRedirectToResource,
+  ResponseErrorForbiddenNotAuthorized,
+  ResponseErrorForbiddenNotAuthorizedForDefaultAddresses,
+  ResponseErrorForbiddenNotAuthorizedForProduction,
+  ResponseErrorForbiddenNotAuthorizedForRecipient,
+  ResponseErrorFromValidationErrors,
+  ResponseErrorInternal,
+  ResponseErrorNotFound,
+  ResponseSuccessJson,
+  ResponseSuccessRedirectToResource
+} from "italia-ts-commons/lib/responses";
+import { NonEmptyString } from "italia-ts-commons/lib/strings";
+import {
   AzureApiAuthMiddleware,
   IAzureApiAuthorization,
   UserGroup
@@ -40,35 +66,7 @@ import {
   withRequestMiddlewares,
   wrapRequestHandler
 } from "../utils/request_middleware";
-import {
-  IResponseErrorForbiddenNotAuthorized,
-  IResponseErrorForbiddenNotAuthorizedForDefaultAddresses,
-  IResponseErrorForbiddenNotAuthorizedForProduction,
-  IResponseErrorForbiddenNotAuthorizedForRecipient,
-  IResponseErrorInternal,
-  IResponseErrorNotFound,
-  IResponseErrorQuery,
-  IResponseErrorValidation,
-  IResponseSuccessJson,
-  IResponseSuccessJsonIterator,
-  IResponseSuccessRedirectToResource,
-  ResponseErrorForbiddenNotAuthorized,
-  ResponseErrorForbiddenNotAuthorizedForDefaultAddresses,
-  ResponseErrorForbiddenNotAuthorizedForProduction,
-  ResponseErrorForbiddenNotAuthorizedForRecipient,
-  ResponseErrorFromValidationErrors,
-  ResponseErrorInternal,
-  ResponseErrorNotFound,
-  ResponseErrorQuery,
-  ResponseSuccessJson,
-  ResponseSuccessJsonIterator,
-  ResponseSuccessRedirectToResource
-} from "../utils/response";
-import {
-  NonEmptyString,
-  ObjectIdGenerator,
-  ulidGenerator
-} from "../utils/strings";
+import { ObjectIdGenerator, ulidGenerator } from "../utils/strings";
 
 import {
   checkSourceIpForHandler,
@@ -90,7 +88,7 @@ import {
   RetrievedMessage
 } from "../models/message";
 
-import { withoutUndefinedValues } from "../utils/types";
+import { withoutUndefinedValues } from "italia-ts-commons/lib/types";
 
 import { Either, isLeft, isRight, left, right } from "fp-ts/lib/Either";
 import {
@@ -102,12 +100,17 @@ import {
 } from "fp-ts/lib/Option";
 
 import { CreatedMessageWithContent } from "../api/definitions/CreatedMessageWithContent";
+import { MessageResponseWithoutContent } from "../api/definitions/MessageResponseWithoutContent";
 import { MessageStatusValueEnum } from "../api/definitions/MessageStatusValue";
 import { NotificationChannelEnum } from "../api/definitions/NotificationChannel";
 import { NotificationChannelStatusValueEnum } from "../api/definitions/NotificationChannelStatusValue";
 import { TimeToLiveSeconds } from "../api/definitions/TimeToLiveSeconds";
 import { MessageStatusModel } from "../models/message_status";
 import { NotificationStatusModel } from "../models/notification_status";
+import {
+  CustomTelemetryClientFactory,
+  diffInMilliseconds
+} from "../utils/application_insights";
 
 /**
  * Input and output bindings for this function
@@ -148,6 +151,7 @@ function retrievedMessageToPublic(
   retrievedMessage: RetrievedMessage
 ): CreatedMessageWithoutContent {
   return {
+    created_at: retrievedMessage.createdAt,
     fiscal_code: retrievedMessage.fiscalCode,
     id: retrievedMessage.id,
     sender_service_id: retrievedMessage.senderServiceId
@@ -193,7 +197,9 @@ type IGetMessageHandler = (
   fiscalCode: FiscalCode,
   messageId: string
 ) => Promise<
-  | IResponseSuccessJson<MessageResponseWithContent>
+  | IResponseSuccessJson<
+      MessageResponseWithContent | MessageResponseWithoutContent
+    >
   | IResponseErrorNotFound
   | IResponseErrorQuery
   | IResponseErrorValidation
@@ -270,7 +276,7 @@ async function getMessageNotificationStatuses(
     // due to some latency, so it's better to not fail here but return an empty object
     const maybeNotification = errorOrMaybeNotification.value;
     if (isNone(maybeNotification)) {
-      winston.info(
+      winston.debug(
         `getMessageNotificationStatuses|Notification not found|messageId=${
           retrievedMessage.id
         }`
@@ -318,7 +324,7 @@ async function getMessageNotificationStatuses(
  * Returns a type safe CreateMessage handler.
  */
 export function CreateMessageHandler(
-  applicationInsightsClient: ApplicationInsights.TelemetryClient,
+  getCustomTelemetryClient: CustomTelemetryClientFactory,
   messageModel: MessageModel,
   generateObjectId: ObjectIdGenerator
 ): ICreateMessageHandler {
@@ -332,6 +338,8 @@ export function CreateMessageHandler(
   ) => {
     // extract the user service
     const userService = userAttributes.service;
+
+    const startRequestTime = process.hrtime();
 
     // base appinsights event attributes for convenience (used later)
     const appInsightsEventName = "api.messages.create";
@@ -372,13 +380,16 @@ export function CreateMessageHandler(
       return ResponseErrorForbiddenNotAuthorizedForDefaultAddresses;
     }
 
+    const id = generateObjectId();
+
     // create a new message from the payload
     // this object contains only the message metadata, the content of the
     // message is handled separately (see below).
     const newMessageWithoutContent: NewMessageWithoutContent = {
       createdAt: new Date(),
       fiscalCode,
-      id: generateObjectId(),
+      id,
+      indexedId: id,
       kind: "INewMessageWithoutContent",
       senderServiceId: userService.serviceId,
       senderUserId: auth.userId,
@@ -395,11 +406,21 @@ export function CreateMessageHandler(
       newMessageWithoutContent.fiscalCode
     );
 
+    const appInsightsClient = getCustomTelemetryClient(
+      {
+        operationId: newMessageWithoutContent.id,
+        serviceId: userService.serviceId
+      },
+      {
+        messageId: newMessageWithoutContent.id
+      }
+    );
+
     if (isLeft(errorOrMessage)) {
       // we got an error while creating the message
 
       // track the event that a message has failed to be created
-      applicationInsightsClient.trackEvent({
+      appInsightsClient.trackEvent({
         name: appInsightsEventName,
         properties: {
           ...appInsightsEventProps,
@@ -464,7 +485,10 @@ export function CreateMessageHandler(
     //
 
     // track the event that a message has been created
-    applicationInsightsClient.trackEvent({
+    appInsightsClient.trackEvent({
+      measurements: {
+        duration: diffInMilliseconds(startRequestTime)
+      },
       name: appInsightsEventName,
       properties: {
         ...appInsightsEventProps,
@@ -489,12 +513,12 @@ export function CreateMessageHandler(
  * Wraps a CreateMessage handler inside an Express request handler.
  */
 export function CreateMessage(
-  applicationInsightsClient: ApplicationInsights.TelemetryClient,
+  getCustomTelemetryClient: CustomTelemetryClientFactory,
   serviceModel: ServiceModel,
   messageModel: MessageModel
 ): express.RequestHandler {
   const handler = CreateMessageHandler(
-    applicationInsightsClient,
+    getCustomTelemetryClient,
     messageModel,
     ulidGenerator
   );
@@ -589,7 +613,9 @@ export function GetMessageHandler(
       );
     }
 
-    const message: CreatedMessageWithContent = withoutUndefinedValues({
+    const message:
+      | CreatedMessageWithContent
+      | CreatedMessageWithoutContent = withoutUndefinedValues({
       content: errorOrMaybeContent.value.toUndefined(),
       ...retrievedMessageToPublic(retrievedMessage)
     });
@@ -622,7 +648,9 @@ export function GetMessageHandler(
     }
     const maybeMessageStatus = errorOrMaybeMessageStatus.value;
 
-    const returnedMessage: MessageResponseWithContent = {
+    const returnedMessage:
+      | MessageResponseWithContent
+      | MessageResponseWithoutContent = {
       message,
       notification: notificationStatuses.toUndefined(),
       // we do not return the status date-time
@@ -684,7 +712,7 @@ export function GetMessagesHandler(
       retrievedMessagesIterator,
       retrievedMessageToPublic
     );
-    return ResponseSuccessJsonIterator(publicExtendedMessagesIterator);
+    return ResponseJsonIterator(publicExtendedMessagesIterator);
   };
 }
 

@@ -2,25 +2,29 @@ import * as t from "io-ts";
 
 import * as DocumentDb from "documentdb";
 
-import { pick, tag } from "../utils/types";
+import { pick, tag } from "italia-ts-commons/lib/types";
 
 import * as DocumentDbUtils from "../utils/documentdb";
 import { DocumentDbModel } from "../utils/documentdb_model";
 
 import { Either, isLeft, left, right } from "fp-ts/lib/Either";
 import { isNone, none, Option, some } from "fp-ts/lib/Option";
-import { NonEmptyString } from "../utils/strings";
+import { NonEmptyString } from "italia-ts-commons/lib/strings";
 
 import { MessageContent } from "../api/definitions/MessageContent";
 
 import { FiscalCode } from "../api/definitions/FiscalCode";
 
 import { BlobService } from "azure-storage";
+import { readableReport } from "italia-ts-commons/lib/reporters";
+import { ServiceId } from "../api/definitions/ServiceId";
 import { Timestamp } from "../api/definitions/Timestamp";
 import { TimeToLiveSeconds } from "../api/definitions/TimeToLiveSeconds";
 import { getBlobAsText, upsertBlobFromObject } from "../utils/azure_storage";
 import { iteratorToArray } from "../utils/documentdb";
-import { readableReport } from "../utils/validation_reporters";
+
+export const MESSAGE_COLLECTION_NAME = "messages";
+export const MESSAGE_MODEL_PK_FIELD = "fiscalCode";
 
 const MESSAGE_BLOB_STORAGE_SUFFIX = ".json";
 
@@ -30,7 +34,7 @@ const MessageBase = t.interface(
     fiscalCode: FiscalCode,
 
     // the identifier of the service of the sender
-    senderServiceId: t.string,
+    senderServiceId: ServiceId,
 
     // the userId of the sender (this is opaque and depends on the API gateway)
     senderUserId: NonEmptyString,
@@ -38,8 +42,12 @@ const MessageBase = t.interface(
     // time to live in seconds
     timeToLiveSeconds: TimeToLiveSeconds,
 
-    // timestamp: the message was accepted by the system
-    createdAt: Timestamp
+    // when the message was accepted by the system
+    createdAt: Timestamp,
+
+    // needed to order by id or to make range queries (ie. WHERE id > "string")
+    // see https://stackoverflow.com/questions/48710600/azure-cosmosdb-how-to-order-by-id
+    indexedId: NonEmptyString
   },
   "MessageBase"
 );
@@ -246,15 +254,20 @@ export class MessageModel extends DocumentDbModel<
   public findMessages(
     fiscalCode: FiscalCode
   ): DocumentDbUtils.IResultIterator<RetrievedMessageWithContent> {
-    return DocumentDbUtils.queryDocuments(this.dbClient, this.collectionUri, {
-      parameters: [
-        {
-          name: "@fiscalCode",
-          value: fiscalCode
-        }
-      ],
-      query: "SELECT * FROM messages m WHERE (m.fiscalCode = @fiscalCode)"
-    });
+    return DocumentDbUtils.queryDocuments(
+      this.dbClient,
+      this.collectionUri,
+      {
+        parameters: [
+          {
+            name: "@fiscalCode",
+            value: fiscalCode
+          }
+        ],
+        query: `SELECT * FROM m WHERE m.${MESSAGE_MODEL_PK_FIELD} = @fiscalCode`
+      },
+      fiscalCode
+    );
   }
 
   /**
@@ -313,11 +326,18 @@ export class MessageModel extends DocumentDbModel<
     fiscalCode: FiscalCode
   ): Promise<Either<Error, Option<MessageContent>>> {
     // get link to attached blob(s)
-    const media = await iteratorToArray(
+    const errorOrMedia = await iteratorToArray(
       await this.getAttachments(messageId, {
         partitionKey: fiscalCode
       })
     );
+
+    if (isLeft(errorOrMedia)) {
+      const queryError = errorOrMedia.value;
+      return left<Error, Option<MessageContent>>(new Error(queryError.body));
+    }
+
+    const media = errorOrMedia.value;
 
     // no blob(s) attached to the message
     if (!media || !media[0]) {

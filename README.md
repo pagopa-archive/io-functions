@@ -397,7 +397,7 @@ Jinja templates to translate the specs into TypeScript code.
 The generator can be executed with:
 
 ```sh
-$ yarn generate-models
+$ yarn generate:models
 
 // the command will output the models that have been generated
 ```

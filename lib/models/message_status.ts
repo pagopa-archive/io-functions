@@ -1,6 +1,6 @@
 import * as t from "io-ts";
 
-import { pick, tag } from "../utils/types";
+import { pick, tag } from "italia-ts-commons/lib/types";
 
 import * as DocumentDb from "documentdb";
 import * as DocumentDbUtils from "../utils/documentdb";
@@ -19,10 +19,10 @@ import {
 import { Timestamp } from "../api/definitions/Timestamp";
 
 import { Option } from "fp-ts/lib/Option";
+import { NonNegativeNumber } from "italia-ts-commons/lib/numbers";
+import { NonEmptyString } from "italia-ts-commons/lib/strings";
 import { nonEmptyStringToModelId } from "../utils/conversions";
 import { RuntimeError, TransientError } from "../utils/errors";
-import { NonNegativeNumber } from "../utils/numbers";
-import { NonEmptyString } from "../utils/strings";
 
 export const MESSAGE_STATUS_COLLECTION_NAME = "message-status";
 export const MESSAGE_STATUS_MODEL_ID_FIELD = "messageId";
@@ -164,6 +164,8 @@ export class MessageStatusModel extends DocumentDbModelVersioned<
   ): Promise<Either<DocumentDb.QueryError, Option<RetrievedMessageStatus>>> {
     return super.findLastVersionByModelId(
       MESSAGE_STATUS_MODEL_ID_FIELD,
+      messageId,
+      MESSAGE_STATUS_MODEL_PK_FIELD,
       messageId
     );
   }

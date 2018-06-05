@@ -1,14 +1,14 @@
 // tslint:disable:no-any
 
 import {
-  IRequestMiddleware,
-  withRequestMiddlewares
-} from "../request_middleware";
-import {
   IResponse,
   IResponseErrorValidation,
   ResponseErrorValidation
-} from "../response";
+} from "italia-ts-commons/lib/responses";
+import {
+  IRequestMiddleware,
+  withRequestMiddlewares
+} from "../request_middleware";
 
 import { left, right } from "fp-ts/lib/Either";
 

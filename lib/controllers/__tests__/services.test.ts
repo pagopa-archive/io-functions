@@ -3,10 +3,10 @@
 import { none, some } from "fp-ts/lib/Option";
 
 import { left, right } from "fp-ts/lib/Either";
-import { NonNegativeNumber } from "../../utils/numbers";
-import { NonEmptyString } from "../../utils/strings";
+import { NonNegativeNumber } from "italia-ts-commons/lib/numbers";
+import { NonEmptyString } from "italia-ts-commons/lib/strings";
 
-import { Set } from "json-set-map";
+import { response as MockResponse } from "jest-mock-express";
 
 import * as middlewares from "../../utils/request_middleware";
 
@@ -14,6 +14,7 @@ import {
   IAzureApiAuthorization,
   UserGroup
 } from "../../utils/middlewares/azure_api_auth";
+import * as authMiddleware from "../../utils/middlewares/azure_api_auth";
 
 import {
   NewService,
@@ -25,7 +26,13 @@ import {
 
 import { ServicePublic as ApiService } from "../../api/definitions/ServicePublic";
 
-import { GetService, GetServiceHandler } from "../services";
+import { FiscalCode } from "../../api/definitions/FiscalCode";
+import {
+  GetService,
+  GetServiceHandler,
+  GetServicesByRecipient,
+  GetServicesByRecipientHandler
+} from "../services";
 
 afterEach(() => {
   jest.resetAllMocks();
@@ -69,10 +76,17 @@ const aRetrievedService: RetrievedService = {
   kind: "IRetrievedService"
 };
 
+const someRetrievedServices: ReadonlyArray<any> = [
+  aRetrievedService,
+  { ...aRetrievedService, id: "124" }
+];
+
 const aSeralizedService: ApiService = {
   ...aServicePayload,
   version: 1 as NonNegativeNumber
 };
+
+const aFiscalCode = "SPNDNL80R13C000X" as FiscalCode;
 
 describe("GetServiceHandler", () => {
   it("should get an existing service", async () => {
@@ -137,12 +151,70 @@ describe("GetServiceHandler", () => {
   });
 });
 
-describe("GetService", () => {
-  it("should set up middlewares", async () => {
+describe("GetServicesByRecipientHandler", () => {
+  it("should get id of the services that notified an existing recipient", async () => {
+    const mockIterator = {
+      executeNext: jest.fn()
+    };
+    mockIterator.executeNext.mockImplementationOnce(() =>
+      Promise.resolve(right(some(someRetrievedServices)))
+    );
+    mockIterator.executeNext.mockImplementationOnce(() =>
+      Promise.resolve(right(none))
+    );
+
+    const senderServiceModelMock = {
+      findSenderServicesForRecipient: jest.fn(() => mockIterator)
+    };
+
+    const getSenderServiceHandler = GetServicesByRecipientHandler(
+      senderServiceModelMock as any
+    );
+    const response = await getSenderServiceHandler(
+      anAzureAuthorization,
+      undefined as any, // not used
+      undefined as any, // not used
+      aFiscalCode
+    );
+    response.apply(MockResponse());
+
+    await Promise.resolve(); // needed to let the response promise complete
+    expect(
+      senderServiceModelMock.findSenderServicesForRecipient
+    ).toHaveBeenCalledWith(aFiscalCode);
+    expect(response.kind).toBe("IResponseSuccessJsonIterator");
+    expect(mockIterator.executeNext).toHaveBeenCalledTimes(2);
+  });
+});
+
+describe("GetServicesByRecipient", () => {
+  it("should set up authentication middleware", async () => {
     const withRequestMiddlewaresSpy = jest
       .spyOn(middlewares, "withRequestMiddlewares")
       .mockReturnValueOnce(jest.fn());
+    const authMiddlewaresSpy = jest
+      .spyOn(authMiddleware, "AzureApiAuthMiddleware")
+      .mockReturnValueOnce(jest.fn());
+    GetServicesByRecipient({} as any, {} as any);
+    expect(withRequestMiddlewaresSpy).toHaveBeenCalledTimes(1);
+    expect(authMiddlewaresSpy).toHaveBeenCalledWith(
+      new Set([UserGroup.ApiServiceByRecipientQuery])
+    );
+  });
+});
+
+describe("GetService", () => {
+  it("should set up authentication middleware", async () => {
+    const withRequestMiddlewaresSpy = jest
+      .spyOn(middlewares, "withRequestMiddlewares")
+      .mockReturnValueOnce(jest.fn());
+    const authMiddlewaresSpy = jest
+      .spyOn(authMiddleware, "AzureApiAuthMiddleware")
+      .mockReturnValueOnce(jest.fn());
     GetService({} as any);
     expect(withRequestMiddlewaresSpy).toHaveBeenCalledTimes(1);
+    expect(authMiddlewaresSpy).toHaveBeenCalledWith(
+      new Set([UserGroup.ApiPublicServiceRead])
+    );
   });
 });

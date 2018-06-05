@@ -5,7 +5,7 @@ import * as winston from "winston";
 
 import { QueueService } from "azure-storage";
 
-import { Either } from "fp-ts/lib/Either";
+import { Either, left, right } from "fp-ts/lib/Either";
 import { Option, some } from "fp-ts/lib/Option";
 import {
   isTransient,
@@ -92,7 +92,9 @@ export function updateMessageVisibilityTimeout<T extends IQueueMessage>(
 ): Promise<boolean> {
   return new Promise(resolve => {
     winston.debug(
-      `Retry to handle message ${queueMessageToString(queueMessage)}`
+      `updateMessageVisibilityTimeout|Retry to handle message ${queueName}:${queueMessageToString(
+        queueMessage
+      )}`
     );
 
     if (!queueMessage.dequeueCount) {
@@ -118,8 +120,8 @@ export function updateMessageVisibilityTimeout<T extends IQueueMessage>(
                 `updateMessageVisibilityTimeout|Error|${err.message}`
               );
             }
-            winston.info(
-              `Updated visibilityTimeout|retry=${numberOfRetries}|timeout=${visibilityTimeoutSec}|queueMessageId=${
+            winston.debug(
+              `updateMessageVisibilityTimeout|retry=${numberOfRetries}|timeout=${visibilityTimeoutSec}|queueMessageId=${
                 queueMessage.id
               }`
             );
@@ -129,8 +131,8 @@ export function updateMessageVisibilityTimeout<T extends IQueueMessage>(
         );
       })
       .getOrElseL(() => {
-        winston.info(
-          `Maximum number of retries reached|retries=${numberOfRetries}|${
+        winston.debug(
+          `updateMessageVisibilityTimeout|Maximum number of retries reached|retries=${numberOfRetries}|${
             queueMessage.id
           }`
         );
@@ -140,7 +142,12 @@ export function updateMessageVisibilityTimeout<T extends IQueueMessage>(
 }
 
 /**
- * Returns false when we need to trigger a retry.
+ * Call this method in the catch handler of a queue handler to:
+ *
+ * - execute onTransientError() in case of Transient Error
+ * - execute onPermanentError() in case of Permanent Error
+ * - trigger a retry in case of TransientError
+ *   and retriesNumber < maxRetriesNumber
  */
 export async function handleQueueProcessingFailure(
   queueService: QueueService,
@@ -170,7 +177,9 @@ export async function handleQueueProcessingFailure(
       .catch(winston.error);
     if (shouldTriggerARetry) {
       // throws to trigger a retry in the caller handler
-      throw TransientError(`Retry|${queueName}|${runtimeError.message}`);
+      // must be an Error in order to be logged correctly
+      // by the Azure Functions runtime
+      throw new Error(`Retry|${queueName}|${runtimeError.message}`);
     } else {
       winston.error(
         `Maximum number of retries reached, stop processing|${queueName}|${
@@ -202,4 +211,22 @@ export async function handleQueueProcessingFailure(
       // do not catch here, let it throw
     );
   }
+}
+
+/**
+ * Promisify queueService.getQueueMetadata
+ */
+/* istanbul ignore next */
+export function getQueueMetadata(
+  queueService: QueueService,
+  queueName: string
+): Promise<Either<Error, QueueService.QueueResult>> {
+  return new Promise(resolve =>
+    queueService.getQueueMetadata(queueName, (error, result) => {
+      if (error) {
+        return resolve(left<Error, QueueService.QueueResult>(error));
+      }
+      return resolve(right<Error, QueueService.QueueResult>(result));
+    })
+  );
 }

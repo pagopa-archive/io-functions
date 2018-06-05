@@ -10,7 +10,8 @@ process.env = {
   CUSTOMCONNSTR_COSMOSDB_KEY: "anyCosmosDbKey",
   CUSTOMCONNSTR_COSMOSDB_URI: "anyCosmosDbUri",
   MESSAGE_CONTAINER_NAME: "anyMessageContainerName",
-  QueueStorageConnection: "anyQueueStorageConnection"
+  QueueStorageConnection: "anyQueueStorageConnection",
+  WEBHOOK_CHANNEL_URL: "https://example.com"
 };
 
 import { CreatedMessageEvent } from "../models/created_message_event";
@@ -26,21 +27,23 @@ import {
   EmailNotification,
   NewNotification,
   NotificationAddressSourceEnum,
-  NotificationModel
+  NotificationModel,
+  WebhookNotification
 } from "../models/notification";
 import { ProfileModel, RetrievedProfile } from "../models/profile";
 
 import { isLeft, isRight, left, right } from "fp-ts/lib/Either";
+import { NonNegativeNumber } from "italia-ts-commons/lib/numbers";
+import { EmailString, NonEmptyString } from "italia-ts-commons/lib/strings";
 import * as winston from "winston";
 import { isTransient } from "../utils/errors";
-import { NonNegativeNumber } from "../utils/numbers";
-import { EmailString, NonEmptyString } from "../utils/strings";
 
 import { NotificationChannelEnum } from "../api/definitions/NotificationChannel";
 import { TimeToLiveSeconds } from "../api/definitions/TimeToLiveSeconds";
 import { NotificationEvent } from "../models/notification_event";
 
 jest.mock("azure-storage");
+jest.mock("applicationinsights");
 jest.mock("../utils/azure_queues");
 import { handleQueueProcessingFailure } from "../utils/azure_queues";
 
@@ -50,7 +53,13 @@ import {
   MESSAGE_QUEUE_NAME
 } from "../created_message_queue_handler";
 
+import { HttpsUrl } from "../api/definitions/HttpsUrl";
+import { ServiceId } from "../api/definitions/ServiceId";
 import { MessageStatusModel } from "../models/message_status";
+import {
+  RetrievedSenderService,
+  SenderServiceModel
+} from "../models/sender_service";
 
 afterEach(() => {
   jest.resetAllMocks();
@@ -60,6 +69,7 @@ afterEach(() => {
 const aCorrectFiscalCode = "FRLFRC74E04B157I" as FiscalCode;
 const aWrongFiscalCode = "FRLFRC74E04B157" as FiscalCode;
 const anEmail = "x@example.com" as EmailString;
+const aUrl = "http://aUrl.com" as HttpsUrl;
 
 const anEmailNotification: EmailNotification = {
   channels: {
@@ -73,8 +83,19 @@ const anEmailNotification: EmailNotification = {
   messageId: "m123" as NonEmptyString
 };
 
+const aWebhookNotification: WebhookNotification = {
+  channels: {
+    [NotificationChannelEnum.WEBHOOK]: {
+      url: aUrl
+    }
+  },
+  fiscalCode: aCorrectFiscalCode,
+  messageId: "m123" as NonEmptyString
+};
+
 const aMessageBodyMarkdown = "test".repeat(80) as MessageBodyMarkdown;
 const aMessageId = "m123" as NonEmptyString;
+const aServiceId = "s123" as ServiceId;
 
 const aMessage: NewMessageWithContent = {
   content: {
@@ -83,8 +104,9 @@ const aMessage: NewMessageWithContent = {
   createdAt: new Date(),
   fiscalCode: aCorrectFiscalCode,
   id: aMessageId,
+  indexedId: aMessageId,
   kind: "INewMessageWithContent",
-  senderServiceId: "",
+  senderServiceId: aServiceId,
   senderUserId: "u123" as NonEmptyString,
   timeToLiveSeconds: 3600 as TimeToLiveSeconds
 };
@@ -146,6 +168,28 @@ const anAttachmentMeta = {
   contentType: "application/json",
   media: "media.json"
 };
+
+const aRetrivedSenderService: RetrievedSenderService = {
+  _self: "a",
+  _ts: Date.now(),
+  id: "123" as NonEmptyString,
+  kind: "IRetrievedSenderService",
+  lastNotificationAt: new Date(),
+  recipientFiscalCode: aCorrectFiscalCode,
+  serviceId: aServiceId
+};
+
+const getSenderServicesModelMock = (
+  senderService: RetrievedSenderService = aRetrivedSenderService
+) => ({
+  createOrUpdate: jest.fn(async (_, __) => right(senderService)),
+  findSenderServicesForRecipient: jest.fn(async (_, __) =>
+    right({
+      items: [{ serviceId: senderService }],
+      page_size: 1
+    })
+  )
+});
 
 describe("createdMessageQueueIndex", () => {
   it("should return failure if createdMessage is undefined", async () => {
@@ -233,6 +277,10 @@ describe("createdMessageQueueIndex", () => {
       );
 
     jest
+      .spyOn(SenderServiceModel.prototype, "createOrUpdate")
+      .mockReturnValue(Promise.resolve(right(none)));
+
+    jest
       .spyOn(MessageStatusModel.prototype, "upsert")
       .mockReturnValue(Promise.resolve(right(none)));
 
@@ -297,7 +345,9 @@ describe("handleMessage", () => {
       profileModelMock as any,
       {} as any,
       {} as any,
+      getSenderServicesModelMock() as any,
       {} as any,
+      aUrl,
       aMessageEvent
     );
     expect(profileModelMock.findOneProfileByFiscalCode).toHaveBeenCalledWith(
@@ -309,7 +359,7 @@ describe("handleMessage", () => {
     }
   });
 
-  it("should fail with a permanent error if no channels can be resolved", async () => {
+  it("should exit with no output bindings if no channel can be resolved", async () => {
     const profileModelMock = {
       findOneProfileByFiscalCode: jest.fn(() => {
         return Promise.resolve(right(none));
@@ -320,21 +370,24 @@ describe("handleMessage", () => {
       profileModelMock as any,
       {} as any,
       {} as any,
+      getSenderServicesModelMock() as any,
       {} as any,
+      aUrl,
       aMessageEvent
     );
 
     expect(profileModelMock.findOneProfileByFiscalCode).toHaveBeenCalledWith(
       aCorrectFiscalCode
     );
-    expect(isLeft(response)).toBeTruthy();
-    if (isLeft(response)) {
-      expect(isTransient(response.value)).toBeFalsy();
+
+    expect(isRight(response)).toBeTruthy();
+    if (isRight(response)) {
+      expect(response.value).toEqual({});
     }
   });
 
   it(
-    "should not create a notification if a profile exists " +
+    "should not create an email notification if a profile exists " +
       "but the email field is empty and no default email was provided",
     async () => {
       const profileModelMock = {
@@ -353,19 +406,159 @@ describe("handleMessage", () => {
         profileModelMock as any,
         {} as any,
         notificationModelMock as any,
+        getSenderServicesModelMock() as any,
         {} as any,
+        aUrl,
         aMessageEvent
       );
 
       expect(profileModelMock.findOneProfileByFiscalCode).toHaveBeenCalledWith(
         aCorrectFiscalCode
       );
-      expect(isLeft(response)).toBeTruthy();
-      if (isLeft(response)) {
-        expect(isTransient(response.value)).toBeFalsy();
+
+      expect(isRight(response)).toBeTruthy();
+      if (isRight(response)) {
+        expect(response.value).toEqual({});
       }
     }
   );
+
+  it(
+    "should not create an email notification if a profile exists " +
+      "with an email field but the email channel is blocked for this service",
+    async () => {
+      const profileModelMock = {
+        findOneProfileByFiscalCode: jest.fn(() => {
+          return Promise.resolve(
+            right(
+              some({
+                ...aRetrievedProfileWithEmail,
+                blockedInboxOrChannels: {
+                  [aServiceId]: new Set(["EMAIL"])
+                }
+              })
+            )
+          );
+        })
+      };
+
+      const notificationModelMock = {
+        create: jest.fn(() => {
+          return Promise.resolve(right(none));
+        })
+      };
+
+      const response = await handleMessage(
+        profileModelMock as any,
+        {} as any,
+        notificationModelMock as any,
+        getSenderServicesModelMock() as any,
+        {} as any,
+        aUrl,
+        aMessageEvent
+      );
+
+      expect(profileModelMock.findOneProfileByFiscalCode).toHaveBeenCalledWith(
+        aCorrectFiscalCode
+      );
+
+      expect(isRight(response)).toBeTruthy();
+      if (isRight(response)) {
+        expect(response.value).toEqual({});
+      }
+    }
+  );
+
+  it(
+    "should not create a webhook notification if a profile exists " +
+      "with is_webhook_enabled but the channel is blocked for this service",
+    async () => {
+      const profileModelMock = {
+        findOneProfileByFiscalCode: jest.fn(() => {
+          return Promise.resolve(
+            right(
+              some({
+                ...aRetrievedProfileWithoutEmail,
+                blockedInboxOrChannels: {
+                  [aServiceId]: new Set(["WEBHOOK"])
+                },
+                isWebhookEnabled: true
+              })
+            )
+          );
+        })
+      };
+
+      const notificationModelMock = {
+        create: jest.fn(() => {
+          return Promise.resolve(right(none));
+        })
+      };
+
+      const response = await handleMessage(
+        profileModelMock as any,
+        {} as any,
+        notificationModelMock as any,
+        getSenderServicesModelMock() as any,
+        {} as any,
+        aUrl,
+        aMessageEvent
+      );
+
+      expect(profileModelMock.findOneProfileByFiscalCode).toHaveBeenCalledWith(
+        aCorrectFiscalCode
+      );
+
+      expect(isRight(response)).toBeTruthy();
+      if (isRight(response)) {
+        expect(response.value).toEqual({});
+      }
+    }
+  );
+
+  it("should not create a webhook or email notification if the inbox is disabled", async () => {
+    const profileModelMock = {
+      findOneProfileByFiscalCode: jest.fn(() => {
+        return Promise.resolve(
+          right(
+            some({
+              ...aRetrievedProfileWithEmail,
+              blockedInboxOrChannels: {
+                [aServiceId]: new Set(["INBOX"])
+              },
+              isInboxEnabled: true,
+              isWebhookEnabled: true
+            })
+          )
+        );
+      })
+    };
+
+    const notificationModelMock = {
+      create: jest.fn(() => {
+        return Promise.resolve(right(none));
+      })
+    };
+
+    const response = await handleMessage(
+      profileModelMock as any,
+      {} as any,
+      notificationModelMock as any,
+      getSenderServicesModelMock() as any,
+      {} as any,
+      aUrl,
+      aMessageEvent
+    );
+
+    expect(profileModelMock.findOneProfileByFiscalCode).toHaveBeenCalledWith(
+      aCorrectFiscalCode
+    );
+
+    expect(isRight(response)).toBeTruthy();
+    if (isRight(response)) {
+      expect(response.value).toEqual({});
+    }
+  });
 
   it(
     "should create a notification with an email if a profile exists for " +
@@ -387,7 +580,9 @@ describe("handleMessage", () => {
         profileModelMock as any,
         {} as any,
         notificationModelMock as any,
+        getSenderServicesModelMock() as any,
         {} as any,
+        aUrl,
         aMessageEvent
       );
 
@@ -413,7 +608,61 @@ describe("handleMessage", () => {
   );
 
   it(
-    "should create a notification with an email if a profile exists for" +
+    "should create a webhook notification if a profile exists for " +
+      "fiscal code and the webhook is enabled",
+    async () => {
+      const profileModelMock = {
+        findOneProfileByFiscalCode: jest.fn(() => {
+          return Promise.resolve(
+            right(
+              some({
+                ...aRetrievedProfileWithoutEmail,
+                isWebhookEnabled: true
+              })
+            )
+          );
+        })
+      };
+
+      const notificationModelMock = {
+        create: jest.fn((document, _) => {
+          return Promise.resolve(right(document));
+        })
+      };
+
+      const response = await handleMessage(
+        profileModelMock as any,
+        {} as any,
+        notificationModelMock as any,
+        getSenderServicesModelMock() as any,
+        {} as any,
+        aUrl,
+        aMessageEvent
+      );
+
+      expect(profileModelMock.findOneProfileByFiscalCode).toHaveBeenCalledWith(
+        aCorrectFiscalCode
+      );
+
+      expect(notificationModelMock.create).toHaveBeenCalledWith(
+        {
+          ...aWebhookNotification,
+          id: expect.anything(),
+          kind: "INewNotification"
+        },
+        anEmailNotification.messageId
+      );
+
+      expect(isRight(response)).toBeTruthy();
+      if (isRight(response)) {
+        expect(response.value).not.toBeUndefined();
+        expect(response.value.webhookNotification).not.toBeUndefined();
+      }
+    }
+  );
+
+  it(
+    "should create a notification with an email if a profile exists for " +
       "fiscal code, the email field is empty but a default email was provided",
     async () => {
       const profileModelMock = {
@@ -439,7 +688,9 @@ describe("handleMessage", () => {
         profileModelMock as any,
         {} as any,
         notificationModelMock as any,
+        getSenderServicesModelMock() as any,
         {} as any,
+        aUrl,
         {
           ...aMessageEvent,
           defaultAddresses: { email: anEmail }
@@ -454,7 +705,7 @@ describe("handleMessage", () => {
         {
           ...anEmailNotification,
           channels: {
-            EMAIL: {
+            [NotificationChannelEnum.EMAIL]: {
               ...anEmailNotification.channels.EMAIL,
               addressSource: NotificationAddressSourceEnum.DEFAULT_ADDRESS
             }
@@ -493,7 +744,9 @@ describe("handleMessage", () => {
         profileModelMock as any,
         {} as any,
         notificationModelMock as any,
+        getSenderServicesModelMock() as any,
         {} as any,
+        aUrl,
         {
           ...aMessageEvent,
           defaultAddresses: { email: anEmail }
@@ -507,7 +760,7 @@ describe("handleMessage", () => {
         {
           ...anEmailNotification,
           channels: {
-            EMAIL: {
+            [NotificationChannelEnum.EMAIL]: {
               ...anEmailNotification.channels.EMAIL,
               addressSource: NotificationAddressSourceEnum.DEFAULT_ADDRESS
             }
@@ -561,7 +814,9 @@ describe("handleMessage", () => {
       profileModelMock as any,
       messageModelMock as any,
       notificationModelMock as any,
+      getSenderServicesModelMock() as any,
       aBlobService as any,
+      aUrl,
       {
         ...aMessageEvent,
         defaultAddresses: { email: anEmail }
@@ -633,7 +888,9 @@ describe("handleMessage", () => {
       profileModelMock as any,
       messageModelMock as any,
       notificationModelMock as any,
+      getSenderServicesModelMock() as any,
       aBlobService as any,
+      aUrl,
       {
         ...aMessageEvent,
         defaultAddresses: { email: anEmail }
@@ -678,7 +935,9 @@ describe("handleMessage", () => {
       profileModelMock as any,
       {} as any,
       notificationModelMock as any,
+      getSenderServicesModelMock() as any,
       {} as any,
+      aUrl,
       aMessageEvent
     );
 

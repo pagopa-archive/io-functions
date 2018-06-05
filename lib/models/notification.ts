@@ -3,12 +3,12 @@
  * a Message. A notification can be sent on multiple channels, based on the
  * User's preference.
  */
-import { enumType, pick } from "../utils/types";
+import { enumType, pick } from "italia-ts-commons/lib/types";
 
 import * as DocumentDb from "documentdb";
 import * as t from "io-ts";
 
-import { tag } from "../utils/types";
+import { tag } from "italia-ts-commons/lib/types";
 
 import * as DocumentDbUtils from "../utils/documentdb";
 import { DocumentDbModel } from "../utils/documentdb_model";
@@ -18,8 +18,13 @@ import { FiscalCode } from "../api/definitions/FiscalCode";
 
 import { Either } from "fp-ts/lib/Either";
 import { Option } from "fp-ts/lib/Option";
+import { NonEmptyString } from "italia-ts-commons/lib/strings";
+import { HttpsUrl } from "../api/definitions/HttpsUrl";
 import { NotificationChannelEnum } from "../api/definitions/NotificationChannel";
-import { NonEmptyString, ObjectIdGenerator } from "../utils/strings";
+import { ObjectIdGenerator } from "../utils/strings";
+
+export const NOTIFICATION_COLLECTION_NAME = "notifications";
+export const NOTIFICATION_MODEL_PK_FIELD = "messageId";
 
 /**
  * All possible sources that can provide the address of the recipient.
@@ -68,23 +73,34 @@ export const EmailNotification = t.interface({
 });
 export type EmailNotification = t.TypeOf<typeof EmailNotification>;
 
-// All notification channels possible metadata.
-// We have only email at the moment, add other channels here when implemented
+// Webhook Notification
 
-export const NotificationChannelMeta = t.intersection([
-  NotificationChannelEmail
-]);
-export type NotificationChannelMeta = t.TypeOf<typeof NotificationChannelMeta>;
+export const NotificationChannelWebhook = t.interface({
+  url: HttpsUrl
+});
+export type NotificationChannelWebhook = t.TypeOf<
+  typeof NotificationChannelWebhook
+>;
+
+export const WebhookNotification = t.interface({
+  ...NotificationBase.props,
+  channels: t.interface({
+    [NotificationChannelEnum.WEBHOOK]: NotificationChannelWebhook
+  })
+});
+export type WebhookNotification = t.TypeOf<typeof WebhookNotification>;
 
 // Generic Notification object
-// We have only email at the moment, add other channels here when implemented
 
 export const Notification = t.intersection([
   NotificationBase,
   t.interface({
-    channels: t.partial({
-      [NotificationChannelEnum.EMAIL]: NotificationChannelEmail
-    })
+    channels: t.exact(
+      t.partial({
+        [NotificationChannelEnum.EMAIL]: NotificationChannelEmail,
+        [NotificationChannelEnum.WEBHOOK]: NotificationChannelWebhook
+      })
+    )
   })
 ]);
 export type Notification = t.TypeOf<typeof Notification>;
@@ -177,14 +193,19 @@ export class NotificationModel extends DocumentDbModel<
   public findNotificationForMessage(
     messageId: string
   ): Promise<Either<DocumentDb.QueryError, Option<RetrievedNotification>>> {
-    return DocumentDbUtils.queryOneDocument(this.dbClient, this.collectionUri, {
-      parameters: [
-        {
-          name: "@messageId",
-          value: messageId
-        }
-      ],
-      query: "SELECT * FROM notifications n WHERE (n.messageId = @messageId)"
-    });
+    return DocumentDbUtils.queryOneDocument(
+      this.dbClient,
+      this.collectionUri,
+      {
+        parameters: [
+          {
+            name: "@messageId",
+            value: messageId
+          }
+        ],
+        query: `SELECT * FROM n WHERE (n.${NOTIFICATION_MODEL_PK_FIELD} = @messageId)`
+      },
+      messageId
+    );
   }
 }
