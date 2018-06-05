@@ -281,12 +281,7 @@ definitions:
 responses: {}
 parameters:
   PaginationRequest:
-    name: cursor
-    in: query
-    type: string
-    minimum: 1
-    description: An opaque identifier that points to the next item in the collection.
-    x-example: 01BX9NSMKVXXS5PSP2FATZM123
+    $ref: 'components.yaml#/x-components/parameters/cursor'
   FiscalCode:
     name: fiscal_code
     in: path
