@@ -321,7 +321,7 @@ describe("isSenderAllowed", () => {
     );
     expect(ret).toBeFalsy();
   });
-  it("should return false if the user has not blocked the service", async () => {
+  it("should return true if the user has not blocked the service", async () => {
     const ret = isSenderAllowed(
       {
         [`${aServiceId}foo`]: new Set(["INBOX"]) as ReadonlySet<
