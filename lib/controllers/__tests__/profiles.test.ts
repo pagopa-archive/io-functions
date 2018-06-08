@@ -324,7 +324,7 @@ describe("isSenderAllowed", () => {
   it("should return false if the user has not blocked the service", async () => {
     const ret = isSenderAllowed(
       {
-        [aServiceId + "foo"]: new Set(["INBOX"]) as ReadonlySet<
+        [`${aServiceId}foo`]: new Set(["INBOX"]) as ReadonlySet<
           BlockedInboxOrChannelEnum
         >
       },
