@@ -253,8 +253,13 @@ LimitedProfile:
     attributes.
   type: object
   properties:
+    sender_allowed:
+      type: boolean
+      default: true
     preferred_languages:
       $ref: "#/PreferredLanguages"
+  required:
+    - sender_allowed
 ExtendedProfile:
   description: |-
     Describes the citizen's profile, mostly interesting for preferences
