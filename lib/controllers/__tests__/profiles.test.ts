@@ -10,18 +10,26 @@ import {
   IAzureApiAuthorization,
   UserGroup
 } from "../../utils/middlewares/azure_api_auth";
-import { GetProfileHandler, UpsertProfileHandler } from "../profiles";
+import {
+  GetProfileHandler,
+  isSenderAllowed,
+  UpsertProfileHandler
+} from "../profiles";
 
 import { ExtendedProfile } from "../../api/definitions/ExtendedProfile";
 import { FiscalCode } from "../../api/definitions/FiscalCode";
 import { LimitedProfile } from "../../api/definitions/LimitedProfile";
 
 import { NonNegativeNumber } from "italia-ts-commons/lib/numbers";
+import { BlockedInboxOrChannelEnum } from "../../api/definitions/BlockedInboxOrChannel";
+import { ServiceId } from "../../api/definitions/ServiceId";
+
+const aServiceId = "s123" as ServiceId;
 
 const anAzureAuthorization: IAzureApiAuthorization = {
   groups: new Set([UserGroup.ApiLimitedProfileRead]),
   kind: "IAzureApiAuthorization",
-  subscriptionId: "s123" as NonEmptyString,
+  subscriptionId: aServiceId,
   userId: "u123" as NonEmptyString
 };
 
@@ -46,7 +54,9 @@ const aPublicExtendedProfile: ExtendedProfile = {
   version: aRetrievedProfile.version
 };
 
-const aPublicLimitedProfile: LimitedProfile = {};
+const aPublicLimitedProfile: LimitedProfile = {
+  sender_allowed: true
+};
 
 describe("GetProfileHandler", () => {
   it("should find an existing profile", async () => {
@@ -60,8 +70,8 @@ describe("GetProfileHandler", () => {
 
     const response = await getProfileHandler(
       anAzureAuthorization,
-      undefined as any, // not used
-      undefined as any, // not used
+      undefined as any,
+      { service: { serviceId: aServiceId } } as any,
       aFiscalCode
     );
 
@@ -71,6 +81,40 @@ describe("GetProfileHandler", () => {
     expect(response.kind).toBe("IResponseSuccessJson");
     if (response.kind === "IResponseSuccessJson") {
       expect(response.value).toEqual(aPublicLimitedProfile);
+    }
+  });
+
+  it("should return sender_allowed: false if the user has blocked the sender service", async () => {
+    const profileModelMock = {
+      findOneProfileByFiscalCode: jest.fn(() => {
+        return Promise.resolve(
+          right(
+            some({
+              ...aRetrievedProfile,
+              blockedInboxOrChannels: { [aServiceId]: new Set(["INBOX"]) }
+            })
+          )
+        );
+      })
+    };
+
+    const getProfileHandler = GetProfileHandler(profileModelMock as any);
+
+    const response = await getProfileHandler(
+      anAzureAuthorization,
+      undefined as any,
+      { service: { serviceId: aServiceId } } as any,
+      aFiscalCode
+    );
+
+    expect(profileModelMock.findOneProfileByFiscalCode).toHaveBeenCalledWith(
+      aFiscalCode
+    );
+    expect(response.kind).toBe("IResponseSuccessJson");
+    if (response.kind === "IResponseSuccessJson") {
+      expect(response.value).toEqual({
+        sender_allowed: false
+      });
     }
   });
 
@@ -90,8 +134,8 @@ describe("GetProfileHandler", () => {
 
     const response = await getProfileHandler(
       trustedAuth,
-      undefined as any, // not used
-      undefined as any, // not used
+      undefined as any,
+      { service: { serviceId: aServiceId } } as any,
       aFiscalCode
     );
     expect(profileModelMock.findOneProfileByFiscalCode).toHaveBeenCalledWith(
@@ -114,8 +158,8 @@ describe("GetProfileHandler", () => {
 
     const response = await getProfileHandler(
       anAzureAuthorization,
-      undefined as any, // not used
-      undefined as any, // not used
+      undefined as any,
+      undefined as any,
       aFiscalCode
     );
     expect(profileModelMock.findOneProfileByFiscalCode).toHaveBeenCalledWith(
@@ -135,8 +179,8 @@ describe("GetProfileHandler", () => {
 
     const promise = getProfileHandler(
       anAzureAuthorization,
-      undefined as any, // not used
-      undefined as any, // not used
+      undefined as any,
+      { service: { serviceId: aServiceId } } as any,
       aFiscalCode
     );
 
@@ -159,8 +203,8 @@ describe("UpsertProfile", () => {
 
     const response = await upsertProfileHandler(
       anAzureAuthorization,
-      undefined as any, // not used
-      undefined as any, // not used
+      undefined as any,
+      undefined as any,
       aFiscalCode,
       aProfilePayloadMock as any
     );
@@ -212,8 +256,8 @@ describe("UpsertProfile", () => {
 
     const response = await upsertProfileHandler(
       anAzureAuthorization,
-      undefined as any, // not used
-      undefined as any, // not used
+      undefined as any,
+      undefined as any,
       aFiscalCode,
       profilePayloadMock
     );
@@ -251,8 +295,8 @@ describe("UpsertProfile", () => {
 
     const response = await upsertProfileHandler(
       anAzureAuthorization,
-      undefined as any, // not used
-      undefined as any, // not used
+      undefined as any,
+      undefined as any,
       aFiscalCode,
       profilePayloadMock
     );
@@ -262,5 +306,30 @@ describe("UpsertProfile", () => {
     expect(profileModelMock.create).not.toHaveBeenCalled();
     expect(profileModelMock.update).not.toHaveBeenCalled();
     expect(response.kind).toBe("IResponseErrorConflict");
+  });
+});
+
+describe("isSenderAllowed", () => {
+  it("should return false if the user has blocked the service", async () => {
+    const ret = isSenderAllowed(
+      {
+        [aServiceId]: new Set(["INBOX"]) as ReadonlySet<
+          BlockedInboxOrChannelEnum
+        >
+      },
+      aServiceId
+    );
+    expect(ret).toBeFalsy();
+  });
+  it("should return true if the user has not blocked the service", async () => {
+    const ret = isSenderAllowed(
+      {
+        [`${aServiceId}foo`]: new Set(["INBOX"]) as ReadonlySet<
+          BlockedInboxOrChannelEnum
+        >
+      },
+      aServiceId
+    );
+    expect(ret).toBeTruthy();
   });
 });
