@@ -255,7 +255,9 @@ LimitedProfile:
   properties:
     sender_allowed:
       type: boolean
-      default: true
+      description: |-
+        True in case the service that made the request can send 
+        messages to the user identified by this profile (false otherwise).
     preferred_languages:
       $ref: "#/PreferredLanguages"
   required:
