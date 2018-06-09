@@ -93,6 +93,7 @@ const someUserAttributes: IAzureUserAttributes = {
     authorizedCIDRs: toAuthorizedCIDRs([]),
     authorizedRecipients: new Set([]),
     departmentName: "IT" as NonEmptyString,
+    fiscalCode: aFiscalCode,
     organizationName: "AgID" as NonEmptyString,
     serviceId: "test" as NonEmptyString,
     serviceName: "Test" as NonEmptyString

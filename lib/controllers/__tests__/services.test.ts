@@ -53,10 +53,13 @@ const aServicePayload: ApiService = {
   service_name: "MyServiceName" as NonEmptyString
 };
 
+const aFiscalCode = "SPNDNL80R13C000X" as FiscalCode;
+
 const aService: Service = {
   authorizedCIDRs: toAuthorizedCIDRs([]),
   authorizedRecipients: toAuthorizedRecipients([]),
   departmentName: "MyDeptName" as NonEmptyString,
+  fiscalCode: aFiscalCode,
   organizationName: "MyOrgName" as NonEmptyString,
   serviceId: "MySubscriptionId" as NonEmptyString,
   serviceName: "MyServiceName" as NonEmptyString
@@ -85,8 +88,6 @@ const aSeralizedService: ApiService = {
   ...aServicePayload,
   version: 1 as NonNegativeNumber
 };
-
-const aFiscalCode = "SPNDNL80R13C000X" as FiscalCode;
 
 describe("GetServiceHandler", () => {
   it("should get an existing service", async () => {

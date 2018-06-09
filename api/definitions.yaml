@@ -368,13 +368,21 @@ Service:
     department_name:
       $ref: "#/DepartmentName"
     authorized_cidrs:
+      description: |-
+        List of IPs (or IP ranges) that are authorized
+        to use the APIs on behalf of this service account
       type: array
       items:
         $ref: "#/CIDR"
     authorized_recipients:
+      description: |-
+        List of authorized fiscal codes that belong to the users
+        this service can send messages to
       type: array
       items:
         $ref: "#/FiscalCode"
+    fiscal_code:
+      $ref: "#/FiscalCode"
     version:
       type: integer
     id:
@@ -386,6 +394,7 @@ Service:
     - department_name
     - authorized_cidrs
     - authorized_recipients
+    - fiscal_code
 ServicePublic:
   title: Service (public)
   description: A Service associated to an user's subscription.
