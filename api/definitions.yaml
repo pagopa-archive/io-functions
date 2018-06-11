@@ -97,8 +97,31 @@ NewMessage:
       $ref: "#/MessageContent"
     default_addresses:
       $ref: "#/NewMessageDefaultAddresses"
+    payment_data:
+      $ref: "#/PaymentData"
   required:
     - content
+PaymentData:
+  type: object
+  description: |-
+    Metadata needed to process pagoPA payments.
+  properties:
+    amount:
+      $ref: "#/PaymentAmount"
+    notice_number:
+      $ref: "#/PaymentNoticeNumber"
+PaymentNoticeNumber:
+  description: The field ["Numero Avviso"](https://pagopa-specifichepagamenti.readthedocs.io/it/latest/_docs/Capitolo7.html#il-numero-avviso-e-larchivio-dei-pagamenti-in-attesa)
+    of pagoPa, needed to identify the payment. Format is `<aux digit (1n)>[<application code> (2n)]<codice IUV (15|17n)>`.
+    See [pagoPa specs](https://www.agid.gov.it/sites/default/files/repository_files/specifiche_attuative_pagamenti_1_3_1_0.pdf) for more info on this field and the IUV.
+  type: string
+  minLength: 16
+  maxLength: 20
+PaymentAmount:
+  description: Amount of payment in euro cent.
+  type: integer
+  minimum: 1
+  maximum: 999999999999
 MessageStatusValue:
   type: string
   description: |-
@@ -143,6 +166,8 @@ CreatedMessageWithContent:
       $ref: "#/MessageContent"
     sender_service_id:
       type: string
+    payment_data:
+      $ref: "#/PaymentData"
   required:
     - id
     - fiscal_code
@@ -162,6 +187,8 @@ CreatedMessageWithoutContent:
       $ref: "#/Timestamp"
     sender_service_id:
       type: string
+    payment_data:
+      $ref: "#/PaymentData"
   required:
     - id
     - fiscal_code
