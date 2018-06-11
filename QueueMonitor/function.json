@@ -1,13 +1,15 @@
 {
-  "scriptFile": "../lib/index.js",
-  "disabled": false,
-  "bindings": [
-    {
-      "schedule": "0 * * * * *",
-      "name": "myTimer",
-      "type": "timerTrigger",
-      "direction": "in"
-    }
-  ],
-  "entryPoint": "QueueMonitor"
+ "scriptFile": "../.funcpack/index.js",
+ "disabled": false,
+ "bindings": [
+  {
+   "schedule": "0 * * * * *",
+   "name": "myTimer",
+   "type": "timerTrigger",
+   "direction": "in"
+  }
+ ],
+ "entryPoint": "QueueMonitor",
+ "_originalEntryPoint": "QueueMonitor",
+ "_originalScriptFile": "../lib/index.js"
 }
