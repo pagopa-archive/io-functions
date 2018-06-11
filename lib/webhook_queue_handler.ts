@@ -144,7 +144,6 @@ function newMessageToPublic(
     created_at: newMessage.createdAt,
     fiscal_code: newMessage.fiscalCode,
     id: newMessage.id,
-    payment_data: newMessage.payment,
     sender_service_id: newMessage.senderServiceId
   };
 }

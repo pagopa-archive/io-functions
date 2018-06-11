@@ -17,7 +17,7 @@ import { FiscalCode } from "../api/definitions/FiscalCode";
 
 import { BlobService } from "azure-storage";
 import { readableReport } from "italia-ts-commons/lib/reporters";
-import { PaymentData } from "../api/definitions/PaymentData";
+
 import { ServiceId } from "../api/definitions/ServiceId";
 import { Timestamp } from "../api/definitions/Timestamp";
 import { TimeToLiveSeconds } from "../api/definitions/TimeToLiveSeconds";
@@ -29,33 +29,27 @@ export const MESSAGE_MODEL_PK_FIELD = "fiscalCode";
 
 const MESSAGE_BLOB_STORAGE_SUFFIX = ".json";
 
-const MessageBase = t.intersection(
-  [
-    t.interface({
-      // the fiscal code of the recipient
-      fiscalCode: FiscalCode,
+const MessageBase = t.interface(
+  {
+    // the fiscal code of the recipient
+    fiscalCode: FiscalCode,
 
-      // the identifier of the service of the sender
-      senderServiceId: ServiceId,
+    // the identifier of the service of the sender
+    senderServiceId: ServiceId,
 
-      // the userId of the sender (this is opaque and depends on the API gateway)
-      senderUserId: NonEmptyString,
+    // the userId of the sender (this is opaque and depends on the API gateway)
+    senderUserId: NonEmptyString,
 
-      // time to live in seconds
-      timeToLiveSeconds: TimeToLiveSeconds,
+    // time to live in seconds
+    timeToLiveSeconds: TimeToLiveSeconds,
 
-      // when the message was accepted by the system
-      createdAt: Timestamp,
+    // when the message was accepted by the system
+    createdAt: Timestamp,
 
-      // needed to order by id or to make range queries (ie. WHERE id > "string")
-      // see https://stackoverflow.com/questions/48710600/azure-cosmosdb-how-to-order-by-id
-      indexedId: NonEmptyString
-    }),
-    t.partial({
-      // payment (pagoPA) metadata
-      payment: PaymentData
-    })
-  ],
+    // needed to order by id or to make range queries (ie. WHERE id > "string")
+    // see https://stackoverflow.com/questions/48710600/azure-cosmosdb-how-to-order-by-id
+    indexedId: NonEmptyString
+  },
   "MessageBase"
 );
 
@@ -194,8 +188,7 @@ function toBaseType(o: RetrievedMessage): Message {
     "senderServiceId",
     "senderUserId",
     "timeToLiveSeconds",
-    "createdAt",
-    "payment"
+    "createdAt"
   ];
   return RetrievedMessageWithContent.is(o)
     ? pick(["content", ...props], o)
