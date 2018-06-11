@@ -59,9 +59,9 @@
     "@types/events" "*"
     "@types/node" "*"
 
-"@types/express@*", "@types/express@^4.0.36":
-  version "4.11.1"
-  resolved "https://registry.yarnpkg.com/@types/express/-/express-4.11.1.tgz#f99663b3ab32d04cb11db612ef5dd7933f75465b"
+"@types/express@*", "@types/express@^4.16.0":
+  version "4.16.0"
+  resolved "https://registry.yarnpkg.com/@types/express/-/express-4.16.0.tgz#6d8bc42ccaa6f35cf29a2b7c3333cb47b5a32a19"
   dependencies:
     "@types/body-parser" "*"
     "@types/express-serve-static-core" "*"
@@ -3606,9 +3606,9 @@ italia-ts-commons@^1.15.0:
     json-set-map "^1.0.2"
     validator "^10.1.0"
 
-italia-utils@^3.7.1:
-  version "3.7.1"
-  resolved "https://registry.yarnpkg.com/italia-utils/-/italia-utils-3.7.1.tgz#7e6f550744edf2552644945d927d85b798ddaa72"
+italia-utils@^3.8.1:
+  version "3.8.1"
+  resolved "https://registry.yarnpkg.com/italia-utils/-/italia-utils-3.8.1.tgz#e4cfdb58d2dc8849841234972dfd2ac6bd4ba1f7"
   dependencies:
     fs-extra "^6.0.0"
     nunjucks "^3.1.2"
@@ -6865,7 +6865,7 @@ source-map-support@^0.4.15:
   dependencies:
     source-map "^0.5.6"
 
-source-map-support@^0.5.0, source-map-support@^0.5.3, source-map-support@^0.5.5, source-map-support@^0.5.6:
+source-map-support@^0.5.0, source-map-support@^0.5.5, source-map-support@^0.5.6:
   version "0.5.6"
   resolved "https://registry.yarnpkg.com/source-map-support/-/source-map-support-0.5.6.tgz#4435cee46b1aab62b8e8610ce60f788091c51c13"
   dependencies:
@@ -7351,17 +7351,16 @@ ts-jest@^22.4.5:
     source-map-support "^0.5.5"
     yargs "^11.0.0"
 
-ts-node@^6.0.3:
-  version "6.0.5"
-  resolved "https://registry.yarnpkg.com/ts-node/-/ts-node-6.0.5.tgz#977c1c931da7a2b09ae2930101f0104a5c2271e9"
+ts-node@^6.1.0:
+  version "6.1.0"
+  resolved "https://registry.yarnpkg.com/ts-node/-/ts-node-6.1.0.tgz#a2c37a11fdb58e60eca887a1269b025cf4d2f8b8"
   dependencies:
     arrify "^1.0.0"
-    chalk "^2.3.0"
     diff "^3.1.0"
     make-error "^1.1.1"
     minimist "^1.2.0"
     mkdirp "^0.5.1"
-    source-map-support "^0.5.3"
+    source-map-support "^0.5.6"
     yn "^2.0.0"
 
 tslib@^1.7.1, tslib@^1.8.0, tslib@^1.8.1:
