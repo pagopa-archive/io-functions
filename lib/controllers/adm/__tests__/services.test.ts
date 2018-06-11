@@ -55,7 +55,7 @@ const aServicePayload: ApiService = {
   authorized_cidrs: [],
   authorized_recipients: [],
   department_name: "MyDeptName" as NonEmptyString,
-  fiscal_code: aFiscalCode,
+  organization_fiscal_code: aFiscalCode,
   organization_name: "MyOrgName" as NonEmptyString,
   service_id: "MySubscriptionId" as NonEmptyString,
   service_name: "MyServiceName" as NonEmptyString
@@ -65,7 +65,7 @@ const aService: Service = {
   authorizedCIDRs: toAuthorizedCIDRs([]),
   authorizedRecipients: toAuthorizedRecipients([]),
   departmentName: "MyDeptName" as NonEmptyString,
-  fiscalCode: aFiscalCode,
+  organizationFiscalCode: aFiscalCode,
   organizationName: "MyOrgName" as NonEmptyString,
   serviceId: "MySubscriptionId" as NonEmptyString,
   serviceName: "MyServiceName" as NonEmptyString

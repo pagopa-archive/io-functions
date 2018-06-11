@@ -27,7 +27,7 @@ const aService: Service = {
   authorizedCIDRs: toAuthorizedCIDRs([]),
   authorizedRecipients: new Set([]),
   departmentName: "MyDept" as NonEmptyString,
-  fiscalCode: aFiscalCode,
+  organizationFiscalCode: aFiscalCode,
   organizationName: "MyService" as NonEmptyString,
   serviceId: "serviceId" as NonEmptyString,
   serviceName: "MyService" as NonEmptyString

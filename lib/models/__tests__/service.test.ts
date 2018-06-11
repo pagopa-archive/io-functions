@@ -34,9 +34,9 @@ const aRetrievedService: RetrievedService = {
   authorizedCIDRs: toAuthorizedCIDRs([]),
   authorizedRecipients: toAuthorizedRecipients([]),
   departmentName: "MyDept" as NonEmptyString,
-  fiscalCode: aFiscalCode,
   id: "xyz" as NonEmptyString,
   kind: "IRetrievedService",
+  organizationFiscalCode: aFiscalCode,
   organizationName: "MyOrg" as NonEmptyString,
   serviceId: aServiceId,
   serviceName: "MyService" as NonEmptyString,
@@ -113,7 +113,7 @@ describe("createService", () => {
       authorizedCIDRs: toAuthorizedCIDRs([]),
       authorizedRecipients: toAuthorizedRecipients([]),
       departmentName: "MyService" as NonEmptyString,
-      fiscalCode: aFiscalCode,
+      organizationFiscalCode: aFiscalCode,
       organizationName: "MyService" as NonEmptyString,
       serviceId: aServiceId,
       serviceName: "MyService" as NonEmptyString
@@ -148,7 +148,7 @@ describe("createService", () => {
       authorizedCIDRs: toAuthorizedCIDRs([]),
       authorizedRecipients: toAuthorizedRecipients([]),
       departmentName: "MyService" as NonEmptyString,
-      fiscalCode: aFiscalCode,
+      organizationFiscalCode: aFiscalCode,
       organizationName: "MyService" as NonEmptyString,
       serviceId: aServiceId,
       serviceName: "MyService" as NonEmptyString

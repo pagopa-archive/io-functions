@@ -36,8 +36,8 @@ export const Service = t.interface({
   authorizedRecipients: readonlySetType(FiscalCode, "fiscal codes"),
   // the name of the department within the service
   departmentName: NonEmptyString,
-  // fiscal code of the service, used to receive payments
-  fiscalCode: FiscalCode,
+  // fiscal code of the organization, used to receive payments
+  organizationFiscalCode: FiscalCode,
   // the name of the organization
   organizationName: NonEmptyString,
   // this equals user's subscriptionId
@@ -139,7 +139,7 @@ function toBaseType(o: RetrievedService): Service {
       "authorizedCIDRs",
       "authorizedRecipients",
       "departmentName",
-      "fiscalCode",
+      "organizationFiscalCode",
       "organizationName",
       "serviceId",
       "serviceName"

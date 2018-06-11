@@ -107,8 +107,8 @@ function retrievedServiceToPublic(
       retrievedService.authorizedRecipients
     ).filter(FiscalCode.is),
     department_name: retrievedService.departmentName,
-    fiscal_code: retrievedService.fiscalCode,
     id: retrievedService.id,
+    organization_fiscal_code: retrievedService.organizationFiscalCode,
     organization_name: retrievedService.organizationName,
     service_id: retrievedService.serviceId,
     service_name: retrievedService.serviceName,
@@ -124,7 +124,7 @@ function servicePayloadToService(service: ApiService): Service {
     authorizedCIDRs: toAuthorizedCIDRs(service.authorized_cidrs),
     authorizedRecipients: toAuthorizedRecipients(service.authorized_recipients),
     departmentName: service.department_name,
-    fiscalCode: service.fiscal_code,
+    organizationFiscalCode: service.organization_fiscal_code,
     organizationName: service.organization_name,
     serviceId: service.service_id,
     serviceName: service.service_name

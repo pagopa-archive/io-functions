@@ -369,19 +369,18 @@ Service:
       $ref: "#/DepartmentName"
     authorized_cidrs:
       description: |-
-        List of IPs (or IP ranges) that are authorized
-        to use the APIs on behalf of this service account
+        Allowed source IPs or CIDRs for this service.
       type: array
       items:
         $ref: "#/CIDR"
     authorized_recipients:
       description: |-
-        List of authorized fiscal codes that belong to the users
-        this service can send messages to
+        If non empty, the service will be able
+        to send messages only to these fiscal codes.
       type: array
       items:
         $ref: "#/FiscalCode"
-    fiscal_code:
+    organization_fiscal_code:
       $ref: "#/FiscalCode"
     version:
       type: integer
@@ -394,7 +393,7 @@ Service:
     - department_name
     - authorized_cidrs
     - authorized_recipients
-    - fiscal_code
+    - organization_fiscal_code
 ServicePublic:
   title: Service (public)
   description: A Service associated to an user's subscription.

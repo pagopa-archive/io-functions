@@ -59,7 +59,7 @@ const aService: Service = {
   authorizedCIDRs: toAuthorizedCIDRs([]),
   authorizedRecipients: toAuthorizedRecipients([]),
   departmentName: "MyDeptName" as NonEmptyString,
-  fiscalCode: aFiscalCode,
+  organizationFiscalCode: aFiscalCode,
   organizationName: "MyOrgName" as NonEmptyString,
   serviceId: "MySubscriptionId" as NonEmptyString,
   serviceName: "MyServiceName" as NonEmptyString
