@@ -1,6 +1,6 @@
 swagger: '2.0'
 info:
-  version: 0.0.1
+  version: 0.1.0
   title: Digital Citizenship Admin API.
   description: Digital Citizenship Admin API.
 basePath: "/adm"

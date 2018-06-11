@@ -11,6 +11,18 @@ The format of this file is loosely based on [Keep a Changelog](http://keepachang
 
 ## [Unreleased]
 
+## [v0.42.0] - 2018-06-11
+
+### Added
+- [getProfile] Added `sender_allowed` to profile properties: true in case the
+  calling service can send notifications to the fiscal code of the retrieved profile
+- [getProfile] Added `accepted_service_tos_version`: returns the latest version
+  of the Terms of Service accepted by the user (one for each service)
+- [getService] Added `organization_fiscal_code` to service properties
+- [submitMessageforUser] Added payment metadata into the message payload  
+  (`payment.amount`, `payment.notice_number`)
+- [internal] Added a function to monitor the lenght of the queues
+
 ## [v0.41.0] - 2018-06-02
 
 ### Added
