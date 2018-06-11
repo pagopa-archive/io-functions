@@ -81,7 +81,8 @@ The format of this file is loosely based on [Keep a Changelog](http://keepachang
 [upsertProfile]: https://teamdigitale.github.io/digital-citizenship/api/public.html#operation/upsertProfile
 [getInfo]: https://teamdigitale.github.io/digital-citizenship/api/public.html#operation/getInfo
 
-[Unreleased]: https://github.com/teamdigitale/digital-citizenship-functions/compare/v0.41.0...HEAD
+[Unreleased]: https://github.com/teamdigitale/digital-citizenship-functions/compare/v0.42.0...HEAD
+[v0.42.0]: https://github.com/teamdigitale/digital-citizenship-functions/compare/v0.41.0...v0.42.0
 [v0.41.0]: https://github.com/teamdigitale/digital-citizenship-functions/compare/v0.40.0...v0.41.0
 [v0.40.0]: https://github.com/teamdigitale/digital-citizenship-functions/compare/v0.39.0...v0.40.0
 [v0.39.0]: https://github.com/teamdigitale/digital-citizenship-functions/compare/v0.38.0...v0.39.0
