@@ -26,7 +26,7 @@ import {
   IResponseErrorQuery,
   IResponseSuccessJsonIterator,
   ResponseErrorQuery,
-  ResponseSuccessJsonIterator
+  ResponseJsonIterator
 } from "../utils/response";
 
 import {
@@ -712,7 +712,7 @@ export function GetMessagesHandler(
       retrievedMessagesIterator,
       retrievedMessageToPublic
     );
-    return ResponseSuccessJsonIterator(publicExtendedMessagesIterator);
+    return ResponseJsonIterator(publicExtendedMessagesIterator);
   };
 }
 

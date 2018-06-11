@@ -45,7 +45,7 @@ const MessageBase = t.interface(
     // when the message was accepted by the system
     createdAt: Timestamp,
 
-    // needed to order by id
+    // needed to order by id or to make range queries (ie. WHERE id > "string")
     // see https://stackoverflow.com/questions/48710600/azure-cosmosdb-how-to-order-by-id
     indexedId: NonEmptyString
   },
@@ -264,7 +264,7 @@ export class MessageModel extends DocumentDbModel<
             value: fiscalCode
           }
         ],
-        query: `SELECT * FROM m WHERE m.${MESSAGE_MODEL_PK_FIELD} = @fiscalCode ORDER BY m.indexedId DESC`
+        query: `SELECT * FROM m WHERE m.${MESSAGE_MODEL_PK_FIELD} = @fiscalCode`
       },
       fiscalCode
     );
@@ -326,11 +326,18 @@ export class MessageModel extends DocumentDbModel<
     fiscalCode: FiscalCode
   ): Promise<Either<Error, Option<MessageContent>>> {
     // get link to attached blob(s)
-    const media = await iteratorToArray(
+    const errorOrMedia = await iteratorToArray(
       await this.getAttachments(messageId, {
         partitionKey: fiscalCode
       })
     );
+
+    if (isLeft(errorOrMedia)) {
+      const queryError = errorOrMedia.value;
+      return left<Error, Option<MessageContent>>(new Error(queryError.body));
+    }
+
+    const media = errorOrMedia.value;
 
     // no blob(s) attached to the message
     if (!media || !media[0]) {

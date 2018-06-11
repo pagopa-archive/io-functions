@@ -4,10 +4,10 @@ import * as Express from "express";
 
 import { response as MockResponse } from "jest-mock-express";
 
-import { right } from "fp-ts/lib/Either";
+import { left, right } from "fp-ts/lib/Either";
 import { none, some } from "fp-ts/lib/Option";
 
-import { ResponseSuccessJsonIterator } from "../response";
+import { ResponseJsonIterator } from "../response";
 
 function flushPromises<T>(): Promise<T> {
   return new Promise(resolve => setImmediate(resolve));
@@ -23,7 +23,7 @@ describe("ResponseSuccessJsonIterator", () => {
       executeNext: jest.fn(() => Promise.resolve(right(some([]))))
     };
 
-    const streamingResponse = ResponseSuccessJsonIterator(mockIterator);
+    const streamingResponse = ResponseJsonIterator(mockIterator);
 
     const mockResponse = MockResponse() as Express.Response;
 
@@ -50,7 +50,7 @@ describe("ResponseSuccessJsonIterator", () => {
       Promise.resolve(right(none))
     );
 
-    const streamingResponse = ResponseSuccessJsonIterator(mockIterator);
+    const streamingResponse = ResponseJsonIterator(mockIterator);
 
     const mockResponse = MockResponse() as Express.Response;
 
@@ -78,7 +78,7 @@ describe("ResponseSuccessJsonIterator", () => {
       Promise.resolve(right(none))
     );
 
-    const streamingResponse = ResponseSuccessJsonIterator(mockIterator);
+    const streamingResponse = ResponseJsonIterator(mockIterator);
 
     const mockResponse = MockResponse() as Express.Response;
 
@@ -86,5 +86,31 @@ describe("ResponseSuccessJsonIterator", () => {
 
     await flushPromises();
     expect(mockResponse.json).toHaveBeenCalledWith(mockIteratorkindlessResult);
+  });
+
+  it("should return error on failures during query", async () => {
+    const queryError = {
+      body: "too many requests",
+      code: 429
+    };
+    const mockIterator = {
+      executeNext: jest.fn(() => Promise.resolve(left(queryError)))
+    };
+
+    const streamingResponse = ResponseJsonIterator(mockIterator);
+
+    const mockResponse = MockResponse() as Express.Response;
+
+    streamingResponse.apply(mockResponse);
+
+    await flushPromises();
+    expect(mockResponse.status).toHaveBeenCalledWith(500);
+    expect(mockResponse.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        detail: "too many requests",
+        status: 500,
+        title: "Query error (429)"
+      })
+    );
   });
 });

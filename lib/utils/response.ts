@@ -1,4 +1,5 @@
 import * as DocumentDb from "documentdb";
+import { isLeft } from "fp-ts/lib/Either";
 import {
   HttpStatusCodeEnum,
   IResponse,
@@ -15,19 +16,26 @@ export interface IResponseSuccessJsonIterator<T>
 }
 
 /**
- * A successful response that consumes and return the documentdb iterator as a json array
+ * A response that consumes and return the DocumentDb iterator as a json array
+ * or an error in case of any failure occurs querying the database.
+ *
  * @TODO: pagination
  */
-export function ResponseSuccessJsonIterator<T>(
+export function ResponseJsonIterator<T>(
   i: IResultIterator<T>
 ): IResponseSuccessJsonIterator<T> {
   return {
     apply: res =>
-      iteratorToArray(i).then(documents => {
+      iteratorToArray(i).then(errorOrDocuments => {
+        if (isLeft(errorOrDocuments)) {
+          const queryError = errorOrDocuments.value;
+          return ResponseErrorQuery(queryError.body, queryError).apply(res);
+        }
+        const documents = errorOrDocuments.value;
         const kindlessDocuments = documents.map(d =>
           Object.assign(Object.assign({}, d), { kind: undefined })
         );
-        res.status(200).json({
+        return res.status(200).json({
           items: kindlessDocuments,
           page_size: kindlessDocuments.length
         });

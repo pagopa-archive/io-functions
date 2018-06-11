@@ -51,7 +51,14 @@ import {
   clientIPAndCidrTuple as ipTuple
 } from "../utils/source_ip_check";
 
-import { Profile, ProfileModel, RetrievedProfile } from "../models/profile";
+import { BlockedInboxOrChannelEnum } from "../api/definitions/BlockedInboxOrChannel";
+import { ServiceId } from "../api/definitions/ServiceId";
+import {
+  IProfileBlockedInboxOrChannels,
+  Profile,
+  ProfileModel,
+  RetrievedProfile
+} from "../models/profile";
 import { ServiceModel } from "../models/service";
 
 function toExtendedProfile(profile: RetrievedProfile): ExtendedProfile {
@@ -65,8 +72,30 @@ function toExtendedProfile(profile: RetrievedProfile): ExtendedProfile {
   };
 }
 
-function toLimitedProfile(_: RetrievedProfile): LimitedProfile {
-  return {};
+/**
+ * Whether the sender service is allowed to send
+ * notififications to the user identified by this profile
+ */
+export function isSenderAllowed(
+  blockedInboxOrChannels: IProfileBlockedInboxOrChannels | undefined,
+  serviceId: ServiceId
+): boolean {
+  return (
+    blockedInboxOrChannels === undefined ||
+    blockedInboxOrChannels[serviceId] === undefined ||
+    !blockedInboxOrChannels[serviceId].has(BlockedInboxOrChannelEnum.INBOX)
+  );
+}
+
+function toLimitedProfile(
+  profile: RetrievedProfile,
+  senderAllowed: boolean
+): LimitedProfile {
+  return {
+    preferred_languages: profile.preferredLanguages,
+    // computed property
+    sender_allowed: senderAllowed
+  };
 }
 
 /**
@@ -113,7 +142,7 @@ type IUpsertProfileHandler = (
 export function GetProfileHandler(
   profileModel: ProfileModel
 ): IGetProfileHandler {
-  return async (auth, _, __, fiscalCode) => {
+  return async (auth, _, userAttributes, fiscalCode) => {
     const errorOrMaybeProfile = await profileModel.findOneProfileByFiscalCode(
       fiscalCode
     );
@@ -127,7 +156,15 @@ export function GetProfileHandler(
           return ResponseSuccessJson(toExtendedProfile(profile));
         } else {
           // or else, we return a limited profile
-          return ResponseSuccessJson(toLimitedProfile(profile));
+          return ResponseSuccessJson(
+            toLimitedProfile(
+              profile,
+              isSenderAllowed(
+                profile.blockedInboxOrChannels,
+                userAttributes.service.serviceId
+              )
+            )
+          );
         }
       } else {
         return ResponseErrorNotFound(

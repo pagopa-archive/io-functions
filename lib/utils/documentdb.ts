@@ -442,15 +442,19 @@ export function mapResultIterator<A, B>(
  */
 export async function iteratorToArray<T>(
   i: IResultIterator<T>
-): Promise<ReadonlyArray<T>> {
-  async function iterate(a: ReadonlyArray<T>): Promise<ReadonlyArray<T>> {
+): Promise<Either<DocumentDb.QueryError, ReadonlyArray<T>>> {
+  async function iterate(
+    a: ReadonlyArray<T>
+  ): Promise<Either<DocumentDb.QueryError, ReadonlyArray<T>>> {
     const errorOrMaybeDocuments = await i.executeNext();
+    if (isLeft(errorOrMaybeDocuments)) {
+      return left(errorOrMaybeDocuments.value);
+    }
     if (
-      isLeft(errorOrMaybeDocuments) ||
       isNone(errorOrMaybeDocuments.value) ||
       errorOrMaybeDocuments.value.value.length === 0
     ) {
-      return a;
+      return right(a);
     }
     const result = errorOrMaybeDocuments.value.value;
     return iterate(a.concat(...result));
