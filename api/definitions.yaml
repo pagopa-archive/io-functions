@@ -115,8 +115,7 @@ PaymentNoticeNumber:
     of pagoPa, needed to identify the payment. Format is `<aux digit (1n)>[<application code> (2n)]<codice IUV (15|17n)>`.
     See [pagoPa specs](https://www.agid.gov.it/sites/default/files/repository_files/specifiche_attuative_pagamenti_1_3_1_0.pdf) for more info on this field and the IUV.
   type: string
-  minLength: 16
-  maxLength: 20
+  pattern: "^[0123][0-9]{17}$"
 PaymentAmount:
   description: |-
     Amount of payment in euro cent. Even if pagoPA accepts until 999999999999 euro cents,
