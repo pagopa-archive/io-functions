@@ -68,7 +68,7 @@ export const Profile = t.intersection([
     // https://it.wikipedia.org/wiki/ISO_3166-2
     preferredLanguages: PreferredLanguages,
 
-    // for each services that ha contacted the user
+    // for each services that has contacted the user
     // we save the latest version of the ToS the user has accepted
     acceptedServiceTosVersion: AcceptedServiceTosVersion
   })
