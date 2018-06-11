@@ -26,6 +26,7 @@ import {
 
 import { Service as ApiService } from "../../../api/definitions/Service";
 
+import { FiscalCode } from "../../../api/definitions/FiscalCode";
 import {
   CreateService,
   CreateServiceHandler,
@@ -48,10 +49,13 @@ const anAzureAuthorization: IAzureApiAuthorization = {
   userId: "u123" as NonEmptyString
 };
 
+const aFiscalCode = "SPNDNL80R13C000X" as FiscalCode;
+
 const aServicePayload: ApiService = {
   authorized_cidrs: [],
   authorized_recipients: [],
   department_name: "MyDeptName" as NonEmptyString,
+  organization_fiscal_code: aFiscalCode,
   organization_name: "MyOrgName" as NonEmptyString,
   service_id: "MySubscriptionId" as NonEmptyString,
   service_name: "MyServiceName" as NonEmptyString
@@ -61,6 +65,7 @@ const aService: Service = {
   authorizedCIDRs: toAuthorizedCIDRs([]),
   authorizedRecipients: toAuthorizedRecipients([]),
   departmentName: "MyDeptName" as NonEmptyString,
+  organizationFiscalCode: aFiscalCode,
   organizationName: "MyOrgName" as NonEmptyString,
   serviceId: "MySubscriptionId" as NonEmptyString,
   serviceName: "MyServiceName" as NonEmptyString

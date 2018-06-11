@@ -21,7 +21,7 @@ import { NonNegativeNumber } from "italia-ts-commons/lib/numbers";
 import { NonEmptyString } from "italia-ts-commons/lib/strings";
 import { nonEmptyStringToModelId } from "../utils/conversions";
 
-import { readonlySetType, tag } from "italia-ts-commons/lib/types";
+import { pick, readonlySetType, tag } from "italia-ts-commons/lib/types";
 
 export const SERVICE_COLLECTION_NAME = "services";
 export const SERVICE_MODEL_PK_FIELD = "serviceId";
@@ -36,6 +36,8 @@ export const Service = t.interface({
   authorizedRecipients: readonlySetType(FiscalCode, "fiscal codes"),
   // the name of the department within the service
   departmentName: NonEmptyString,
+  // fiscal code of the organization, used to receive payments
+  organizationFiscalCode: FiscalCode,
   // the name of the organization
   organizationName: NonEmptyString,
   // this equals user's subscriptionId
@@ -132,14 +134,18 @@ function updateModelId(
 }
 
 function toBaseType(o: RetrievedService): Service {
-  return {
-    authorizedCIDRs: o.authorizedCIDRs,
-    authorizedRecipients: o.authorizedRecipients,
-    departmentName: o.departmentName,
-    organizationName: o.organizationName,
-    serviceId: o.serviceId,
-    serviceName: o.serviceName
-  };
+  return pick(
+    [
+      "authorizedCIDRs",
+      "authorizedRecipients",
+      "departmentName",
+      "organizationFiscalCode",
+      "organizationName",
+      "serviceId",
+      "serviceName"
+    ],
+    o
+  );
 }
 
 /**

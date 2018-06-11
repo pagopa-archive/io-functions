@@ -10,6 +10,7 @@ import { NonNegativeNumber } from "italia-ts-commons/lib/numbers";
 import { NonEmptyString } from "italia-ts-commons/lib/strings";
 import * as DocumentDbUtils from "../../utils/documentdb";
 
+import { FiscalCode } from "../../api/definitions/FiscalCode";
 import {
   RetrievedService,
   Service,
@@ -25,6 +26,7 @@ const servicesCollectionUrl = DocumentDbUtils.getCollectionUri(
 );
 
 const aServiceId = "xyz" as NonEmptyString;
+const aFiscalCode = "SPNDNL80R13C000X" as FiscalCode;
 
 const aRetrievedService: RetrievedService = {
   _self: "xyz",
@@ -34,6 +36,7 @@ const aRetrievedService: RetrievedService = {
   departmentName: "MyDept" as NonEmptyString,
   id: "xyz" as NonEmptyString,
   kind: "IRetrievedService",
+  organizationFiscalCode: aFiscalCode,
   organizationName: "MyOrg" as NonEmptyString,
   serviceId: aServiceId,
   serviceName: "MyService" as NonEmptyString,
@@ -110,6 +113,7 @@ describe("createService", () => {
       authorizedCIDRs: toAuthorizedCIDRs([]),
       authorizedRecipients: toAuthorizedRecipients([]),
       departmentName: "MyService" as NonEmptyString,
+      organizationFiscalCode: aFiscalCode,
       organizationName: "MyService" as NonEmptyString,
       serviceId: aServiceId,
       serviceName: "MyService" as NonEmptyString
@@ -144,6 +148,7 @@ describe("createService", () => {
       authorizedCIDRs: toAuthorizedCIDRs([]),
       authorizedRecipients: toAuthorizedRecipients([]),
       departmentName: "MyService" as NonEmptyString,
+      organizationFiscalCode: aFiscalCode,
       organizationName: "MyService" as NonEmptyString,
       serviceId: aServiceId,
       serviceName: "MyService" as NonEmptyString

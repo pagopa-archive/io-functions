@@ -10,6 +10,7 @@ import { Service, toAuthorizedCIDRs } from "../../../models/service";
 import { NonEmptyString } from "italia-ts-commons/lib/strings";
 
 import { Set } from "json-set-map";
+import { FiscalCode } from "../../../api/definitions/FiscalCode";
 import { AzureUserAttributesMiddleware } from "../azure_user_attributes";
 
 interface IHeaders {
@@ -20,10 +21,13 @@ function lookup(h: IHeaders): (k: string) => string | undefined {
   return (k: string) => h[k];
 }
 
+const aFiscalCode = "SPNDNL80R13C000X" as FiscalCode;
+
 const aService: Service = {
   authorizedCIDRs: toAuthorizedCIDRs([]),
   authorizedRecipients: new Set([]),
   departmentName: "MyDept" as NonEmptyString,
+  organizationFiscalCode: aFiscalCode,
   organizationName: "MyService" as NonEmptyString,
   serviceId: "serviceId" as NonEmptyString,
   serviceName: "MyService" as NonEmptyString

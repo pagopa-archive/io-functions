@@ -392,13 +392,20 @@ Service:
     department_name:
       $ref: "#/DepartmentName"
     authorized_cidrs:
+      description: |-
+        Allowed source IPs or CIDRs for this service.
       type: array
       items:
         $ref: "#/CIDR"
     authorized_recipients:
+      description: |-
+        If non empty, the service will be able
+        to send messages only to these fiscal codes.
       type: array
       items:
         $ref: "#/FiscalCode"
+    organization_fiscal_code:
+      $ref: "#/FiscalCode"
     version:
       type: integer
     id:
@@ -410,6 +417,7 @@ Service:
     - department_name
     - authorized_cidrs
     - authorized_recipients
+    - organization_fiscal_code
 ServicePublic:
   title: Service (public)
   description: A Service associated to an user's subscription.
