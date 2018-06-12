@@ -22,6 +22,7 @@ import {
 } from "../message";
 
 jest.mock("../../utils/azure_storage");
+import { MessageSubject } from "../../api/definitions/MessageSubject";
 import { ServiceId } from "../../api/definitions/ServiceId";
 import { TimeToLiveSeconds } from "../../api/definitions/TimeToLiveSeconds";
 import * as azureStorageUtils from "../../utils/azure_storage";
@@ -37,7 +38,8 @@ const aMessagesCollectionUrl = DocumentDbUtils.getCollectionUri(
 const aMessageBodyMarkdown = "test".repeat(80) as MessageBodyMarkdown;
 
 const aMessageContent: MessageContent = {
-  markdown: aMessageBodyMarkdown
+  markdown: aMessageBodyMarkdown,
+  subject: "test".repeat(10) as MessageSubject
 };
 
 const aFiscalCode = "FRLFRC74E04B157I" as FiscalCode;

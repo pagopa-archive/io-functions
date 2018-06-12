@@ -54,6 +54,7 @@ import {
 } from "../created_message_queue_handler";
 
 import { HttpsUrl } from "../api/definitions/HttpsUrl";
+import { MessageSubject } from "../api/definitions/MessageSubject";
 import { ServiceId } from "../api/definitions/ServiceId";
 import { MessageStatusModel } from "../models/message_status";
 import {
@@ -99,7 +100,8 @@ const aServiceId = "s123" as ServiceId;
 
 const aMessage: NewMessageWithContent = {
   content: {
-    markdown: aMessageBodyMarkdown
+    markdown: aMessageBodyMarkdown,
+    subject: "test".repeat(10) as MessageSubject
   },
   createdAt: new Date(),
   fiscalCode: aCorrectFiscalCode,
@@ -155,7 +157,10 @@ const aCreatedNotificationWithEmail: NewNotification = {
 const anEmailNotificationEvent: NotificationEvent = {
   message: {
     ...aMessage,
-    content: { markdown: aMessageBodyMarkdown },
+    content: {
+      markdown: aMessageBodyMarkdown,
+      subject: "test".repeat(10) as MessageSubject
+    },
     kind: "INewMessageWithContent"
   },
   notificationId: aCreatedNotificationWithEmail.id,

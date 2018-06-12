@@ -10,6 +10,7 @@ import { NotificationEvent } from "../notification_event";
 import { MessageContent } from "../../api/definitions/MessageContent";
 
 import { isRight } from "fp-ts/lib/Either";
+import { MessageSubject } from "../../api/definitions/MessageSubject";
 import { TimeToLiveSeconds } from "../../api/definitions/TimeToLiveSeconds";
 import { CreatedMessageEventSenderMetadata } from "../created_message_sender_metadata";
 
@@ -19,7 +20,8 @@ const aNotificationId = "A_NOTIFICATION_ID" as NonEmptyString;
 const aMessageBodyMarkdown = "test".repeat(80) as MessageBodyMarkdown;
 
 const aMessageContent: MessageContent = {
-  markdown: aMessageBodyMarkdown
+  markdown: aMessageBodyMarkdown,
+  subject: "test".repeat(10) as MessageSubject
 };
 
 const aMessage = {
