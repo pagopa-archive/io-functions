@@ -1,3 +1,5 @@
+/* tslint:disable:no-identical-functions */
+
 import { ResponseSuccessJson } from "italia-ts-commons/lib/responses";
 import { IPString } from "italia-ts-commons/lib/strings";
 import { ITuple2, Tuple2 } from "italia-ts-commons/lib/tuples";

@@ -19,6 +19,9 @@
       "no-var-keyword": true,
       "typedef": [true, "call-signature"],
 
+      // sonarts
+      "max-union-size": false,
+
       // tslint-immutable: Immutability rules
       "readonly-keyword": true,
       "readonly-array": true,

@@ -48,7 +48,7 @@ export const getDelaySecForRetries = (
 ): Option<number> =>
   some(retries)
     .filter(nr => nr <= maxRetries)
-    .map(nr => Math.ceil(minBackoff * Math.pow(2, nr) / 1000));
+    .map(nr => Math.ceil((minBackoff * Math.pow(2, nr)) / 1000));
 
 /* istanbul ignore next */
 export function queueMessageToString(queueMessage: IQueueMessage): string {

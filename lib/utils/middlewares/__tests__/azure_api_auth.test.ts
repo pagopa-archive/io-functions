@@ -1,6 +1,7 @@
 /* tslint:disable:no-any */
 /* tslint:disable:no-big-function */
 /* tslint:disable:no-duplicate-string */
+/* tslint:disable:no-identical-functions */
 
 import { isLeft, isRight } from "fp-ts/lib/Either";
 

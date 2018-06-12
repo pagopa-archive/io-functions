@@ -55,22 +55,20 @@ type GetDebug = (
 ) => Promise<IResponseSuccessJson<object>>;
 
 const getDebugHandler: GetDebug = (request, _, auth, userAttributes) => {
-  return new Promise((resolve, __) => {
-    resolve(
-      ResponseSuccessJson({
-        auth: {
-          ...auth,
-          // must convert the Set to an Array
-          // see https://stackoverflow.com/questions/31190885/json-stringify-a-set
-          groups: Array.from(auth.groups.values())
-        },
-        body: request.body,
-        headers: request.headers,
-        params: request.params,
-        user: userAttributes
-      })
-    );
-  });
+  return Promise.resolve(
+    ResponseSuccessJson({
+      auth: {
+        ...auth,
+        // must convert the Set to an Array
+        // see https://stackoverflow.com/questions/31190885/json-stringify-a-set
+        groups: Array.from(auth.groups.values())
+      },
+      body: request.body,
+      headers: request.headers,
+      params: request.params,
+      user: userAttributes
+    })
+  );
 };
 
 export function GetDebug(serviceModel: ServiceModel): express.RequestHandler {
