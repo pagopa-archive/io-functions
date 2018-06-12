@@ -63,7 +63,6 @@ import { ServiceModel } from "../models/service";
 
 function toExtendedProfile(profile: RetrievedProfile): ExtendedProfile {
   return {
-    accepted_service_tos_version: profile.acceptedServiceTosVersion,
     blocked_inbox_or_channels: profile.blockedInboxOrChannels,
     email: profile.email,
     is_inbox_enabled: profile.isInboxEnabled,
@@ -230,7 +229,6 @@ async function createNewProfileFromPayload(
 ): Promise<IResponseSuccessJson<ExtendedProfile> | IResponseErrorQuery> {
   // create a new profile
   const profile: Profile = {
-    acceptedServiceTosVersion: profileModelPayload.accepted_service_tos_version,
     blockedInboxOrChannels: profileModelPayload.blocked_inbox_or_channels,
     email: profileModelPayload.email,
     fiscalCode,
@@ -267,8 +265,6 @@ async function updateExistingProfileFromPayload(
     p => {
       return {
         ...p,
-        acceptedServiceTosVersion:
-          profileModelPayload.accepted_service_tos_version,
         blockedInboxOrChannels: profileModelPayload.blocked_inbox_or_channels,
         email: profileModelPayload.email,
         isInboxEnabled: profileModelPayload.is_inbox_enabled,

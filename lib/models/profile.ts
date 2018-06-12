@@ -15,8 +15,6 @@ import { Option } from "fp-ts/lib/Option";
 
 import { NonNegativeNumber } from "italia-ts-commons/lib/numbers";
 import { NonEmptyString } from "italia-ts-commons/lib/strings";
-
-import { AcceptedServiceTosVersion } from "../api/definitions/AcceptedServiceTosVersion";
 import { BlockedInboxOrChannel } from "../api/definitions/BlockedInboxOrChannel";
 import { EmailAddress } from "../api/definitions/EmailAddress";
 import { FiscalCode } from "../api/definitions/FiscalCode";
@@ -66,11 +64,7 @@ export const Profile = t.intersection([
 
     // array of user's preferred languages in ISO-3166-1-2 format
     // https://it.wikipedia.org/wiki/ISO_3166-2
-    preferredLanguages: PreferredLanguages,
-
-    // latest version of the ToS the user has accepted
-    // for the services identified by serviceIds
-    acceptedServiceTosVersion: AcceptedServiceTosVersion
+    preferredLanguages: PreferredLanguages
   })
 ]);
 

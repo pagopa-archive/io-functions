@@ -271,14 +271,6 @@ BlockedInboxOrChannels:
   description: |-
     All the notification channels blocked by the user.
     Each channel is related to a specific service (sender).
-AcceptedServiceTosVersion:
-  type: object
-  default: {}
-  additionalProperties:
-    type: integer
-    minimum: 0
-  description: |-
-    Latest version of ToS accepted for each service
 LimitedProfile:
   description: |-
     Describes the citizen's profile, mostly interesting for preferences
@@ -310,8 +302,6 @@ ExtendedProfile:
       $ref: "#/IsInboxEnabled"
     is_webhook_enabled:
       $ref: "#/IsWebhookEnabled"
-    accepted_service_tos_version:
-      $ref: "#/AcceptedServiceTosVersion"
     version:
       type: integer
 IsInboxEnabled:
