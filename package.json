@@ -23,7 +23,7 @@
     "generate:templates": "gulp generate:templates"
   },
   "dependencies": {
-    "applicationinsights": "^1.0.2",
+    "applicationinsights": "^1.0.3",
     "azure-function-express": "^1.2.2",
     "azure-functions-types": "^0.1.1",
     "azure-storage": "^2.8.2",
