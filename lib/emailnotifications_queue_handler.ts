@@ -282,14 +282,8 @@ export async function handleNotification(
 
   const emailNotification = errorOrEmailNotification.value.channels.EMAIL;
 
-  // use the provided subject if present, or else use the default subject line
-  // TODO: generate the default subject from the service/client metadata
-  const subject = message.content.subject
-    ? message.content.subject
-    : ("A new notification for you." as MessageSubject);
-
   const documentHtml = await generateDocumentHtml(
-    subject,
+    message.content.subject,
     message.content.markdown,
     senderMetadata
   );
@@ -312,7 +306,7 @@ export async function handleNotification(
     },
     html: documentHtml,
     messageId: message.id,
-    subject,
+    subject: message.content.subject,
     text: bodyText,
     to: emailNotification.toAddress
     // priority: "high", // TODO: set based on kind of notification

@@ -20,7 +20,8 @@ describe("", () => {
             "dbs/LgNRAA==/colls/LgNRANj9nwA=/docs/LgNRANj9nwBgAAAAAAAAAA==/",
           _ts: 1505754168,
           content: {
-            markdown: aMessageBodyMarkdown
+            markdown: aMessageBodyMarkdown,
+            subject: "test".repeat(10)
           },
           createdAt: new Date().toISOString(),
           fiscalCode: "FRLFRC73E04B157I",

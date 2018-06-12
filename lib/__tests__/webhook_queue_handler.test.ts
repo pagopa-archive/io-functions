@@ -98,7 +98,8 @@ const aMessage = {
 const aMessageContent = {
   markdown: `# Hello world!
     lorem ipsum
-  `.repeat(10) as MessageBodyMarkdown
+  `.repeat(10) as MessageBodyMarkdown,
+  subject: "test".repeat(10) as MessageSubject
 };
 
 const aMessageBodyMarkdown = "test".repeat(80) as MessageBodyMarkdown;

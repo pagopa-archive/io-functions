@@ -277,7 +277,8 @@ describe("handleNotification", () => {
     const aMessageContent = {
       markdown: `# Hello world!
         lorem ipsum
-      `.repeat(10) as MessageBodyMarkdown
+      `.repeat(10) as MessageBodyMarkdown,
+      subject: aMessageBodySubject
     };
 
     const notificationModelMock = {
@@ -344,7 +345,8 @@ This is a *message* from the future!
 This is a *message* from the future!
 This is a *message* from the future!
 This is a *message* from the future!
-` as MessageBodyMarkdown
+` as MessageBodyMarkdown,
+      subject: aMessageBodySubject
     };
 
     const notificationModelMock = {
@@ -368,43 +370,13 @@ org
 dept
 service
 
-A new notification for you.
+${aMessageBodySubject}
 
 HELLO WORLD!
 This is a message from the future!
 This is a message from the future!
 This is a message from the future!
 This is a message from the future!`.replace(/[ \n]+/g, "|")
-    );
-
-    expect(isRight(result)).toBeTruthy();
-    expect(result.value).toBeDefined();
-  });
-
-  it("should send an email notification with the default subject", async () => {
-    const mockAppinsights = getAppinsightsMock();
-
-    const mockTransport = MockTransport();
-    const mockTransporter = NodeMailer.createTransport(mockTransport);
-
-    const notificationModelMock = {
-      find: jest.fn(() => right(some(aNotification))),
-      update: jest.fn(() => right(some(aNotification)))
-    };
-
-    const result = await handleNotification(
-      mockTransporter,
-      mockAppinsights as any,
-      notificationModelMock as any,
-      getMockNotificationEvent({
-        markdown: aMessageBodyMarkdown,
-        subject: undefined
-      }),
-      notificationDefaults
-    );
-
-    expect(mockTransport.sentMail[0].data.subject).toBe(
-      "A new notification for you."
     );
 
     expect(isRight(result)).toBeTruthy();

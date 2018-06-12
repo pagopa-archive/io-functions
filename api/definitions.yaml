@@ -89,6 +89,7 @@ MessageContent:
     payment_data:
       $ref: "#/PaymentData"
   required:
+    - subject
     - markdown
 NewMessage:
   type: object

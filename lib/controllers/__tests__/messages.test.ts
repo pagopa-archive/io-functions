@@ -114,9 +114,12 @@ const aUserAuthenticationTrustedApplication: IAzureApiAuthorization = {
   userId: "u123" as NonEmptyString
 };
 
+const aMessageSubject = "test".repeat(10) as MessageSubject;
+
 const aMessagePayload: ApiNewMessageWithDefaults = {
   content: {
-    markdown: aMessageBodyMarkdown
+    markdown: aMessageBodyMarkdown,
+    subject: aMessageSubject
   },
   time_to_live: 3600 as TimeToLiveSeconds
 };
@@ -284,7 +287,8 @@ describe("CreateMessageHandler", () => {
         message: {
           ...aNewMessageWithoutContent,
           content: {
-            markdown: aMessagePayload.content.markdown
+            markdown: aMessagePayload.content.markdown,
+            subject: aMessageSubject
           },
           createdAt: expect.any(Date),
           kind: "INewMessageWithContent"
@@ -302,7 +306,6 @@ describe("CreateMessageHandler", () => {
       expect.objectContaining({
         name: "api.messages.create",
         properties: {
-          hasCustomSubject: "false",
           hasDefaultEmail: "false",
           senderServiceId: "test",
           senderUserId: "u123",
@@ -373,7 +376,8 @@ describe("CreateMessageHandler", () => {
         message: {
           ...aNewMessageWithoutContent,
           content: {
-            markdown: aMessagePayload.content.markdown
+            markdown: aMessagePayload.content.markdown,
+            subject: aMessagePayload.content.subject
           },
           createdAt: expect.any(Date),
           kind: "INewMessageWithContent"
@@ -391,7 +395,6 @@ describe("CreateMessageHandler", () => {
       expect.objectContaining({
         name: "api.messages.create",
         properties: {
-          hasCustomSubject: "false",
           hasDefaultEmail: "false",
           senderServiceId: "test",
           senderUserId: "u123",
@@ -477,7 +480,6 @@ describe("CreateMessageHandler", () => {
       expect.objectContaining({
         name: "api.messages.create",
         properties: {
-          hasCustomSubject: "true",
           hasDefaultEmail: "false",
           senderServiceId: "test",
           senderUserId: "u123",
@@ -554,7 +556,8 @@ describe("CreateMessageHandler", () => {
         message: {
           ...aNewMessageWithoutContent,
           content: {
-            markdown: messagePayload.content.markdown
+            markdown: messagePayload.content.markdown,
+            subject: messagePayload.content.subject
           },
           createdAt: expect.any(Date),
           kind: "INewMessageWithContent"
@@ -572,7 +575,6 @@ describe("CreateMessageHandler", () => {
       expect.objectContaining({
         name: "api.messages.create",
         properties: {
-          hasCustomSubject: "false",
           hasDefaultEmail: "true",
           senderServiceId: "test",
           senderUserId: "u123",
@@ -707,7 +709,6 @@ describe("CreateMessageHandler", () => {
         name: "api.messages.create",
         properties: {
           error: "IResponseErrorQuery",
-          hasCustomSubject: "false",
           hasDefaultEmail: "false",
           senderServiceId: "test",
           senderUserId: "u123",
@@ -1055,11 +1056,6 @@ describe("MessagePayloadMiddleware", () => {
     const fixtures: ReadonlyArray<any> = [
       {
         content: {
-          markdown: "test".repeat(100)
-        }
-      },
-      {
-        content: {
           markdown: "test".repeat(100),
           subject: "test subject"
         }
@@ -1075,7 +1071,8 @@ describe("MessagePayloadMiddleware", () => {
       },
       {
         content: {
-          markdown: "test".repeat(100)
+          markdown: "test".repeat(100),
+          subject: "test subject"
         },
         time_to_live: 4000
       }

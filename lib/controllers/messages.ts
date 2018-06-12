@@ -344,7 +344,6 @@ export function CreateMessageHandler(
     // base appinsights event attributes for convenience (used later)
     const appInsightsEventName = "api.messages.create";
     const appInsightsEventProps = {
-      hasCustomSubject: Boolean(messagePayload.content.subject).toString(),
       hasDefaultEmail: Boolean(
         messagePayload.default_addresses &&
           messagePayload.default_addresses.email
