@@ -30,7 +30,6 @@ const aFiscalCode = "FRLFRC74E04B157I" as FiscalCode;
 const aRetrievedProfile: RetrievedProfile = {
   _self: "xyz",
   _ts: 123,
-  acceptedServiceTosVersion: {},
   fiscalCode: aFiscalCode,
   id: "xyz" as NonEmptyString,
   isInboxEnabled: false,
