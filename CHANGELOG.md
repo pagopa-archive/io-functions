@@ -11,6 +11,14 @@ The format of this file is loosely based on [Keep a Changelog](http://keepachang
 
 ## [Unreleased]
 
+## [v0.43.0] - 2018-06-13
+
+### Removed
+- [getProfile] Removed `accepted_service_tos_version` field (reverted changes in 0.42)
+
+### Changed
+- [submitMessageforUser] Changed: message `subject` is now mandatory
+
 ## [v0.42.0] - 2018-06-11
 
 ### Added
@@ -81,7 +89,8 @@ The format of this file is loosely based on [Keep a Changelog](http://keepachang
 [upsertProfile]: https://teamdigitale.github.io/digital-citizenship/api/public.html#operation/upsertProfile
 [getInfo]: https://teamdigitale.github.io/digital-citizenship/api/public.html#operation/getInfo
 
-[Unreleased]: https://github.com/teamdigitale/digital-citizenship-functions/compare/v0.42.0...HEAD
+[Unreleased]: https://github.com/teamdigitale/digital-citizenship-functions/compare/v0.43.0...HEAD
+[v0.43.0]: https://github.com/teamdigitale/digital-citizenship-functions/compare/v0.42.0...v0.43.0
 [v0.42.0]: https://github.com/teamdigitale/digital-citizenship-functions/compare/v0.41.0...v0.42.0
 [v0.41.0]: https://github.com/teamdigitale/digital-citizenship-functions/compare/v0.40.0...v0.41.0
 [v0.40.0]: https://github.com/teamdigitale/digital-citizenship-functions/compare/v0.39.0...v0.40.0
