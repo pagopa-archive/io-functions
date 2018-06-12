@@ -23,7 +23,7 @@
     "generate:templates": "gulp generate:templates"
   },
   "dependencies": {
-    "applicationinsights": "^1.0.2",
+    "applicationinsights": "^1.0.3",
     "azure-function-express": "^1.2.2",
     "azure-functions-types": "^0.1.1",
     "azure-storage": "^2.8.2",
@@ -35,7 +35,7 @@
     "helmet": "^3.12.0",
     "helmet-csp": "^2.5.1",
     "html-to-text": "^4.0.0",
-    "io-ts": "^1.1.3",
+    "io-ts": "^1.1.4",
     "italia-ts-commons": "^1.15.0",
     "json-set-map": "^1.0.2",
     "nodemailer": "^4.6.4",
@@ -48,7 +48,7 @@
     "ulid": "^2.2.2",
     "unified": "^6.1.5",
     "validator": "^9.4.1",
-    "vfile": "^2.2.0",
+    "vfile": "^3.0.0",
     "winston": "^2.4.2"
   },
   "devDependencies": {
@@ -78,7 +78,7 @@
     "italia-utils": "^3.8.1",
     "jest": "^23.1.0",
     "jest-mock-express": "^0.1.1",
-    "lolex": "^2.4.1",
+    "lolex": "^2.7.0",
     "mjml": "^4.0.5",
     "nodemailer-mock-transport": "^1.3.0",
     "npm-run-all": "^4.1.1",
@@ -86,7 +86,7 @@
     "rimraf": "^2.6.2",
     "run-sequence": "^2.2.0",
     "semver": "^5.4.1",
-    "swagger-parser": "^4.1.0",
+    "swagger-parser": "^5.0.0",
     "ts-jest": "^22.4.5",
     "ts-node": "^6.1.0",
     "tslint": "^5.8.0",
@@ -94,17 +94,24 @@
     "tslint-immutable": "^4.5.4",
     "tslint-plugin-prettier": "^1.3.0",
     "tslint-sonarts": "^1.6.0",
-    "typescript": "^2.8.3",
-    "typestrict": "^0.0.8",
+    "typescript": "^2.9.1",
+    "typestrict": "^0.0.9",
     "yargs": "^11.0.0"
   },
   "jest": {
     "testEnvironment": "node",
-    "moduleFileExtensions": ["ts", "js"],
+    "moduleFileExtensions": [
+      "ts",
+      "js"
+    ],
     "transform": {
       "^.+\\.(ts|tsx)$": "<rootDir>/node_modules/ts-jest/preprocessor.js"
     },
-    "transformIgnorePatterns": ["<rootDir>/node_modules/(?!azure-functions-types)"],
-    "testMatch": ["**/__tests__/*.ts"]
+    "transformIgnorePatterns": [
+      "<rootDir>/node_modules/(?!azure-functions-types)"
+    ],
+    "testMatch": [
+      "**/__tests__/*.ts"
+    ]
   }
 }

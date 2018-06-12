@@ -1,5 +1,6 @@
 /* tslint:disable:no-any */
 /* tslint:disable:no-duplicate-string */
+/* tslint:disable:no-identical-functions */
 
 import { none, some } from "fp-ts/lib/Option";
 
