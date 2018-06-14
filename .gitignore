@@ -9,5 +9,6 @@
 .idea
 .vscode
 .env
+.data
 lib/templates/**
 lib/api/**/*.ts
