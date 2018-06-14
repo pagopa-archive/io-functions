@@ -382,6 +382,17 @@ a top level directory associated (e.g., `PublicApiV1`).
 Each function directory contains a `function.json` that configures the bindings
 and the reference to the function entrypoint from `lib/index.ts`.
 
+### Quickstart
+
+Install [yarn](https://yarnpkg.com/) package manager then,
+to build the functions from Typescript sources, use:
+
+```sh
+$ yarn install      # install npm packages
+$ yarn build        # to lint and build
+$ yarn test         # run jest unit tests
+```
+
 ### Code generation from OpenAPI specs
 
 To gain the most from TypeScript's type safety we rely on compile-time code
