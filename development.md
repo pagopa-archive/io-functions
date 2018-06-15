@@ -2,27 +2,36 @@
 
 Instructions and troubleshooting to setup a development environment.
 
+
 ## System Requirements
+
 * Node.js *(check version in `.node-version` file)*
 * Yarn *(https://yarnpkg.com/lang/en/)*
+
 
 ## Setup libraries
 
 ### Azure Functions Tools
+
 In order to execute Azure Functions locally, you need to install `azure-functions-tools` on your machine. It's available on Windows, OSX and Linux. Please refer to [the official repository](https://github.com/Azure/azure-functions-core-tools) for installation instructions. 
 
 ### Azure Storage
+
 As some functions binds to Queue, it's mandatory to provide access to an [Azure Storage Service](https://docs.microsoft.com/en-us/azure/storage/). For development, it's easier rely to a local emulator instance of such service.
 
 #### on Windows
+
 An offical Storage Emulator is provided, please refer to [documentation](https://docs.microsoft.com/en-us/azure/storage/common/storage-use-emulator.
 
 #### on Linux
+
 An open-source project called `Azurite` provides a local emulator for Linux based environments. It runs locally as well in a dedicated docker container. Check out [Azurite's repo](https://github.com/Azure/Azurite) for more informations.
+
 
 ## Local Configuration
 
 ### local.settings.json
+
 On production environment, Azure binds functions to the Storage Service. On a local environment, an explicit connection configuration must be provided in a `local.settings.json` file. Place such file at the project's root. Here's an example:
 ```json
 {
@@ -36,7 +45,8 @@ On production environment, Azure binds functions to the Storage Service. On a lo
 ```
 Please don't commit this file.
 
-## Build
+## 
+
 Install [yarn](https://yarnpkg.com/) package manager then,
 to build the functions from Typescript sources, use:
 
@@ -46,19 +56,23 @@ $ yarn build        # to lint and build
 $ yarn test         # run jest unit tests
 ```
 
+
 ## Run
 
-## Using Terminal
+### Using Terminal
+
 Simply run the following command:
 ```sh
 func host start
 ```
 the application should start and get ready to receive input.
 
-## Using Visual Studio Code
+### Using Visual Studio Code
+
 You can configure Visual Studio Code by adding configuration to `.vscode/task.json` and `.vscode/launch.json`. Please refer to Visual Studio Code documentation for further informations.
 
-### task.json
+#### task.json
+
 ```json
  {
   "version": "2.0.0",
@@ -106,13 +120,8 @@ You can configure Visual Studio Code by adding configuration to `.vscode/task.js
 }
 ```
 
+#### launch.json
 
-
-
-
-
-
-### launch.json
 ```json
 {
     "version": "0.2.0",
@@ -130,7 +139,7 @@ You can configure Visual Studio Code by adding configuration to `.vscode/task.js
 ```
 You can now execute and debug the application with `Debug -> Start Debugging`.
 
-## Using Docker
+### Using Docker
 
 Microsoft itself provides a docker image for running functions on node: https://hub.docker.com/r/microsoft/azure-functions-node8/.
 
