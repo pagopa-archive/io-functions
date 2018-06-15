@@ -45,7 +45,7 @@ On production environment, Azure binds functions to the Storage Service. On a lo
 ```
 Please don't commit this file.
 
-## 
+## Build
 
 Install [yarn](https://yarnpkg.com/) package manager then,
 to build the functions from Typescript sources, use:
