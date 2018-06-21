@@ -15,10 +15,13 @@ import { Option } from "fp-ts/lib/Option";
 import { Set } from "json-set-map";
 
 import { CIDR } from "../api/definitions/CIDR";
-import { FiscalCode } from "../api/definitions/FiscalCode";
 
 import { NonNegativeNumber } from "italia-ts-commons/lib/numbers";
-import { NonEmptyString } from "italia-ts-commons/lib/strings";
+import {
+  FiscalCode,
+  NonEmptyString,
+  OrganizationFiscalCode
+} from "italia-ts-commons/lib/strings";
 import { nonEmptyStringToModelId } from "../utils/conversions";
 
 import { pick, readonlySetType, tag } from "italia-ts-commons/lib/types";
@@ -37,7 +40,7 @@ export const Service = t.interface({
   // the name of the department within the service
   departmentName: NonEmptyString,
   // fiscal code of the organization, used to receive payments
-  organizationFiscalCode: FiscalCode,
+  organizationFiscalCode: OrganizationFiscalCode,
   // the name of the organization
   organizationName: NonEmptyString,
   // this equals user's subscriptionId

@@ -8,10 +8,12 @@ import { isLeft, isRight, left, right } from "fp-ts/lib/Either";
 
 import { Service, toAuthorizedCIDRs } from "../../../models/service";
 
-import { NonEmptyString } from "italia-ts-commons/lib/strings";
+import {
+  NonEmptyString,
+  OrganizationFiscalCode
+} from "italia-ts-commons/lib/strings";
 
 import { Set } from "json-set-map";
-import { FiscalCode } from "../../../api/definitions/FiscalCode";
 import { AzureUserAttributesMiddleware } from "../azure_user_attributes";
 
 interface IHeaders {
@@ -22,13 +24,13 @@ function lookup(h: IHeaders): (k: string) => string | undefined {
   return (k: string) => h[k];
 }
 
-const aFiscalCode = "SPNDNL80R13C000X" as FiscalCode;
+const anOrganizationFiscalCode = "01234567890" as OrganizationFiscalCode;
 
 const aService: Service = {
   authorizedCIDRs: toAuthorizedCIDRs([]),
   authorizedRecipients: new Set([]),
   departmentName: "MyDept" as NonEmptyString,
-  organizationFiscalCode: aFiscalCode,
+  organizationFiscalCode: anOrganizationFiscalCode,
   organizationName: "MyService" as NonEmptyString,
   serviceId: "serviceId" as NonEmptyString,
   serviceName: "MyService" as NonEmptyString
