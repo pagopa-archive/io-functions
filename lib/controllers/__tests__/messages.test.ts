@@ -15,7 +15,11 @@ import { FiscalCode } from "../../api/definitions/FiscalCode";
 import { MessageBodyMarkdown } from "../../api/definitions/MessageBodyMarkdown";
 import { MessageSubject } from "../../api/definitions/MessageSubject";
 
-import { EmailString, NonEmptyString } from "italia-ts-commons/lib/strings";
+import {
+  EmailString,
+  NonEmptyString,
+  OrganizationFiscalCode
+} from "italia-ts-commons/lib/strings";
 import {
   IAzureApiAuthorization,
   UserGroup
@@ -83,6 +87,7 @@ function lookup(h: IHeaders): (k: string) => string | undefined {
 }
 
 const aFiscalCode = "FRLFRC74E04B157I" as FiscalCode;
+const anOrganizationFiscalCode = "01234567890" as OrganizationFiscalCode;
 const anEmail = "test@example.com" as EmailString;
 const aMessageBodyMarkdown = "test".repeat(80) as MessageBodyMarkdown;
 
@@ -93,7 +98,7 @@ const someUserAttributes: IAzureUserAttributes = {
     authorizedCIDRs: toAuthorizedCIDRs([]),
     authorizedRecipients: new Set([]),
     departmentName: "IT" as NonEmptyString,
-    organizationFiscalCode: aFiscalCode,
+    organizationFiscalCode: anOrganizationFiscalCode,
     organizationName: "AgID" as NonEmptyString,
     serviceId: "test" as NonEmptyString,
     serviceName: "Test" as NonEmptyString

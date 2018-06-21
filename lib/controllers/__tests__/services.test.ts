@@ -4,7 +4,10 @@ import { none, some } from "fp-ts/lib/Option";
 
 import { left, right } from "fp-ts/lib/Either";
 import { NonNegativeNumber } from "italia-ts-commons/lib/numbers";
-import { NonEmptyString } from "italia-ts-commons/lib/strings";
+import {
+  NonEmptyString,
+  OrganizationFiscalCode
+} from "italia-ts-commons/lib/strings";
 
 import { response as MockResponse } from "jest-mock-express";
 
@@ -53,13 +56,14 @@ const aServicePayload: ApiService = {
   service_name: "MyServiceName" as NonEmptyString
 };
 
-const aFiscalCode = "SPNDNL80R13C000X" as FiscalCode;
+const anOrganizationFiscalCode = "01234567890" as OrganizationFiscalCode;
+const aFiscalCode = "SPNDNL80R13D000X" as FiscalCode;
 
 const aService: Service = {
   authorizedCIDRs: toAuthorizedCIDRs([]),
   authorizedRecipients: toAuthorizedRecipients([]),
   departmentName: "MyDeptName" as NonEmptyString,
-  organizationFiscalCode: aFiscalCode,
+  organizationFiscalCode: anOrganizationFiscalCode,
   organizationName: "MyOrgName" as NonEmptyString,
   serviceId: "MySubscriptionId" as NonEmptyString,
   serviceName: "MyServiceName" as NonEmptyString

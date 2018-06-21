@@ -5,7 +5,10 @@ import { none, some } from "fp-ts/lib/Option";
 
 import { isLeft, isRight, left, right } from "fp-ts/lib/Either";
 import { NonNegativeNumber } from "italia-ts-commons/lib/numbers";
-import { NonEmptyString } from "italia-ts-commons/lib/strings";
+import {
+  NonEmptyString,
+  OrganizationFiscalCode
+} from "italia-ts-commons/lib/strings";
 
 import { Set } from "json-set-map";
 
@@ -26,7 +29,6 @@ import {
 
 import { Service as ApiService } from "../../../api/definitions/Service";
 
-import { FiscalCode } from "../../../api/definitions/FiscalCode";
 import {
   CreateService,
   CreateServiceHandler,
@@ -49,13 +51,13 @@ const anAzureAuthorization: IAzureApiAuthorization = {
   userId: "u123" as NonEmptyString
 };
 
-const aFiscalCode = "SPNDNL80R13C000X" as FiscalCode;
+const anOrganizationFiscalCode = "12345678901" as OrganizationFiscalCode;
 
 const aServicePayload: ApiService = {
   authorized_cidrs: [],
   authorized_recipients: [],
   department_name: "MyDeptName" as NonEmptyString,
-  organization_fiscal_code: aFiscalCode,
+  organization_fiscal_code: anOrganizationFiscalCode,
   organization_name: "MyOrgName" as NonEmptyString,
   service_id: "MySubscriptionId" as NonEmptyString,
   service_name: "MyServiceName" as NonEmptyString
@@ -65,7 +67,7 @@ const aService: Service = {
   authorizedCIDRs: toAuthorizedCIDRs([]),
   authorizedRecipients: toAuthorizedRecipients([]),
   departmentName: "MyDeptName" as NonEmptyString,
-  organizationFiscalCode: aFiscalCode,
+  organizationFiscalCode: anOrganizationFiscalCode,
   organizationName: "MyOrgName" as NonEmptyString,
   serviceId: "MySubscriptionId" as NonEmptyString,
   serviceName: "MyServiceName" as NonEmptyString
