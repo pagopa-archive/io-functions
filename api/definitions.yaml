@@ -222,8 +222,15 @@ MessageResponseWithoutContent:
 FiscalCode:
   type: string
   description: User's fiscal code.
-  pattern: "^[A-Z]{6}[0-9LMNPQRSTUV]{2}[ABCDEHLMPRST][0-9LMNPQRSTUV]{2}[A-Z][0-9LMNPQRSTUV]{3}[A-Z]$"
+  format: FiscalCode
+  x-import: italia-ts-commons/lib/strings
   example: SPNDNL80R13C555X
+OrganizationFiscalCode:
+  type: string
+  description: Organization fiscal code.
+  format: OrganizationFiscalCode
+  x-import: italia-ts-commons/lib/strings
+  example: "12345678901"
 MessageSubject:
   type: string
   description: |-
@@ -406,7 +413,7 @@ Service:
       items:
         $ref: "#/FiscalCode"
     organization_fiscal_code:
-      $ref: "#/FiscalCode"
+        $ref: "#/OrganizationFiscalCode"
     version:
       type: integer
     id:
