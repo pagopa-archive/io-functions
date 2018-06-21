@@ -1,0 +1,21 @@
+version: '3'
+services:
+  func:
+    image: microsoft/azure-functions-node8
+    volumes:
+      - .:/home/site/wwwroot
+    environment:
+      - AzureWebJobsScriptRoot=/home/site/wwwroot
+      - AzureWebJobsStorage=DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://storage:10000/devstoreaccount1;QueueEndpoint=http://storage:10001/devstoreaccount1;
+    ports: 
+      - "7071:80" 
+    links: 
+      - storage
+  
+  storage:
+    image: arafato/azurite
+    ports: 
+      - "10000:10000" 
+      - "10001:10001"
+    volumes:
+      - ./.data:/opt/azurite/folder
