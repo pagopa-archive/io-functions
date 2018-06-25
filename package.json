@@ -35,10 +35,10 @@
     "helmet": "^3.12.0",
     "helmet-csp": "^2.5.1",
     "html-to-text": "^4.0.0",
-    "io-ts": "^1.1.4",
+    "io-ts": "^1.1.5",
     "italia-ts-commons": "^2.5.0",
     "json-set-map": "^1.0.2",
-    "nodemailer": "^4.6.4",
+    "nodemailer": "^4.6.7",
     "referrer-policy": "^1.1.0",
     "rehype-stringify": "^3.0.0",
     "remark-parse": "^5.0.0",
@@ -46,7 +46,7 @@
     "request-ip": "^2.0.2",
     "superagent": "^3.8.3",
     "ulid": "^2.2.2",
-    "unified": "^6.1.5",
+    "unified": "^7.0.0",
     "validator": "^9.4.1",
     "vfile": "^3.0.0",
     "winston": "^2.4.2"
@@ -100,11 +100,18 @@
   },
   "jest": {
     "testEnvironment": "node",
-    "moduleFileExtensions": ["ts", "js"],
+    "moduleFileExtensions": [
+      "ts",
+      "js"
+    ],
     "transform": {
       "^.+\\.(ts|tsx)$": "<rootDir>/node_modules/ts-jest/preprocessor.js"
     },
-    "transformIgnorePatterns": ["<rootDir>/node_modules/(?!azure-functions-types)"],
-    "testMatch": ["**/__tests__/*.ts"]
+    "transformIgnorePatterns": [
+      "<rootDir>/node_modules/(?!azure-functions-types)"
+    ],
+    "testMatch": [
+      "**/__tests__/*.ts"
+    ]
   }
 }
