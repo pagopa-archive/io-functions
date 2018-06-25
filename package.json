@@ -38,7 +38,7 @@
     "io-ts": "^1.1.4",
     "italia-ts-commons": "^2.4.0",
     "json-set-map": "^1.0.2",
-    "nodemailer": "^4.6.4",
+    "nodemailer": "^4.6.7",
     "referrer-policy": "^1.1.0",
     "rehype-stringify": "^3.0.0",
     "remark-parse": "^5.0.0",
