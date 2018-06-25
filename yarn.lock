@@ -78,9 +78,9 @@
   version "1.4.31"
   resolved "https://registry.yarnpkg.com/@types/html-to-text/-/html-to-text-1.4.31.tgz#3b73aa59f127551cc0ce615346caa730e7622f9f"
 
-"@types/jest@^22.0.0":
-  version "22.2.3"
-  resolved "https://registry.yarnpkg.com/@types/jest/-/jest-22.2.3.tgz#0157c0316dc3722c43a7b71de3fdf3acbccef10d"
+"@types/jest@^23.1.0":
+  version "23.1.1"
+  resolved "https://registry.yarnpkg.com/@types/jest/-/jest-23.1.1.tgz#c54ab1a5f41aa693c0957222dd10414416d0c87b"
 
 "@types/lolex@^2.1.2":
   version "2.1.2"
@@ -98,9 +98,9 @@
   version "6.0.112"
   resolved "https://registry.yarnpkg.com/@types/node/-/node-6.0.112.tgz#0f37473b1d1ecd30c8bf57215ef4fb558f99cc86"
 
-"@types/nodemailer@^4.6.0":
-  version "4.6.0"
-  resolved "https://registry.yarnpkg.com/@types/nodemailer/-/nodemailer-4.6.0.tgz#542ecb5fff91cd3d841fc67cace0527649030462"
+"@types/nodemailer@^4.6.2":
+  version "4.6.2"
+  resolved "https://registry.yarnpkg.com/@types/nodemailer/-/nodemailer-4.6.2.tgz#4a0cf246846cc5178270d354a252394a16860191"
   dependencies:
     "@types/events" "*"
     "@types/node" "*"
@@ -120,9 +120,9 @@
     "@types/express-serve-static-core" "*"
     "@types/mime" "*"
 
-"@types/superagent@^3.5.8":
-  version "3.8.0"
-  resolved "https://registry.yarnpkg.com/@types/superagent/-/superagent-3.8.0.tgz#e7f81d93a54eaad60a64f9b3c4911990721ca536"
+"@types/superagent@^3.8.1":
+  version "3.8.1"
+  resolved "https://registry.yarnpkg.com/@types/superagent/-/superagent-3.8.1.tgz#2dcb111c1a1c565dfceb2c34f1f440b3ff68c781"
   dependencies:
     "@types/node" "*"
 
@@ -3314,6 +3314,12 @@ io-ts@^1.1.4:
   dependencies:
     fp-ts "^1.0.0"
 
+io-ts@^1.1.5:
+  version "1.1.5"
+  resolved "https://registry.yarnpkg.com/io-ts/-/io-ts-1.1.5.tgz#5a943eeb063eebf27517a559359fd121ba04eaaa"
+  dependencies:
+    fp-ts "^1.0.0"
+
 ip@^1.0.2:
   version "1.1.5"
   resolved "https://registry.yarnpkg.com/ip/-/ip-1.1.5.tgz#bdded70114290828c0a039e72ef25f5aaec4354a"
@@ -3362,7 +3368,7 @@ is-binary-path@^1.0.0:
   dependencies:
     binary-extensions "^1.0.0"
 
-is-buffer@^1.1.4, is-buffer@^1.1.5:
+is-buffer@^1.1.5:
   version "1.1.6"
   resolved "https://registry.yarnpkg.com/is-buffer/-/is-buffer-1.1.6.tgz#efaa2ea9daa0d7ab2ea13a97b2b8ad51fefbe8be"
 
@@ -7654,15 +7660,15 @@ unherit@^1.0.4:
     inherits "^2.0.1"
     xtend "^4.0.1"
 
-unified@^6.1.5:
-  version "6.2.0"
-  resolved "https://registry.yarnpkg.com/unified/-/unified-6.2.0.tgz#7fbd630f719126d67d40c644b7e3f617035f6dba"
+unified@^7.0.0:
+  version "7.0.0"
+  resolved "https://registry.yarnpkg.com/unified/-/unified-7.0.0.tgz#9c8f4fcee78f8e7e895f0e3d6adb53bd015e1a53"
   dependencies:
     bail "^1.0.0"
     extend "^3.0.0"
     is-plain-obj "^1.1.0"
     trough "^1.0.0"
-    vfile "^2.0.0"
+    vfile "^3.0.0"
     x-is-string "^0.1.0"
 
 union-value@^1.0.0:
@@ -7837,15 +7843,6 @@ vfile-message@^1.0.0:
   resolved "https://registry.yarnpkg.com/vfile-message/-/vfile-message-1.0.1.tgz#51a2ccd8a6b97a7980bb34efb9ebde9632e93677"
   dependencies:
     unist-util-stringify-position "^1.1.1"
-
-vfile@^2.0.0:
-  version "2.3.0"
-  resolved "https://registry.yarnpkg.com/vfile/-/vfile-2.3.0.tgz#e62d8e72b20e83c324bc6c67278ee272488bf84a"
-  dependencies:
-    is-buffer "^1.1.4"
-    replace-ext "1.0.0"
-    unist-util-stringify-position "^1.0.0"
-    vfile-message "^1.0.0"
 
 vfile@^3.0.0:
   version "3.0.0"
