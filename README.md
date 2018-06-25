@@ -384,7 +384,7 @@ and the reference to the function entrypoint from `lib/index.ts`.
 
 ### Quickstart
 
-See [Development Documentation](development.md) to run the application for development.
+See the [development documentation](DEVELOP.md) to run the application for development.
 
 ### Code generation from OpenAPI specs
 
