@@ -1,8 +1,9 @@
 # Develop Digital Citizenship API
 
-Instructions and troubleshooting to setup a development environment follow.
+Instructions to set up a local development environment
+and start contributing to the Digital Citizenship API.
 
-## Requirements
+## System requirements
 
 * [Node.js](https://nodejs.org) 
 * [Yarn](https://yarnpkg.com/lang/en/)
