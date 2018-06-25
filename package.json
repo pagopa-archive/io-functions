@@ -46,7 +46,7 @@
     "request-ip": "^2.0.2",
     "superagent": "^3.8.3",
     "ulid": "^2.2.2",
-    "unified": "^6.1.5",
+    "unified": "^7.0.0",
     "validator": "^9.4.1",
     "vfile": "^3.0.0",
     "winston": "^2.4.2"
