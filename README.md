@@ -384,14 +384,7 @@ and the reference to the function entrypoint from `lib/index.ts`.
 
 ### Quickstart
 
-Install [yarn](https://yarnpkg.com/) package manager then,
-to build the functions from Typescript sources, use:
-
-```sh
-$ yarn install      # install npm packages
-$ yarn build        # to lint and build
-$ yarn test         # run jest unit tests
-```
+See the [development documentation](DEVELOP.md) to run the application for development.
 
 ### Code generation from OpenAPI specs
 
