@@ -216,8 +216,8 @@ paths:
       summary: Get User's Preferences
       description:  |-
         Returns the preferences for the user identified by the provided
-        fiscal code. The field 'sender_allowed' is set fo 'false' in case
-        the service which calls the API is blacklisted by the user.
+        fiscal code. The field `sender_allowed` is set fo `false` in case
+        the service which is calling the API is blacklisted by the user.
       responses:
         '200':
           description: Found.
