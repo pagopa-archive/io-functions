@@ -1,7 +1,6 @@
 # Digital Citizenship APIs
 
 [![CircleCI](https://circleci.com/gh/teamdigitale/digital-citizenship-functions/tree/master.svg?style=svg)](https://circleci.com/gh/teamdigitale/digital-citizenship-functions/tree/master)
-[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fteamdigitale%2Fdigital-citizenship-functions.svg?type=shield)](https://app.fossa.io/projects/git%2Bgithub.com%2Fteamdigitale%2Fdigital-citizenship-functions?ref=badge_shield)
 
 [![dependencies](https://david-dm.org/teamdigitale/digital-citizenship-functions/status.svg)](https://david-dm.org/teamdigitale/digital-citizenship-functions)
 
@@ -16,6 +15,8 @@
 [![Known Vulnerabilities](https://snyk.io/test/github/teamdigitale/digital-citizenship-functions/badge.svg)](https://snyk.io/test/github/teamdigitale/digital-citizenship-functions)
 
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/58e9cc58362f43e1bfdb0a52435cf117)](https://www.codacy.com/app/cloudify/digital-citizenship-functions?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=teamdigitale/digital-citizenship-functions&amp;utm_campaign=Badge_Grade)
+
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fteamdigitale%2Fdigital-citizenship-functions.svg?type=shield)](https://app.fossa.io/projects/git%2Bgithub.com%2Fteamdigitale%2Fdigital-citizenship-functions?ref=badge_shield)
 
 ## Introduction
 
