@@ -76,7 +76,7 @@
     "gulp-run": "^1.7.1",
     "gulp-text-simple": "^0.4.1",
     "italia-utils": "^3.11.1",
-    "jest": "^23.1.0",
+    "jest": "^23.2.0",
     "jest-mock-express": "^0.1.1",
     "lolex": "^2.7.0",
     "mjml": "^4.0.5",
