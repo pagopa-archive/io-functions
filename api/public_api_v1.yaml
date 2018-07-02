@@ -170,6 +170,10 @@ paths:
       description: |-
         Submits a message to a user.
         On error, the reason is returned in the response payload.
+        In order to call `submitMessageforUser`, before sending any message, 
+        the sender MUST call `getProfile` and check that the profile exists
+        (for the specified fiscal code) and that the `sender_allowed` field
+        of the user's profile it set to `true`.
       parameters:
       - name: message
         in: body
@@ -212,7 +216,8 @@ paths:
       summary: Get User's Preferences
       description:  |-
         Returns the preferences for the user identified by the provided
-        fiscal code.
+        fiscal code. The field 'sender_allowed' is set fo 'false' in case
+        the service which calls the API is blacklisted by the user.
       responses:
         '200':
           description: Found.
