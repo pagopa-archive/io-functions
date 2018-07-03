@@ -170,17 +170,22 @@ export async function sendToWebhook(
   message: NewMessageWithContent,
   senderMetadata: CreatedMessageEventSenderMetadata
 ): Promise<Either<RuntimeError, request.Response>> {
+  const payload = {
+    message: newMessageToPublic(message),
+    sender_metadata: senderMetadataToPublic(senderMetadata)
+  };
   return request("POST", webhookEndpoint)
     .timeout(DEFAULT_REQUEST_TIMEOUT_MS)
     .set("Content-Type", "application/json")
     .accept("application/json")
-    .send({
-      message: newMessageToPublic(message),
-      sender_metadata: senderMetadataToPublic(senderMetadata)
-    })
+    .send(payload)
     .then(
       response => {
         if (response.error) {
+          winston.debug(
+            "sendToWebhook|error during request: %s",
+            JSON.stringify(payload)
+          );
           return left<RuntimeError, request.Response>(
             // in case of server HTTP 5xx errors we trigger a retry
             response.serverError
