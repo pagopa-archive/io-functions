@@ -56,6 +56,7 @@ import {
   IAzureUserAttributes
 } from "../../utils/middlewares/azure_user_attributes";
 
+import { Validation } from "io-ts";
 import {
   checkSourceIpForHandler,
   clientIPAndCidrTuple as ipTuple
@@ -66,7 +67,11 @@ type ICreateServiceHandler = (
   clientIp: ClientIp,
   userAttributes: IAzureUserAttributes,
   service: ApiService
-) => Promise<IResponseSuccessJson<ApiService> | IResponseErrorQuery>;
+) => Promise<
+  | IResponseSuccessJson<ApiService>
+  | IResponseErrorQuery
+  | IResponseErrorValidation
+>;
 
 type IGetServiceHandler = (
   auth: IAzureApiAuthorization,
@@ -119,16 +124,17 @@ function retrievedServiceToPublic(
 /**
  * Converts an API Service to an internal Service model
  */
-function servicePayloadToService(service: ApiService): Service {
-  return {
+function servicePayloadToService(service: ApiService): Validation<Service> {
+  return Service.decode({
     authorizedCIDRs: toAuthorizedCIDRs(service.authorized_cidrs),
     authorizedRecipients: toAuthorizedRecipients(service.authorized_recipients),
     departmentName: service.department_name,
+    maxPaymentAmount: service.max_payment_amount,
     organizationFiscalCode: service.organization_fiscal_code,
     organizationName: service.organization_name,
     serviceId: service.service_id,
     serviceName: service.service_name
-  };
+  });
 }
 
 /**
@@ -176,6 +182,16 @@ export function UpdateServiceHandler(
     }
 
     const existingService = maybeService.value;
+    const errorOrServiceFromPayload = servicePayloadToService(
+      serviceModelPayload
+    );
+
+    if (isLeft(errorOrServiceFromPayload)) {
+      return ResponseErrorFromValidationErrors(Service)(
+        errorOrServiceFromPayload.value
+      );
+    }
+    const serviceFromPayload = errorOrServiceFromPayload.value;
 
     const errorOrMaybeUpdatedService = await serviceModel.update(
       existingService.id,
@@ -183,7 +199,7 @@ export function UpdateServiceHandler(
       currentService => {
         return {
           ...currentService,
-          ...servicePayloadToService(serviceModelPayload),
+          ...serviceFromPayload,
           serviceId
         };
       }
@@ -218,18 +234,22 @@ export function CreateServiceHandler(
   serviceModel: ServiceModel
 ): ICreateServiceHandler {
   return async (_, __, ___, serviceModelPayload) => {
-    const service = servicePayloadToService(serviceModelPayload);
-    const errorOrService = await serviceModel.create(
+    const errorOrService = servicePayloadToService(serviceModelPayload);
+    if (isLeft(errorOrService)) {
+      return ResponseErrorFromValidationErrors(Service)(errorOrService.value);
+    }
+    const service = errorOrService.value;
+    const errorOrCreatedService = await serviceModel.create(
       service,
       service.serviceId
     );
-    if (isRight(errorOrService)) {
-      return ResponseSuccessJson(
-        retrievedServiceToPublic(errorOrService.value)
-      );
-    } else {
-      return ResponseErrorQuery("Error", errorOrService.value);
-    }
+    return errorOrCreatedService.fold<
+      IResponseErrorQuery | IResponseSuccessJson<ApiService>
+    >(
+      error => ResponseErrorQuery("CreateServiceHandler error", error),
+      createdService =>
+        ResponseSuccessJson(retrievedServiceToPublic(createdService))
+    );
   };
 }
 
