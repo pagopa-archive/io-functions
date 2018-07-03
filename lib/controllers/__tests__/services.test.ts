@@ -30,7 +30,7 @@ import {
 import { ServicePublic as ApiService } from "../../api/definitions/ServicePublic";
 
 import { FiscalCode } from "../../api/definitions/FiscalCode";
-import { MaxPaymentAmount } from "../../api/definitions/MaxPaymentAmount";
+import { MaxAllowedPaymentAmount } from "../../api/definitions/MaxAllowedPaymentAmount";
 import {
   GetService,
   GetServiceHandler,
@@ -64,7 +64,7 @@ const aService: Service = {
   authorizedCIDRs: toAuthorizedCIDRs([]),
   authorizedRecipients: toAuthorizedRecipients([]),
   departmentName: "MyDeptName" as NonEmptyString,
-  maxPaymentAmount: 0 as MaxPaymentAmount,
+  maxAllowedPaymentAmount: 0 as MaxAllowedPaymentAmount,
   organizationFiscalCode: anOrganizationFiscalCode,
   organizationName: "MyOrgName" as NonEmptyString,
   serviceId: "MySubscriptionId" as NonEmptyString,

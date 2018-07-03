@@ -59,7 +59,7 @@ import {
 } from "../messages";
 
 import * as lolex from "lolex";
-import { MaxPaymentAmount } from "../../api/definitions/MaxPaymentAmount";
+import { MaxAllowedPaymentAmount } from "../../api/definitions/MaxAllowedPaymentAmount";
 import { ServiceId } from "../../api/definitions/ServiceId";
 
 jest.mock("applicationinsights");
@@ -99,7 +99,7 @@ const someUserAttributes: IAzureUserAttributes = {
     authorizedCIDRs: toAuthorizedCIDRs([]),
     authorizedRecipients: new Set([]),
     departmentName: "IT" as NonEmptyString,
-    maxPaymentAmount: 0 as MaxPaymentAmount,
+    maxAllowedPaymentAmount: 0 as MaxAllowedPaymentAmount,
     organizationFiscalCode: anOrganizationFiscalCode,
     organizationName: "AgID" as NonEmptyString,
     serviceId: "test" as NonEmptyString,

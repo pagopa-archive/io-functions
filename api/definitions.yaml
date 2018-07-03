@@ -123,7 +123,7 @@ PaymentAmount:
   type: integer
   minimum: 1
   maximum: 9999999999
-MaxPaymentAmount:
+MaxAllowedPaymentAmount:
   description: |-
     Maximum amount in euro cents that a service is allowed to charge to a user.
   type: integer
@@ -418,8 +418,8 @@ Service:
       type: array
       items:
         $ref: "#/FiscalCode"
-    max_payment_amount:
-        $ref: "#/MaxPaymentAmount"
+    max_allowed_payment_amount:
+        $ref: "#/MaxAllowedPaymentAmount"
     organization_fiscal_code:
         $ref: "#/OrganizationFiscalCode"
     version:

@@ -129,7 +129,7 @@ function servicePayloadToService(service: ApiService): Validation<Service> {
     authorizedCIDRs: toAuthorizedCIDRs(service.authorized_cidrs),
     authorizedRecipients: toAuthorizedRecipients(service.authorized_recipients),
     departmentName: service.department_name,
-    maxPaymentAmount: service.max_payment_amount,
+    maxAllowedPaymentAmount: service.max_allowed_payment_amount,
     organizationFiscalCode: service.organization_fiscal_code,
     organizationName: service.organization_name,
     serviceId: service.service_id,

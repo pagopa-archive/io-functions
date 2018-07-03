@@ -46,6 +46,7 @@ import {
   ResponseErrorFromValidationErrors,
   ResponseErrorInternal,
   ResponseErrorNotFound,
+  ResponseErrorValidation,
   ResponseSuccessJson,
   ResponseSuccessRedirectToResource
 } from "italia-ts-commons/lib/responses";
@@ -377,6 +378,24 @@ export function CreateMessageHandler(
       // the user is sending a message by providing default addresses but he's
       // not allowed to do so.
       return ResponseErrorForbiddenNotAuthorizedForDefaultAddresses;
+    }
+
+    const paymentData = messagePayload.content.payment_data;
+
+    const hasExceededAmount =
+      paymentData &&
+      paymentData.amount &&
+      (paymentData.amount as number) >
+        (userService.maxAllowedPaymentAmount as number);
+
+    // check if the service wants to charge a valid amount to the user
+    if (hasExceededAmount) {
+      return ResponseErrorValidation(
+        "Error while sending payment metadata",
+        `The requested amount exceeds the maximum allowed for this service (${
+          userService.maxAllowedPaymentAmount
+        })`
+      );
     }
 
     const id = generateObjectId();

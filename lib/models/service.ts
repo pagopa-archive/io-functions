@@ -25,7 +25,7 @@ import {
 import { nonEmptyStringToModelId } from "../utils/conversions";
 
 import { pick, readonlySetType, tag } from "italia-ts-commons/lib/types";
-import { MaxPaymentAmount } from "../api/definitions/MaxPaymentAmount";
+import { MaxAllowedPaymentAmount } from "../api/definitions/MaxAllowedPaymentAmount";
 
 export const SERVICE_COLLECTION_NAME = "services";
 export const SERVICE_MODEL_PK_FIELD = "serviceId";
@@ -42,7 +42,7 @@ export const Service = t.interface({
   departmentName: NonEmptyString,
   // maximum amount in euro cents that the service
   // can charge to a specific user (0 if the service cannot send payment requests)
-  maxPaymentAmount: MaxPaymentAmount,
+  maxAllowedPaymentAmount: MaxAllowedPaymentAmount,
   // fiscal code of the organization, used to receive payments
   organizationFiscalCode: OrganizationFiscalCode,
   // the name of the organization
@@ -146,7 +146,7 @@ function toBaseType(o: RetrievedService): Service {
       "authorizedCIDRs",
       "authorizedRecipients",
       "departmentName",
-      "maxPaymentAmount",
+      "maxAllowedPaymentAmount",
       "organizationFiscalCode",
       "organizationName",
       "serviceId",
