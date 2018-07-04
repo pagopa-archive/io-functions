@@ -29,6 +29,7 @@ import {
 
 import { Service as ApiService } from "../../../api/definitions/Service";
 
+import { MaxAllowedPaymentAmount } from "../../../api/definitions/MaxAllowedPaymentAmount";
 import {
   CreateService,
   CreateServiceHandler,
@@ -67,6 +68,7 @@ const aService: Service = {
   authorizedCIDRs: toAuthorizedCIDRs([]),
   authorizedRecipients: toAuthorizedRecipients([]),
   departmentName: "MyDeptName" as NonEmptyString,
+  maxAllowedPaymentAmount: 0 as MaxAllowedPaymentAmount,
   organizationFiscalCode: anOrganizationFiscalCode,
   organizationName: "MyOrgName" as NonEmptyString,
   serviceId: "MySubscriptionId" as NonEmptyString,
@@ -388,11 +390,15 @@ describe("ServicePayloadMiddleware", () => {
       body: aServicePayload
     } as any);
     expect(isRight(errorOrServicePayload)).toBeTruthy();
-    expect(errorOrServicePayload.value).toEqual(aServicePayload);
+    expect(errorOrServicePayload.value).toEqual({
+      ...aServicePayload,
+      max_allowed_payment_amount: 0
+    });
   });
+
   it("should fail if request payload does not validate", async () => {
     const errorOrServicePayload = await ServicePayloadMiddleware({
-      body: {}
+      body: { ...aServicePayload, max_allowed_payment_amount: 99999999999999 }
     } as any);
     expect(isLeft(errorOrServicePayload)).toBeTruthy();
     if (isLeft(errorOrServicePayload)) {

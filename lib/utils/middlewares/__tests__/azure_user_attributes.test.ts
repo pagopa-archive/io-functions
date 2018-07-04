@@ -14,6 +14,7 @@ import {
 } from "italia-ts-commons/lib/strings";
 
 import { Set } from "json-set-map";
+import { MaxAllowedPaymentAmount } from "../../../api/definitions/MaxAllowedPaymentAmount";
 import { AzureUserAttributesMiddleware } from "../azure_user_attributes";
 
 interface IHeaders {
@@ -30,6 +31,7 @@ const aService: Service = {
   authorizedCIDRs: toAuthorizedCIDRs([]),
   authorizedRecipients: new Set([]),
   departmentName: "MyDept" as NonEmptyString,
+  maxAllowedPaymentAmount: 0 as MaxAllowedPaymentAmount,
   organizationFiscalCode: anOrganizationFiscalCode,
   organizationName: "MyService" as NonEmptyString,
   serviceId: "serviceId" as NonEmptyString,

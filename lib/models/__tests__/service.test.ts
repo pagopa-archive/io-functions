@@ -11,6 +11,7 @@ import {
   NonEmptyString,
   OrganizationFiscalCode
 } from "italia-ts-commons/lib/strings";
+import { MaxAllowedPaymentAmount } from "../../api/definitions/MaxAllowedPaymentAmount";
 import * as DocumentDbUtils from "../../utils/documentdb";
 import {
   RetrievedService,
@@ -37,6 +38,7 @@ const aRetrievedService: RetrievedService = {
   departmentName: "MyDept" as NonEmptyString,
   id: "xyz" as NonEmptyString,
   kind: "IRetrievedService",
+  maxAllowedPaymentAmount: 0 as MaxAllowedPaymentAmount,
   organizationFiscalCode: anOrganizationFiscalCode,
   organizationName: "MyOrg" as NonEmptyString,
   serviceId: aServiceId,
@@ -114,6 +116,7 @@ describe("createService", () => {
       authorizedCIDRs: toAuthorizedCIDRs([]),
       authorizedRecipients: toAuthorizedRecipients([]),
       departmentName: "MyService" as NonEmptyString,
+      maxAllowedPaymentAmount: 0 as MaxAllowedPaymentAmount,
       organizationFiscalCode: anOrganizationFiscalCode,
       organizationName: "MyService" as NonEmptyString,
       serviceId: aServiceId,
@@ -149,6 +152,7 @@ describe("createService", () => {
       authorizedCIDRs: toAuthorizedCIDRs([]),
       authorizedRecipients: toAuthorizedRecipients([]),
       departmentName: "MyService" as NonEmptyString,
+      maxAllowedPaymentAmount: 0 as MaxAllowedPaymentAmount,
       organizationFiscalCode: anOrganizationFiscalCode,
       organizationName: "MyService" as NonEmptyString,
       serviceId: aServiceId,
