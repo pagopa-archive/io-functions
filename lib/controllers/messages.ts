@@ -324,6 +324,7 @@ async function getMessageNotificationStatuses(
 /**
  * Returns a type safe CreateMessage handler.
  */
+// tslint:disable-next-line:cognitive-complexity
 export function CreateMessageHandler(
   getCustomTelemetryClient: CustomTelemetryClientFactory,
   messageModel: MessageModel,
@@ -380,21 +381,21 @@ export function CreateMessageHandler(
       return ResponseErrorForbiddenNotAuthorizedForDefaultAddresses;
     }
 
-    const paymentData = messagePayload.content.payment_data;
+    const requestedAmount = messagePayload.content.payment_data
+      ? messagePayload.content.payment_data.amount
+      : undefined;
 
     const hasExceededAmount =
-      paymentData &&
-      paymentData.amount &&
-      (paymentData.amount as number) >
-        (userService.maxAllowedPaymentAmount as number);
+      requestedAmount &&
+      requestedAmount > (userService.maxAllowedPaymentAmount as number);
 
     // check if the service wants to charge a valid amount to the user
     if (hasExceededAmount) {
       return ResponseErrorValidation(
         "Error while sending payment metadata",
-        `The requested amount exceeds the maximum allowed for this service (${
+        `The requested amount (${requestedAmount} cents) exceeds the maximum allowed for this service (${
           userService.maxAllowedPaymentAmount
-        })`
+        } cents)`
       );
     }
 

@@ -119,7 +119,7 @@ PaymentNoticeNumber:
   pattern: "^[0123][0-9]{17}$"
 PaymentAmount:
   description: |-
-    Amount of payment in euro cent. PagoPA accepts until 999999999 euro cents.
+    Amount of payment in euro cent. PagoPA accepts up to 999999999 euro cents.
   type: integer
   minimum: 1
   maximum: 9999999999

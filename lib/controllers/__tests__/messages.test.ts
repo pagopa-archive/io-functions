@@ -60,6 +60,7 @@ import {
 
 import * as lolex from "lolex";
 import { MaxAllowedPaymentAmount } from "../../api/definitions/MaxAllowedPaymentAmount";
+import { PaymentAmount } from "../../api/definitions/PaymentAmount";
 import { ServiceId } from "../../api/definitions/ServiceId";
 
 jest.mock("applicationinsights");
@@ -726,6 +727,44 @@ describe("CreateMessageHandler", () => {
 
     expect(mockContext.bindings).toEqual({});
     expect(result.kind).toBe("IResponseErrorQuery");
+  });
+
+  it("should fail when the payment amount exceed the service maximum", async () => {
+    const mockMessageModel = {
+      create: jest.fn(() => left("error"))
+    };
+
+    const createMessageHandler = CreateMessageHandler(
+      getCustomTelemetryClient as any,
+      mockMessageModel as any,
+      () => aMessageId
+    );
+
+    const mockContext = {
+      bindings: {},
+      log: jest.fn()
+    };
+
+    const result = await createMessageHandler(
+      mockContext as any,
+      {
+        ...aUserAuthenticationDeveloper,
+        groups: new Set([UserGroup.ApiMessageWrite])
+      },
+      undefined as any,
+      someUserAttributes,
+      aFiscalCode,
+      {
+        ...aMessagePayload,
+        content: {
+          ...aMessagePayload.content,
+          payment_data: { amount: 1 as PaymentAmount }
+        }
+      }
+    );
+
+    expect(mockMessageModel.create).not.toHaveBeenCalled();
+    expect(result.kind).toBe("IResponseErrorValidation");
   });
 });
 
