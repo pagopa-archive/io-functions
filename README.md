@@ -16,6 +16,8 @@
 
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/58e9cc58362f43e1bfdb0a52435cf117)](https://www.codacy.com/app/cloudify/digital-citizenship-functions?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=teamdigitale/digital-citizenship-functions&amp;utm_campaign=Badge_Grade)
 
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fteamdigitale%2Fdigital-citizenship-functions.svg?type=shield)](https://app.fossa.io/projects/git%2Bgithub.com%2Fteamdigitale%2Fdigital-citizenship-functions?ref=badge_shield)
+
 ## Introduction
 
 This is the implementation of the Digital Citizenship API, a set of services
@@ -479,3 +481,7 @@ git reset --hard origin/funcpack-release-x.y.z
 git push -f
 ```
 
+
+
+## License
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fteamdigitale%2Fdigital-citizenship-functions.svg?type=large)](https://app.fossa.io/projects/git%2Bgithub.com%2Fteamdigitale%2Fdigital-citizenship-functions?ref=badge_large)

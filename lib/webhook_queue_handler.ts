@@ -176,7 +176,7 @@ export async function sendToWebhook(
     .accept("application/json")
     .send({
       message: newMessageToPublic(message),
-      senderMetadata: senderMetadataToPublic(senderMetadata)
+      sender_metadata: senderMetadataToPublic(senderMetadata)
     })
     .then(
       response => {

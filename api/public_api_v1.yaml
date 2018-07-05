@@ -1,8 +1,102 @@
 swagger: '2.0'
 info:
-  version: 0.1.0
+  version: 1.0.0
   title: Digital Citizenship API
-  description: Digital Citizenship API.
+  contact:
+    name: Digital Transformation Team and AgID
+    url: https://forum.italia.it/c/progetto-io
+  x-logo:
+    url: https://io.italia.it/assets/img/io-logo-blue.svg
+  description: >
+    # Introduction
+
+    This is the documentation of the Digital Citizenship API.
+    This API enables Public Administration services to integrate with the
+    Digital Citizenship platform of the Italian Government.
+    The platform enables services to communicate with Italian Citizens via
+    the [IO app](https://io.italia.it/).
+
+    # How to get an API key
+
+    To get access to this API, you'll need to register on the
+    [Digital Citizenship Developer Portal](https://developer.cd.italia.it/).
+
+    After the registration step, you have to click on the button that says
+    `subscribe to the digital citizenship api` to receive the API key
+    that you will use to authenticate the API calls.
+
+    You will also receive an email with further instructions, including a fake
+    Fiscal Code that you will be able to use to send test messages. Messages
+    sent to the fake Fiscal Code will be notified to the email address used
+    during the registration process on the developer portal.
+
+    # Messages
+
+    ## What is a message
+
+    Messages are the primary form of communication enabled by the Digital
+    Citizenship APIs. Messages are **personal** communications directed to a
+    **specific citizen**. You will not be able to use this API to broadcast a
+    message to a group of citizens, you will have to compose e specific,
+    personalized message to each citizen you want to communicate to.
+
+    The recipient of the message (i.e. a citizen) is identified trough his
+    [Fiscal Code](https://it.wikipedia.org/wiki/Codice_fiscale).
+
+    ## Message format
+
+    A message is conceptually very similar to an email and, in its simplest form,
+    is composed of the following attributes:
+
+      * A required `subject`: a short description of the topic.
+      * A required `markdown` body: a Markdown representation of the body (see
+        below on what Markdown tags are allowed).
+      * An optional `payment_data`: in case the message is a payment request,
+        the _payment data_ will enable the recipient to pay the requested amount
+        via [PagoPA](https://www.agid.gov.it/it/piattaforme/pagopa).
+
+    ## Allowed Markdown formatting
+
+    Not all Markdown formatting is currently available. Currently you can use
+    the following formatting:
+
+      * Headings
+      * Text stylings (bold, italic, etc...)
+      * Lists (bullet and numbered)
+
+    ## Process for sending a message to a citizen
+
+    Not every citizen will be interested in what you have to say and not every
+    citizen you want to communicate to will be registered on the Digital
+    Citizenship platform. For this reason, before sending a message you will
+    have to check whether the recipient is registered on the platform and
+    that he has not yet opted out from receiving messages from you.
+
+    The process for sending a message is made of 3 steps:
+
+      1. Call [getProfile](#operation/getProfile): if the profile does not exist
+         or the recipient has opted-out from your service, you cannot send the
+         message and you must stop here.
+      1. Call [submitMessageforUser](#operation/submitMessageforUser) to submit
+         a new message.
+      1. (optional) Call [getMessage](#operation/getMessage) to check whether
+         the message has been notified to the recipient.
+
+servers:
+  - url: https://api.cd.italia.it/
+    description: Production endpoint
+tags:
+  - name: public
+    description: Public APIs
+  - name: restricted
+    description: Restricted APIs
+x-tagGroups:
+  - name: For Public Administrations and services
+    tags:
+      - public
+  - name: For the IO app
+    tags:
+      - restricted
 basePath: "/api/v1"
 schemes:
 - https
@@ -17,6 +111,8 @@ paths:
       required: true
       description: The ID of an existing Service.
     get:
+      tags:
+        - restricted
       operationId: getService
       summary: Get Service
       description: A previously created service with the provided service ID is returned.
@@ -37,6 +133,8 @@ paths:
       parameters: []
   "/services":
     get:
+      tags:
+      - restricted
       operationId: getServices
       summary: Get Services by recipient
       description:  |-
@@ -54,7 +152,7 @@ paths:
                   items:
                     type: object
                     properties:
-                      serviceId: 
+                      serviceId:
                         $ref: '#/definitions/ServiceId'
             - $ref: "#/definitions/PaginationResponse"
           examples:
@@ -77,6 +175,9 @@ paths:
       required: true
       description: The ID of the message.
     get:
+      tags:
+        - public
+        - restricted
       operationId: getMessage
       summary: Get Message
       description: |-
@@ -112,6 +213,8 @@ paths:
     parameters:
     - $ref: "#/parameters/FiscalCode"
     get:
+      tags:
+        - restricted
       operationId: getMessagesByUser
       summary: Get messages by user
       description: |-
@@ -165,11 +268,17 @@ paths:
       parameters:
       - $ref: "#/parameters/PaginationRequest"
     post:
+      tags:
+        - public
       operationId: submitMessageforUser
       summary: Submit a message
       description: |-
         Submits a message to a user.
         On error, the reason is returned in the response payload.
+        In order to call `submitMessageforUser`, before sending any message,
+        the sender MUST call `getProfile` and check that the profile exists
+        (for the specified fiscal code) and that the `sender_allowed` field
+        of the user's profile it set to `true`.
       parameters:
       - name: message
         in: body
@@ -208,11 +317,14 @@ paths:
             $ref: "#/definitions/ProblemJson"
   "/profiles/{fiscal_code}":
     get:
+      tags:
+        - public
       operationId: getProfile
-      summary: Get User's Preferences
+      summary: Get a User Profile
       description:  |-
         Returns the preferences for the user identified by the provided
-        fiscal code.
+        fiscal code. The field `sender_allowed` is set fo `false` in case
+        the service which is calling the API is blacklisted by the user.
       responses:
         '200':
           description: Found.
@@ -231,6 +343,8 @@ paths:
     parameters:
     - $ref: "#/parameters/FiscalCode"
     post:
+      tags:
+        - restricted
       responses:
         '200':
           description: Profile updated.
@@ -254,7 +368,7 @@ paths:
         Create or update the preferences for the user identified by the
         provided fiscal code.
       operationId: upsertProfile
-      summary: Set User's Preferences
+      summary: Updates a User Profile
       parameters:
       - in: body
         name: body
@@ -265,6 +379,8 @@ paths:
             email: foobar@example.com
   "/info":
     get:
+      tags:
+        - restricted
       operationId: getInfo
       responses:
         '200':
