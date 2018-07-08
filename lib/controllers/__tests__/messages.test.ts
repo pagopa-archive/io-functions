@@ -2,6 +2,8 @@
 /* tslint:disable:no-duplicate-string */
 /* tslint:disable:no-big-function */
 
+jest.mock("winston");
+
 import { toAuthorizedCIDRs } from "../../models/service";
 
 import { response as MockResponse } from "jest-mock-express";

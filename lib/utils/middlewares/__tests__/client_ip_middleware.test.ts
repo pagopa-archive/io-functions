@@ -1,4 +1,7 @@
 // tslint:disable:no-any
+
+jest.mock("winston");
+
 import { isNone, isSome } from "fp-ts/lib/Option";
 
 import { isRight } from "fp-ts/lib/Either";
