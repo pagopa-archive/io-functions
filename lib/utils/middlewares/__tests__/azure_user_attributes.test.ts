@@ -2,6 +2,8 @@
 /* tslint:disable:no-duplicate-string */
 /* tslint:disable:no-identical-functions */
 
+jest.mock("winston");
+
 import { none, some } from "fp-ts/lib/Option";
 
 import { isLeft, isRight, left, right } from "fp-ts/lib/Either";

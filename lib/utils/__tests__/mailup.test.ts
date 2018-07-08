@@ -1,5 +1,7 @@
 // tslint:disable:no-any
 
+jest.mock("winston");
+
 import Mail = require("nodemailer/lib/mailer");
 
 import * as nodemailer from "nodemailer";

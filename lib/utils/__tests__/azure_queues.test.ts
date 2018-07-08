@@ -1,5 +1,7 @@
 /* tslint:disable:no-any */
 
+jest.mock("winston");
+
 import { left, right } from "fp-ts/lib/Either";
 import * as config from "../../../host.json";
 import {
