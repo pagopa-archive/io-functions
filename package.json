@@ -43,7 +43,7 @@
     "rehype-stringify": "^3.0.0",
     "remark-parse": "^5.0.0",
     "remark-rehype": "^3.0.0",
-    "request-ip": "^2.0.2",
+    "request-ip": "^2.1.1",
     "superagent": "^3.8.3",
     "ulid": "^2.2.2",
     "unified": "^7.0.0",
