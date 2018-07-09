@@ -63,6 +63,7 @@ import {
 import * as lolex from "lolex";
 import { MaxAllowedPaymentAmount } from "../../api/definitions/MaxAllowedPaymentAmount";
 import { PaymentAmount } from "../../api/definitions/PaymentAmount";
+import { PaymentNoticeNumber } from "../../api/definitions/PaymentNoticeNumber";
 import { ServiceId } from "../../api/definitions/ServiceId";
 
 jest.mock("applicationinsights");
@@ -760,7 +761,10 @@ describe("CreateMessageHandler", () => {
         ...aMessagePayload,
         content: {
           ...aMessagePayload.content,
-          payment_data: { amount: 1 as PaymentAmount }
+          payment_data: {
+            amount: 1 as PaymentAmount,
+            notice_number: "0" as PaymentNoticeNumber
+          }
         }
       }
     );
