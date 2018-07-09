@@ -11,6 +11,11 @@ The format of this file is loosely based on [Keep a Changelog](http://keepachang
 
 ## [Unreleased]
 
+## [v0.47.0] - 2018-07-09
+
+### Fixed
+- Fixed swagger specs syntax
+
 ## [v0.46.0] - 2018-07-09
 
 ### Added
@@ -107,7 +112,8 @@ The format of this file is loosely based on [Keep a Changelog](http://keepachang
 [upsertProfile]: https://teamdigitale.github.io/digital-citizenship/api/public.html#operation/upsertProfile
 [getInfo]: https://teamdigitale.github.io/digital-citizenship/api/public.html#operation/getInfo
 
-[Unreleased]: https://github.com/teamdigitale/digital-citizenship-functions/compare/v0.46.0...HEAD
+[Unreleased]: https://github.com/teamdigitale/digital-citizenship-functions/compare/v0.47.0...HEAD
+[v0.47.0]: https://github.com/teamdigitale/digital-citizenship-functions/compare/v0.46.0...v0.47.0
 [v0.46.0]: https://github.com/teamdigitale/digital-citizenship-functions/compare/v0.45.0...v0.46.0
 [v0.45.0]: https://github.com/teamdigitale/digital-citizenship-functions/compare/v0.44.0...v0.45.0
 [v0.44.0]: https://github.com/teamdigitale/digital-citizenship-functions/compare/v0.43.0...v0.44.0
