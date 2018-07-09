@@ -111,6 +111,9 @@ PaymentData:
       $ref: "#/PaymentAmount"
     notice_number:
       $ref: "#/PaymentNoticeNumber"
+  required:
+    - amount
+    - notice_number
 PaymentNoticeNumber:
   description: The field ["Numero Avviso"](https://pagopa-specifichepagamenti.readthedocs.io/it/latest/_docs/Capitolo7.html#il-numero-avviso-e-larchivio-dei-pagamenti-in-attesa)
     of pagoPa, needed to identify the payment. Format is `<aux digit (1n)>[<application code> (2n)]<codice IUV (15|17n)>`.

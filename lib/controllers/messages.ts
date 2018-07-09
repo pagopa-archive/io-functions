@@ -474,10 +474,7 @@ export function CreateMessageHandler(
 
     const newMessageWithContent: NewMessageWithContent = {
       ...newMessageWithoutContent,
-      content: {
-        markdown: messagePayload.content.markdown,
-        subject: messagePayload.content.subject
-      },
+      content: messagePayload.content,
       kind: "INewMessageWithContent"
     };
 
