@@ -11,6 +11,24 @@ The format of this file is loosely based on [Keep a Changelog](http://keepachang
 
 ## [Unreleased]
 
+## [v0.46.0] - 2018-07-09
+
+### Added
+- Added a maximum to the allowed amount a service can charge to a user
+
+### Fixed
+- [submitMessageforUser] Save payment_data aside message textual content
+
+## [v0.45.0] - 2018-07-03
+
+### Added
+- Added docs and docker-compose.yml to deploy functions locally
+
+## [v0.44.0] - 2018-06-25
+
+### Changed
+- [getService] changed format for organization fiscal code (now is [0-9]{11})
+
 ## [v0.43.0] - 2018-06-13
 
 ### Removed
@@ -89,7 +107,10 @@ The format of this file is loosely based on [Keep a Changelog](http://keepachang
 [upsertProfile]: https://teamdigitale.github.io/digital-citizenship/api/public.html#operation/upsertProfile
 [getInfo]: https://teamdigitale.github.io/digital-citizenship/api/public.html#operation/getInfo
 
-[Unreleased]: https://github.com/teamdigitale/digital-citizenship-functions/compare/v0.43.0...HEAD
+[Unreleased]: https://github.com/teamdigitale/digital-citizenship-functions/compare/v0.46.0...HEAD
+[v0.46.0]: https://github.com/teamdigitale/digital-citizenship-functions/compare/v0.45.0...v0.46.0
+[v0.45.0]: https://github.com/teamdigitale/digital-citizenship-functions/compare/v0.44.0...v0.45.0
+[v0.44.0]: https://github.com/teamdigitale/digital-citizenship-functions/compare/v0.43.0...v0.44.0
 [v0.43.0]: https://github.com/teamdigitale/digital-citizenship-functions/compare/v0.42.0...v0.43.0
 [v0.42.0]: https://github.com/teamdigitale/digital-citizenship-functions/compare/v0.41.0...v0.42.0
 [v0.41.0]: https://github.com/teamdigitale/digital-citizenship-functions/compare/v0.40.0...v0.41.0
