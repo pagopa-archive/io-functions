@@ -82,9 +82,7 @@ info:
       1. (optional) Call [getMessage](#operation/getMessage) to check whether
          the message has been notified to the recipient.
 
-servers:
-  - url: https://api.cd.italia.it/
-    description: Production endpoint
+host: api.cd.italia.it
 tags:
   - name: public
     description: Public APIs
