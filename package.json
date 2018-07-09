@@ -1,6 +1,6 @@
 {
   "name": "digital-citizenship-functions",
-  "version": "0.46.0",
+  "version": "0.47.0-SNAPSHOT",
   "description": "Implementation of the Public API V1, part of the Digital Citizenship platform",
   "main": "index.js",
   "repository": {
