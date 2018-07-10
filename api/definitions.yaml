@@ -88,6 +88,8 @@ MessageContent:
       $ref: "#/MessageBodyMarkdown"
     payment_data:
       $ref: "#/PaymentData"
+    due_date:
+      $ref: "#/Timestamp"
   required:
     - subject
     - markdown
