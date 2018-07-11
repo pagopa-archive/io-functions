@@ -88,6 +88,8 @@ MessageContent:
       $ref: "#/MessageBodyMarkdown"
     payment_data:
       $ref: "#/PaymentData"
+    due_date:
+      $ref: "#/Timestamp"
   required:
     - subject
     - markdown
@@ -485,8 +487,10 @@ CIDR:
   pattern: "^([0-9]{1,3}[.]){3}[0-9]{1,3}(/([0-9]|[1-2][0-9]|3[0-2]))?$"
 Timestamp:
   type: string
-  format: date-time
-  description: A date-time field in ISO-8601 format
+  format: UTCISODateFromString
+  description: A date-time field in ISO-8601 format and UTC timezone.
+  x-import: italia-ts-commons/lib/dates
+  example: "2018-10-13T00:00:00.000Z"
 HttpsUrl:
   type: string
   format: uri

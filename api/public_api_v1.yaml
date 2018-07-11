@@ -54,6 +54,10 @@ info:
       * An optional `payment_data`: in case the message is a payment request,
         the _payment data_ will enable the recipient to pay the requested amount
         via [PagoPA](https://www.agid.gov.it/it/piattaforme/pagopa).
+      * An optional `due_date`: a _due date_ that let the recipient
+        add a reminder when receiving the message. The format for all
+        dates is [ISO8601](https://it.wikipedia.org/wiki/ISO_8601) with time 
+        information and UTC timezone (ie. "2018-10-13T00:00:00.000Z").
 
     ## Allowed Markdown formatting
 
