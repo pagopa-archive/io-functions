@@ -64,7 +64,7 @@ const aRetrievedNotificationStatus = RetrievedNotificationStatus.decode(
   throw new Error("Fix NotificationStatus mock: " + error);
 });
 
-describe.skip("findOneNotificationStatusById", () => {
+describe("findOneNotificationStatusById", () => {
   it("should resolve a promise to an existing notification status", async () => {
     const iteratorMock = {
       executeNext: jest.fn(cb =>
