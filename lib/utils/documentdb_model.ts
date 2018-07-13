@@ -149,7 +149,7 @@ export abstract class DocumentDbModel<
   public async getCollectionIterator(): Promise<
     DocumentDbUtils.IResultIterator<TR>
   > {
-    const documentsIterator = DocumentDbUtils.queryAllDocuments(
+    const documentsIterator = DocumentDbUtils.readDocuments(
       this.dbClient,
       this.collectionUri
     );

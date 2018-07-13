@@ -352,13 +352,13 @@ export function queryDocuments<T>(
 }
 
 /**
- * Queries a collection for all documents
+ * Queries a collection for all documents and returns an iterator.
  *
  * @param client The DocumentDB client
  * @param collectionUrl The collection URL
  * @param query The query string
  */
-export function queryAllDocuments<T>(
+export function readDocuments<T>(
   client: DocumentDb.DocumentClient,
   collectionUri: IDocumentDbCollectionUri
 ): IResultIterator<T & DocumentDb.RetrievedDocument> {

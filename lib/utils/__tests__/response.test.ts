@@ -20,7 +20,10 @@ describe("ResponseSuccessJsonIterator", () => {
       page_size: 0
     };
     const mockIterator = {
-      executeNext: jest.fn(() => Promise.resolve(right(some([]))))
+      executeNext: jest
+        .fn()
+        .mockReturnValueOnce(Promise.resolve(right(some([]))))
+        .mockReturnValue(Promise.resolve(right(none)))
     };
 
     const streamingResponse = ResponseJsonIterator(mockIterator);

@@ -342,7 +342,8 @@ describe("queryOneDocument", () => {
 
   it("should resolve a promise to null if the query has no results", async () => {
     const iteratorMock = {
-      executeNext: jest.fn(cb => cb(undefined, [], undefined))
+      executeNext: jest.fn(cb => cb(undefined, [], undefined)),
+      hasMoreResults: jest.fn().mockReturnValue(false)
     };
     const clientMock = {
       queryDocuments: jest.fn((__, ___) => iteratorMock)

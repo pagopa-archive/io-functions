@@ -54,7 +54,10 @@ const aSerializedService = {
 describe("findOneServiceById", () => {
   it("should resolve a promise to an existing service", async () => {
     const iteratorMock = {
-      executeNext: jest.fn(cb => cb(undefined, [aSerializedService], undefined))
+      executeNext: jest.fn(cb =>
+        cb(undefined, [aSerializedService], undefined)
+      ),
+      hasMoreResults: jest.fn().mockReturnValue(false)
     };
 
     const clientMock = {
@@ -77,7 +80,8 @@ describe("findOneServiceById", () => {
 
   it("should resolve a promise to an empty value if no service is found", async () => {
     const iteratorMock = {
-      executeNext: jest.fn(cb => cb(undefined, [], undefined))
+      executeNext: jest.fn(cb => cb(undefined, [], undefined)),
+      hasMoreResults: jest.fn().mockReturnValue(false)
     };
 
     const clientMock = {
