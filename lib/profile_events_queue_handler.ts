@@ -74,31 +74,29 @@ export async function index(
 
   const url = adminApiUrl + "/api/v1/messages/" + event.fiscalCode;
 
-  const hasEnabledInbox =
+  const hasJustEnabledInbox =
     event.newProfile.is_inbox_enabled === true &&
     (event.kind === "ProfileCreatedEvent" ||
       (event.kind === "ProfileUpdatedEvent" &&
         event.oldProfile.is_inbox_enabled !==
           event.newProfile.is_inbox_enabled));
 
-  if (hasEnabledInbox) {
+  if (hasJustEnabledInbox) {
     const newMessage = NewMessage.decode({
       content: {
         markdown: createWelcomeMessageMarkdown(event.newProfile),
         subject: createWelcomeMessageSubject(event.newProfile)
       }
     }).getOrElseL(errs => {
-      throw new Error("Invalid welcome message: " + readableReport(errs));
+      const error = `Invalid welcome message: ${readableReport(errs)}`;
+      winston.error(`ProfileEventsQueueHandler|${error}`);
+      throw new Error(error);
     });
-
-    winston.debug(
-      `ProfileEventsQueueHandler|Sending welcome message to ${url}`
-    );
 
     // TODO: schedule retries
     sendWelcomeMessage(url, adminApiKey, newMessage).then(response => {
       winston.debug(
-        `WelcomMessageEventHandler|Welcome message sent to ${
+        `ProfileEventsQueueHandler|Welcome message sent to ${
           event.fiscalCode
         } (response status=${response.status})`
       );
