@@ -20,7 +20,8 @@
     "CreatedMessageQueueHandler",
     "EmailNotificationsQueueHandler",
     "WebhookNotificationsQueueHandler",
-    "QueueMonitor"
+    "QueueMonitor",
+    "ProfileEventsHandler"
   ],
   "tracing": {
     "consoleLevel": "verbose",

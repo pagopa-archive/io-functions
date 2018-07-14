@@ -58,7 +58,7 @@ info:
         add a reminder when receiving the message. The format for all
         dates is [ISO8601](https://it.wikipedia.org/wiki/ISO_8601) with time 
         information and UTC timezone (ie. "2018-10-13T00:00:00.000Z").
-
+        
     ## Allowed Markdown formatting
 
     Not all Markdown formatting is currently available. Currently you can use
@@ -299,6 +299,12 @@ paths:
       responses:
         '201':
           description: Message created.
+          schema:
+            type: object
+            properties:
+              id:
+                type: string
+                description: The identifier of the created message.
           headers:
             Location:
               type: string

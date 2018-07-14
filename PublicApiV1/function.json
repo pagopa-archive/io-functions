@@ -20,11 +20,18 @@
   },
   {
    "type": "queue",
-   "direction": "out",
-   "name": "createdMessage",
-   "queueName": "createdmessages",
-   "connection": "QueueStorageConnection"
+    "direction": "out",
+    "name": "createdMessage",
+    "queueName": "createdmessages",
+    "connection": "QueueStorageConnection"
+   },
+   {
+    "type": "queue",
+    "direction": "out",
+    "name": "profileEvent",
+    "queueName": "profileevents",
+    "connection": "QueueStorageConnection"
   }
- ],
+],
  "entryPoint": "PublicApiV1"
 }

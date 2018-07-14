@@ -51,6 +51,7 @@ import {
   clientIPAndCidrTuple as ipTuple
 } from "../utils/source_ip_check";
 
+import { IContext } from "azure-function-express";
 import { BlockedInboxOrChannelEnum } from "../api/definitions/BlockedInboxOrChannel";
 import { ServiceId } from "../api/definitions/ServiceId";
 import {
@@ -60,6 +61,25 @@ import {
   RetrievedProfile
 } from "../models/profile";
 import { ServiceModel } from "../models/service";
+import { ContextMiddleware } from "../utils/middlewares/context_middleware";
+
+export interface IProfileCreatedEvent {
+  readonly kind: "ProfileCreatedEvent";
+  readonly fiscalCode: FiscalCode;
+  readonly newProfile: ExtendedProfile;
+}
+
+export interface IProfileUpdatedEvent {
+  readonly kind: "ProfileUpdatedEvent";
+  readonly fiscalCode: FiscalCode;
+  readonly oldProfile: ExtendedProfile;
+  readonly newProfile: ExtendedProfile;
+}
+
+interface IBindings {
+  // tslint:disable-next-line:readonly-keyword
+  profileEvent?: IProfileCreatedEvent | IProfileUpdatedEvent;
+}
 
 function toExtendedProfile(profile: RetrievedProfile): ExtendedProfile {
   return {
@@ -123,6 +143,7 @@ type IGetProfileHandler = (
  * returns a Profile or a Validation or a Generic error.
  */
 type IUpsertProfileHandler = (
+  context: IContext<IBindings>,
   auth: IAzureApiAuthorization,
   clientIp: ClientIp,
   attrs: IAzureUserAttributes,
@@ -227,7 +248,6 @@ async function createNewProfileFromPayload(
   fiscalCode: FiscalCode,
   profileModelPayload: ExtendedProfile
 ): Promise<IResponseSuccessJson<ExtendedProfile> | IResponseErrorQuery> {
-  // create a new profile
   const profile: Profile = {
     blockedInboxOrChannels: profileModelPayload.blocked_inbox_or_channels,
     email: profileModelPayload.email,
@@ -259,17 +279,22 @@ async function updateExistingProfileFromPayload(
   | IResponseErrorQuery
   | IResponseErrorInternal
 > {
+  const profile: Profile = {
+    blockedInboxOrChannels: profileModelPayload.blocked_inbox_or_channels,
+    email: profileModelPayload.email,
+    fiscalCode: existingProfile.fiscalCode,
+    isInboxEnabled: profileModelPayload.is_inbox_enabled,
+    isWebhookEnabled: profileModelPayload.is_webhook_enabled,
+    preferredLanguages: profileModelPayload.preferred_languages
+  };
+
   const errorOrMaybeProfile = await profileModel.update(
     existingProfile.id,
     existingProfile.fiscalCode,
     p => {
       return {
         ...p,
-        blockedInboxOrChannels: profileModelPayload.blocked_inbox_or_channels,
-        email: profileModelPayload.email,
-        isInboxEnabled: profileModelPayload.is_inbox_enabled,
-        isWebhookEnabled: profileModelPayload.is_webhook_enabled,
-        preferredLanguages: profileModelPayload.preferred_languages
+        ...profile
       };
     }
   );
@@ -283,19 +308,17 @@ async function updateExistingProfileFromPayload(
 
   const maybeProfile = errorOrMaybeProfile.value;
 
-  if (isNone(maybeProfile)) {
-    // this should never happen since if the profile doesn't exist this function
-    // will never be called, but let's deal with this anyway, you never know
-    return ResponseErrorInternal(
-      "Error while updating the existing profile, the profile does not exist!"
-    );
-  }
-
-  const profile = maybeProfile.value;
-
-  const publicExtendedProfile = toExtendedProfile(profile);
-
-  return ResponseSuccessJson(publicExtendedProfile);
+  return maybeProfile.foldL<
+    IResponseErrorInternal | IResponseSuccessJson<ExtendedProfile>
+  >(
+    () =>
+      // this should never happen since if the profile doesn't exist this function
+      // will never be called, but let's deal with this anyway, you never know
+      ResponseErrorInternal(
+        "Error while updating the existing profile, the profile does not exist!"
+      ),
+    p => ResponseSuccessJson(toExtendedProfile(p))
+  );
 }
 
 /**
@@ -306,36 +329,59 @@ async function updateExistingProfileFromPayload(
 export function UpsertProfileHandler(
   profileModel: ProfileModel
 ): IUpsertProfileHandler {
-  return async (_, __, ___, fiscalCode, profileModelPayload) => {
+  return async (context, _, __, ___, fiscalCode, profileModelPayload) => {
     const errorOrMaybeProfile = await profileModel.findOneProfileByFiscalCode(
       fiscalCode
     );
-    if (isRight(errorOrMaybeProfile)) {
-      const maybeProfile = errorOrMaybeProfile.value;
-      if (isNone(maybeProfile)) {
-        // create a new profile
-        return createNewProfileFromPayload(
-          profileModel,
+    if (isLeft(errorOrMaybeProfile)) {
+      return ResponseErrorQuery("Error", errorOrMaybeProfile.value);
+    }
+    const maybeProfile = errorOrMaybeProfile.value;
+
+    if (isNone(maybeProfile)) {
+      // create a new profile
+      const response = await createNewProfileFromPayload(
+        profileModel,
+        fiscalCode,
+        profileModelPayload
+      );
+      // if we successfully created the user's profile
+      // broadcast a profile-created event
+      if (response.kind === "IResponseSuccessJson") {
+        // tslint:disable-next-line:no-object-mutation
+        context.bindings.profileEvent = {
           fiscalCode,
-          profileModelPayload
-        );
-      } else {
-        const existingProfile = maybeProfile.value;
-        // verify that the client asked to update the latest version
-        if (profileModelPayload.version !== existingProfile.version) {
-          return ResponseErrorConflict(
-            `Version ${profileModelPayload.version} is not the latest version.`
-          );
-        }
-        // update existing profile
-        return updateExistingProfileFromPayload(
-          profileModel,
-          existingProfile,
-          profileModelPayload
+          kind: "ProfileCreatedEvent",
+          newProfile: response.value
+        };
+      }
+      return response;
+    } else {
+      const existingProfile = maybeProfile.value;
+      // verify that the client asked to update the latest version
+      if (profileModelPayload.version !== existingProfile.version) {
+        return ResponseErrorConflict(
+          `Version ${profileModelPayload.version} is not the latest version.`
         );
       }
-    } else {
-      return ResponseErrorQuery("Error", errorOrMaybeProfile.value);
+      // update existing profile
+      const response = await updateExistingProfileFromPayload(
+        profileModel,
+        existingProfile,
+        profileModelPayload
+      );
+      // if we successfully updated the user's profile
+      // broadcast a profile-updated event
+      if (response.kind === "IResponseSuccessJson") {
+        // tslint:disable-next-line:no-object-mutation
+        context.bindings.profileEvent = {
+          fiscalCode: existingProfile.fiscalCode,
+          kind: "ProfileUpdatedEvent",
+          newProfile: response.value,
+          oldProfile: toExtendedProfile(existingProfile)
+        };
+      }
+      return response;
     }
   };
 }
@@ -352,6 +398,7 @@ export function UpsertProfile(
     serviceModel
   );
   const middlewaresWrap = withRequestMiddlewares(
+    ContextMiddleware<IBindings>(),
     AzureApiAuthMiddleware(new Set([UserGroup.ApiProfileWrite])),
     ClientIpMiddleware,
     azureUserAttributesMiddleware,
@@ -360,7 +407,9 @@ export function UpsertProfile(
   );
   return wrapRequestHandler(
     middlewaresWrap(
-      checkSourceIpForHandler(handler, (_, c, u, __, ___) => ipTuple(c, u))
+      checkSourceIpForHandler(handler, (_, __, c, u, ___, ____) =>
+        ipTuple(c, u)
+      )
     )
   );
 }
