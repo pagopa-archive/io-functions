@@ -128,19 +128,6 @@ export abstract class DocumentDbModel<
   }
 
   /**
-   * Returns all the documents in this collection.
-   *
-   * @param recipient The fiscalCode of the recipient user
-   */
-  /* istanbul ignore next */
-  public findAll(): DocumentDbUtils.IResultIterator<TR> {
-    return DocumentDbUtils.queryDocuments(this.dbClient, this.collectionUri, {
-      parameters: [],
-      query: `SELECT * FROM n`
-    });
-  }
-
-  /**
    * Get an iterator to process all documents of the collection.
    *
    * @param documentId    The ID of the document to retrieve.

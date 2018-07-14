@@ -333,19 +333,11 @@ export function queryDocuments<T>(
   client: DocumentDb.DocumentClient,
   collectionUri: IDocumentDbCollectionUri,
   query: DocumentDb.DocumentQuery,
-  partitionKey?: string
+  partitionKey: string
 ): IResultIterator<T & DocumentDb.RetrievedDocument> {
-  const documentIterator = client.queryDocuments(
-    collectionUri.uri,
-    query,
+  const documentIterator = client.queryDocuments(collectionUri.uri, query, {
     partitionKey
-      ? {
-          partitionKey
-        }
-      : {
-          enableCrossPartitionQuery: true
-        }
-  );
+  });
   return {
     executeNext: () => executeNext<T>(documentIterator)
   };
@@ -466,7 +458,7 @@ export function mapResultIterator<A, B>(
                   } else {
                     resolve(
                       right<DocumentDb.QueryError, Option<ReadonlyArray<B>>>(
-                        none
+                        some([])
                       )
                     );
                   }
