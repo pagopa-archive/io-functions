@@ -32,13 +32,13 @@ const adminApiKey = getRequiredStringEnv("ADMIN_API_KEY");
 // TODO: decide text for welcome message
 // TODO: switch text based on user's preferred_language
 const createWelcomeMessageMarkdown = (profile: ExtendedProfile) =>
-  `Hello new user ${profile.email}
+  `Hello new user ${profile.email || ""}
 
   We welcome you to the digital citizenship API program  
   This is a welcome message to test the system (if it works)`;
 
 const createWelcomeMessageSubject = (profile: ExtendedProfile) =>
-  `Welcome new user ${profile.email}`;
+  `Welcome new user ${profile.email || ""}`;
 
 const ContextWithBindings = t.exact(
   t.interface({
