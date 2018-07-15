@@ -94,12 +94,11 @@ export async function index(
     });
 
     // TODO: schedule retries
-    await sendWelcomeMessage(url, adminApiKey, newMessage).then(response => {
-      winston.debug(
-        `ProfileEventsQueueHandler|Welcome message sent to ${
-          event.fiscalCode
-        } (response status=${response.status})`
-      );
-    });
+    const response = await sendWelcomeMessage(url, adminApiKey, newMessage);
+    winston.debug(
+      `ProfileEventsQueueHandler|Welcome message sent to ${
+        event.fiscalCode
+      } (response status=${response.status})`
+    );
   }
 }
