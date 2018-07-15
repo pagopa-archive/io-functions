@@ -72,7 +72,7 @@ export async function index(
     JSON.stringify(event)
   );
 
-  const url = adminApiUrl + "/api/v1/messages/" + event.fiscalCode;
+  const url = `${adminApiUrl}/api/v1/messages/${event.fiscalCode}`;
 
   const hasJustEnabledInbox =
     event.newProfile.is_inbox_enabled === true &&
@@ -94,7 +94,7 @@ export async function index(
     });
 
     // TODO: schedule retries
-    sendWelcomeMessage(url, adminApiKey, newMessage).then(response => {
+    await sendWelcomeMessage(url, adminApiKey, newMessage).then(response => {
       winston.debug(
         `ProfileEventsQueueHandler|Welcome message sent to ${
           event.fiscalCode
