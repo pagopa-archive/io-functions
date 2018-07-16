@@ -26,7 +26,7 @@ const DEFAULT_REQUEST_TIMEOUT_MS = 10000;
 const isProduction = process.env.NODE_ENV === "production";
 
 // Needed to call notifications API
-const adminApiUrl = getRequiredStringEnv("ADMIN_API_URL");
+const notificationApiUrl = getRequiredStringEnv("ADMIN_API_URL");
 const adminApiKey = getRequiredStringEnv("ADMIN_API_KEY");
 
 // TODO: decide text for welcome message
@@ -72,14 +72,16 @@ export async function index(
     JSON.stringify(event)
   );
 
-  const url = `${adminApiUrl}/api/v1/messages/${event.fiscalCode}`;
+  const url = `${notificationApiUrl}/api/v1/messages/${event.fiscalCode}`;
+
+  const isInboxEnabled = event.newProfile.is_inbox_enabled === true;
+  const isProfileCreated = event.kind === "ProfileCreatedEvent";
+  const isProfileUpdated =
+    event.kind === "ProfileUpdatedEvent" &&
+    event.oldProfile.is_inbox_enabled === false;
 
   const hasJustEnabledInbox =
-    event.newProfile.is_inbox_enabled === true &&
-    (event.kind === "ProfileCreatedEvent" ||
-      (event.kind === "ProfileUpdatedEvent" &&
-        event.oldProfile.is_inbox_enabled !==
-          event.newProfile.is_inbox_enabled));
+    isInboxEnabled && (isProfileCreated || isProfileUpdated);
 
   if (hasJustEnabledInbox) {
     const newMessage = NewMessage.decode({
