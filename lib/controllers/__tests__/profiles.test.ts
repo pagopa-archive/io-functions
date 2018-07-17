@@ -202,6 +202,7 @@ describe("UpsertProfile", () => {
     const upsertProfileHandler = UpsertProfileHandler(profileModelMock as any);
 
     const response = await upsertProfileHandler(
+      { bindings: {} } as any,
       anAzureAuthorization,
       undefined as any,
       undefined as any,
@@ -255,6 +256,7 @@ describe("UpsertProfile", () => {
     };
 
     const response = await upsertProfileHandler(
+      { bindings: {} } as any,
       anAzureAuthorization,
       undefined as any,
       undefined as any,
@@ -294,6 +296,7 @@ describe("UpsertProfile", () => {
     };
 
     const response = await upsertProfileHandler(
+      { bindings: {} } as any,
       anAzureAuthorization,
       undefined as any,
       undefined as any,
