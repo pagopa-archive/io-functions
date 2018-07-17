@@ -18,6 +18,8 @@
 
 [![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fteamdigitale%2Fdigital-citizenship-functions.svg?type=shield)](https://app.fossa.io/projects/git%2Bgithub.com%2Fteamdigitale%2Fdigital-citizenship-functions?ref=badge_shield)
 
+[![Run in Postman](https://run.pstmn.io/button.svg)](https://www.getpostman.com/run-collection/ff49a06cd838475a9765)
+
 ## Introduction
 
 This is the implementation of the Digital Citizenship API, a set of services
