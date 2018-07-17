@@ -99,6 +99,8 @@ This means:
 
 As soon as you’re ready, we can remove these restrictions.
 
+[![Run in Postman](https://run.pstmn.io/button.svg)](https://www.getpostman.com/run-collection/ff49a06cd838475a9765)
+
 ### Message sending flow
 
 ![message sending flow](docs/message-sending-flow.png)
