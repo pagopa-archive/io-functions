@@ -50,20 +50,22 @@ const anAzureAuthorization: IAzureApiAuthorization = {
   userId: "u123" as NonEmptyString
 };
 
+const anOrganizationFiscalCode = "01234567890" as OrganizationFiscalCode;
+const aFiscalCode = "SPNDNL80R13D000X" as FiscalCode;
+
 const aServicePayload: ApiService = {
   department_name: "MyDeptName" as NonEmptyString,
+  organization_fiscal_code: anOrganizationFiscalCode,
   organization_name: "MyOrgName" as NonEmptyString,
   service_id: "MySubscriptionId" as NonEmptyString,
   service_name: "MyServiceName" as NonEmptyString
 };
 
-const anOrganizationFiscalCode = "01234567890" as OrganizationFiscalCode;
-const aFiscalCode = "SPNDNL80R13D000X" as FiscalCode;
-
 const aService: Service = {
   authorizedCIDRs: toAuthorizedCIDRs([]),
   authorizedRecipients: toAuthorizedRecipients([]),
   departmentName: "MyDeptName" as NonEmptyString,
+  isVisible: true,
   maxAllowedPaymentAmount: 0 as MaxAllowedPaymentAmount,
   organizationFiscalCode: anOrganizationFiscalCode,
   organizationName: "MyOrgName" as NonEmptyString,

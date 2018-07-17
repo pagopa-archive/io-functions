@@ -423,6 +423,9 @@ Service:
       type: array
       items:
         $ref: "#/FiscalCode"
+    is_visible:
+      type: boolean
+      default: false
     max_allowed_payment_amount:
         $ref: "#/MaxAllowedPaymentAmount"
     organization_fiscal_code:
@@ -452,6 +455,8 @@ ServicePublic:
       $ref: "#/OrganizationName"
     department_name:
       $ref: "#/DepartmentName"
+    organization_fiscal_code:
+      $ref: "#/OrganizationFiscalCode"
     version:
       type: integer
   required:
@@ -459,6 +464,7 @@ ServicePublic:
     - service_name
     - organization_name
     - department_name
+    - organization_fiscal_code
 ServiceId:
   type: string
   description: |-

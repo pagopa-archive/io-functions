@@ -87,6 +87,19 @@ export interface IResultIterator<T> {
   >;
 }
 
+/**
+ * Result of DocumentDb queries.
+ *
+ * This is a wrapper around the executeNext method provided by QueryIterator.
+ *
+ * See http://azure.github.io/azure-documentdb-node/QueryIterator.html
+ */
+export interface IFoldableResultIterator<T> {
+  readonly executeNext: (
+    init: T
+  ) => Promise<Either<DocumentDb.QueryError, Option<T>>>;
+}
+
 //
 // Definition of functions
 //
@@ -264,6 +277,65 @@ export function readDocument<T>(
 }
 
 /**
+ * Wraps executeNext inner QueryIterator method in a Promise
+ *
+ * Returns an Either:
+ *
+ *    right(some(RetrievedDocuments)): when documents exists and are correctly retrieved
+ *    right(none): in case the iterator haven't found any document
+ *    left(QueryError): in case of error querying the database
+ */
+function executeNext<T>(
+  documentIterator: DocumentDb.QueryIterator<DocumentDb.RetrievedDocument>
+): Promise<
+  Either<
+    DocumentDb.QueryError,
+    Option<ReadonlyArray<DocumentDb.RetrievedDocument & T>>
+  >
+> {
+  return new Promise(resolve => {
+    documentIterator.executeNext((error, documents, _) => {
+      if (error) {
+        resolve(
+          left<
+            DocumentDb.QueryError,
+            Option<ReadonlyArray<T & DocumentDb.RetrievedDocument>>
+          >(error)
+        );
+      } else if (documents && documents.length > 0) {
+        const readonlyDocuments: ReadonlyArray<
+          DocumentDb.RetrievedDocument
+        > = documents;
+        resolve(
+          right<
+            DocumentDb.QueryError,
+            Option<ReadonlyArray<T & DocumentDb.RetrievedDocument>>
+          >(
+            some(readonlyDocuments as ReadonlyArray<
+              T & DocumentDb.RetrievedDocument
+            >)
+          )
+        );
+      } else if (!documentIterator.hasMoreResults()) {
+        resolve(
+          right<
+            DocumentDb.QueryError,
+            Option<ReadonlyArray<T & DocumentDb.RetrievedDocument>>
+          >(none)
+        );
+      } else {
+        resolve(
+          right<
+            DocumentDb.QueryError,
+            Option<ReadonlyArray<T & DocumentDb.RetrievedDocument>>
+          >(some([]))
+        );
+      }
+    });
+  });
+}
+
+/**
  * Queries a collection for documents
  *
  * @param client The DocumentDB client
@@ -280,41 +352,24 @@ export function queryDocuments<T>(
     partitionKey
   });
   return {
-    executeNext: () => {
-      return new Promise(resolve => {
-        documentIterator.executeNext((error, documents, _) => {
-          if (error) {
-            resolve(
-              left<
-                DocumentDb.QueryError,
-                Option<ReadonlyArray<T & DocumentDb.RetrievedDocument>>
-              >(error)
-            );
-          } else if (documents && documents.length > 0) {
-            const readonlyDocuments: ReadonlyArray<
-              DocumentDb.RetrievedDocument
-            > = documents;
-            resolve(
-              right<
-                DocumentDb.QueryError,
-                Option<ReadonlyArray<T & DocumentDb.RetrievedDocument>>
-              >(
-                some(readonlyDocuments as ReadonlyArray<
-                  T & DocumentDb.RetrievedDocument
-                >)
-              )
-            );
-          } else {
-            resolve(
-              right<
-                DocumentDb.QueryError,
-                Option<ReadonlyArray<T & DocumentDb.RetrievedDocument>>
-              >(none)
-            );
-          }
-        });
-      });
-    }
+    executeNext: () => executeNext<T>(documentIterator)
+  };
+}
+
+/**
+ * Queries a collection for all documents and returns an iterator.
+ *
+ * @param client The DocumentDB client
+ * @param collectionUrl The collection URL
+ * @param query The query string
+ */
+export function readDocuments<T>(
+  client: DocumentDb.DocumentClient,
+  collectionUri: IDocumentDbCollectionUri
+): IResultIterator<T & DocumentDb.RetrievedDocument> {
+  const documentIterator = client.readDocuments(collectionUri.uri);
+  return {
+    executeNext: () => executeNext<T>(documentIterator)
   };
 }
 
@@ -416,7 +471,7 @@ export function mapResultIterator<A, B>(
                   } else {
                     resolve(
                       right<DocumentDb.QueryError, Option<ReadonlyArray<B>>>(
-                        none
+                        some([])
                       )
                     );
                   }
@@ -438,6 +493,45 @@ export function mapResultIterator<A, B>(
 }
 
 /**
+ * Reduce a result iterator
+ */
+export function reduceResultIterator<A, B>(
+  i: IResultIterator<A>,
+  f: (prev: B, curr: A) => B
+): IFoldableResultIterator<B> {
+  return {
+    executeNext: (init: B) =>
+      new Promise((resolve, reject) =>
+        i.executeNext().then(errorOrMaybeDocuments => {
+          errorOrMaybeDocuments
+            .map(maybeDocuments => {
+              maybeDocuments
+                .map(documents => {
+                  if (documents && documents.length > 0) {
+                    resolve(
+                      right<DocumentDb.QueryError, Option<B>>(
+                        some(documents.reduce(f, init))
+                      )
+                    );
+                  } else {
+                    resolve(
+                      right<DocumentDb.QueryError, Option<B>>(some(init))
+                    );
+                  }
+                })
+                .getOrElseL(() =>
+                  resolve(right<DocumentDb.QueryError, Option<B>>(none))
+                );
+            })
+            .mapLeft(error =>
+              resolve(left<DocumentDb.QueryError, Option<B>>(error))
+            );
+        }, reject)
+      )
+  };
+}
+
+/**
  * Consumes the iterator and returns an arrays with the generated elements
  */
 export async function iteratorToArray<T>(
@@ -450,16 +544,35 @@ export async function iteratorToArray<T>(
     if (isLeft(errorOrMaybeDocuments)) {
       return left(errorOrMaybeDocuments.value);
     }
-    if (
-      isNone(errorOrMaybeDocuments.value) ||
-      errorOrMaybeDocuments.value.value.length === 0
-    ) {
+    if (isNone(errorOrMaybeDocuments.value)) {
       return right(a);
     }
     const result = errorOrMaybeDocuments.value.value;
     return iterate(a.concat(...result));
   }
   return iterate([]);
+}
+
+/**
+ * Consumes the iterator and returns the reduced value
+ */
+export async function iteratorToValue<T>(
+  i: IFoldableResultIterator<T>,
+  init: T
+): Promise<Either<DocumentDb.QueryError, T>> {
+  async function iterate(a: T): Promise<Either<DocumentDb.QueryError, T>> {
+    const errorOrMaybeResult = await i.executeNext(a);
+    if (isLeft(errorOrMaybeResult)) {
+      return left(errorOrMaybeResult.value);
+    }
+    const maybeResult = errorOrMaybeResult.value;
+    if (isNone(maybeResult)) {
+      return right(a);
+    }
+    const result = maybeResult.value;
+    return iterate(result);
+  }
+  return iterate(init);
 }
 
 /**

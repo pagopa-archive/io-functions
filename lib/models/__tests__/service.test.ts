@@ -37,6 +37,7 @@ const aRetrievedService: RetrievedService = {
   authorizedRecipients: toAuthorizedRecipients([]),
   departmentName: "MyDept" as NonEmptyString,
   id: "xyz" as NonEmptyString,
+  isVisible: true,
   kind: "IRetrievedService",
   maxAllowedPaymentAmount: 0 as MaxAllowedPaymentAmount,
   organizationFiscalCode: anOrganizationFiscalCode,
@@ -54,7 +55,10 @@ const aSerializedService = {
 describe("findOneServiceById", () => {
   it("should resolve a promise to an existing service", async () => {
     const iteratorMock = {
-      executeNext: jest.fn(cb => cb(undefined, [aSerializedService], undefined))
+      executeNext: jest.fn(cb =>
+        cb(undefined, [aSerializedService], undefined)
+      ),
+      hasMoreResults: jest.fn().mockReturnValue(false)
     };
 
     const clientMock = {
@@ -77,7 +81,8 @@ describe("findOneServiceById", () => {
 
   it("should resolve a promise to an empty value if no service is found", async () => {
     const iteratorMock = {
-      executeNext: jest.fn(cb => cb(undefined, [], undefined))
+      executeNext: jest.fn(cb => cb(undefined, [], undefined)),
+      hasMoreResults: jest.fn().mockReturnValue(false)
     };
 
     const clientMock = {
@@ -116,6 +121,7 @@ describe("createService", () => {
       authorizedCIDRs: toAuthorizedCIDRs([]),
       authorizedRecipients: toAuthorizedRecipients([]),
       departmentName: "MyService" as NonEmptyString,
+      isVisible: true,
       maxAllowedPaymentAmount: 0 as MaxAllowedPaymentAmount,
       organizationFiscalCode: anOrganizationFiscalCode,
       organizationName: "MyService" as NonEmptyString,
@@ -152,6 +158,7 @@ describe("createService", () => {
       authorizedCIDRs: toAuthorizedCIDRs([]),
       authorizedRecipients: toAuthorizedRecipients([]),
       departmentName: "MyService" as NonEmptyString,
+      isVisible: true,
       maxAllowedPaymentAmount: 0 as MaxAllowedPaymentAmount,
       organizationFiscalCode: anOrganizationFiscalCode,
       organizationName: "MyService" as NonEmptyString,
