@@ -1,20 +1,16 @@
-// tslint:disable
-// jest.mock("../../lib/utils/documentdb");
-// jest.mock("../../lib/models/service");
-// import * as documentDbUtils from "../../lib/utils/documentdb";
-
+/* tslint:disable:no-any */
+/* tslint:disable:no-object-mutation */
 process.env = {
   ...process.env,
-  CUSTOMCONNSTR_COSMOSDB_URI: "xxx",
+  COSMOSDB_NAME: "xxx",
   CUSTOMCONNSTR_COSMOSDB_KEY: "xxx",
-  COSMOSDB_NAME: "xxx"
+  CUSTOMCONNSTR_COSMOSDB_URI: "xxx"
 };
 
 jest.mock("winston");
 jest.mock("../utils/logging");
 
-import { index } from "../compute_visible_services";
-import { right, left } from "fp-ts/lib/Either";
+import { left, right } from "fp-ts/lib/Either";
 import { none, some } from "fp-ts/lib/Option";
 import { NonNegativeNumber } from "italia-ts-commons/lib/numbers";
 import {
@@ -28,7 +24,13 @@ import {
   toAuthorizedRecipients
 } from "../../lib/models/service";
 import { MaxAllowedPaymentAmount } from "../api/definitions/MaxAllowedPaymentAmount";
+import { index } from "../compute_visible_services";
 import { VisibleService } from "../models/visible_service";
+
+afterEach(() => {
+  jest.resetAllMocks();
+  jest.restoreAllMocks();
+});
 
 const aServiceId = "xyz" as NonEmptyString;
 const anOrganizationFiscalCode = "01234567890" as OrganizationFiscalCode;
@@ -57,8 +59,8 @@ const aRetrievedInvisibleService: RetrievedService = {
 
 const aVisibleService: VisibleService = {
   departmentName: aRetrievedService.departmentName,
-  organizationFiscalCode: aRetrievedService.organizationFiscalCode,
   id: aRetrievedService.id,
+  organizationFiscalCode: aRetrievedService.organizationFiscalCode,
   organizationName: aRetrievedService.organizationName,
   serviceId: aRetrievedService.serviceId,
   serviceName: aRetrievedService.serviceName,
@@ -67,7 +69,7 @@ const aVisibleService: VisibleService = {
 
 describe("computeVisibleServices", () => {
   it("should extract visible services from a collection of services", async () => {
-    jest
+    const collectionIteratorSpy = jest
       .spyOn(ServiceModel.prototype, "getCollectionIterator")
       .mockImplementation(() =>
         Promise.resolve({
@@ -81,8 +83,8 @@ describe("computeVisibleServices", () => {
             .mockReturnValueOnce(Promise.resolve(right(none)))
         })
       );
-    // tslint:disable-next-line:no-any
     const ret = await index({} as any);
+    expect(collectionIteratorSpy).toHaveBeenCalledTimes(1);
     expect(ret).toEqual({
       visibleServicesBlob: {
         [aRetrievedService.serviceId]: aVisibleService
@@ -91,7 +93,7 @@ describe("computeVisibleServices", () => {
   });
 
   it("should take the latest version of a service", async () => {
-    jest
+    const collectionIteratorSpy = jest
       .spyOn(ServiceModel.prototype, "getCollectionIterator")
       .mockImplementation(() =>
         Promise.resolve({
@@ -111,15 +113,15 @@ describe("computeVisibleServices", () => {
             .mockReturnValueOnce(Promise.resolve(right(none)))
         })
       );
-    // tslint:disable-next-line:no-any
     const ret = await index({} as any);
+    expect(collectionIteratorSpy).toHaveBeenCalledTimes(1);
     expect(ret).toEqual({
       visibleServicesBlob: {}
     });
   });
 
   it("should exit on error querying the collection", async () => {
-    jest
+    const collectionIteratorSpy = jest
       .spyOn(ServiceModel.prototype, "getCollectionIterator")
       .mockImplementation(() =>
         Promise.resolve({
@@ -128,8 +130,8 @@ describe("computeVisibleServices", () => {
             .mockReturnValueOnce(Promise.resolve(left(Error("error"))))
         })
       );
-    // tslint:disable-next-line:no-any
     const ret = await index({} as any);
+    expect(collectionIteratorSpy).toHaveBeenCalledTimes(1);
     expect(ret).toBeUndefined();
   });
 
@@ -141,7 +143,6 @@ describe("computeVisibleServices", () => {
           executeNext: jest.fn().mockRejectedValueOnce({})
         })
       );
-    // tslint:disable-next-line:no-any
     const ret = await index({} as any);
     expect(ret).toBeUndefined();
   });
