@@ -1,10 +1,15 @@
 /* tslint:disable:no-identical-functions */
 
 import { isRight } from "fp-ts/lib/Either";
-import { getBlobAsText, upsertBlobFromText } from "../azure_storage";
+import {
+  getBlobAsObject,
+  getBlobAsText,
+  upsertBlobFromText
+} from "../azure_storage";
 
 jest.mock("azure-storage");
 import * as azureStorage from "azure-storage";
+import * as t from "io-ts";
 
 const aBlobResult: azureStorage.BlobService.BlobResult = {
   blobType: "",
@@ -101,5 +106,39 @@ describe("upsertBlobFromObject", () => {
       }
       spy.mockReset();
     });
+  });
+});
+
+describe("getBlobAsObject", () => {
+  it("should return a typed io-ts object from blob", async () => {
+    const aJsonObjectT = t.type({
+      some: t.string
+    });
+    type aJsonObjectT = t.TypeOf<typeof aJsonObjectT>;
+    const aJsonObject: aJsonObjectT = {
+      some: "jsonObject"
+    };
+    const spy = jest
+      .spyOn(aBlobService, "getBlobToText")
+      .mockImplementation((_, __, cb) => {
+        cb(undefined, JSON.stringify(aJsonObject));
+      });
+    const result = await getBlobAsObject(
+      aJsonObjectT,
+      aBlobService,
+      aContainerName,
+      anAttachmentName
+    );
+    expect(spy).toHaveBeenCalledTimes(1);
+    expect(spy).toHaveBeenCalledWith(
+      aContainerName,
+      anAttachmentName,
+      expect.any(Function)
+    );
+    expect(isRight(result)).toBeTruthy();
+    if (isRight(result)) {
+      expect(result.value).toEqual(aJsonObject);
+    }
+    spy.mockReset();
   });
 });
