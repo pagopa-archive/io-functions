@@ -342,7 +342,8 @@ describe("queryOneDocument", () => {
 
   it("should resolve a promise to null if the query has no results", async () => {
     const iteratorMock = {
-      executeNext: jest.fn(cb => cb(undefined, [], undefined))
+      executeNext: jest.fn(cb => cb(undefined, [], undefined)),
+      hasMoreResults: jest.fn().mockReturnValue(false)
     };
     const clientMock = {
       queryDocuments: jest.fn((__, ___) => iteratorMock)
@@ -394,7 +395,7 @@ describe("queryOneDocument", () => {
 });
 
 describe("mapResultIterator", () => {
-  it("should map the documents or the wrapped iterator", async () => {
+  it("should map the documents of the wrapped iterator", async () => {
     const iteratorMock = {
       executeNext: jest.fn()
     };
@@ -476,6 +477,94 @@ describe("iteratorToArray", () => {
     expect(result).toEqual(left(queryError));
   });
 });
+
+/////////////////////////////////
+
+describe("reduceResultIterator", () => {
+  it("should reduce the documents of the wrapped iterator", async () => {
+    const iteratorMock = {
+      executeNext: jest.fn()
+    };
+
+    iteratorMock.executeNext.mockImplementationOnce(() =>
+      Promise.resolve(right(some(["1", "2"])))
+    );
+    iteratorMock.executeNext.mockImplementationOnce(() =>
+      Promise.resolve(right(none))
+    );
+
+    const reduceIterator = DocumentDbUtils.reduceResultIterator(
+      iteratorMock as any,
+      (prev: string, cur: string) => prev + cur
+    );
+
+    const result1 = await reduceIterator.executeNext("");
+    result1.map(r => r.map(async o => await reduceIterator.executeNext(o)));
+
+    expect(iteratorMock.executeNext).toHaveBeenCalledTimes(2);
+    expect(isRight(result1)).toBeTruthy();
+    if (isRight(result1)) {
+      expect(result1.value.isSome());
+      expect(result1.value.toUndefined()).toEqual("12");
+    }
+    expect(isRight(result1)).toBeTruthy();
+    if (isRight(result1)) {
+      expect(result1.value.isNone());
+    }
+  });
+});
+
+describe("iteratorToValue", () => {
+  it("should reduce an iterator into a value", async () => {
+    const iteratorMock = {
+      executeNext: jest.fn()
+    };
+
+    iteratorMock.executeNext.mockImplementationOnce(init =>
+      Promise.resolve(right(some(init.concat("1"))))
+    );
+    iteratorMock.executeNext.mockImplementationOnce(init =>
+      Promise.resolve(right(some(init.concat("2"))))
+    );
+    iteratorMock.executeNext.mockImplementationOnce(_ =>
+      Promise.resolve(right(none))
+    );
+
+    const result = await DocumentDbUtils.iteratorToValue(iteratorMock, "");
+
+    expect(iteratorMock.executeNext).toHaveBeenCalledTimes(3);
+    expect(result).toEqual(right("12"));
+  });
+  it("should fail in case of query error", async () => {
+    const iteratorMock = {
+      executeNext: jest.fn()
+    };
+    const queryError = {
+      body: "too many requests",
+      code: 429
+    };
+
+    iteratorMock.executeNext.mockImplementationOnce(init =>
+      Promise.resolve(right(some(init.concat("1"))))
+    );
+    iteratorMock.executeNext.mockImplementationOnce(() =>
+      Promise.resolve(left(queryError))
+    );
+    iteratorMock.executeNext.mockImplementationOnce(init =>
+      Promise.resolve(right(some(init.concat("2"))))
+    );
+    iteratorMock.executeNext.mockImplementationOnce(() =>
+      Promise.resolve(right(none))
+    );
+
+    const result = await DocumentDbUtils.iteratorToValue(iteratorMock, "");
+
+    expect(iteratorMock.executeNext).toHaveBeenCalledTimes(2);
+    expect(result).toEqual(left(queryError));
+  });
+});
+
+/////////////////////////////////
 
 describe("upsertAttachment", () => {
   const aDbUri = DocumentDbUtils.getDatabaseUri("mydb" as NonEmptyString);

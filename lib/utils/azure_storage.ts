@@ -2,8 +2,11 @@
  * Utility functions to interact with an Azure Blob Storage.
  */
 import * as azureStorage from "azure-storage";
-import { Either, left, right } from "fp-ts/lib/Either";
+import * as t from "io-ts";
+
+import { Either, fromOption, left, right, tryCatch } from "fp-ts/lib/Either";
 import { fromNullable, Option } from "fp-ts/lib/Option";
+import { readableReport } from "italia-ts-commons/lib/reporters";
 
 /**
  * Create a new blob (media) from plain text.
@@ -86,4 +89,33 @@ export function getBlobAsText(
       }
     });
   });
+}
+
+/**
+ * Get a blob content as a typed (io-ts) object.
+ *
+ * @param blobService     the Azure blob service
+ * @param containerName   the name of the Azure blob storage container
+ * @param blobName        blob file name
+ */
+export async function getBlobAsObject<A, O, I>(
+  type: t.Type<A, O, I>,
+  blobService: azureStorage.BlobService,
+  containerName: string,
+  blobName: string
+): Promise<Either<Error, A>> {
+  const errorOrMaybeJsonText = await getBlobAsText(
+    blobService,
+    containerName,
+    blobName
+  );
+  return errorOrMaybeJsonText.chain(maybeJsonText =>
+    fromOption(new Error("getBlobAsObject: cannot get json from blob"))(
+      maybeJsonText
+    )
+      .chain(jsonText => tryCatch(() => JSON.parse(jsonText)))
+      .chain(parsedJson =>
+        type.decode(parsedJson).mapLeft(errs => new Error(readableReport(errs)))
+      )
+  );
 }

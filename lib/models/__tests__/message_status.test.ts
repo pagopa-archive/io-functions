@@ -60,7 +60,8 @@ describe("findOneMessageStatusById", () => {
     const iteratorMock = {
       executeNext: jest.fn(cb =>
         cb(undefined, [aSerializedRetrievedMessageStatus], undefined)
-      )
+      ),
+      hasMoreResults: jest.fn().mockReturnValue(false)
     };
 
     const clientMock = {
@@ -83,7 +84,8 @@ describe("findOneMessageStatusById", () => {
 
   it("should resolve a promise to an empty value if no MessageStatus is found", async () => {
     const iteratorMock = {
-      executeNext: jest.fn(cb => cb(undefined, [], undefined))
+      executeNext: jest.fn(cb => cb(undefined, [], undefined)),
+      hasMoreResults: jest.fn().mockReturnValue(false)
     };
 
     const clientMock = {

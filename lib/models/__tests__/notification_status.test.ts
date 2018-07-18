@@ -19,6 +19,11 @@ import {
   RetrievedNotificationStatus
 } from "../notification_status";
 
+afterEach(() => {
+  jest.clearAllMocks();
+  jest.resetAllMocks();
+});
+
 const aDatabaseUri = DocumentDbUtils.getDatabaseUri("mockdb" as NonEmptyString);
 const collectionUrl = DocumentDbUtils.getCollectionUri(
   aDatabaseUri,
@@ -64,7 +69,8 @@ describe("findOneNotificationStatusById", () => {
     const iteratorMock = {
       executeNext: jest.fn(cb =>
         cb(undefined, [aSerializedRetrievedNotificationStatus], undefined)
-      )
+      ),
+      hasMoreResults: jest.fn().mockReturnValue(false)
     };
 
     const clientMock = {
@@ -90,11 +96,12 @@ describe("findOneNotificationStatusById", () => {
 
   it("should resolve a promise to an empty value if no NotificationStatus is found", async () => {
     const iteratorMock = {
-      executeNext: jest.fn(cb => cb(undefined, [], undefined))
+      executeNext: jest.fn(cb => cb(undefined, [], undefined)),
+      hasMoreResults: jest.fn().mockReturnValue(false)
     };
 
     const clientMock = {
-      queryDocuments: jest.fn((__, ___) => iteratorMock)
+      queryDocuments: jest.fn().mockReturnValue(iteratorMock)
     };
 
     const model = new NotificationStatusModel(

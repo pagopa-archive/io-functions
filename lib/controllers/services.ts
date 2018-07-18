@@ -3,6 +3,7 @@
  */
 
 import * as express from "express";
+import * as t from "io-ts";
 
 import {
   ClientIp,
@@ -27,8 +28,10 @@ import {
 } from "../utils/request_middleware";
 
 import {
+  IResponseErrorInternal,
   IResponseErrorNotFound,
   IResponseSuccessJson,
+  ResponseErrorInternal,
   ResponseErrorNotFound,
   ResponseSuccessJson
 } from "italia-ts-commons/lib/responses";
@@ -51,7 +54,17 @@ import { ServiceId } from "../api/definitions/ServiceId";
 import { SenderServiceModel } from "../models/sender_service";
 import { mapResultIterator } from "../utils/documentdb";
 
-import { RequiredQueryParamMiddleware } from "../utils/middlewares/required_query_param";
+import { BlobService } from "azure-storage";
+
+import { StrMap } from "fp-ts/lib/StrMap";
+import {
+  ApiVisibleService,
+  toVisibleServicesApi,
+  VISIBLE_SERVICE_BLOB_ID,
+  VISIBLE_SERVICE_CONTAINER,
+  VisibleService
+} from "../models/visible_service";
+import { getBlobAsObject } from "../utils/azure_storage";
 import {
   checkSourceIpForHandler,
   clientIPAndCidrTuple as ipTuple
@@ -82,6 +95,19 @@ type IGetSenderServicesHandler = (
   fiscalCode: FiscalCode
 ) => Promise<IGetSenderServicesHandlerRet>;
 
+type IGetVisibleServicesHandlerRet =
+  | IResponseSuccessJson<{
+      readonly items: ReadonlyArray<ApiVisibleService>;
+      readonly page_size: number;
+    }>
+  | IResponseErrorInternal;
+
+type IGetVisibleServicesHandler = (
+  auth: IAzureApiAuthorization,
+  clientIp: ClientIp,
+  userAttributes: IAzureUserAttributes
+) => Promise<IGetVisibleServicesHandlerRet>;
+
 /**
  * Converts a retrieved service to a service that can be shared via API
  */
@@ -90,6 +116,7 @@ function retrievedServiceToPublic(
 ): ApiService {
   return {
     department_name: retrievedService.departmentName,
+    organization_fiscal_code: retrievedService.organizationFiscalCode,
     organization_name: retrievedService.organizationName,
     service_id: retrievedService.serviceId,
     service_name: retrievedService.serviceName,
@@ -148,6 +175,8 @@ export function GetService(serviceModel: ServiceModel): express.RequestHandler {
   );
 }
 
+///////////////////////////////////////
+
 /**
  * Returns the serviceId for all the Services that have sent
  * at least one notification to the recipient with the provided fiscalCode.
@@ -184,11 +213,67 @@ export function GetServicesByRecipient(
     AzureApiAuthMiddleware(new Set([UserGroup.ApiServiceByRecipientQuery])),
     ClientIpMiddleware,
     azureUserAttributesMiddleware,
-    RequiredQueryParamMiddleware("recipient", FiscalCode)
+    RequiredParamMiddleware("fiscalcode", FiscalCode)
   );
   return wrapRequestHandler(
     middlewaresWrap(
       checkSourceIpForHandler(handler, (_, c, u, __) => ipTuple(c, u))
+    )
+  );
+}
+
+///////////////////////////////////////
+
+/**
+ * Returns all the visible services (is_visible = true).
+ */
+export function GetVisibleServicesHandler(
+  blobService: BlobService
+): IGetVisibleServicesHandler {
+  return async (_, __, ___) => {
+    const errorOrVisibleServicesJson = await getBlobAsObject(
+      t.dictionary(ServiceId, VisibleService),
+      blobService,
+      VISIBLE_SERVICE_CONTAINER,
+      VISIBLE_SERVICE_BLOB_ID
+    );
+    return errorOrVisibleServicesJson.fold<IGetVisibleServicesHandlerRet>(
+      error =>
+        ResponseErrorInternal(
+          `Error getting visible services list: ${error.message}`
+        ),
+      visibleServicesJson => {
+        const visibleServicesApi = toVisibleServicesApi(
+          new StrMap(visibleServicesJson)
+        );
+        return ResponseSuccessJson({
+          items: visibleServicesApi,
+          page_size: visibleServicesApi.length
+        });
+      }
+    );
+  };
+}
+
+/**
+ * Wraps a GetVisibleServices handler inside an Express request handler.
+ */
+export function GetVisibleServices(
+  serviceModel: ServiceModel,
+  blobService: BlobService
+): express.RequestHandler {
+  const handler = GetVisibleServicesHandler(blobService);
+  const azureUserAttributesMiddleware = AzureUserAttributesMiddleware(
+    serviceModel
+  );
+  const middlewaresWrap = withRequestMiddlewares(
+    AzureApiAuthMiddleware(new Set([UserGroup.ApiPublicServiceList])),
+    ClientIpMiddleware,
+    azureUserAttributesMiddleware
+  );
+  return wrapRequestHandler(
+    middlewaresWrap(
+      checkSourceIpForHandler(handler, (_, c, u) => ipTuple(c, u))
     )
   );
 }

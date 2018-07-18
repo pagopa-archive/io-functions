@@ -39,6 +39,9 @@ export enum UserGroup {
   // services: read services attributes (public API)
   ApiPublicServiceRead = "ApiPublicServiceRead",
 
+  // services: read services attributes (public API)
+  ApiPublicServiceList = "ApiPublicServiceList",
+
   // services: list services that notified a specific recipient
   ApiServiceByRecipientQuery = "ApiServiceByRecipientQuery",
 

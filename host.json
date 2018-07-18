@@ -17,6 +17,7 @@
     "PublicApiV1",
     "Openapi",
     "AdminApi",
+    "ComputeVisibleServices",
     "CreatedMessageQueueHandler",
     "EmailNotificationsQueueHandler",
     "WebhookNotificationsQueueHandler",

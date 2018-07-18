@@ -133,11 +133,11 @@ paths:
         '404':
           description: No service found for the provided ID.
       parameters: []
-  "/services":
+  "/services/by-recipient/{recipient}":
     get:
       tags:
       - restricted
-      operationId: getServices
+      operationId: getServicesByRecipient
       summary: Get Services by recipient
       description:  |-
         Returns the service IDs of all the services that have contacted the recipient,
@@ -164,10 +164,30 @@ paths:
                 - service_id: 2b3e728c1a5d1efa035c
       parameters:
       - name: recipient
-        in: query
+        in: path
         type: string
         required: true
         description: The recipient's fiscal code.
+  "/services":
+    get:
+      tags:
+      - restricted
+      operationId: getVisibleServices
+      summary: Get all visibile services.
+      description:  |-
+        Returns all the services that have the 'is_visibile' field value set to true.
+      responses:
+        '200':
+          description: Found.
+          schema:
+            allOf:
+            - type: object
+              properties:
+                items:
+                  type: array
+                  items:
+                    $ref: '#/definitions/ServicePublic'
+            - $ref: "#/definitions/PaginationResponse"
   "/messages/{fiscal_code}/{id}":
     parameters:
     - $ref: "#/parameters/FiscalCode"

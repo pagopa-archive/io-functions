@@ -58,6 +58,8 @@ const aServicePayload: ApiService = {
   authorized_cidrs: [],
   authorized_recipients: [],
   department_name: "MyDeptName" as NonEmptyString,
+  is_visible: true,
+  max_allowed_payment_amount: 1 as MaxAllowedPaymentAmount,
   organization_fiscal_code: anOrganizationFiscalCode,
   organization_name: "MyOrgName" as NonEmptyString,
   service_id: "MySubscriptionId" as NonEmptyString,
@@ -68,7 +70,8 @@ const aService: Service = {
   authorizedCIDRs: toAuthorizedCIDRs([]),
   authorizedRecipients: toAuthorizedRecipients([]),
   departmentName: "MyDeptName" as NonEmptyString,
-  maxAllowedPaymentAmount: 0 as MaxAllowedPaymentAmount,
+  isVisible: true,
+  maxAllowedPaymentAmount: 1 as MaxAllowedPaymentAmount,
   organizationFiscalCode: anOrganizationFiscalCode,
   organizationName: "MyOrgName" as NonEmptyString,
   serviceId: "MySubscriptionId" as NonEmptyString,
@@ -392,7 +395,7 @@ describe("ServicePayloadMiddleware", () => {
     expect(isRight(errorOrServicePayload)).toBeTruthy();
     expect(errorOrServicePayload.value).toEqual({
       ...aServicePayload,
-      max_allowed_payment_amount: 0
+      max_allowed_payment_amount: 1
     });
   });
 

@@ -103,6 +103,7 @@ const someUserAttributes: IAzureUserAttributes = {
     authorizedCIDRs: toAuthorizedCIDRs([]),
     authorizedRecipients: new Set([]),
     departmentName: "IT" as NonEmptyString,
+    isVisible: true,
     maxAllowedPaymentAmount: 0 as MaxAllowedPaymentAmount,
     organizationFiscalCode: anOrganizationFiscalCode,
     organizationName: "AgID" as NonEmptyString,
