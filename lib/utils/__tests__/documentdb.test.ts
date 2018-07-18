@@ -499,7 +499,7 @@ describe("reduceResultIterator", () => {
     );
 
     const result1 = await reduceIterator.executeNext("");
-    await result1.map(async r => r.map(await reduceIterator.executeNext));
+    result1.map(r => r.map(async o => await reduceIterator.executeNext(o)));
 
     expect(iteratorMock.executeNext).toHaveBeenCalledTimes(2);
     expect(isRight(result1)).toBeTruthy();
@@ -521,10 +521,10 @@ describe("iteratorToValue", () => {
     };
 
     iteratorMock.executeNext.mockImplementationOnce(init =>
-      Promise.resolve(right(some(init + "1")))
+      Promise.resolve(right(some(init.concat("1"))))
     );
     iteratorMock.executeNext.mockImplementationOnce(init =>
-      Promise.resolve(right(some(init + "2")))
+      Promise.resolve(right(some(init.concat("2"))))
     );
     iteratorMock.executeNext.mockImplementationOnce(_ =>
       Promise.resolve(right(none))
@@ -545,13 +545,13 @@ describe("iteratorToValue", () => {
     };
 
     iteratorMock.executeNext.mockImplementationOnce(init =>
-      Promise.resolve(right(some(init + "1")))
+      Promise.resolve(right(some(init.concat("1"))))
     );
     iteratorMock.executeNext.mockImplementationOnce(() =>
       Promise.resolve(left(queryError))
     );
     iteratorMock.executeNext.mockImplementationOnce(init =>
-      Promise.resolve(right(some(init + "2")))
+      Promise.resolve(right(some(init.concat("2"))))
     );
     iteratorMock.executeNext.mockImplementationOnce(() =>
       Promise.resolve(right(none))
