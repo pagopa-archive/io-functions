@@ -15,16 +15,15 @@ import {
 } from "./models/service";
 import { getRequiredStringEnv } from "./utils/env";
 
-import { createBlobService } from "azure-storage";
 import { isLeft } from "fp-ts/lib/Either";
 import { isNone, isSome } from "fp-ts/lib/Option";
-import {
-  VISIBLE_SERVICE_BLOB_ID,
-  VISIBLE_SERVICE_CONTAINER,
-  VisibleService
-} from "./models/visible_service";
-import { upsertBlobFromObject } from "./utils/azure_storage";
+import { VisibleService } from "./models/visible_service";
+
 import { configureAzureContextTransport } from "./utils/logging";
+
+interface IOutputBindings {
+  readonly visibleServicesBlob: Record<string, VisibleService>;
+}
 
 // Whether we're in a production environment
 const isProduction = process.env.NODE_ENV === "production";
@@ -45,9 +44,6 @@ const documentClient = new DocumentClient(cosmosDbUri, {
 
 const serviceModel = new ServiceModel(documentClient, servicesCollectionUrl);
 
-const storageConnectionString = getRequiredStringEnv("QueueStorageConnection");
-const blobService = createBlobService(storageConnectionString);
-
 function reduceServicesToVisibleServices(
   visibleServicesObj: StrMap<VisibleService>,
   service: RetrievedService
@@ -62,10 +58,6 @@ function reduceServicesToVisibleServices(
   ) {
     // if the service is not visible anymore
     // delete it from the visible services list
-    winston.debug(
-      "ComputeVisibleService: remove %s",
-      JSON.stringify(maybeVisibleService)
-    );
     return remove(service.serviceId, visibleServicesObj);
   } else if (
     // if the service is visible and we don't have a related
@@ -76,8 +68,7 @@ function reduceServicesToVisibleServices(
       // is greater than the stored version of the cached visible service
       service.version > maybeVisibleService.value.version)
   ) {
-    winston.debug("ComputeVisibleService: insert %s", JSON.stringify(service));
-    // store the visible service
+    // store the visible service into the object (map)
     return insert(
       service.serviceId,
       pick(
@@ -94,8 +85,6 @@ function reduceServicesToVisibleServices(
       ),
       visibleServicesObj
     );
-  } else {
-    winston.debug("ComputeVisibleService: noop %s", JSON.stringify(service));
   }
   return visibleServicesObj;
 }
@@ -106,12 +95,14 @@ function reduceServicesToVisibleServices(
  * Scheduled using a timer trigger, see
  * https://github.com/MicrosoftDocs/azure-docs/blob/master/articles/azure-functions/functions-bindings-timer.md
  */
-export async function index(context: IContext<{}>): Promise<void> {
+export async function index(
+  context: IContext<{}>
+): Promise<void | IOutputBindings> {
   const logLevel = isProduction ? "info" : "debug";
   configureAzureContextTransport(context, winston, logLevel);
   try {
-    const servicesCollectionIterator = await serviceModel.getCollectionIterator();
     // iterate over the whole services collection and collect visible services
+    const servicesCollectionIterator = await serviceModel.getCollectionIterator();
     const servicesIterator = documentDbUtils.reduceResultIterator(
       servicesCollectionIterator,
       reduceServicesToVisibleServices
@@ -134,25 +125,12 @@ export async function index(context: IContext<{}>): Promise<void> {
       JSON.stringify(visibleServices.value)
     );
 
-    // save to blob storage
-    const errorOrCachedContent = await upsertBlobFromObject(
-      blobService,
-      VISIBLE_SERVICE_CONTAINER,
-      VISIBLE_SERVICE_BLOB_ID,
-      visibleServices.value
-    );
-
-    if (isLeft(errorOrCachedContent)) {
-      winston.error(
-        "ComputeVisibleServices|Error storing data: %s",
-        errorOrCachedContent.value
-      );
-    }
+    // write to blob storage using output bindings
+    return {
+      visibleServicesBlob: visibleServices.value
+    };
   } catch (e) {
-    winston.error(
-      "ComputeVisibleServices error: %s",
-      JSON.stringify(e, undefined, 2)
-    );
+    winston.error("ComputeVisibleServices error: %s", JSON.stringify(e));
     return;
   }
 }
