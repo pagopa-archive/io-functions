@@ -128,6 +128,34 @@ export abstract class DocumentDbModel<
   }
 
   /**
+   * Get an iterator to process all documents of the collection.
+   *
+   * @param documentId    The ID of the document to retrieve.
+   * @param partitionKey  The partitionKey associated to this model.
+   */
+  public async getCollectionIterator(): Promise<
+    DocumentDbUtils.IResultIterator<TR>
+  > {
+    const documentsIterator = DocumentDbUtils.readDocuments(
+      this.dbClient,
+      this.collectionUri
+    );
+    return DocumentDbUtils.mapResultIterator(
+      documentsIterator,
+      this.toRetrieved
+    );
+  }
+
+  /**
+   * Deletes a document in the data store.
+   */
+  public async delete(
+    documentLink: string
+  ): Promise<Either<DocumentDb.QueryError, void>> {
+    return await DocumentDbUtils.deleteDocument(this.dbClient, documentLink);
+  }
+
+  /**
    * Upsert an attachment for a specified document.
    *
    * @param documentId    the id of the document

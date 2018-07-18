@@ -264,6 +264,65 @@ export function readDocument<T>(
 }
 
 /**
+ * Wraps executeNext inner QueryIterator method in a Promise
+ *
+ * Returns an Either:
+ *
+ *    right(some(RetrievedDocuments)): when documents exists and are correctly retrieved
+ *    right(none): in case the iterator haven't found any document
+ *    left(QueryError): in case of error querying the database
+ */
+function executeNext<T>(
+  documentIterator: DocumentDb.QueryIterator<DocumentDb.RetrievedDocument>
+): Promise<
+  Either<
+    DocumentDb.QueryError,
+    Option<ReadonlyArray<DocumentDb.RetrievedDocument & T>>
+  >
+> {
+  return new Promise(resolve => {
+    documentIterator.executeNext((error, documents, _) => {
+      if (error) {
+        resolve(
+          left<
+            DocumentDb.QueryError,
+            Option<ReadonlyArray<T & DocumentDb.RetrievedDocument>>
+          >(error)
+        );
+      } else if (documents && documents.length > 0) {
+        const readonlyDocuments: ReadonlyArray<
+          DocumentDb.RetrievedDocument
+        > = documents;
+        resolve(
+          right<
+            DocumentDb.QueryError,
+            Option<ReadonlyArray<T & DocumentDb.RetrievedDocument>>
+          >(
+            some(readonlyDocuments as ReadonlyArray<
+              T & DocumentDb.RetrievedDocument
+            >)
+          )
+        );
+      } else if (!documentIterator.hasMoreResults()) {
+        resolve(
+          right<
+            DocumentDb.QueryError,
+            Option<ReadonlyArray<T & DocumentDb.RetrievedDocument>>
+          >(none)
+        );
+      } else {
+        resolve(
+          right<
+            DocumentDb.QueryError,
+            Option<ReadonlyArray<T & DocumentDb.RetrievedDocument>>
+          >(some([]))
+        );
+      }
+    });
+  });
+}
+
+/**
  * Queries a collection for documents
  *
  * @param client The DocumentDB client
@@ -280,41 +339,24 @@ export function queryDocuments<T>(
     partitionKey
   });
   return {
-    executeNext: () => {
-      return new Promise(resolve => {
-        documentIterator.executeNext((error, documents, _) => {
-          if (error) {
-            resolve(
-              left<
-                DocumentDb.QueryError,
-                Option<ReadonlyArray<T & DocumentDb.RetrievedDocument>>
-              >(error)
-            );
-          } else if (documents && documents.length > 0) {
-            const readonlyDocuments: ReadonlyArray<
-              DocumentDb.RetrievedDocument
-            > = documents;
-            resolve(
-              right<
-                DocumentDb.QueryError,
-                Option<ReadonlyArray<T & DocumentDb.RetrievedDocument>>
-              >(
-                some(readonlyDocuments as ReadonlyArray<
-                  T & DocumentDb.RetrievedDocument
-                >)
-              )
-            );
-          } else {
-            resolve(
-              right<
-                DocumentDb.QueryError,
-                Option<ReadonlyArray<T & DocumentDb.RetrievedDocument>>
-              >(none)
-            );
-          }
-        });
-      });
-    }
+    executeNext: () => executeNext<T>(documentIterator)
+  };
+}
+
+/**
+ * Queries a collection for all documents and returns an iterator.
+ *
+ * @param client The DocumentDB client
+ * @param collectionUrl The collection URL
+ * @param query The query string
+ */
+export function readDocuments<T>(
+  client: DocumentDb.DocumentClient,
+  collectionUri: IDocumentDbCollectionUri
+): IResultIterator<T & DocumentDb.RetrievedDocument> {
+  const documentIterator = client.readDocuments(collectionUri.uri);
+  return {
+    executeNext: () => executeNext<T>(documentIterator)
   };
 }
 
@@ -416,7 +458,7 @@ export function mapResultIterator<A, B>(
                   } else {
                     resolve(
                       right<DocumentDb.QueryError, Option<ReadonlyArray<B>>>(
-                        none
+                        some([])
                       )
                     );
                   }
@@ -450,10 +492,7 @@ export async function iteratorToArray<T>(
     if (isLeft(errorOrMaybeDocuments)) {
       return left(errorOrMaybeDocuments.value);
     }
-    if (
-      isNone(errorOrMaybeDocuments.value) ||
-      errorOrMaybeDocuments.value.value.length === 0
-    ) {
+    if (isNone(errorOrMaybeDocuments.value)) {
       return right(a);
     }
     const result = errorOrMaybeDocuments.value.value;
@@ -534,6 +573,30 @@ export function replaceDocument<T>(
               created as T & DocumentDb.RetrievedDocument
             )
           );
+        }
+      }
+    );
+  });
+}
+
+/**
+ * Deletes a document
+ *
+ * @param documentLink  the _self link to the document
+ */
+export function deleteDocument(
+  client: DocumentDb.DocumentClient,
+  documentLink: string
+): Promise<Either<DocumentDb.QueryError, void>> {
+  return new Promise(resolve => {
+    client.deleteDocument(
+      documentLink,
+      /* tslint:disable-next-line:no-identical-functions */
+      (err, _) => {
+        if (err) {
+          resolve(left<DocumentDb.QueryError, void>(err));
+        } else {
+          resolve(right<DocumentDb.QueryError, void>(void 0));
         }
       }
     );

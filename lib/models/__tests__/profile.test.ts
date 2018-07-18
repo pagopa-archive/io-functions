@@ -41,7 +41,8 @@ const aRetrievedProfile: RetrievedProfile = {
 describe("findOneProfileByFiscalCode", () => {
   it("should resolve a promise to an existing profile", async () => {
     const iteratorMock = {
-      executeNext: jest.fn(cb => cb(undefined, [aRetrievedProfile], undefined))
+      executeNext: jest.fn(cb => cb(undefined, [aRetrievedProfile], undefined)),
+      hasMoreResults: jest.fn().mockReturnValue(false)
     };
 
     const clientMock = {
@@ -64,7 +65,8 @@ describe("findOneProfileByFiscalCode", () => {
 
   it("should resolve a promise to undefined if no profile is found", async () => {
     const iteratorMock = {
-      executeNext: jest.fn(cb => cb(undefined, [], undefined))
+      executeNext: jest.fn(cb => cb(undefined, [], undefined)),
+      hasMoreResults: jest.fn().mockReturnValue(false)
     };
 
     const clientMock = {
