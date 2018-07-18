@@ -92,7 +92,7 @@ export function getBlobAsText(
 }
 
 /**
- * Get a blob content as text (string).
+ * Get a blob content as a typed (io-ts) object.
  *
  * @param blobService     the Azure blob service
  * @param containerName   the name of the Azure blob storage container
