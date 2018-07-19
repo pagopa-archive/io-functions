@@ -80,7 +80,7 @@ describe("profileEventsQueueHandlerIndex", () => {
         time_to_live: expect.anything()
       })
     );
-    expect(ret).toEqual(res);
+    expect(ret).toBeUndefined();
   });
   it("should send welcome message in case is_inbox_enabled switches to true", async () => {
     const ctxMock = { log: jest.fn() };
@@ -96,7 +96,7 @@ describe("profileEventsQueueHandlerIndex", () => {
         time_to_live: expect.anything()
       })
     );
-    expect(ret).toEqual(res);
+    expect(ret).toBeUndefined();
   });
 
   it("should not send welcome message in case is_inbox_enabled was already true", async () => {
