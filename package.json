@@ -47,7 +47,7 @@
     "superagent": "^3.8.3",
     "ulid": "^2.2.2",
     "unified": "^7.0.0",
-    "validator": "^9.4.1",
+    "validator": "^10.4.0",
     "vfile": "^3.0.0",
     "winston": "^3.0.0"
   },
