@@ -33,7 +33,7 @@ const mockSuperagentResponse = (response: any) => {
   return sendMock.mockReturnValueOnce(Promise.resolve(response));
 };
 
-const aFiscalCode = "SPNDNL80R13C523K" as FiscalCode;
+const aFiscalCode = "SPNDNL80R13C555X" as FiscalCode;
 
 const anOldProfile: ExtendedProfile = {
   blocked_inbox_or_channels: {},
