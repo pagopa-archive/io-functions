@@ -1,6 +1,6 @@
 {
   "scriptFile": "../lib/index.js",
-  "disabled": false,
+  "disabled": true,
   "bindings": [
     {
       "type": "queueTrigger",
