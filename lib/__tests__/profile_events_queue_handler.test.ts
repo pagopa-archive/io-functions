@@ -3,8 +3,8 @@
 
 process.env = {
   ...process.env,
-  NOTIFICATION_API_KEY: "xxx",
-  NOTIFICATION_API_URL: "http://example.com"
+  PUBLIC_API_KEY: "xxx",
+  PUBLIC_API_URL: "http://example.com"
 };
 
 import * as superagent from "superagent";
