@@ -26,8 +26,8 @@ const DEFAULT_REQUEST_TIMEOUT_MS = 10000;
 const isProduction = process.env.NODE_ENV === "production";
 
 // Needed to call notifications API
-const notificationApiUrl = getRequiredStringEnv("ADMIN_API_URL");
-const adminApiKey = getRequiredStringEnv("ADMIN_API_KEY");
+const publicApiUrl = getRequiredStringEnv("PUBLIC_API_URL");
+const publicApiKey = getRequiredStringEnv("PUBLIC_API_KEY");
 
 // TODO: decide text for welcome message
 // TODO: switch text based on user's preferred_language
@@ -63,7 +63,7 @@ async function sendWelcomeMessage(
 export async function index(
   context: ContextWithBindings,
   event: IProfileCreatedEvent | IProfileUpdatedEvent
-): Promise<Response | void> {
+): Promise<void> {
   const logLevel = isProduction ? "info" : "debug";
   configureAzureContextTransport(context, winston, logLevel);
 
@@ -72,7 +72,7 @@ export async function index(
     JSON.stringify(event)
   );
 
-  const url = `${notificationApiUrl}/api/v1/messages/${event.fiscalCode}`;
+  const url = `${publicApiUrl}/api/v1/messages/${event.fiscalCode}`;
 
   const isInboxEnabled = event.newProfile.is_inbox_enabled === true;
   const isProfileCreated = event.kind === "ProfileCreatedEvent";
@@ -96,7 +96,7 @@ export async function index(
     });
 
     // TODO: schedule retries
-    const response = await sendWelcomeMessage(url, adminApiKey, newMessage);
+    const response = await sendWelcomeMessage(url, publicApiKey, newMessage);
     winston.debug(
       `ProfileEventsQueueHandler|Welcome message sent to ${
         event.fiscalCode
