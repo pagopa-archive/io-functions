@@ -42,9 +42,9 @@
   dependencies:
     "@types/node" "*"
 
-"@types/documentdb@^1.10.2":
-  version "1.10.4"
-  resolved "https://registry.yarnpkg.com/@types/documentdb/-/documentdb-1.10.4.tgz#f255f785c62a8d48792fd1d7776b02352741e7a0"
+"@types/documentdb@^1.10.5":
+  version "1.10.5"
+  resolved "https://registry.yarnpkg.com/@types/documentdb/-/documentdb-1.10.5.tgz#86c6ec9be9ce07ff9fcac5ca3c17570c385d40a4"
   dependencies:
     "@types/node" "*"
 
