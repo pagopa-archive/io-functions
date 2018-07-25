@@ -1,3 +1,4 @@
+import * as cors from "cors";
 import * as express from "express";
 import * as helmet from "helmet";
 import * as csp from "helmet-csp";
@@ -12,6 +13,9 @@ import * as referrerPolicy from "referrer-policy";
 export function secureExpressApp(app: express.Express): void {
   // Set header `referrer-policy` to `no-referrer`
   app.use(referrerPolicy());
+
+  // Set up CORS (free access to the API from browser clients)
+  app.use(cors());
 
   // Set up Content Security Policy
   app.use(
