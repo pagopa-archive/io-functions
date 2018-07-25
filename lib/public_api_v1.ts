@@ -68,6 +68,9 @@ const getCustomTelemetryClient = wrapCustomTelemetryClient(
 const app = express();
 secureExpressApp(app);
 
+// Set up CORS (free access to the API from browser clients)
+app.use(cors());
+
 // Setup DocumentDB
 
 const cosmosDbUri = getRequiredStringEnv("CUSTOMCONNSTR_COSMOSDB_URI");

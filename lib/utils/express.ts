@@ -14,9 +14,6 @@ export function secureExpressApp(app: express.Express): void {
   // Set header `referrer-policy` to `no-referrer`
   app.use(referrerPolicy());
 
-  // Set up CORS (free access to the API from browser clients)
-  app.use(cors());
-
   // Set up Content Security Policy
   app.use(
     csp({
