@@ -5,6 +5,7 @@ import { getRequiredStringEnv } from "./utils/env";
 
 import { IContext } from "azure-function-express";
 
+import * as cors from "cors";
 import * as winston from "winston";
 
 import { setAppContext } from "./utils/middlewares/context_middleware";
@@ -67,6 +68,9 @@ const getCustomTelemetryClient = wrapCustomTelemetryClient(
 // Setup Express
 const app = express();
 secureExpressApp(app);
+
+// Set up CORS (free access to the API from browser clients)
+app.use(cors());
 
 // Setup DocumentDB
 
