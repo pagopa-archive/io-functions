@@ -1,4 +1,3 @@
-import * as cors from "cors";
 import * as express from "express";
 import * as helmet from "helmet";
 import * as csp from "helmet-csp";

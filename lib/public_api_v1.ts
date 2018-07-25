@@ -5,6 +5,7 @@ import { getRequiredStringEnv } from "./utils/env";
 
 import { IContext } from "azure-function-express";
 
+import * as cors from "cors";
 import * as winston from "winston";
 
 import { setAppContext } from "./utils/middlewares/context_middleware";
