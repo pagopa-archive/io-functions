@@ -11,6 +11,14 @@ The format of this file is loosely based on [Keep a Changelog](http://keepachang
 
 ## [Unreleased]
 
+## [v0.48.0] - 2018-07-27
+
+### Added
+- [submitMessageforUser] Added `due_date` field
+- Added logic to send welcome messages when the user log in for the first time
+- Added an endpoint (`/services`) to list all visible services
+- Added CORS to let API calls from web browsers
+
 ## [v0.47.0] - 2018-07-09
 
 ### Fixed
