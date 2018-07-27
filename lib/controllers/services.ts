@@ -12,7 +12,10 @@ import {
 
 import { RetrievedService, ServiceModel } from "../models/service";
 
-import { ServicePublic as ApiService } from "../api/definitions/ServicePublic";
+import {
+  ServicePublic,
+  ServicePublic as ApiService
+} from "../api/definitions/ServicePublic";
 
 import {
   AzureApiAuthMiddleware,
@@ -58,8 +61,7 @@ import { BlobService } from "azure-storage";
 
 import { StrMap } from "fp-ts/lib/StrMap";
 import {
-  ApiVisibleService,
-  toVisibleServicesApi,
+  toServicesPublic,
   VISIBLE_SERVICE_BLOB_ID,
   VISIBLE_SERVICE_CONTAINER,
   VisibleService
@@ -97,7 +99,7 @@ type IGetSenderServicesHandler = (
 
 type IGetVisibleServicesHandlerRet =
   | IResponseSuccessJson<{
-      readonly items: ReadonlyArray<ApiVisibleService>;
+      readonly items: ReadonlyArray<ServicePublic>;
       readonly page_size: number;
     }>
   | IResponseErrorInternal;
@@ -243,12 +245,12 @@ export function GetVisibleServicesHandler(
           `Error getting visible services list: ${error.message}`
         ),
       visibleServicesJson => {
-        const visibleServicesApi = toVisibleServicesApi(
+        const servicesPublic = toServicesPublic(
           new StrMap(visibleServicesJson)
         );
         return ResponseSuccessJson({
-          items: visibleServicesApi,
-          page_size: visibleServicesApi.length
+          items: servicesPublic,
+          page_size: servicesPublic.length
         });
       }
     );
