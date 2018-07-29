@@ -133,7 +133,7 @@ paths:
         '404':
           description: No service found for the provided ID.
       parameters: []
-  "/services/by-recipient/{recipient}":
+  "/profiles/{recipient}/sender-services":
     get:
       tags:
       - restricted
