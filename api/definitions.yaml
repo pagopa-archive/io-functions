@@ -471,6 +471,14 @@ ServiceId:
     The ID of the Service. Equals the subscriptionId of a registered
     API user.
   minLength: 1
+ServiceTuple:
+  description: Service identifier and version used to return list of services.
+  type: object
+  properties:
+    service_id:
+      $ref: "#/ServiceId"
+    version:
+      type: integer
 ServiceName:
   type: string
   description: The name of the service. Will be added to the content of sent messages.

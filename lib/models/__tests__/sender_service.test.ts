@@ -10,6 +10,7 @@ import { FiscalCode } from "../../api/definitions/FiscalCode";
 
 import { NonEmptyString } from "italia-ts-commons/lib/strings";
 
+import { NonNegativeNumber } from "../../../node_modules/italia-ts-commons/lib/numbers";
 import { ServiceId } from "../../api/definitions/ServiceId";
 import {
   NewSenderService,
@@ -31,7 +32,8 @@ const aNewSenderService: NewSenderService = {
   kind: "INewSenderService",
   lastNotificationAt: new Date(),
   recipientFiscalCode: aFiscalCode,
-  serviceId: aServiceId
+  serviceId: aServiceId,
+  version: 1 as NonNegativeNumber
 };
 
 const aRetrievedSenderService: RetrievedSenderService = {

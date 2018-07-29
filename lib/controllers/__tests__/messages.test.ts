@@ -108,7 +108,8 @@ const someUserAttributes: IAzureUserAttributes = {
     organizationFiscalCode: anOrganizationFiscalCode,
     organizationName: "AgID" as NonEmptyString,
     serviceId: "test" as NonEmptyString,
-    serviceName: "Test" as NonEmptyString
+    serviceName: "Test" as NonEmptyString,
+    version: 1 as NonNegativeNumber
   }
 };
 
@@ -309,7 +310,8 @@ describe("CreateMessageHandler", () => {
           departmentName: "IT",
           organizationName: "AgID",
           serviceName: "Test"
-        }
+        },
+        serviceVersion: 1
       }
     });
 
@@ -398,7 +400,8 @@ describe("CreateMessageHandler", () => {
           departmentName: "IT",
           organizationName: "AgID",
           serviceName: "Test"
-        }
+        },
+        serviceVersion: 1
       }
     });
 
@@ -483,7 +486,8 @@ describe("CreateMessageHandler", () => {
           departmentName: "IT",
           organizationName: "AgID",
           serviceName: "Test"
-        }
+        },
+        serviceVersion: 1
       }
     });
 
@@ -578,7 +582,8 @@ describe("CreateMessageHandler", () => {
           departmentName: "IT",
           organizationName: "AgID",
           serviceName: "Test"
-        }
+        },
+        serviceVersion: 1
       }
     });
 

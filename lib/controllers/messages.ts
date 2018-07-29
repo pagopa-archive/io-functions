@@ -488,7 +488,8 @@ export function CreateMessageHandler(
         departmentName: userAttributes.service.departmentName,
         organizationName: userAttributes.service.organizationName,
         serviceName: userAttributes.service.serviceName
-      }
+      },
+      serviceVersion: userAttributes.service.version
     });
 
     // queue the message to the created messages queue by setting

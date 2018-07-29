@@ -9,6 +9,7 @@ import { NonEmptyString } from "italia-ts-commons/lib/strings";
 import { OrganizationFiscalCode } from "../api/definitions/OrganizationFiscalCode";
 import { ServiceId } from "../api/definitions/ServiceId";
 import { ServicePublic } from "../api/definitions/ServicePublic";
+import { ServiceTuple } from "../api/definitions/ServiceTuple";
 
 // this is not a CosmosDB model, but entities are stored into blob storage
 export const VISIBLE_SERVICE_CONTAINER = "cached";
@@ -40,4 +41,13 @@ export function toServicesPublic(
   visibleServices: StrMap<VisibleService>
 ): ReadonlyArray<ServicePublic> {
   return collect(visibleServices, (_, v) => toServicePublic(v));
+}
+
+export function toServicesTuple(
+  visibleServices: StrMap<VisibleService>
+): ReadonlyArray<ServiceTuple> {
+  return collect(visibleServices, (_, v) => ({
+    service_id: v.serviceId,
+    version: v.version
+  }));
 }

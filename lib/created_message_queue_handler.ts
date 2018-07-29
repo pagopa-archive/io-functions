@@ -385,7 +385,8 @@ export async function handleMessage(
   const errorOrSenderService = await lSenderServiceModel.createOrUpdate(
     newSenderService(
       newMessageWithContent.fiscalCode,
-      newMessageWithContent.senderServiceId
+      newMessageWithContent.senderServiceId,
+      createdMessageEvent.serviceVersion
     ),
     // partition key
     newMessageWithContent.fiscalCode

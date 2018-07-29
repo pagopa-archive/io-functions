@@ -15,6 +15,7 @@ import { DocumentDbModel } from "../utils/documentdb_model";
 import { FiscalCode } from "../api/definitions/FiscalCode";
 
 import { DateFromString } from "italia-ts-commons/lib/dates";
+import { NonNegativeNumber } from "italia-ts-commons/lib/numbers";
 import { NonEmptyString } from "italia-ts-commons/lib/strings";
 import { ServiceId } from "../api/definitions/ServiceId";
 
@@ -26,7 +27,8 @@ export const SenderService = t.interface({
   // fiscal code of the user that has received at least
   // one message from the service identified by the serviceId
   [SENDER_SERVICE_MODEL_PK_FIELD]: FiscalCode,
-  serviceId: ServiceId
+  serviceId: ServiceId,
+  version: NonNegativeNumber
 });
 export type SenderService = t.TypeOf<typeof SenderService>;
 
@@ -62,7 +64,12 @@ export type RetrievedSenderService = t.TypeOf<typeof RetrievedSenderService>;
 /* istanbul ignore next */
 function toBaseType(o: RetrievedSenderService): SenderService {
   return pick(
-    ["lastNotificationAt", SENDER_SERVICE_MODEL_PK_FIELD, "serviceId"],
+    [
+      "lastNotificationAt",
+      SENDER_SERVICE_MODEL_PK_FIELD,
+      "serviceId",
+      "version"
+    ],
     o
   );
 }
@@ -91,14 +98,16 @@ export function makeSenderServiceId(
 
 export function newSenderService(
   fiscalCode: FiscalCode,
-  senderServiceId: ServiceId
+  senderServiceId: ServiceId,
+  version: NonNegativeNumber
 ): NewSenderService {
   return {
     id: makeSenderServiceId(fiscalCode, senderServiceId),
     kind: "INewSenderService",
     lastNotificationAt: new Date(),
     recipientFiscalCode: fiscalCode,
-    serviceId: senderServiceId
+    serviceId: senderServiceId,
+    version
   };
 }
 

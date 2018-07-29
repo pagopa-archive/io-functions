@@ -11,11 +11,13 @@ import { NewMessageDefaultAddresses } from "../api/definitions/NewMessageDefault
 
 import { NewMessageWithContent } from "./message";
 
+import { NonNegativeNumber } from "italia-ts-commons/lib/numbers";
 import { CreatedMessageEventSenderMetadata } from "./created_message_sender_metadata";
 
 const CreatedMessageEventR = t.interface({
   message: NewMessageWithContent,
-  senderMetadata: CreatedMessageEventSenderMetadata
+  senderMetadata: CreatedMessageEventSenderMetadata,
+  serviceVersion: NonNegativeNumber
 });
 
 const CreatedMessageEventO = t.partial({
