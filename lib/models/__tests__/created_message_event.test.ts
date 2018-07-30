@@ -35,7 +35,8 @@ describe("", () => {
           departmentName: "IT",
           organizationName: "AgID",
           serviceName: "Test"
-        }
+        },
+        serviceVersion: 1
       }
     ];
     payloads.forEach(payload => {

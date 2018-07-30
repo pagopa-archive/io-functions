@@ -133,7 +133,7 @@ paths:
         '404':
           description: No service found for the provided ID.
       parameters: []
-  "/services/by-recipient/{recipient}":
+  "/profiles/{recipient}/sender-services":
     get:
       tags:
       - restricted
@@ -152,16 +152,8 @@ paths:
                 items:
                   type: array
                   items:
-                    type: object
-                    properties:
-                      serviceId:
-                        $ref: '#/definitions/ServiceId'
+                    $ref: "#/definitions/ServiceTuple"
             - $ref: "#/definitions/PaginationResponse"
-          examples:
-            application/json:
-              page_size: 1
-              items:
-                - service_id: 2b3e728c1a5d1efa035c
       parameters:
       - name: recipient
         in: path
@@ -186,7 +178,7 @@ paths:
                 items:
                   type: array
                   items:
-                    $ref: '#/definitions/ServicePublic'
+                    $ref: "#/definitions/ServiceTuple"
             - $ref: "#/definitions/PaginationResponse"
   "/messages/{fiscal_code}/{id}":
     parameters:

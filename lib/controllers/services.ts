@@ -12,10 +12,7 @@ import {
 
 import { RetrievedService, ServiceModel } from "../models/service";
 
-import {
-  ServicePublic,
-  ServicePublic as ApiService
-} from "../api/definitions/ServicePublic";
+import { ServicePublic as ApiService } from "../api/definitions/ServicePublic";
 
 import {
   AzureApiAuthMiddleware,
@@ -60,8 +57,9 @@ import { mapResultIterator } from "../utils/documentdb";
 import { BlobService } from "azure-storage";
 
 import { StrMap } from "fp-ts/lib/StrMap";
+import { ServiceTuple } from "../api/definitions/ServiceTuple";
 import {
-  toServicesPublic,
+  toServicesTuple,
   VISIBLE_SERVICE_BLOB_ID,
   VISIBLE_SERVICE_CONTAINER,
   VisibleService
@@ -85,9 +83,7 @@ type IGetServiceHandler = (
 ) => Promise<IGetServiceHandlerRet>;
 
 type IGetSenderServicesHandlerRet =
-  | IResponseSuccessJsonIterator<{
-      readonly service_id: ServiceId;
-    }>
+  | IResponseSuccessJsonIterator<ServiceTuple>
   | IResponseErrorQuery;
 
 type IGetSenderServicesHandler = (
@@ -99,7 +95,7 @@ type IGetSenderServicesHandler = (
 
 type IGetVisibleServicesHandlerRet =
   | IResponseSuccessJson<{
-      readonly items: ReadonlyArray<ServicePublic>;
+      readonly items: ReadonlyArray<ServiceTuple>;
       readonly page_size: number;
     }>
   | IResponseErrorInternal;
@@ -193,7 +189,8 @@ export function GetServicesByRecipientHandler(
     const senderServicesIterator = mapResultIterator(
       retrievedServicesIterator,
       service => ({
-        service_id: service.serviceId
+        service_id: service.serviceId,
+        version: service.version
       })
     );
     return ResponseJsonIterator(senderServicesIterator);
@@ -245,12 +242,10 @@ export function GetVisibleServicesHandler(
           `Error getting visible services list: ${error.message}`
         ),
       visibleServicesJson => {
-        const servicesPublic = toServicesPublic(
-          new StrMap(visibleServicesJson)
-        );
+        const servicesTuples = toServicesTuple(new StrMap(visibleServicesJson));
         return ResponseSuccessJson({
-          items: servicesPublic,
-          page_size: servicesPublic.length
+          items: servicesTuples,
+          page_size: servicesTuples.length
         });
       }
     );

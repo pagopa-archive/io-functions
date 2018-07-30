@@ -119,7 +119,8 @@ const aMessageEvent: CreatedMessageEvent = {
     departmentName: "IT" as NonEmptyString,
     organizationName: "agid" as NonEmptyString,
     serviceName: "Test" as NonEmptyString
-  }
+  },
+  serviceVersion: 1 as NonNegativeNumber
 };
 
 const aRetrievedProfileWithEmail: RetrievedProfile = {
@@ -181,7 +182,8 @@ const aRetrivedSenderService: RetrievedSenderService = {
   kind: "IRetrievedSenderService",
   lastNotificationAt: new Date(),
   recipientFiscalCode: aCorrectFiscalCode,
-  serviceId: aServiceId
+  serviceId: aServiceId,
+  version: 1 as NonNegativeNumber
 };
 
 const getSenderServicesModelMock = (

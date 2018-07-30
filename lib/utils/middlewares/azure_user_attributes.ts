@@ -13,6 +13,7 @@ import { Service, ServiceModel } from "../../models/service";
 import { IRequestMiddleware } from "../request_middleware";
 import { ResponseErrorQuery } from "../response";
 
+import { NonNegativeNumber } from "italia-ts-commons/lib/numbers";
 import {
   ResponseErrorForbiddenNotAuthorized,
   ResponseErrorInternal
@@ -31,7 +32,7 @@ export interface IAzureUserAttributes {
   // the email of the registered user
   readonly email: EmailString;
   // the service associated to the user
-  readonly service: Service;
+  readonly service: Service & { readonly version: NonNegativeNumber };
 }
 
 /**
