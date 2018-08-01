@@ -287,11 +287,9 @@ export async function handleMessage(
 
   // channels ther user has blocked for this sender service
   const blockedInboxOrChannels = maybeProfile
-    .chain(profile =>
-      fromNullable(profile.blockedInboxOrChannels).map(
-        (bc: IProfileBlockedInboxOrChannels) =>
-          bc[newMessageWithContent.senderServiceId]
-      )
+    .chain(profile => fromNullable(profile.blockedInboxOrChannels))
+    .chain((bc: IProfileBlockedInboxOrChannels) =>
+      fromNullable(bc[newMessageWithContent.senderServiceId])
     )
     .getOrElse(new Set());
 
