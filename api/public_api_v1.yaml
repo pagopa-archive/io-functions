@@ -9,15 +9,15 @@ info:
     url: https://io.italia.it/assets/img/io-logo-blue.svg
   description: >
   
+    # Warning / Avvertenza
   
-        Avvertenza: Questa è una API sperimentale che (probabilmente)
-        subirà dei cambiamenti mano a mano che il servizio di
-        messaggistica IO si evolverà. 
+      **Questa è una API sperimentale che (probabilmente)
+      subirà dei cambiamenti mano a mano che il servizio di
+      messaggistica IO si evolverà.**
 
-        Warning: This is an experimental API that is (most probably) 
-        going to change as we evolve the IO Messaging service. 
-        
-
+      **This is an experimental API that is (most probably) 
+      going to change as we evolve the IO Messaging service.**
+      
     # Introduction
 
     This is the documentation of the Digital Citizenship API.
