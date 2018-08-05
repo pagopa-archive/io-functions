@@ -8,6 +8,16 @@ info:
   x-logo:
     url: https://io.italia.it/assets/img/io-logo-blue.svg
   description: >
+  
+    # Warning / Avvertenza
+  
+      **Questa è una API sperimentale che (probabilmente)
+      subirà dei cambiamenti mano a mano che il servizio di
+      messaggistica IO si evolverà.**
+
+      **This is an experimental API that is (most probably) 
+      going to change as we evolve the IO Messaging service.**
+      
     # Introduction
 
     This is the documentation of the Digital Citizenship API.
