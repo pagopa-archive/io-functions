@@ -3723,9 +3723,9 @@ italia-ts-commons@^2.9.0:
     validator "^10.1.0"
     winston "^3.0.0"
 
-italia-utils@^3.11.1:
-  version "3.11.1"
-  resolved "https://registry.yarnpkg.com/italia-utils/-/italia-utils-3.11.1.tgz#2148b5ab9a09128a80e4ab67f02c73324b464c08"
+italia-utils@^3.12.0:
+  version "3.12.0"
+  resolved "https://registry.yarnpkg.com/italia-utils/-/italia-utils-3.12.0.tgz#78690531370d92e15233babb192b2bf1eedcd6b3"
   dependencies:
     fs-extra "^6.0.0"
     nunjucks "^3.1.2"
