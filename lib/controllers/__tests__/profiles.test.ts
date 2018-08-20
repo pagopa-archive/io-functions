@@ -51,6 +51,8 @@ const aRetrievedProfile: RetrievedProfile = {
 
 const aPublicExtendedProfile: ExtendedProfile = {
   email: aRetrievedProfile.email,
+  is_inbox_enabled: false,
+  is_webhook_enabled: false,
   version: aRetrievedProfile.version
 };
 
@@ -252,6 +254,8 @@ describe("UpsertProfile", () => {
 
     const profilePayloadMock = {
       email: "y@example.com" as EmailString,
+      is_inbox_enabled: false,
+      is_webhook_enabled: false,
       version: aRetrievedProfile.version
     };
 
@@ -292,6 +296,8 @@ describe("UpsertProfile", () => {
 
     const profilePayloadMock = {
       email: "y@example.com" as EmailString,
+      is_inbox_enabled: false,
+      is_webhook_enabled: false,
       version: 0 as NonNegativeNumber
     };
 

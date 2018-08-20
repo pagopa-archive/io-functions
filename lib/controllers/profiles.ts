@@ -85,8 +85,8 @@ function toExtendedProfile(profile: RetrievedProfile): ExtendedProfile {
   return {
     blocked_inbox_or_channels: profile.blockedInboxOrChannels,
     email: profile.email,
-    is_inbox_enabled: profile.isInboxEnabled,
-    is_webhook_enabled: profile.isWebhookEnabled,
+    is_inbox_enabled: profile.isInboxEnabled === true,
+    is_webhook_enabled: profile.isWebhookEnabled === true,
     preferred_languages: profile.preferredLanguages,
     version: profile.version
   };
