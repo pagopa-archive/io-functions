@@ -323,6 +323,10 @@ ExtendedProfile:
       $ref: "#/IsWebhookEnabled"
     version:
       type: integer
+  required:
+    - is_inbox_enabled
+    - is_webhook_enabled
+    - version
 IsInboxEnabled:
   type: boolean
   default: false
