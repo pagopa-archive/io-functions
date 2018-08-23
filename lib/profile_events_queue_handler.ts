@@ -14,7 +14,6 @@ import {
 } from "./controllers/profiles";
 import { configureAzureContextTransport } from "./utils/logging";
 
-import { Either, left, right } from "fp-ts/lib/Either";
 import { readableReport } from "italia-ts-commons/lib/reporters";
 import { FiscalCode } from "italia-ts-commons/lib/strings";
 import { ExtendedProfile } from "./api/definitions/ExtendedProfile";
@@ -39,31 +38,38 @@ const isProduction = process.env.NODE_ENV === "production";
 const publicApiUrl = getRequiredStringEnv("PUBLIC_API_URL");
 const publicApiKey = getRequiredStringEnv("PUBLIC_API_KEY");
 
-type WelcomeMessages = ReadonlyArray<
-  [(p: ExtendedProfile) => string, (p: ExtendedProfile) => string]
->;
+type WelcomeMessages = ReadonlyArray<(p: ExtendedProfile) => NewMessage>;
 
 // TODO: decide text for welcome message
 // TODO: switch text based on user's preferred_language
 const welcomeMessages: WelcomeMessages = [
-  [
-    (profile: ExtendedProfile) =>
-      `# Hello new user ${profile.email || ""}
+  (profile: ExtendedProfile) =>
+    NewMessage.decode({
+      markdown: `# Hello new user ${profile.email || ""}
 
   We welcome you to the Digital Citizenship API program  
   This is a welcome message to test if the system works.`,
 
-    (profile: ExtendedProfile) => `Welcome new user ${profile.email || ""}`
-  ],
-  [
-    (profile: ExtendedProfile) =>
-      `# Hello new user ${profile.email || ""}
-  
-    We welcome you to the Digital Citizenship API program  
-    This is a welcome message to test if the system works.`,
+      subject: `Welcome new user ${profile.email || ""}`
+    }).getOrElseL(errs => {
+      throw new Error(
+        "Invalid MessageContent for welcome message: " + readableReport(errs)
+      );
+    }),
+  (profile: ExtendedProfile) =>
+    NewMessage.decode({
+      markdown: `# Hello new user ${profile.email || ""}
 
-    (profile: ExtendedProfile) => `Welcome new user ${profile.email || ""}`
-  ]
+  We welcome you to the Digital Citizenship API program  
+  This is a welcome message to test if the system works.`,
+
+      subject: `Welcome new user ${profile.email || ""}`
+      // tslint:disable-next-line:no-identical-functions
+    }).getOrElseL(errs => {
+      throw new Error(
+        "Invalid MessageContent for welcome message: " + readableReport(errs)
+      );
+    })
 ];
 
 /**
@@ -94,26 +100,13 @@ function sendWelcomeMessages(
   messages: WelcomeMessages,
   fiscalCode: FiscalCode,
   profile: ExtendedProfile
-): ReadonlyArray<Promise<Either<Error, request.Response>>> {
+): ReadonlyArray<Promise<request.Response>> {
   const url = `${apiUrl}/api/v1/messages/${fiscalCode}`;
   winston.debug(
     `ProfileEventsQueueHandler|Sending welcome messages to ${fiscalCode}`
   );
-  return messages.map(([createMessageMarkdown, createMessageSubject]) =>
-    NewMessage.decode({
-      content: {
-        markdown: createMessageMarkdown(profile),
-        subject: createMessageSubject(profile)
-      }
-    }).fold<Promise<Either<Error, request.Response>>>(
-      async errs => {
-        const error = `Invalid welcome message: ${readableReport(errs)}`;
-        winston.error(`ProfileEventsQueueHandler|${error}`);
-        return left(new Error(error));
-      },
-      async welcomeMessage =>
-        right(await sendWelcomeMessage(url, apiKey, welcomeMessage))
-    )
+  return messages.map(welcomeMessage =>
+    sendWelcomeMessage(url, apiKey, welcomeMessage(profile))
   );
 }
 
