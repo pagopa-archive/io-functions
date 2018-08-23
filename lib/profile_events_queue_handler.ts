@@ -99,7 +99,7 @@ function sendWelcomeMessages(
   winston.debug(
     `ProfileEventsQueueHandler|Sending welcome messages to ${fiscalCode}`
   );
-  return messages.map(async ([createMessageMarkdown, createMessageSubject]) =>
+  return messages.map(([createMessageMarkdown, createMessageSubject]) =>
     NewMessage.decode({
       content: {
         markdown: createMessageMarkdown(profile),
