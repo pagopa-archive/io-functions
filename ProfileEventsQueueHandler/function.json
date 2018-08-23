@@ -1,6 +1,6 @@
 {
   "scriptFile": "../lib/index.js",
-  "disabled": true,
+  "disabled": false,
   "bindings": [
     {
       "type": "queueTrigger",
@@ -11,4 +11,4 @@
     }
   ],
   "entryPoint": "ProfileEventsQueueHandler"
- }
+}
