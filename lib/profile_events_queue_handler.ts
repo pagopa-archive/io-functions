@@ -4,6 +4,7 @@
  *
  */
 import * as t from "io-ts";
+import * as request from "superagent";
 import * as winston from "winston";
 
 import { IContext } from "azure-functions-types";
@@ -13,11 +14,20 @@ import {
 } from "./controllers/profiles";
 import { configureAzureContextTransport } from "./utils/logging";
 
+import { Either, left, right } from "fp-ts/lib/Either";
 import { readableReport } from "italia-ts-commons/lib/reporters";
-import * as request from "superagent";
+import { FiscalCode } from "italia-ts-commons/lib/strings";
 import { ExtendedProfile } from "./api/definitions/ExtendedProfile";
 import { NewMessage } from "./api/definitions/NewMessage";
 import { getRequiredStringEnv } from "./utils/env";
+
+const ContextWithBindings = t.exact(
+  t.interface({
+    bindings: t.partial({ notificationEvent: t.object })
+  })
+);
+
+type ContextWithBindings = t.TypeOf<typeof ContextWithBindings> & IContext;
 
 // HTTP external requests timeout in milliseconds
 const DEFAULT_REQUEST_TIMEOUT_MS = 10000;
@@ -29,25 +39,39 @@ const isProduction = process.env.NODE_ENV === "production";
 const publicApiUrl = getRequiredStringEnv("PUBLIC_API_URL");
 const publicApiKey = getRequiredStringEnv("PUBLIC_API_KEY");
 
+type WelcomeMessages = ReadonlyArray<
+  [(p: ExtendedProfile) => string, (p: ExtendedProfile) => string]
+>;
+
 // TODO: decide text for welcome message
 // TODO: switch text based on user's preferred_language
-const createWelcomeMessageMarkdown = (profile: ExtendedProfile) =>
-  `Hello new user ${profile.email || ""}
+const welcomeMessages: WelcomeMessages = [
+  [
+    (profile: ExtendedProfile) =>
+      `# Hello new user ${profile.email || ""}
 
-  We welcome you to the digital citizenship API program  
-  This is a welcome message to test the system (if it works)`;
+  We welcome you to the Digital Citizenship API program  
+  This is a welcome message to test if the system works.`,
 
-const createWelcomeMessageSubject = (profile: ExtendedProfile) =>
-  `Welcome new user ${profile.email || ""}`;
+    (profile: ExtendedProfile) => `Welcome new user ${profile.email || ""}`
+  ],
+  [
+    (profile: ExtendedProfile) =>
+      `# Hello new user ${profile.email || ""}
+  
+    We welcome you to the Digital Citizenship API program  
+    This is a welcome message to test if the system works.`,
 
-const ContextWithBindings = t.exact(
-  t.interface({
-    bindings: t.partial({ notificationEvent: t.object })
-  })
-);
+    (profile: ExtendedProfile) => `Welcome new user ${profile.email || ""}`
+  ]
+];
 
-type ContextWithBindings = t.TypeOf<typeof ContextWithBindings> & IContext;
-
+/**
+ * Send a single welcome message using the
+ * Digital Citizenship Notification API (REST).
+ *
+ *  TODO: use italia-commons client with retries
+ */
 async function sendWelcomeMessage(
   url: string,
   apiKey: string,
@@ -58,6 +82,39 @@ async function sendWelcomeMessage(
     .set("Ocp-Apim-Subscription-Key", apiKey)
     .timeout(DEFAULT_REQUEST_TIMEOUT_MS)
     .send(newMessage);
+}
+
+/**
+ * Send all welcome messages to the user
+ * identified by the provided fiscal code.
+ */
+function sendWelcomeMessages(
+  apiUrl: string,
+  apiKey: string,
+  messages: WelcomeMessages,
+  fiscalCode: FiscalCode,
+  profile: ExtendedProfile
+): ReadonlyArray<Promise<Either<Error, request.Response>>> {
+  const url = `${apiUrl}/api/v1/messages/${fiscalCode}`;
+  winston.debug(
+    `ProfileEventsQueueHandler|Sending welcome messages to ${fiscalCode}`
+  );
+  return messages.map(async ([createMessageMarkdown, createMessageSubject]) =>
+    NewMessage.decode({
+      content: {
+        markdown: createMessageMarkdown(profile),
+        subject: createMessageSubject(profile)
+      }
+    }).fold<Promise<Either<Error, request.Response>>>(
+      async errs => {
+        const error = `Invalid welcome message: ${readableReport(errs)}`;
+        winston.error(`ProfileEventsQueueHandler|${error}`);
+        return left(new Error(error));
+      },
+      async welcomeMessage =>
+        right(await sendWelcomeMessage(url, apiKey, welcomeMessage))
+    )
+  );
 }
 
 export async function index(
@@ -72,35 +129,24 @@ export async function index(
     JSON.stringify(event)
   );
 
-  const url = `${publicApiUrl}/api/v1/messages/${event.fiscalCode}`;
-
   const isInboxEnabled = event.newProfile.is_inbox_enabled === true;
   const isProfileCreated = event.kind === "ProfileCreatedEvent";
-  const isProfileUpdated =
+  const hasOldProfileWithInboxDisabled =
     event.kind === "ProfileUpdatedEvent" &&
     event.oldProfile.is_inbox_enabled === false;
 
   const hasJustEnabledInbox =
-    isInboxEnabled && (isProfileCreated || isProfileUpdated);
+    isInboxEnabled && (isProfileCreated || hasOldProfileWithInboxDisabled);
 
   if (hasJustEnabledInbox) {
-    const newMessage = NewMessage.decode({
-      content: {
-        markdown: createWelcomeMessageMarkdown(event.newProfile),
-        subject: createWelcomeMessageSubject(event.newProfile)
-      }
-    }).getOrElseL(errs => {
-      const error = `Invalid welcome message: ${readableReport(errs)}`;
-      winston.error(`ProfileEventsQueueHandler|${error}`);
-      throw new Error(error);
-    });
-
-    // TODO: schedule retries
-    const response = await sendWelcomeMessage(url, publicApiKey, newMessage);
-    winston.debug(
-      `ProfileEventsQueueHandler|Welcome message sent to ${
-        event.fiscalCode
-      } (response status=${response.status})`
+    await Promise.all(
+      sendWelcomeMessages(
+        publicApiUrl,
+        publicApiKey,
+        welcomeMessages,
+        event.fiscalCode,
+        event.newProfile
+      )
     );
   }
 }
