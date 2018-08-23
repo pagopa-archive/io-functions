@@ -15,10 +15,14 @@ import {
 import { configureAzureContextTransport } from "./utils/logging";
 
 import { readableReport } from "italia-ts-commons/lib/reporters";
-import { FiscalCode } from "italia-ts-commons/lib/strings";
+import { FiscalCode, NonEmptyString } from "italia-ts-commons/lib/strings";
 import { ExtendedProfile } from "./api/definitions/ExtendedProfile";
 import { NewMessage } from "./api/definitions/NewMessage";
 import { getRequiredStringEnv } from "./utils/env";
+
+import { TelemetryClient } from "applicationinsights";
+import { ulid } from "ulid";
+import { wrapCustomTelemetryClient } from "./utils/application_insights";
 
 const ContextWithBindings = t.exact(
   t.interface({
@@ -33,6 +37,11 @@ const DEFAULT_REQUEST_TIMEOUT_MS = 10000;
 
 // Whether we're in a production environment
 const isProduction = process.env.NODE_ENV === "production";
+
+const getCustomTelemetryClient = wrapCustomTelemetryClient(
+  isProduction,
+  new TelemetryClient()
+);
 
 // Needed to call notifications API
 const publicApiUrl = getRequiredStringEnv("PUBLIC_API_URL");
@@ -136,14 +145,38 @@ export async function index(
     isInboxEnabled && (isProfileCreated || hasOldProfileWithInboxDisabled);
 
   if (hasJustEnabledInbox) {
-    await Promise.all(
-      sendWelcomeMessages(
-        publicApiUrl,
-        publicApiKey,
-        welcomeMessages,
-        event.fiscalCode,
-        event.newProfile
-      )
+    const appInsightsClient = getCustomTelemetryClient(
+      {
+        operationId: ("profile-events.inbox-enabled:" +
+          ulid()) as NonEmptyString
+      },
+      {
+        fiscalCode: event.fiscalCode
+      }
     );
+    try {
+      await Promise.all(
+        sendWelcomeMessages(
+          publicApiUrl,
+          publicApiKey,
+          welcomeMessages,
+          event.fiscalCode,
+          event.newProfile
+        )
+      );
+      appInsightsClient.trackEvent({
+        name: "profile-events.welcome-message",
+        properties: {
+          success: "true"
+        }
+      });
+    } catch (e) {
+      appInsightsClient.trackException({
+        exception: e,
+        properties: {
+          type: "profile-events.welcome-message"
+        }
+      });
+    }
   }
 }
