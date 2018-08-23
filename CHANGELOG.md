@@ -11,6 +11,15 @@ The format of this file is loosely based on [Keep a Changelog](http://keepachang
 
 ## [Unreleased]
 
+## [v0.51.0] - 2018-08-23
+- **Added** send two welcome messages when enabling inbox.
+
+## [v0.50.0] - 2018-08-01
+- **Fixed** NPE during profile update.
+
+## [v0.49.0] - 2018-07-30
+- **Changed** return version aside service id when listing Services.
+
 ## [v0.48.0] - 2018-07-27
 
 ### Added
