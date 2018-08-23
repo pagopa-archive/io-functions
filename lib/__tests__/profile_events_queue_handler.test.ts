@@ -17,6 +17,8 @@ import {
 } from "../controllers/profiles";
 import { index } from "../profile_events_queue_handler";
 
+jest.mock("applicationinsights");
+
 afterEach(() => {
   jest.restoreAllMocks();
   jest.resetAllMocks();

@@ -15,14 +15,14 @@ import {
 import { configureAzureContextTransport } from "./utils/logging";
 
 import { readableReport } from "italia-ts-commons/lib/reporters";
-import { FiscalCode, NonEmptyString } from "italia-ts-commons/lib/strings";
+import { FiscalCode } from "italia-ts-commons/lib/strings";
 import { ExtendedProfile } from "./api/definitions/ExtendedProfile";
 import { NewMessage } from "./api/definitions/NewMessage";
 import { getRequiredStringEnv } from "./utils/env";
 
 import { TelemetryClient } from "applicationinsights";
-import { ulid } from "ulid";
 import { wrapCustomTelemetryClient } from "./utils/application_insights";
+import { ulidGenerator } from "./utils/strings";
 
 const ContextWithBindings = t.exact(
   t.interface({
@@ -147,7 +147,7 @@ export async function index(
   if (hasJustEnabledInbox) {
     const appInsightsClient = getCustomTelemetryClient(
       {
-        operationId: ulid() as NonEmptyString
+        operationId: ulidGenerator()
       },
       {
         fiscalCode: event.fiscalCode
