@@ -147,8 +147,7 @@ export async function index(
   if (hasJustEnabledInbox) {
     const appInsightsClient = getCustomTelemetryClient(
       {
-        operationId: ("profile-events.inbox-enabled:" +
-          ulid()) as NonEmptyString
+        operationId: ulid() as NonEmptyString
       },
       {
         fiscalCode: event.fiscalCode
