@@ -45,12 +45,14 @@ type WelcomeMessages = ReadonlyArray<(p: ExtendedProfile) => NewMessage>;
 const welcomeMessages: WelcomeMessages = [
   (profile: ExtendedProfile) =>
     NewMessage.decode({
-      markdown: `# Hello new user ${profile.email || ""}
+      content: {
+        markdown: `# Hello new user ${profile.email || ""}
 
   We welcome you to the Digital Citizenship API program  
   This is a welcome message to test if the system works.`,
 
-      subject: `Welcome new user ${profile.email || ""}`
+        subject: `Welcome new user ${profile.email || ""}`
+      }
     }).getOrElseL(errs => {
       throw new Error(
         "Invalid MessageContent for welcome message: " + readableReport(errs)
@@ -58,12 +60,14 @@ const welcomeMessages: WelcomeMessages = [
     }),
   (profile: ExtendedProfile) =>
     NewMessage.decode({
-      markdown: `# Hello new user ${profile.email || ""}
+      content: {
+        markdown: `# Hello new user ${profile.email || ""}
 
   We welcome you to the Digital Citizenship API program  
   This is a welcome message to test if the system works.`,
 
-      subject: `Welcome new user ${profile.email || ""}`
+        subject: `Welcome new user ${profile.email || ""}`
+      }
       // tslint:disable-next-line:no-identical-functions
     }).getOrElseL(errs => {
       throw new Error(
