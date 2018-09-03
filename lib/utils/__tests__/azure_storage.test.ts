@@ -15,6 +15,7 @@ const aBlobResult: azureStorage.BlobService.BlobResult = {
   blobType: "",
   container: "",
   contentLength: "",
+  creationTime: new Date().toISOString(),
   etag: "",
   lastModified: "",
   name: "",
@@ -137,7 +138,8 @@ describe("getBlobAsObject", () => {
     );
     expect(isRight(result)).toBeTruthy();
     if (isRight(result)) {
-      expect(result.value).toEqual(aJsonObject);
+      // tslint:disable-next-line:no-any
+      expect<any>(result.value).toEqual(aJsonObject);
     }
     spy.mockReset();
   });

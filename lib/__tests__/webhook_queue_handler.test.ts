@@ -58,6 +58,7 @@ jest.mock("../utils/azure_queues");
 import { handleQueueProcessingFailure } from "../utils/azure_queues";
 
 import * as superagent from "superagent";
+import { HttpsUrl } from "../api/definitions/HttpsUrl";
 
 // as superagent does not export request methods directly
 // we must override the superagent.Request prototype
@@ -149,7 +150,7 @@ const getMockNotificationEvent = (
 const aNotification: Notification = {
   channels: {
     [NotificationChannelEnum.WEBHOOK]: {
-      url: process.env.WEBHOOK_CHANNEL_URL
+      url: process.env.WEBHOOK_CHANNEL_URL as HttpsUrl
     }
   },
   fiscalCode: aFiscalCode,
