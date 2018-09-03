@@ -69,7 +69,7 @@
     "@types/vfile": "^2.2.1",
     "@types/winston": "^2.3.9",
     "azure-functions-pack": "^1.0.0",
-    "danger": "^3.7.20",
+    "danger": "^3.8.0",
     "danger-plugin-digitalcitizenship": "^0.3.1",
     "gulp": "^3.9.1",
     "gulp-git": "^2.4.2",
