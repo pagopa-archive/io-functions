@@ -18,7 +18,7 @@ describe("RequiredParamMiddleware", () => {
 
     expect(isRight(result)).toBeTruthy();
     if (isRight(result)) {
-      expect(result.value).toBe("hello");
+      expect<any>(result.value).toBe("hello");
     }
   });
 

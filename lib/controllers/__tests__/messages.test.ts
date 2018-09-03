@@ -295,7 +295,7 @@ describe("CreateMessageHandler", () => {
 
     expect(mockMessageModel.create.mock.calls[0][1]).toEqual(aFiscalCode);
 
-    expect(mockContext.bindings).toEqual({
+    expect<any>(mockContext.bindings).toEqual({
       createdMessage: {
         message: {
           ...aNewMessageWithoutContent,
@@ -385,7 +385,7 @@ describe("CreateMessageHandler", () => {
 
     expect(mockMessageModel.create.mock.calls[0][1]).toEqual(aFiscalCode);
 
-    expect(mockContext.bindings).toEqual({
+    expect<any>(mockContext.bindings).toEqual({
       createdMessage: {
         message: {
           ...aNewMessageWithoutContent,
@@ -471,7 +471,7 @@ describe("CreateMessageHandler", () => {
 
     expect(mockMessageModel.create.mock.calls[0][1]).toEqual(aFiscalCode);
 
-    expect(mockContext.bindings).toEqual({
+    expect<any>(mockContext.bindings).toEqual({
       createdMessage: {
         message: {
           ...aNewMessageWithoutContent,
@@ -564,7 +564,7 @@ describe("CreateMessageHandler", () => {
 
     expect(mockMessageModel.create.mock.calls[0][1]).toEqual(aFiscalCode);
 
-    expect(mockContext.bindings).toEqual({
+    expect<any>(mockContext.bindings).toEqual({
       createdMessage: {
         defaultAddresses: {
           email: "test@example.com" as EmailAddress
@@ -645,7 +645,7 @@ describe("CreateMessageHandler", () => {
 
     expect(mockMessageModel.create).not.toHaveBeenCalled();
 
-    expect(mockContext.bindings).toEqual({
+    expect<any>(mockContext.bindings).toEqual({
       createdMessage: undefined
     });
 
@@ -734,7 +734,7 @@ describe("CreateMessageHandler", () => {
       })
     );
 
-    expect(mockContext.bindings).toEqual({});
+    expect<any>(mockContext.bindings).toEqual({});
     expect(result.kind).toBe("IResponseErrorQuery");
   });
 

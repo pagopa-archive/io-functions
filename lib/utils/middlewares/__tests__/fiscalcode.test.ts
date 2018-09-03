@@ -29,7 +29,7 @@ describe("FiscalCodeMiddleware", () => {
     return FiscalCodeMiddleware(mockRequest as any).then(result => {
       expect(isRight(result)).toBeTruthy();
       if (isRight(result)) {
-        expect(result.value).toEqual(mockRequest.params.fiscalcode);
+        expect<any>(result.value).toEqual(mockRequest.params.fiscalcode);
       }
     });
   });
