@@ -49,33 +49,46 @@ const publicApiKey = getRequiredStringEnv("PUBLIC_API_KEY");
 
 type WelcomeMessages = ReadonlyArray<(p: ExtendedProfile) => NewMessage>;
 
-// TODO: decide text for welcome message
+// TODO: internal links
 // TODO: switch text based on user's preferred_language
 const welcomeMessages: WelcomeMessages = [
   (profile: ExtendedProfile) =>
     NewMessage.decode({
       content: {
-        markdown: `# Hello new user ${profile.email || ""}
+        markdown: `**Benvenuto su IO, l'applicazione dei servizi pubblici a disposizione di tutti i cittadini italiani !**
 
-  We welcome you to the Digital Citizenship API program  
-  This is a welcome message to test if the system works.`,
+Scopri le funzioni e impara a usare l'app del cittadino.
+IO ti consente di ricevere messaggi dalle Pubbliche Amministrazioni italiane, sia locali che nazionali e all'occorrenza effettuare pagamenti.
+Puoi decidere da chi e come essere contattato, dalla sezione [preferenze] di questa applicazione.  
+Per esempio puoi decidere di ricevere i messaggi anche sulla tua e-mail associata a SPID${
+          profile.email ? ":" + profile.email : ""
+        }.
+Se hai già usato pagoPA per effettuare pagamenti verso la Pubblica Amministrazione, potrai vedere lo storico delle transazioni  
+ed eventuali carte di credito salvate nella sezione [portafoglio].
+Altrimenti, sempre dal [portafoglio] puoi aggiungere i tuoi metodi di pagamento preferiti, oppure pagare direttamente  
+un avviso pagoPA leggendo il QR code di un avviso cartaceo.
+Se qualcosa non ti dovesse essere chiaro durante l'utilizzo dell'app, clicca il punto di domanda che trovi in alto a destra.`,
 
-        subject: `Welcome new user ${profile.email || ""}`
+        subject: `Benvenuto ! Scopri le funzioni principali e impara a usare l'app dei servizi pubblici.`
       }
     }).getOrElseL(errs => {
       throw new Error(
         "Invalid MessageContent for welcome message: " + readableReport(errs)
       );
     }),
-  (profile: ExtendedProfile) =>
+  (_: ExtendedProfile) =>
     NewMessage.decode({
       content: {
-        markdown: `# Hello new user ${profile.email || ""}
+        markdown: `**Scopri come attivare o disattivare i servizi delle Pubbliche Amministrazioni.**
 
-  We welcome you to the Digital Citizenship API program  
-  This is a welcome message to test if the system works.`,
+Scegli i servizi delle Pubbliche Amministrazioni con cui vuoi interagire nell'app.
+Al lancio dell'applicazione la lista dei servizi disponibili comprende tutte quelle a livello nazionale  
+(ad esempio l'ACI) e quelle relative ad alcune regioni e ad alcuni comuni, ma non temere:  
+ti scriveranno solo i servizi che hanno qualcosa di specifico da dire proprio a te! ;-)
+Puoi disattivare eventuali servizi a cui non sei interessato oppure scegliere su quale canale  
+ricevere le comunicazioni di ciascun servizio nella sezione [servizi] dentro [preferenze].`,
 
-        subject: `Welcome new user ${profile.email || ""}`
+        subject: `Personalizza la lista dei servizi pubblici a cui vuoi accedere tramite IO.`
       }
       // tslint:disable-next-line:no-identical-functions
     }).getOrElseL(errs => {
