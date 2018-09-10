@@ -61,6 +61,7 @@ Scopri le funzioni e impara a usare l'app del cittadino.
 IO ti consente di ricevere messaggi dalle Pubbliche Amministrazioni italiane, sia locali che nazionali e all'occorrenza effettuare pagamenti.
 Puoi decidere da chi e come essere contattato, dalla sezione [preferenze] di questa applicazione.  
 Per esempio puoi decidere di ricevere i messaggi anche sulla tua e-mail associata a SPID${
+          // tslint:disable-next-line:restrict-plus-operands
           profile.email ? ":" + profile.email : ""
         }.
 Se hai già usato pagoPA per effettuare pagamenti verso la Pubblica Amministrazione, potrai vedere lo storico delle transazioni  
