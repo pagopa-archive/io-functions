@@ -59,14 +59,14 @@ const welcomeMessages: WelcomeMessages = [
 
 Scopri le funzioni e impara a usare l'app del cittadino.
 IO ti consente di ricevere messaggi dalle Pubbliche Amministrazioni italiane, sia locali che nazionali e all'occorrenza effettuare pagamenti.
-Puoi decidere da chi e come essere contattato, dalla sezione [preferenze] di questa applicazione.  
+Puoi decidere da chi e come essere contattato, dalla sezione [preferenze](ioit://PREFERENCES_HOME) di questa applicazione.  
 Per esempio puoi decidere di ricevere i messaggi anche sulla tua e-mail associata a SPID${
           // tslint:disable-next-line:restrict-plus-operands
           profile.email ? ":" + profile.email : ""
         }.
 Se hai già usato pagoPA per effettuare pagamenti verso la Pubblica Amministrazione, potrai vedere lo storico delle transazioni  
-ed eventuali carte di credito salvate nella sezione [portafoglio].
-Altrimenti, sempre dal [portafoglio] puoi aggiungere i tuoi metodi di pagamento preferiti, oppure pagare direttamente  
+ed eventuali carte di credito salvate nella sezione [portafoglio](ioit://WALLET_HOME).
+Altrimenti, sempre dal [portafoglio](ioit://WALLET_HOME) puoi aggiungere i tuoi metodi di pagamento preferiti, oppure pagare direttamente  
 un avviso pagoPA leggendo il QR code di un avviso cartaceo.
 Se qualcosa non ti dovesse essere chiaro durante l'utilizzo dell'app, clicca il punto di domanda che trovi in alto a destra.`,
 
@@ -87,7 +87,8 @@ Al lancio dell'applicazione la lista dei servizi disponibili comprende tutte que
 (ad esempio l'ACI) e quelle relative ad alcune regioni e ad alcuni comuni, ma non temere:  
 ti scriveranno solo i servizi che hanno qualcosa di specifico da dire proprio a te! ;-)
 Puoi disattivare eventuali servizi a cui non sei interessato oppure scegliere su quale canale  
-ricevere le comunicazioni di ciascun servizio nella sezione [servizi] dentro [preferenze].`,
+ricevere le comunicazioni di ciascun servizio nella sezione [servizi](ioit://PREFERENCES_SERVICES)   
+dentro [preferenze](ioit://PREFERENCES_HOME).`,
 
         subject: `Personalizza la lista dei servizi pubblici a cui vuoi accedere tramite IO.`
       }
