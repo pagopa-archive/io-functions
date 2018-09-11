@@ -55,7 +55,7 @@ const welcomeMessages: WelcomeMessages = [
   (profile: ExtendedProfile) =>
     NewMessage.decode({
       content: {
-        markdown: `**Benvenuto su IO, l'applicazione dei servizi pubblici a disposizione di tutti i cittadini italiani !**
+        markdown: `**Benvenuto su IO, l'applicazione dei servizi pubblici a disposizione di tutti i cittadini italiani!**
 
 Scopri le funzioni e impara a usare l'app del cittadino.
 IO ti consente di ricevere messaggi dalle Pubbliche Amministrazioni italiane, sia locali che nazionali e all'occorrenza effettuare pagamenti.
@@ -70,7 +70,7 @@ Altrimenti, sempre dal [portafoglio](ioit://WALLET_HOME) puoi aggiungere i tuoi 
 un avviso pagoPA leggendo il QR code di un avviso cartaceo.
 Se qualcosa non ti dovesse essere chiaro durante l'utilizzo dell'app, clicca il punto di domanda che trovi in alto a destra.`,
 
-        subject: `Benvenuto ! Scopri le funzioni principali e impara a usare l'app dei servizi pubblici.`
+        subject: `Benvenuto! Scopri le funzioni principali e impara a usare l'app dei servizi pubblici.`
       }
     }).getOrElseL(errs => {
       throw new Error(
@@ -84,8 +84,9 @@ Se qualcosa non ti dovesse essere chiaro durante l'utilizzo dell'app, clicca il 
 
 Scegli i servizi delle Pubbliche Amministrazioni con cui vuoi interagire nell'app.
 Al lancio dell'applicazione la lista dei servizi disponibili comprende tutte quelle a livello nazionale
-(ad esempio l'ACI) e quelle relative ad alcune regioni e ad alcuni comuni, ma non temere:
+(ad esempio ACI) e quelle relative ad alcune regioni e ad alcuni comuni, ma non temere:
 ti scriveranno solo i servizi che hanno qualcosa di specifico da dire proprio a te! ;-)
+
 Puoi disattivare eventuali servizi a cui non sei interessato oppure scegliere su quale canale
 ricevere le comunicazioni di ciascun servizio nella sezione [servizi](ioit://PREFERENCES_SERVICES)
 dentro [preferenze](ioit://PREFERENCES_HOME).`,
