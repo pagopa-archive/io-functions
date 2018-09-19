@@ -132,7 +132,12 @@ The format of this file is loosely based on [Keep a Changelog](http://keepachang
 [upsertProfile]: https://teamdigitale.github.io/digital-citizenship/api/public.html#operation/upsertProfile
 [getInfo]: https://teamdigitale.github.io/digital-citizenship/api/public.html#operation/getInfo
 
-[Unreleased]: https://github.com/teamdigitale/digital-citizenship-functions/compare/v0.47.0...HEAD
+[Unreleased]: https://github.com/teamdigitale/digital-citizenship-functions/compare/v0.52.0...HEAD
+[v0.52.0]: https://github.com/teamdigitale/digital-citizenship-functions/compare/v0.51.0...v0.52.0
+[v0.51.0]: https://github.com/teamdigitale/digital-citizenship-functions/compare/v0.50.0...v0.51.0
+[v0.50.0]: https://github.com/teamdigitale/digital-citizenship-functions/compare/v0.49.0...v0.50.0
+[v0.49.0]: https://github.com/teamdigitale/digital-citizenship-functions/compare/v0.48.0...v0.49.0
+[v0.48.0]: https://github.com/teamdigitale/digital-citizenship-functions/compare/v0.47.0...v0.48.0
 [v0.47.0]: https://github.com/teamdigitale/digital-citizenship-functions/compare/v0.46.0...v0.47.0
 [v0.46.0]: https://github.com/teamdigitale/digital-citizenship-functions/compare/v0.45.0...v0.46.0
 [v0.45.0]: https://github.com/teamdigitale/digital-citizenship-functions/compare/v0.44.0...v0.45.0
