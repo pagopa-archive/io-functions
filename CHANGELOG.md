@@ -11,6 +11,9 @@ The format of this file is loosely based on [Keep a Changelog](http://keepachang
 
 ## [Unreleased]
 
+## [v0.52.0] - 2018-09-19
+- **Added** add internal links to default welcome messages.
+
 ## [v0.51.0] - 2018-08-23
 - **Added** send two welcome messages when enabling inbox.
 
