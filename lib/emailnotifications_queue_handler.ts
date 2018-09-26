@@ -334,7 +334,7 @@ export async function handleNotification(
     name: eventName,
     properties: {
       addressSource: emailNotification.addressSource,
-      transport: "mailup"
+      transport: lMailerTransporter.transporter.name
     }
   };
 
