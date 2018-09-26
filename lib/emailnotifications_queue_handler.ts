@@ -411,9 +411,7 @@ export async function index(
     emailNotificationEvent.notificationId
   );
 
-  winston.debug(
-    `useSendgridTransport:${useSendgridTransport} key=${sendgridApiKey}`
-  );
+  winston.debug(`useSendgridTransport:${useSendgridTransport}`);
 
   const mailerTransporter = NodeMailer.createTransport(
     useSendgridTransport
