@@ -68,6 +68,8 @@ import {
   wrapCustomTelemetryClient
 } from "./utils/application_insights";
 
+import * as SendgridTransport from "nodemailer-sendgrid-transport";
+
 // Whether we're in a production environment
 const isProduction = process.env.NODE_ENV === "production";
 
@@ -124,6 +126,14 @@ const queueService = createQueueService(queueConnectionString);
 //
 const mailupUsername = getRequiredStringEnv("MAILUP_USERNAME");
 const mailupSecret = getRequiredStringEnv("MAILUP_SECRET");
+
+//
+//  setup SendGrid
+//
+const useSendgridTransport = process.env.USE_SENDGRID_TRANSPORT;
+const sendgridApiKey = useSendgridTransport
+  ? getRequiredStringEnv("SENDGRID_API_KEY")
+  : undefined;
 
 //
 // options used when converting an HTML message to pure text
@@ -401,13 +411,23 @@ export async function index(
     emailNotificationEvent.notificationId
   );
 
+  winston.debug(
+    `useSendgridTransport:${useSendgridTransport} key=${sendgridApiKey}`
+  );
+
   const mailerTransporter = NodeMailer.createTransport(
-    MailUpTransport({
-      creds: {
-        Secret: mailupSecret,
-        Username: mailupUsername
-      }
-    })
+    useSendgridTransport
+      ? SendgridTransport({
+          auth: {
+            api_key: sendgridApiKey
+          }
+        })
+      : MailUpTransport({
+          creds: {
+            Secret: mailupSecret,
+            Username: mailupUsername
+          }
+        })
   );
 
   const serviceId = emailNotificationEvent.message.senderServiceId;
