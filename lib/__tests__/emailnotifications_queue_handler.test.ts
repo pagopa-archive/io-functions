@@ -321,7 +321,7 @@ describe("handleNotification", () => {
         name: "notification.email.delivery",
         properties: {
           addressSource: NotificationAddressSourceEnum.DEFAULT_ADDRESS,
-          transport: "mailup"
+          transport: expect.anything()
         },
         success: true
       })
@@ -418,7 +418,8 @@ This is a message from the future!`.replace(/[ \n]+/g, "|")
     const mockAppinsights = getAppinsightsMock();
 
     const mockTransport = {
-      send: jest.fn((_, cb) => cb("error"))
+      send: jest.fn((_, cb) => cb("error")),
+      transporter: { name: "transporter" }
     };
     const mockTransporter = NodeMailer.createTransport(mockTransport as any);
 
@@ -439,8 +440,7 @@ This is a message from the future!`.replace(/[ \n]+/g, "|")
       expect.objectContaining({
         name: "notification.email.delivery",
         properties: {
-          addressSource: NotificationAddressSourceEnum.DEFAULT_ADDRESS,
-          transport: "mailup"
+          addressSource: NotificationAddressSourceEnum.DEFAULT_ADDRESS
         },
         success: false
       })
@@ -563,7 +563,8 @@ describe("emailnotificationQueueHandlerIndex", () => {
     });
 
     jest.spyOn(NodeMailer, "createTransport").mockReturnValue({
-      sendMail: jest.fn((_, cb) => cb(null, "ok"))
+      sendMail: jest.fn((_, cb) => cb(null, "ok")),
+      transporter: { name: "transporter" }
     });
 
     const statusSpy = jest
@@ -601,7 +602,8 @@ describe("emailnotificationQueueHandlerIndex", () => {
     });
 
     jest.spyOn(NodeMailer, "createTransport").mockReturnValue({
-      sendMail: jest.fn((_, cb) => cb(null, "ok"))
+      sendMail: jest.fn((_, cb) => cb(null, "ok")),
+      transporter: { name: "transporter" }
     });
 
     jest
@@ -651,7 +653,8 @@ describe("emailnotificationQueueHandlerIndex", () => {
     const nodemailerSpy = jest
       .spyOn(NodeMailer, "createTransport")
       .mockReturnValue({
-        sendMail: jest.fn((_, cb) => cb(null, "ok"))
+        sendMail: jest.fn((_, cb) => cb(null, "ok")),
+        transporter: { name: "transporter" }
       });
 
     const ret = await index(contextMock as any);
