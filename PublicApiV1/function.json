@@ -1,5 +1,5 @@
 {
- "scriptFile": "../lib/index.js",
+ "scriptFile": "../.funcpack/index.js",
  "disabled": false,
  "bindings": [
   {
@@ -20,18 +20,20 @@
   },
   {
    "type": "queue",
-    "direction": "out",
-    "name": "createdMessage",
-    "queueName": "createdmessages",
-    "connection": "QueueStorageConnection"
-   },
-   {
-    "type": "queue",
-    "direction": "out",
-    "name": "profileEvent",
-    "queueName": "profileevents",
-    "connection": "QueueStorageConnection"
+   "direction": "out",
+   "name": "createdMessage",
+   "queueName": "createdmessages",
+   "connection": "QueueStorageConnection"
+  },
+  {
+   "type": "queue",
+   "direction": "out",
+   "name": "profileEvent",
+   "queueName": "profileevents",
+   "connection": "QueueStorageConnection"
   }
-],
- "entryPoint": "PublicApiV1"
+ ],
+ "entryPoint": "PublicApiV1",
+ "_originalEntryPoint": "PublicApiV1",
+ "_originalScriptFile": "../lib/index.js"
 }
