@@ -55,7 +55,7 @@ const welcomeMessages: WelcomeMessages = [
   (_: ExtendedProfile) =>
     NewMessage.decode({
       content: {
-        markdown: `## Benvenuto su IO, l'applicazione dei servizi pubblici a disposizione di tutti i cittadini italiani!**
+        markdown: `## Benvenuto su IO, l'applicazione dei servizi pubblici a disposizione di tutti i cittadini italiani!
 
 Scopri le funzioni e impara a usare l'app del cittadino.
 
@@ -79,7 +79,7 @@ Se qualcosa non ti dovesse essere chiaro durante l'utilizzo dell'app, clicca il 
   (_: ExtendedProfile) =>
     NewMessage.decode({
       content: {
-        markdown: `"## Scopri come attivare o disattivare i servizi delle amministrazioni pubbliche.
+        markdown: `## Scopri come attivare o disattivare i servizi delle amministrazioni pubbliche.
 
 Scegli i servizi con cui vuoi interagire nell'app.
 
