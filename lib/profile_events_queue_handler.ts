@@ -52,25 +52,24 @@ type WelcomeMessages = ReadonlyArray<(p: ExtendedProfile) => NewMessage>;
 // TODO: internal links
 // TODO: switch text based on user's preferred_language
 const welcomeMessages: WelcomeMessages = [
-  (profile: ExtendedProfile) =>
+  (_: ExtendedProfile) =>
     NewMessage.decode({
       content: {
-        markdown: `**Benvenuto su IO, l'applicazione dei servizi pubblici a disposizione di tutti i cittadini italiani!**
+        markdown: `## Benvenuto su IO, l'applicazione dei servizi pubblici a disposizione di tutti i cittadini italiani!**
 
 Scopri le funzioni e impara a usare l'app del cittadino.
+
 IO ti consente di ricevere messaggi dalle Pubbliche Amministrazioni italiane, sia locali che nazionali e all'occorrenza effettuare pagamenti.
 Puoi decidere da chi e come essere contattato, dalla sezione [preferenze](ioit://PREFERENCES_HOME) di questa applicazione.
-Per esempio puoi decidere di ricevere i messaggi anche sulla tua e-mail associata a SPID${
-          // tslint:disable-next-line:restrict-plus-operands
-          profile.email ? ":" + profile.email : ""
-        }.
+Per esempio puoi decidere di ricevere i messaggi anche sulla tua e-mail associata a SPID.
+
 Se hai già usato pagoPA per effettuare pagamenti verso la Pubblica Amministrazione, potrai vedere lo storico delle transazioni
-ed eventuali carte di credito salvate nella sezione [portafoglio](ioit://WALLET_HOME).
+ed eventuali carte di credito salvate nella sezione [portafoglio](ioit://WALLET_HOME).  
 Altrimenti, sempre dal [portafoglio](ioit://WALLET_HOME) puoi aggiungere i tuoi metodi di pagamento preferiti, oppure pagare direttamente
 un avviso pagoPA leggendo il QR code di un avviso cartaceo.
 Se qualcosa non ti dovesse essere chiaro durante l'utilizzo dell'app, clicca il punto di domanda che trovi in alto a destra.`,
 
-        subject: `Benvenuto! Scopri le funzioni principali e impara a usare l'app dei servizi pubblici.`
+        subject: `Benvenuto!`
       }
     }).getOrElseL(errs => {
       throw new Error(
@@ -80,18 +79,20 @@ Se qualcosa non ti dovesse essere chiaro durante l'utilizzo dell'app, clicca il 
   (_: ExtendedProfile) =>
     NewMessage.decode({
       content: {
-        markdown: `**Scopri come attivare o disattivare i servizi delle Pubbliche Amministrazioni.**
+        markdown: `"## Scopri come attivare o disattivare i servizi delle amministrazioni pubbliche.
 
-Scegli i servizi delle Pubbliche Amministrazioni con cui vuoi interagire nell'app.
-Al lancio dell'applicazione la lista dei servizi disponibili comprende tutte quelle a livello nazionale
-(ad esempio ACI) e quelle relative ad alcune regioni e ad alcuni comuni, ma non temere:
-ti scriveranno solo i servizi che hanno qualcosa di specifico da dire proprio a te! ;-)
+Scegli i servizi con cui vuoi interagire nell'app.
 
-Puoi disattivare eventuali servizi a cui non sei interessato oppure scegliere su quale canale
-ricevere le comunicazioni di ciascun servizio nella sezione [servizi](ioit://PREFERENCES_SERVICES)
-dentro [preferenze](ioit://PREFERENCES_HOME).`,
+Al lancio dell'applicazione la lista dei servizi disponibili comprende tutti quelli a livello nazionale (ad esempio l'ACI)
+e quelli relativi ad alcune regioni e ad alcuni comuni, ma non temere: ti scriveranno solo i servizi che hanno
+qualcosa di specifico da dire proprio a te! ;-)
 
-        subject: `Personalizza la lista dei servizi pubblici a cui vuoi accedere tramite IO.`
+Nella sezione [servizi](ioit://PREFERENCES_SERVICES) dentro [preferenze](ioit://PREFERENCES_HOME) puoi scegliere
+su quale canale ricevere le comunicazioni di ciascun servizio (notifiche, email, ecc.) e puoi anche decidere
+di disattivare eventuali servizi a cui non sei interessato. In quest'ultimo caso i servizi verranno disattivati
+da IO: per comunicare con gli enti dovrai utilizzare i canali tradizionali che usavi in precedenza.`,
+
+        subject: `Gestire i servizi in IO`
       }
       // tslint:disable-next-line:no-identical-functions
     }).getOrElseL(errs => {
