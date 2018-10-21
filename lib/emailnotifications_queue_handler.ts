@@ -187,13 +187,19 @@ export async function generateDocumentHtml(
     senderMetadata.serviceName
   }`;
 
+  // strip leading zeroes
+  const organizationFiscalCode = senderMetadata.organizationFiscalCode.replace(
+    /^0+/,
+    ""
+  );
+
   // wrap the generated HTML into an email template
   return defaultEmailTemplate(
     subject, // title
     "", // TODO: headline
     senderMetadata.organizationName, // organization name
     senderServiceName, // service name
-    senderMetadata.organizationFiscalCode,
+    organizationFiscalCode,
     subject,
     bodyHtml,
     "" // TODO: footer
