@@ -308,6 +308,7 @@ describe("CreateMessageHandler", () => {
         },
         senderMetadata: {
           departmentName: "IT",
+          organizationFiscalCode: anOrganizationFiscalCode,
           organizationName: "AgID",
           serviceName: "Test"
         },
@@ -398,6 +399,7 @@ describe("CreateMessageHandler", () => {
         },
         senderMetadata: {
           departmentName: "IT",
+          organizationFiscalCode: anOrganizationFiscalCode,
           organizationName: "AgID",
           serviceName: "Test"
         },
@@ -484,6 +486,7 @@ describe("CreateMessageHandler", () => {
         },
         senderMetadata: {
           departmentName: "IT",
+          organizationFiscalCode: anOrganizationFiscalCode,
           organizationName: "AgID",
           serviceName: "Test"
         },
@@ -580,6 +583,7 @@ describe("CreateMessageHandler", () => {
         },
         senderMetadata: {
           departmentName: "IT",
+          organizationFiscalCode: anOrganizationFiscalCode,
           organizationName: "AgID",
           serviceName: "Test"
         },

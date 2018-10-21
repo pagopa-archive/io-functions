@@ -193,6 +193,7 @@ export async function generateDocumentHtml(
     "", // TODO: headline
     senderMetadata.organizationName, // organization name
     senderServiceName, // service name
+    senderMetadata.organizationFiscalCode,
     subject,
     bodyHtml,
     "" // TODO: footer
