@@ -31,7 +31,7 @@
     <mj-section
         direction="rtl"
         padding="48px 30px 32px"
-        background-url="bg-section.gif"
+        background-url="https://raw.githubusercontent.com/teamdigitale/digital-citizenship-functions/151550349-mail-template/templates/images/bg-section.gif"
         background-repeat="repeat"
         background-size="100%">
       <mj-column width="25%" padding="16px 32px">
@@ -55,7 +55,7 @@
     <!-- Section 2: Title -->
     <mj-section
         padding="32px 30px"
-        background-url="bg-section.gif"
+        background-url="https://raw.githubusercontent.com/teamdigitale/digital-citizenship-functions/151550349-mail-template/templates/images/bg-section.gif"
         background-repeat="repeat"
         background-size="100%">
       <mj-column padding="0 32px">
@@ -66,7 +66,7 @@
     <!-- Section 3: Content -->
     <mj-section
         padding="32px 30px 48px"
-        background-url="bg-section.gif"
+        background-url="https://raw.githubusercontent.com/teamdigitale/digital-citizenship-functions/151550349-mail-template/templates/images/bg-section.gif"
         background-repeat="repeat"
         background-size="100%">
       <mj-column padding="0 32px">
