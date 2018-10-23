@@ -11,8 +11,11 @@ The format of this file is loosely based on [Keep a Changelog](http://keepachang
 
 ## [Unreleased]
 
-## [v0.54.0] - 2018-10-23
+## [v0.55.0] - 2018-10-23
 - **Changed** new template for emails.
+
+## [v0.54.0] - 2018-90-26
+- **Changed** fix telemetry for mailer transport.
 
 ## [v0.53.0] - 2018-09-26
 - **Added** SendGrid mailer transport.
@@ -138,7 +141,8 @@ The format of this file is loosely based on [Keep a Changelog](http://keepachang
 [upsertProfile]: https://teamdigitale.github.io/digital-citizenship/api/public.html#operation/upsertProfile
 [getInfo]: https://teamdigitale.github.io/digital-citizenship/api/public.html#operation/getInfo
 
-[Unreleased]: https://github.com/teamdigitale/digital-citizenship-functions/compare/v0.54.0...HEAD
+[Unreleased]: https://github.com/teamdigitale/digital-citizenship-functions/compare/v0.55.0...HEAD
+[v0.55.0]: https://github.com/teamdigitale/digital-citizenship-functions/compare/v0.54.0...v0.55.0
 [v0.54.0]: https://github.com/teamdigitale/digital-citizenship-functions/compare/v0.53.0...v0.54.0
 [v0.53.0]: https://github.com/teamdigitale/digital-citizenship-functions/compare/v0.52.0...v0.53.0
 [v0.52.0]: https://github.com/teamdigitale/digital-citizenship-functions/compare/v0.51.0...v0.52.0
