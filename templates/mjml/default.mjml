@@ -22,7 +22,7 @@
     <!-- Top Shadow -->
     <mj-section>
       <mj-column>
-        <mj-image height="40px" src="https://raw.githubusercontent.com/teamdigitale/digital-citizenship-functions/151550349-mail-template/templates/images/bg-top-50-blue.gif" />
+        <mj-image height="40px" src="https://raw.githubusercontent.com/teamdigitale/digital-citizenship-functions/master/templates/images/bg-top-50-blue.gif" />
       </mj-column>
     </mj-section>
 
@@ -31,11 +31,11 @@
     <mj-section
         direction="rtl"
         padding="48px 30px 32px"
-        background-url="https://raw.githubusercontent.com/teamdigitale/digital-citizenship-functions/151550349-mail-template/templates/images/bg-section.gif"
+        background-url="https://raw.githubusercontent.com/teamdigitale/digital-citizenship-functions/master/templates/images/bg-section.gif"
         background-repeat="repeat"
         background-size="100%">
       <mj-column width="25%" padding="16px 32px">
-        <mj-image width="50px" src="https://raw.githubusercontent.com/teamdigitale/digital-citizenship-functions/151550349-mail-template/templates/images/img-io.gif" align="right" />
+        <mj-image width="50px" src="https://raw.githubusercontent.com/teamdigitale/digital-citizenship-functions/master/templates/images/img-io.gif" align="right" />
       </mj-column>
       <mj-column width="75%" padding="0 32px">
         <mj-table cellpadding="0" cellspacing="0" padding="0">
@@ -55,7 +55,7 @@
     <!-- Section 2: Title -->
     <mj-section
         padding="32px 30px"
-        background-url="https://raw.githubusercontent.com/teamdigitale/digital-citizenship-functions/151550349-mail-template/templates/images/bg-section.gif"
+        background-url="https://raw.githubusercontent.com/teamdigitale/digital-citizenship-functions/master/templates/images/bg-section.gif"
         background-repeat="repeat"
         background-size="100%">
       <mj-column padding="0 32px">
@@ -66,7 +66,7 @@
     <!-- Section 3: Content -->
     <mj-section
         padding="32px 30px 48px"
-        background-url="https://raw.githubusercontent.com/teamdigitale/digital-citizenship-functions/151550349-mail-template/templates/images/bg-section.gif"
+        background-url="https://raw.githubusercontent.com/teamdigitale/digital-citizenship-functions/master/templates/images/bg-section.gif"
         background-repeat="repeat"
         background-size="100%">
       <mj-column padding="0 32px">
@@ -77,7 +77,7 @@
     <!-- Bottom Shadow -->
     <mj-section>
       <mj-column>
-        <mj-image height="40px" src="https://raw.githubusercontent.com/teamdigitale/digital-citizenship-functions/151550349-mail-template/templates/images/bg-bottom-50.gif" />
+        <mj-image height="40px" src="https://raw.githubusercontent.com/teamdigitale/digital-citizenship-functions/master/templates/images/bg-bottom-50.gif" />
       </mj-column>
     </mj-section>
 
