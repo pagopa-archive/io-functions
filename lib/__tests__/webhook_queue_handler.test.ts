@@ -21,7 +21,10 @@ import * as winston from "winston";
 import { none, some } from "fp-ts/lib/Option";
 
 import { isLeft, isRight, left, right } from "fp-ts/lib/Either";
-import { NonEmptyString } from "italia-ts-commons/lib/strings";
+import {
+  NonEmptyString,
+  OrganizationFiscalCode
+} from "italia-ts-commons/lib/strings";
 
 import { FiscalCode } from "../api/definitions/FiscalCode";
 
@@ -107,9 +110,11 @@ const aMessageBodyMarkdown = "test".repeat(80) as MessageBodyMarkdown;
 const aMessageBodySubject = "t".repeat(30) as MessageSubject;
 
 const aNotificationId = "A_NOTIFICATION_ID" as NonEmptyString;
+const anOrganizationFiscalCode = "00000000000" as OrganizationFiscalCode;
 
 const aSenderMetadata: CreatedMessageEventSenderMetadata = {
   departmentName: "dept" as NonEmptyString,
+  organizationFiscalCode: anOrganizationFiscalCode,
   organizationName: "org" as NonEmptyString,
   serviceName: "service" as NonEmptyString
 };
