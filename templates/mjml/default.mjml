@@ -13,11 +13,11 @@
   <mj-body background-color="#FFFFFF">
 
     <!-- Header -->
-    <mj-section padding="10px 0">
+    <!--<mj-section padding="10px 0">
       <mj-column>
         <mj-text align="center" color="#9B9B9B" font-size="11px">${headlineText}</mj-text>
       </mj-column>
-    </mj-section>
+    </mj-section>-->
 
     <!-- Top Shadow -->
     <mj-section>
@@ -25,30 +25,31 @@
         <mj-image height="40px" src="https://raw.githubusercontent.com/teamdigitale/digital-citizenship-functions/master/templates/images/bg-top-50-blue.gif" />
       </mj-column>
     </mj-section>
-
+      
     <!-- Section 1: Logos -->
-    <!-- using direction="rtl" to leave "io" logo on top on mobile -->
     <mj-section
-        direction="rtl"
-        padding="48px 30px 32px"
+        padding="32px 30px 32px"
         background-url="https://raw.githubusercontent.com/teamdigitale/digital-citizenship-functions/master/templates/images/bg-section.gif"
         background-repeat="repeat"
         background-size="100%">
-      <mj-column width="25%" padding="16px 32px">
-        <mj-image width="50px" src="https://raw.githubusercontent.com/teamdigitale/digital-citizenship-functions/master/templates/images/img-io.gif" align="right" />
-      </mj-column>
-      <mj-column width="75%" padding="0 32px">
-        <mj-table cellpadding="0" cellspacing="0" padding="0">
-          <tr>
-            <td style="width: 80px;">
-                <img src="https://raw.githubusercontent.com/teamdigitale/italia-services-metadata/master/logos/organizations/${organizationFiscalCode}.png" width="80px">
-            </td>
-            <td style="padding-left: 16px;">
-                <span style="font-size: 24px;">${senderOrganizationName}</span><br/>
-                <span style="font-size: 16px;">${senderServiceName}</span>
-            </td>
-          </tr>
-        </mj-table>
+      <mj-group>
+        <mj-column padding-left="32px">
+          <mj-image width="80px" height="80px" src="https://raw.githubusercontent.com/teamdigitale/italia-services-metadata/master/logos/organizations/${organizationFiscalCode}.png" align="left" />
+        </mj-column>
+        <mj-column padding-right="32px" padding-top="16px">
+          <mj-image width="48px" src="https://raw.githubusercontent.com/teamdigitale/digital-citizenship-functions/master/templates/images/img-io.gif" align="right" />
+        </mj-column>
+      </mj-group>
+    </mj-section>
+
+    <mj-section
+        padding="0 30px 32px"
+        background-url="https://raw.githubusercontent.com/teamdigitale/digital-citizenship-functions/master/templates/images/bg-section.gif"
+        background-repeat="repeat"
+        background-size="100%">
+      <mj-column padding="0px 32px">
+        <mj-text padding="0" font-size="24px">${senderOrganizationName}</mj-text>
+        <mj-text padding="0">${senderServiceName}</mj-text>
       </mj-column>
     </mj-section>
 
@@ -59,7 +60,7 @@
         background-repeat="repeat"
         background-size="100%">
       <mj-column padding="0 32px">
-        <mj-text padding="0" font-weight="700" font-size="32px">${titleText}</mj-text>
+        <mj-text padding="0" font-weight="700" font-size="32px" line-height="36px">${titleText}</mj-text>
       </mj-column>
     </mj-section>
 
@@ -82,10 +83,10 @@
     </mj-section>
 
     <!-- Footer -->
-    <mj-section padding="10px 0 20px 0">
+    <!--<mj-section padding="10px 0 20px 0">
       <mj-column>
         <mj-text align="center" color="#9B9B9B" font-size="11px">${footerHtml}</mj-text>
       </mj-column>
-    </mj-section>
+    </mj-section>-->
   </mj-body>
 </mjml>
