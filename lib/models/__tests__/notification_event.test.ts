@@ -11,11 +11,13 @@ import { MessageContent } from "../../api/definitions/MessageContent";
 
 import { isRight } from "fp-ts/lib/Either";
 import { MessageSubject } from "../../api/definitions/MessageSubject";
+import { OrganizationFiscalCode } from "../../api/definitions/OrganizationFiscalCode";
 import { TimeToLiveSeconds } from "../../api/definitions/TimeToLiveSeconds";
 import { CreatedMessageEventSenderMetadata } from "../created_message_sender_metadata";
 
 const aMessageId = "A_MESSAGE_ID" as NonEmptyString;
 const aNotificationId = "A_NOTIFICATION_ID" as NonEmptyString;
+const anOrganizationFiscalCode = "00000000000" as OrganizationFiscalCode;
 
 const aMessageBodyMarkdown = "test".repeat(80) as MessageBodyMarkdown;
 
@@ -38,6 +40,7 @@ const aMessage = {
 
 const aSenderMetadata: CreatedMessageEventSenderMetadata = {
   departmentName: "IT" as NonEmptyString,
+  organizationFiscalCode: anOrganizationFiscalCode,
   organizationName: "AgID" as NonEmptyString,
   serviceName: "Test" as NonEmptyString
 };

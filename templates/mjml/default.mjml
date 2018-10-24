@@ -2,42 +2,86 @@
   
   <mj-head>
     <mj-title>${title}</mj-title>
-    <mj-font name="Roboto" href="https://fonts.googleapis.com/css?family=Montserrat:300,400,500"></mj-font>
+    <mj-font name="Titillium Web" href="https://fonts.googleapis.com/css?family=Titillium+Web:400,700"></mj-font>
     <mj-attributes>
-      <mj-all font-family="Montserrat, Helvetica, Arial, sans-serif"></mj-all>
+      <mj-all font-family="'Titillium Web', Helvetica, Arial, sans-serif"></mj-all>
       <mj-text font-weight="400" font-size="16px" color="#000000" line-height="24px"></mj-text>
       <mj-section padding="0px"></mj-section>
+      <mj-image padding="0px"></mj-section>
     </mj-attributes>
   </mj-head>
-  <mj-body background-color="#F2F2F2">
-    <mj-section padding="10px 0 10px 0">
+  <mj-body background-color="#FFFFFF">
+
+    <!-- Header -->
+    <mj-section padding="10px 0">
       <mj-column>
         <mj-text align="center" color="#9B9B9B" font-size="11px">${headlineText}</mj-text>
       </mj-column>
     </mj-section>
-    <mj-section padding="20px 20px 0 20px" background-color="#FFFFFF">
-      <mj-column width="40%">
-        <mj-text align="left" font-size="20px" font-weight="500">${senderOrganizationName}</mj-text>
-      </mj-column>
-      <mj-column width="60%">
-        <mj-text align="right" font-size="11px">${senderServiceName}</mj-text>
-      </mj-column>
-    </mj-section>
-    <mj-section padding="0 20px 20px 20px" background-color="#FFFFFF">
+
+    <!-- Top Shadow -->
+    <mj-section>
       <mj-column>
-        <mj-text align="center" font-weight="300" padding="10px 40px 10px 40px" font-size="30px" line-height="35x" color="#06C">${titleText}</mj-text>
+        <mj-image height="40px" src="https://raw.githubusercontent.com/teamdigitale/digital-citizenship-functions/master/templates/images/bg-top-50-blue.gif" />
       </mj-column>
     </mj-section>
-    <mj-section vertical-align="middle" background-color="#FFFFFF">
-      <mj-column width="100%">
-        <mj-text padding="10px 40px 10px 40px" font-weight="300">${contentHtml}</mj-text>
+
+    <!-- Section 1: Logos -->
+    <!-- using direction="rtl" to leave "io" logo on top on mobile -->
+    <mj-section
+        direction="rtl"
+        padding="48px 30px 32px"
+        background-url="https://raw.githubusercontent.com/teamdigitale/digital-citizenship-functions/master/templates/images/bg-section.gif"
+        background-repeat="repeat"
+        background-size="100%">
+      <mj-column width="25%" padding="16px 32px">
+        <mj-image width="50px" src="https://raw.githubusercontent.com/teamdigitale/digital-citizenship-functions/master/templates/images/img-io.gif" align="right" />
+      </mj-column>
+      <mj-column width="75%" padding="0 32px">
+        <mj-table cellpadding="0" cellspacing="0" padding="0">
+          <tr>
+            <td style="width: 80px;">
+                <img src="https://raw.githubusercontent.com/teamdigitale/italia-services-metadata/master/logos/organizations/${organizationFiscalCode}.png" width="80px">
+            </td>
+            <td style="padding-left: 16px;">
+                <span style="font-size: 24px;">${senderOrganizationName}</span><br/>
+                <span style="font-size: 16px;">${senderServiceName}</span>
+            </td>
+          </tr>
+        </mj-table>
       </mj-column>
     </mj-section>
-    <mj-section padding="50px 0 0 0" background-color="#FFFFFF">
+
+    <!-- Section 2: Title -->
+    <mj-section
+        padding="32px 30px"
+        background-url="https://raw.githubusercontent.com/teamdigitale/digital-citizenship-functions/master/templates/images/bg-section.gif"
+        background-repeat="repeat"
+        background-size="100%">
+      <mj-column padding="0 32px">
+        <mj-text padding="0" font-weight="700" font-size="32px">${titleText}</mj-text>
+      </mj-column>
+    </mj-section>
+
+    <!-- Section 3: Content -->
+    <mj-section
+        padding="32px 30px 48px"
+        background-url="https://raw.githubusercontent.com/teamdigitale/digital-citizenship-functions/master/templates/images/bg-section.gif"
+        background-repeat="repeat"
+        background-size="100%">
+      <mj-column padding="0 32px">
+        <mj-text padding="0" font-weight="400">${contentHtml}</mj-text>
+      </mj-column>
+    </mj-section>
+
+    <!-- Bottom Shadow -->
+    <mj-section>
       <mj-column>
-        <mj-image src="http://nimus.de/share/tpl-card/bottom.png" alt="bottom border" align="center" border="none" padding="0px"></mj-image>
+        <mj-image height="40px" src="https://raw.githubusercontent.com/teamdigitale/digital-citizenship-functions/master/templates/images/bg-bottom-50.gif" />
       </mj-column>
     </mj-section>
+
+    <!-- Footer -->
     <mj-section padding="10px 0 20px 0">
       <mj-column>
         <mj-text align="center" color="#9B9B9B" font-size="11px">${footerHtml}</mj-text>

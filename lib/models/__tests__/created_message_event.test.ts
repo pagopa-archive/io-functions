@@ -33,6 +33,7 @@ describe("", () => {
         },
         senderMetadata: {
           departmentName: "IT",
+          organizationFiscalCode: "00000000000",
           organizationName: "AgID",
           serviceName: "Test"
         },

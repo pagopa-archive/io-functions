@@ -1,6 +1,6 @@
 {
   "name": "digital-citizenship-functions",
-  "version": "0.55.1-SNAPSHOT",
+  "version": "0.56.0-SNAPSHOT",
   "description": "Implementation of the Public API V1, part of the Digital Citizenship platform",
   "main": "index.js",
   "repository": {
@@ -105,7 +105,7 @@
     "testEnvironment": "node",
     "moduleFileExtensions": ["ts", "js"],
     "transform": {
-      "^.+\\.(ts|tsx)$": "<rootDir>/node_modules/ts-jest/preprocessor.js"
+      "^.+\\.(ts|tsx)$": "ts-jest"
     },
     "transformIgnorePatterns": ["<rootDir>/node_modules/(?!azure-functions-types)"],
     "testMatch": ["**/__tests__/*.ts"]
