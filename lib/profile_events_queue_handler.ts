@@ -176,6 +176,7 @@ export async function index(
       name: "profile-events.created",
       properties: {
         createdAt: new Date().toISOString(),
+        email: event.newProfile.email || "",
         success: "true"
       }
     });
