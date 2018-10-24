@@ -11,6 +11,9 @@ The format of this file is loosely based on [Keep a Changelog](http://keepachang
 
 ## [Unreleased]
 
+## [v0.56.0] - 2018-10-24
+- **Added** track new registrations.
+
 ## [v0.55.0] - 2018-10-23
 - **Changed** new template for emails.
 
@@ -141,7 +144,8 @@ The format of this file is loosely based on [Keep a Changelog](http://keepachang
 [upsertProfile]: https://teamdigitale.github.io/digital-citizenship/api/public.html#operation/upsertProfile
 [getInfo]: https://teamdigitale.github.io/digital-citizenship/api/public.html#operation/getInfo
 
-[Unreleased]: https://github.com/teamdigitale/digital-citizenship-functions/compare/v0.55.0...HEAD
+[Unreleased]: https://github.com/teamdigitale/digital-citizenship-functions/compare/v0.56.0...HEAD
+[v0.56.0]: https://github.com/teamdigitale/digital-citizenship-functions/compare/v0.55.0...v0.56.0
 [v0.55.0]: https://github.com/teamdigitale/digital-citizenship-functions/compare/v0.54.0...v0.55.0
 [v0.54.0]: https://github.com/teamdigitale/digital-citizenship-functions/compare/v0.53.0...v0.54.0
 [v0.53.0]: https://github.com/teamdigitale/digital-citizenship-functions/compare/v0.52.0...v0.53.0
