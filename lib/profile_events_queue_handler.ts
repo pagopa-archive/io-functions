@@ -161,15 +161,28 @@ export async function index(
   const hasJustEnabledInbox =
     isInboxEnabled && (isProfileCreated || hasOldProfileWithInboxDisabled);
 
-  if (hasJustEnabledInbox) {
-    const appInsightsClient = getCustomTelemetryClient(
-      {
-        operationId: ulidGenerator()
-      },
-      {
-        fiscalCode: event.fiscalCode
+  const appInsightsClient = getCustomTelemetryClient(
+    {
+      operationId: ulidGenerator()
+    },
+    {
+      fiscalCode: event.fiscalCode
+    }
+  );
+
+  if (isProfileCreated) {
+    // track every new user's registration
+    appInsightsClient.trackEvent({
+      name: "profile-events.created",
+      properties: {
+        createdAt: new Date().toISOString(),
+        email: event.newProfile.email || "",
+        success: "true"
       }
-    );
+    });
+  }
+
+  if (hasJustEnabledInbox) {
     try {
       await Promise.all(
         sendWelcomeMessages(
