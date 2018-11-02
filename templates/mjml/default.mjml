@@ -4,11 +4,9 @@
     <mj-title>${title}</mj-title>
     <mj-font name="Titillium Web" href="https://fonts.googleapis.com/css?family=Titillium+Web:400,700"></mj-font>
     <mj-attributes>
-      <mj-all font-family="'Titillium Web', Helvetica, Arial, sans-serif"></mj-all>
-      <mj-text font-weight="400" font-size="16px" color="#000000" line-height="24px"></mj-text>
-      <mj-section padding="0px"></mj-section>
-      <mj-image padding="0px">
-        </mj-section>
+      <mj-all font-family="'Titillium Web', Helvetica, Arial, sans-serif" />
+      <mj-section padding="0px" />
+      <mj-image padding="0px" />
     </mj-attributes>
   </mj-head>
   <mj-body background-color="#FFFFFF">
@@ -41,8 +39,8 @@
 
     <mj-section padding="0 30px 32px" background-url="https://raw.githubusercontent.com/teamdigitale/digital-citizenship-functions/master/templates/images/bg-section.gif" background-repeat="repeat" background-size="100%">
       <mj-column padding="0px 32px">
-        <mj-text padding="0" font-size="24px">${senderOrganizationName}</mj-text>
-        <mj-text padding="0">${senderServiceName}</mj-text>
+        <mj-text padding="0" font-weight="400" font-size="24px" line-height="24px">${senderOrganizationName}</mj-text>
+        <mj-text padding="0" font-weight="400" font-size="16px" line-height="24px">${senderServiceName}</mj-text>
       </mj-column>
     </mj-section>
 
@@ -56,7 +54,7 @@
     <!-- Section 3: Content -->
     <mj-section padding="32px 30px 48px" background-url="https://raw.githubusercontent.com/teamdigitale/digital-citizenship-functions/master/templates/images/bg-section.gif" background-repeat="repeat" background-size="100%">
       <mj-column padding="0 32px">
-        <mj-text padding="0" font-weight="400">${contentHtml}</mj-text>
+        <mj-text padding="0">${contentHtml}</mj-text>
       </mj-column>
     </mj-section>
 
