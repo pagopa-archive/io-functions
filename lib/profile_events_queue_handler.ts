@@ -49,33 +49,50 @@ const publicApiKey = getRequiredStringEnv("PUBLIC_API_KEY");
 
 type WelcomeMessages = ReadonlyArray<(p: ExtendedProfile) => NewMessage>;
 
-// TODO: decide text for welcome message
+// TODO: internal links
 // TODO: switch text based on user's preferred_language
 const welcomeMessages: WelcomeMessages = [
-  (profile: ExtendedProfile) =>
+  (_: ExtendedProfile) =>
     NewMessage.decode({
       content: {
-        markdown: `# Hello new user ${profile.email || ""}
+        markdown: `## Benvenuto su IO, l'applicazione dei servizi pubblici a disposizione di tutti i cittadini italiani!
 
-  We welcome you to the Digital Citizenship API program  
-  This is a welcome message to test if the system works.`,
+Scopri le funzioni e impara a usare l'app del cittadino.
 
-        subject: `Welcome new user ${profile.email || ""}`
+IO ti consente di ricevere messaggi dalle Pubbliche Amministrazioni italiane, sia locali che nazionali e all'occorrenza effettuare pagamenti.
+Puoi decidere da chi e come essere contattato, dalla sezione [preferenze](ioit://PREFERENCES_HOME) di questa applicazione.
+Per esempio puoi decidere di ricevere i messaggi anche sulla tua e-mail associata a SPID.
+
+Se hai già usato pagoPA per effettuare pagamenti verso la Pubblica Amministrazione, potrai vedere lo storico delle transazioni
+ed eventuali carte di credito salvate nella sezione [portafoglio](ioit://WALLET_HOME).  
+Altrimenti, sempre dal [portafoglio](ioit://WALLET_HOME) puoi aggiungere i tuoi metodi di pagamento preferiti, oppure pagare direttamente
+un avviso pagoPA leggendo il QR code di un avviso cartaceo.
+Se qualcosa non ti dovesse essere chiaro durante l'utilizzo dell'app, clicca il punto di domanda che trovi in alto a destra.`,
+
+        subject: `Benvenuto!`
       }
     }).getOrElseL(errs => {
       throw new Error(
         "Invalid MessageContent for welcome message: " + readableReport(errs)
       );
     }),
-  (profile: ExtendedProfile) =>
+  (_: ExtendedProfile) =>
     NewMessage.decode({
       content: {
-        markdown: `# Hello new user ${profile.email || ""}
+        markdown: `## Scopri come attivare o disattivare i servizi delle amministrazioni pubbliche.
 
-  We welcome you to the Digital Citizenship API program  
-  This is a welcome message to test if the system works.`,
+Scegli i servizi con cui vuoi interagire nell'app.
 
-        subject: `Welcome new user ${profile.email || ""}`
+Al lancio dell'applicazione la lista dei servizi disponibili comprende tutti quelli a livello nazionale (ad esempio l'ACI)
+e quelli relativi ad alcune regioni e ad alcuni comuni, ma non temere: ti scriveranno solo i servizi che hanno
+qualcosa di specifico da dire proprio a te! ;-)
+
+Nella sezione [servizi](ioit://PREFERENCES_SERVICES) dentro [preferenze](ioit://PREFERENCES_HOME) puoi scegliere
+su quale canale ricevere le comunicazioni di ciascun servizio (notifiche, email, ecc.) e puoi anche decidere
+di disattivare eventuali servizi a cui non sei interessato. In quest'ultimo caso i servizi verranno disattivati
+da IO: per comunicare con gli enti dovrai utilizzare i canali tradizionali che usavi in precedenza.`,
+
+        subject: `Gestire i servizi in IO`
       }
       // tslint:disable-next-line:no-identical-functions
     }).getOrElseL(errs => {
@@ -144,15 +161,28 @@ export async function index(
   const hasJustEnabledInbox =
     isInboxEnabled && (isProfileCreated || hasOldProfileWithInboxDisabled);
 
-  if (hasJustEnabledInbox) {
-    const appInsightsClient = getCustomTelemetryClient(
-      {
-        operationId: ulidGenerator()
-      },
-      {
-        fiscalCode: event.fiscalCode
+  const appInsightsClient = getCustomTelemetryClient(
+    {
+      operationId: ulidGenerator()
+    },
+    {
+      fiscalCode: event.fiscalCode
+    }
+  );
+
+  if (isProfileCreated) {
+    // track every new user's registration
+    appInsightsClient.trackEvent({
+      name: "profile-events.created",
+      properties: {
+        createdAt: new Date().toISOString(),
+        email: event.newProfile.email || "",
+        success: "true"
       }
-    );
+    });
+  }
+
+  if (hasJustEnabledInbox) {
     try {
       await Promise.all(
         sendWelcomeMessages(

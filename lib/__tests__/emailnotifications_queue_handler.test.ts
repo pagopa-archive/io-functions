@@ -27,7 +27,11 @@ import MockTransport = require("nodemailer-mock-transport");
 import { none, some } from "fp-ts/lib/Option";
 
 import { isLeft, isRight, left, right } from "fp-ts/lib/Either";
-import { EmailString, NonEmptyString } from "italia-ts-commons/lib/strings";
+import {
+  EmailString,
+  NonEmptyString,
+  OrganizationFiscalCode
+} from "italia-ts-commons/lib/strings";
 
 import { FiscalCode } from "../api/definitions/FiscalCode";
 
@@ -98,9 +102,11 @@ const aMessageBodyMarkdown = "test".repeat(80) as MessageBodyMarkdown;
 const aMessageBodySubject = "t".repeat(30) as MessageSubject;
 
 const aNotificationId = "A_NOTIFICATION_ID" as NonEmptyString;
+const anOrganizationFiscalCode = "00000000000" as OrganizationFiscalCode;
 
 const aSenderMetadata: CreatedMessageEventSenderMetadata = {
   departmentName: "dept" as NonEmptyString,
+  organizationFiscalCode: anOrganizationFiscalCode,
   organizationName: "org" as NonEmptyString,
   serviceName: "service" as NonEmptyString
 };
@@ -321,7 +327,7 @@ describe("handleNotification", () => {
         name: "notification.email.delivery",
         properties: {
           addressSource: NotificationAddressSourceEnum.DEFAULT_ADDRESS,
-          transport: "mailup"
+          transport: expect.anything()
         },
         success: true
       })
@@ -418,7 +424,8 @@ This is a message from the future!`.replace(/[ \n]+/g, "|")
     const mockAppinsights = getAppinsightsMock();
 
     const mockTransport = {
-      send: jest.fn((_, cb) => cb("error"))
+      send: jest.fn((_, cb) => cb("error")),
+      transporter: { name: "transporter" }
     };
     const mockTransporter = NodeMailer.createTransport(mockTransport as any);
 
@@ -439,8 +446,7 @@ This is a message from the future!`.replace(/[ \n]+/g, "|")
       expect.objectContaining({
         name: "notification.email.delivery",
         properties: {
-          addressSource: NotificationAddressSourceEnum.DEFAULT_ADDRESS,
-          transport: "mailup"
+          addressSource: NotificationAddressSourceEnum.DEFAULT_ADDRESS
         },
         success: false
       })
@@ -476,6 +482,7 @@ Lorem ipsum
     const body = markdown;
     const metadata: CreatedMessageEventSenderMetadata = {
       departmentName: "departmentXXX" as NonEmptyString,
+      organizationFiscalCode: anOrganizationFiscalCode,
       organizationName: "organizationXXX" as NonEmptyString,
       serviceName: "serviceZZZ" as NonEmptyString
     };
@@ -563,7 +570,8 @@ describe("emailnotificationQueueHandlerIndex", () => {
     });
 
     jest.spyOn(NodeMailer, "createTransport").mockReturnValue({
-      sendMail: jest.fn((_, cb) => cb(null, "ok"))
+      sendMail: jest.fn((_, cb) => cb(null, "ok")),
+      transporter: { name: "transporter" }
     });
 
     const statusSpy = jest
@@ -601,7 +609,8 @@ describe("emailnotificationQueueHandlerIndex", () => {
     });
 
     jest.spyOn(NodeMailer, "createTransport").mockReturnValue({
-      sendMail: jest.fn((_, cb) => cb(null, "ok"))
+      sendMail: jest.fn((_, cb) => cb(null, "ok")),
+      transporter: { name: "transporter" }
     });
 
     jest
@@ -651,7 +660,8 @@ describe("emailnotificationQueueHandlerIndex", () => {
     const nodemailerSpy = jest
       .spyOn(NodeMailer, "createTransport")
       .mockReturnValue({
-        sendMail: jest.fn((_, cb) => cb(null, "ok"))
+        sendMail: jest.fn((_, cb) => cb(null, "ok")),
+        transporter: { name: "transporter" }
       });
 
     const ret = await index(contextMock as any);
