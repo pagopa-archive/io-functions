@@ -51,7 +51,7 @@
     "unified": "^7.0.0",
     "validator": "^10.4.0",
     "vfile": "^3.0.0",
-    "winston": "^3.0.0"
+    "winston": "^3.1.0"
   },
   "devDependencies": {
     "@types/cors": "^2.8.4",
@@ -70,7 +70,7 @@
     "@types/vfile": "^2.2.1",
     "@types/winston": "^2.3.9",
     "azure-functions-pack": "^1.0.0",
-    "danger": "^3.8.0",
+    "danger": "^3.9.0",
     "danger-plugin-digitalcitizenship": "^0.3.1",
     "gulp": "^3.9.1",
     "gulp-git": "^2.4.2",
@@ -98,7 +98,7 @@
     "tslint-plugin-prettier": "^1.3.0",
     "tslint-sonarts": "^1.6.0",
     "typescript": "^3.0.3",
-    "typestrict": "^0.0.9",
+    "typestrict": "^1.0.0",
     "yargs": "^12.0.1"
   },
   "jest": {
