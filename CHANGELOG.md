@@ -11,6 +11,21 @@ The format of this file is loosely based on [Keep a Changelog](http://keepachang
 
 ## [Unreleased]
 
+## [v0.56.0] - 2018-10-24
+- **Added** track new registrations.
+
+## [v0.55.0] - 2018-10-23
+- **Changed** new template for emails.
+
+## [v0.54.0] - 2018-90-26
+- **Changed** fix telemetry for mailer transport.
+
+## [v0.53.0] - 2018-09-26
+- **Added** SendGrid mailer transport.
+
+## [v0.52.0] - 2018-09-19
+- **Added** add internal links to default welcome messages.
+
 ## [v0.51.0] - 2018-08-23
 - **Added** send two welcome messages when enabling inbox.
 
@@ -129,7 +144,16 @@ The format of this file is loosely based on [Keep a Changelog](http://keepachang
 [upsertProfile]: https://teamdigitale.github.io/digital-citizenship/api/public.html#operation/upsertProfile
 [getInfo]: https://teamdigitale.github.io/digital-citizenship/api/public.html#operation/getInfo
 
-[Unreleased]: https://github.com/teamdigitale/digital-citizenship-functions/compare/v0.47.0...HEAD
+[Unreleased]: https://github.com/teamdigitale/digital-citizenship-functions/compare/v0.56.0...HEAD
+[v0.56.0]: https://github.com/teamdigitale/digital-citizenship-functions/compare/v0.55.0...v0.56.0
+[v0.55.0]: https://github.com/teamdigitale/digital-citizenship-functions/compare/v0.54.0...v0.55.0
+[v0.54.0]: https://github.com/teamdigitale/digital-citizenship-functions/compare/v0.53.0...v0.54.0
+[v0.53.0]: https://github.com/teamdigitale/digital-citizenship-functions/compare/v0.52.0...v0.53.0
+[v0.52.0]: https://github.com/teamdigitale/digital-citizenship-functions/compare/v0.51.0...v0.52.0
+[v0.51.0]: https://github.com/teamdigitale/digital-citizenship-functions/compare/v0.50.0...v0.51.0
+[v0.50.0]: https://github.com/teamdigitale/digital-citizenship-functions/compare/v0.49.0...v0.50.0
+[v0.49.0]: https://github.com/teamdigitale/digital-citizenship-functions/compare/v0.48.0...v0.49.0
+[v0.48.0]: https://github.com/teamdigitale/digital-citizenship-functions/compare/v0.47.0...v0.48.0
 [v0.47.0]: https://github.com/teamdigitale/digital-citizenship-functions/compare/v0.46.0...v0.47.0
 [v0.46.0]: https://github.com/teamdigitale/digital-citizenship-functions/compare/v0.45.0...v0.46.0
 [v0.45.0]: https://github.com/teamdigitale/digital-citizenship-functions/compare/v0.44.0...v0.45.0

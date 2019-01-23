@@ -486,6 +486,7 @@ export function CreateMessageHandler(
       message: newMessageWithContent,
       senderMetadata: {
         departmentName: userAttributes.service.departmentName,
+        organizationFiscalCode: userAttributes.service.organizationFiscalCode,
         organizationName: userAttributes.service.organizationName,
         serviceName: userAttributes.service.serviceName
       },
