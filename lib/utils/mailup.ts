@@ -143,7 +143,7 @@ async function sendTransactionalMail(
     if (response && response.Code && response.Code === "0") {
       return right(response);
     } else {
-      return left(
+      return left<Error, ApiResponse>(
         new Error(`Error sending email: ${response.Code}:${response.Message}`)
       );
     }

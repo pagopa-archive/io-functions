@@ -119,7 +119,7 @@ export abstract class DocumentDbModel<
 
     if (isLeft(errorOrDocument) && errorOrDocument.value.code === 404) {
       // if the error is 404 (Not Found), we return an empty value
-      return right(none);
+      return right<DocumentDb.QueryError, Option<TR>>(none);
     }
 
     // for any other error (errorOrDocument is a left), we return it as is
@@ -168,11 +168,15 @@ export abstract class DocumentDbModel<
     );
 
     if (isLeft(attachmentMeta)) {
-      return left(attachmentMeta.value);
+      return left<DocumentDb.QueryError, Option<DocumentDb.AttachmentMeta>>(
+        attachmentMeta.value
+      );
     }
 
     // return the attachment media information
-    return right(fromNullable(attachmentMeta.value));
+    return right<DocumentDb.QueryError, Option<DocumentDb.AttachmentMeta>>(
+      fromNullable(attachmentMeta.value)
+    );
   }
 
   /**

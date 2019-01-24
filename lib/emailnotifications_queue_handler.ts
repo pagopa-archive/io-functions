@@ -243,7 +243,7 @@ export async function handleNotification(
 
   if (isLeft(errorOrActiveMessage)) {
     // if the message is expired no more processing is necessary
-    return left(
+    return left<RuntimeError, NotificationEvent>(
       ExpiredError(
         `Message expired|notification=${notificationId}|message=${message.id}`
       )
@@ -259,7 +259,7 @@ export async function handleNotification(
   if (isLeft(errorOrMaybeNotification)) {
     const error = errorOrMaybeNotification.value;
     // we got an error while fetching the notification
-    return left(
+    return left<RuntimeError, NotificationEvent>(
       TransientError(
         `Error while fetching the notification|notification=${notificationId}|message=${
           message.id
@@ -273,7 +273,7 @@ export async function handleNotification(
   if (isNone(maybeEmailNotification)) {
     // it may happen that the object is not yet visible to this function due to latency
     // as the notification object is retrieved from database (?)
-    return left(
+    return left<RuntimeError, NotificationEvent>(
       TransientError(
         `Notification not found|notification=${notificationId}|message=${
           message.id
@@ -288,7 +288,7 @@ export async function handleNotification(
 
   if (isLeft(errorOrEmailNotification)) {
     const error = readableReport(errorOrEmailNotification.value);
-    return left(
+    return left<RuntimeError, NotificationEvent>(
       PermanentError(
         `Wrong format for email notification|notification=${notificationId}|message=${
           message.id
@@ -354,7 +354,7 @@ export async function handleNotification(
       resultCode: error.name,
       success: false
     });
-    return left(
+    return left<RuntimeError, NotificationEvent>(
       TransientError(
         `Error while sending email|notification=${notificationId}|message=${
           message.id
@@ -374,7 +374,7 @@ export async function handleNotification(
   // TODO: handling bounces and delivery updates
   // see https://nodemailer.com/usage/#sending-mail
   // see #150597597
-  return right(emailNotificationEvent);
+  return right<RuntimeError, NotificationEvent>(emailNotificationEvent);
 }
 
 /**

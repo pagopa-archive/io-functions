@@ -120,7 +120,7 @@ export abstract class DocumentDbModelVersioned<
     );
 
     if (isLeft(errorOrMaybeCurrent)) {
-      return left(errorOrMaybeCurrent.value);
+      return left<DocumentDb.QueryError, TR>(errorOrMaybeCurrent.value);
     }
 
     const maybeCurrent = errorOrMaybeCurrent.value;
@@ -159,7 +159,7 @@ export abstract class DocumentDbModelVersioned<
     const maybeCurrent = errorOrMaybeCurrent.value;
 
     if (isNone(maybeCurrent)) {
-      return right(maybeCurrent);
+      return right<DocumentDb.QueryError, Option<TR>>(maybeCurrent);
     }
 
     const currentRetrievedDocument = maybeCurrent.value;
@@ -224,7 +224,7 @@ export abstract class DocumentDbModelVersioned<
       errorOrMaybeDocument.value.code === 404
     ) {
       // if the error is 404 (Not Found), we return an empty value
-      return right(none);
+      return right<DocumentDb.QueryError, Option<TR>>(none);
     }
 
     return errorOrMaybeDocument.map(maybeDocument =>

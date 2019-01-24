@@ -282,7 +282,7 @@ async function getMessageNotificationStatuses(
           retrievedMessage.id
         }`
       );
-      return right(none);
+      return right<Error, Option<NotificationStatusHolder>>(none);
     }
     const notification = maybeNotification.value;
 
@@ -310,14 +310,16 @@ async function getMessageNotificationStatuses(
           : a,
       {}
     );
-    return right(some(response));
+    return right<Error, Option<NotificationStatusHolder>>(some(response));
   } else {
     winston.error(
       `getMessageNotificationStatuses|Query error|${
         errorOrMaybeNotification.value.body
       }`
     );
-    return left(new Error(`Error querying for NotificationStatus`));
+    return left<Error, Option<NotificationStatusHolder>>(
+      new Error(`Error querying for NotificationStatus`)
+    );
   }
 }
 
