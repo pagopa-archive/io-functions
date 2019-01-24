@@ -15,6 +15,7 @@ import { ResponseErrorQuery } from "../response";
 
 import { NonNegativeNumber } from "italia-ts-commons/lib/numbers";
 import {
+  IResponse,
   ResponseErrorForbiddenNotAuthorized,
   ResponseErrorInternal
 } from "italia-ts-commons/lib/responses";
@@ -60,7 +61,7 @@ export function AzureUserAttributesMiddleware(
     );
 
     if (isLeft(errorOrUserEmail)) {
-      return left(
+      return left<IResponse<"IResponseErrorInternal">, IAzureUserAttributes>(
         ResponseErrorInternal(
           `Missing, empty or invalid ${HEADER_USER_EMAIL} header`
         )
@@ -74,7 +75,7 @@ export function AzureUserAttributesMiddleware(
     );
 
     if (isLeft(errorOrUserSubscriptionId)) {
-      return left(
+      return left<IResponse<"IResponseErrorInternal">, IAzureUserAttributes>(
         ResponseErrorInternal(
           `Missing or empty ${HEADER_USER_SUBSCRIPTION_KEY} header`
         )
@@ -94,7 +95,7 @@ export function AzureUserAttributesMiddleware(
           errorOrMaybeService.value
         )}`
       );
-      return left(
+      return left<IResponse<"IResponseErrorQuery">, IAzureUserAttributes>(
         ResponseErrorQuery(
           `Error while retrieving the service tied to the provided subscription id`,
           errorOrMaybeService.value
@@ -108,7 +109,10 @@ export function AzureUserAttributesMiddleware(
       winston.error(
         `AzureUserAttributesMiddleware|Service not found|${subscriptionId}`
       );
-      return left(ResponseErrorForbiddenNotAuthorized);
+      return left<
+        IResponse<"IResponseErrorForbiddenNotAuthorized">,
+        IAzureUserAttributes
+      >(ResponseErrorForbiddenNotAuthorized);
     }
 
     const authInfo: IAzureUserAttributes = {
@@ -117,6 +121,13 @@ export function AzureUserAttributesMiddleware(
       service: maybeService.value
     };
 
-    return right(authInfo);
+    return right<
+      IResponse<
+        | "IResponseErrorForbiddenNotAuthorized"
+        | "IResponseErrorQuery"
+        | "IResponseErrorInternal"
+      >,
+      IAzureUserAttributes
+    >(authInfo);
   };
 }

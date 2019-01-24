@@ -299,7 +299,10 @@ export class MessageModel extends DocumentDbModel<
     );
 
     if (isLeft(errorOrMessageContent)) {
-      return left(errorOrMessageContent.value);
+      return left<
+        Error | DocumentDb.QueryError,
+        Option<DocumentDb.AttachmentMeta>
+      >(errorOrMessageContent.value);
     }
 
     const mediaUrl = blobService.getUrl(this.containerName, blobId);
@@ -312,10 +315,16 @@ export class MessageModel extends DocumentDbModel<
     });
 
     if (isLeft(errorOrAttachmentMeta)) {
-      return left(errorOrAttachmentMeta.value);
+      return left<
+        Error | DocumentDb.QueryError,
+        Option<DocumentDb.AttachmentMeta>
+      >(errorOrAttachmentMeta.value);
     }
 
-    return right(errorOrAttachmentMeta.value);
+    return right<
+      Error | DocumentDb.QueryError,
+      Option<DocumentDb.AttachmentMeta>
+    >(errorOrAttachmentMeta.value);
   }
 
   /**

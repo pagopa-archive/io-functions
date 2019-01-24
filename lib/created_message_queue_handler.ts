@@ -19,7 +19,7 @@ import * as documentDbUtils from "./utils/documentdb";
 
 import { Set } from "json-set-map";
 
-import { fromNullable, isNone, none, Option, some } from "fp-ts/lib/Option";
+import { fromNullable, none, Option, some } from "fp-ts/lib/Option";
 
 import {
   BlobService,
@@ -233,7 +233,9 @@ async function createNotification(
   );
 
   if (isLeft(errorOrNotification)) {
-    return left(TransientError("Cannot save notification to database"));
+    return left<RuntimeError, NotificationEvent>(
+      TransientError("Cannot save notification to database")
+    );
   }
 
   const notification = errorOrNotification.value;
@@ -246,7 +248,7 @@ async function createNotification(
     notificationId: notification.id,
     senderMetadata
   };
-  return right(notificationEvent);
+  return right<RuntimeError, NotificationEvent>(notificationEvent);
 }
 
 /**
@@ -280,7 +282,9 @@ export async function handleMessage(
     // The query has failed.
     // It's *critical* to trigger a retry here
     // otherwise no message content will be saved
-    return left(TransientError("Cannot get user's profile"));
+    return left<RuntimeError, OutputBindings>(
+      TransientError("Cannot get user's profile")
+    );
   }
 
   const maybeProfile = errorOrMaybeProfile.value;
@@ -324,7 +328,9 @@ export async function handleMessage(
       newMessageWithContent.content
     );
     if (isLeft(errorOrAttachment)) {
-      return left(TransientError("Cannot store message content"));
+      return left<RuntimeError, OutputBindings>(
+        TransientError("Cannot store message content")
+      );
     }
   }
 
@@ -391,7 +397,7 @@ export async function handleMessage(
   );
 
   if (isLeft(errorOrSenderService)) {
-    return left(
+    return left<RuntimeError, OutputBindings>(
       TransientError(
         `Cannot save sender service id: ${errorOrSenderService.value.body}`
       )
@@ -401,7 +407,7 @@ export async function handleMessage(
   const noChannelsConfigured = [
     maybeAllowedEmailNotification,
     maybeAllowedWebhookNotification
-  ].every(isNone);
+  ].every(_ => _.isNone());
 
   if (noChannelsConfigured) {
     winston.debug(
@@ -410,7 +416,7 @@ export async function handleMessage(
       } and no default address provided`
     );
     // return no notifications
-    return right({});
+    return right<RuntimeError, OutputBindings>({});
   }
 
   // create and save notification object
@@ -434,7 +440,7 @@ export async function handleMessage(
   );
 
   if (isLeft(errorOrNotificationEvent)) {
-    return left(errorOrNotificationEvent.value);
+    return left<RuntimeError, OutputBindings>(errorOrNotificationEvent.value);
   }
 
   const notificationEvent = errorOrNotificationEvent.value;
@@ -450,7 +456,9 @@ export async function handleMessage(
   };
 
   // avoid to enqueue messages for non existing notifications
-  return right(withoutUndefinedValues(outputBindings));
+  return right<RuntimeError, OutputBindings>(
+    withoutUndefinedValues(outputBindings)
+  );
 }
 
 /**

@@ -542,10 +542,12 @@ export async function iteratorToArray<T>(
   ): Promise<Either<DocumentDb.QueryError, ReadonlyArray<T>>> {
     const errorOrMaybeDocuments = await i.executeNext();
     if (isLeft(errorOrMaybeDocuments)) {
-      return left(errorOrMaybeDocuments.value);
+      return left<DocumentDb.QueryError, ReadonlyArray<T>>(
+        errorOrMaybeDocuments.value
+      );
     }
     if (isNone(errorOrMaybeDocuments.value)) {
-      return right(a);
+      return right<DocumentDb.QueryError, ReadonlyArray<T>>(a);
     }
     const result = errorOrMaybeDocuments.value.value;
     return iterate(a.concat(...result));
@@ -563,11 +565,11 @@ export async function iteratorToValue<T>(
   async function iterate(a: T): Promise<Either<DocumentDb.QueryError, T>> {
     const errorOrMaybeResult = await i.executeNext(a);
     if (isLeft(errorOrMaybeResult)) {
-      return left(errorOrMaybeResult.value);
+      return left<DocumentDb.QueryError, T>(errorOrMaybeResult.value);
     }
     const maybeResult = errorOrMaybeResult.value;
     if (isNone(maybeResult)) {
-      return right(a);
+      return right<DocumentDb.QueryError, T>(a);
     }
     const result = maybeResult.value;
     return iterate(result);

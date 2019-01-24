@@ -230,7 +230,7 @@ export async function handleNotification(
 
   if (isLeft(errorOrActiveMessage)) {
     // if the message is expired no more processing is necessary
-    return left(
+    return left<RuntimeError, NotificationEvent>(
       ExpiredError(
         `Message expired|notification=${notificationId}|message=${message.id}`
       )
@@ -246,7 +246,7 @@ export async function handleNotification(
   if (isLeft(errorOrMaybeNotification)) {
     const error = errorOrMaybeNotification.value;
     // we got an error while fetching the notification
-    return left(
+    return left<RuntimeError, NotificationEvent>(
       TransientError(
         `Error while fetching the notification|notification=${notificationId}|message=${
           message.id
@@ -260,7 +260,7 @@ export async function handleNotification(
   if (isNone(maybeWebhookNotification)) {
     // it may happen that the object is not yet visible to this function due to latency
     // as the notification object is retrieved from database (?)
-    return left(
+    return left<RuntimeError, NotificationEvent>(
       TransientError(
         `Notification not found|notification=${notificationId}|message=${
           message.id
@@ -275,7 +275,7 @@ export async function handleNotification(
 
   if (isLeft(errorOrWebhookNotification)) {
     const error = readableReport(errorOrWebhookNotification.value);
-    return left(
+    return left<RuntimeError, NotificationEvent>(
       PermanentError(
         `Wrong format for webhook notification|notification=${notificationId}|message=${
           message.id
@@ -322,7 +322,7 @@ export async function handleNotification(
       resultCode: error.kind,
       success: false
     });
-    return left(error);
+    return left<RuntimeError, NotificationEvent>(error);
   }
 
   const apiMessageResponse = sendResult.value;
@@ -334,7 +334,7 @@ export async function handleNotification(
     success: true
   });
 
-  return right(webhookNotificationEvent);
+  return right<RuntimeError, NotificationEvent>(webhookNotificationEvent);
 }
 
 /**
