@@ -124,12 +124,6 @@
     "@types/connect" "*"
     "@types/node" "*"
 
-"@types/commander@^2.11.0":
-  version "2.12.2"
-  resolved "https://registry.yarnpkg.com/@types/commander/-/commander-2.12.2.tgz#183041a23842d4281478fa5d23c5ca78e6fd08ae"
-  dependencies:
-    commander "*"
-
 "@types/connect@*":
   version "3.4.32"
   resolved "https://registry.yarnpkg.com/@types/connect/-/connect-3.4.32.tgz#aa0e9616b9435ccad02bc52b5b454ffc2c70ba28"
@@ -198,6 +192,10 @@
   version "10.9.4"
   resolved "https://registry.yarnpkg.com/@types/node/-/node-10.9.4.tgz#0f4cb2dc7c1de6096055357f70179043c33e9897"
 
+"@types/node@^10.11.7":
+  version "10.12.18"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-10.12.18.tgz#1d3ca764718915584fcd9f6344621b7672665c67"
+
 "@types/node@^6.0.0":
   version "6.0.117"
   resolved "https://registry.yarnpkg.com/@types/node/-/node-6.0.117.tgz#ccfc2506001404708528d657aad9c1b931111646"
@@ -217,7 +215,7 @@
   version "1.2.2"
   resolved "https://registry.yarnpkg.com/@types/range-parser/-/range-parser-1.2.2.tgz#fa8e1ad1d474688a757140c91de6dace6f4abc8d"
 
-"@types/semver@^5.4.0":
+"@types/semver@^5.5.0":
   version "5.5.0"
   resolved "https://registry.yarnpkg.com/@types/semver/-/semver-5.5.0.tgz#146c2a29ee7d3bae4bf2fcb274636e264c813c45"
 
@@ -1466,9 +1464,13 @@ comma-separated-tokens@^1.0.1:
   dependencies:
     trim "0.0.1"
 
-commander@*, commander@2.17.x, commander@^2.11.0, commander@^2.12.1, commander@^2.13.0, commander@^2.15.1, commander@^2.7.1, commander@~2.17.1:
+commander@2.17.x, commander@^2.11.0, commander@^2.12.1, commander@^2.13.0, commander@^2.15.1, commander@^2.7.1, commander@~2.17.1:
   version "2.17.1"
   resolved "https://registry.yarnpkg.com/commander/-/commander-2.17.1.tgz#bd77ab7de6de94205ceacc72f1716d29f20a77bf"
+
+commander@^2.19.0:
+  version "2.19.0"
+  resolved "https://registry.yarnpkg.com/commander/-/commander-2.19.0.tgz#f6198aa84e5b83c46054b94ddedbfed5ee9ff12a"
 
 commander@~2.9.0:
   version "2.9.0"
@@ -1488,9 +1490,9 @@ concat-map@0.0.1:
   version "0.0.1"
   resolved "https://registry.yarnpkg.com/concat-map/-/concat-map-0.0.1.tgz#d8a96bd77fd68df7793a73036a3ba0d5405d477b"
 
-config-chain@~1.1.5:
-  version "1.1.11"
-  resolved "https://registry.yarnpkg.com/config-chain/-/config-chain-1.1.11.tgz#aba09747dfbe4c3e70e766a6e41586e1859fc6f2"
+config-chain@^1.1.12:
+  version "1.1.12"
+  resolved "https://registry.yarnpkg.com/config-chain/-/config-chain-1.1.12.tgz#0fde8d091200eb5e808caf25fe618c02f48e4efa"
   dependencies:
     ini "^1.3.4"
     proto-list "~1.2.1"
@@ -1798,9 +1800,9 @@ deep-is@~0.1.3:
   version "0.1.3"
   resolved "https://registry.yarnpkg.com/deep-is/-/deep-is-0.1.3.tgz#b369d6fb5dbc13eecf524f91b070feedc357cf34"
 
-deepmerge@^2.1.1:
-  version "2.1.1"
-  resolved "https://registry.yarnpkg.com/deepmerge/-/deepmerge-2.1.1.tgz#e862b4e45ea0555072bf51e7fd0d9845170ae768"
+deepmerge@^3.0.0:
+  version "3.1.0"
+  resolved "https://registry.yarnpkg.com/deepmerge/-/deepmerge-3.1.0.tgz#a612626ce4803da410d77554bfd80361599c034d"
 
 default-require-extensions@^2.0.0:
   version "2.0.0"
@@ -2034,15 +2036,15 @@ ecdsa-sig-formatter@1.0.10:
   dependencies:
     safe-buffer "^5.0.1"
 
-editorconfig@^0.15.0:
-  version "0.15.0"
-  resolved "https://registry.yarnpkg.com/editorconfig/-/editorconfig-0.15.0.tgz#b6dd4a0b6b9e76ce48e066bdc15381aebb8804fd"
+editorconfig@^0.15.2:
+  version "0.15.2"
+  resolved "https://registry.yarnpkg.com/editorconfig/-/editorconfig-0.15.2.tgz#047be983abb9ab3c2eefe5199cb2b7c5689f0702"
   dependencies:
-    "@types/commander" "^2.11.0"
-    "@types/semver" "^5.4.0"
-    commander "^2.11.0"
-    lru-cache "^4.1.1"
-    semver "^5.4.1"
+    "@types/node" "^10.11.7"
+    "@types/semver" "^5.5.0"
+    commander "^2.19.0"
+    lru-cache "^4.1.3"
+    semver "^5.6.0"
     sigmund "^1.0.1"
 
 ee-first@1.1.1:
@@ -2658,6 +2660,10 @@ fp-ts@^1.0.0, fp-ts@^1.6.0, fp-ts@^1.7.1:
   version "1.8.0"
   resolved "https://registry.yarnpkg.com/fp-ts/-/fp-ts-1.8.0.tgz#305909ebb3f44b21f77e9e3313ee0ed5ee809daa"
 
+fp-ts@^1.6.2:
+  version "1.13.0"
+  resolved "https://registry.yarnpkg.com/fp-ts/-/fp-ts-1.13.0.tgz#004803434e6c92021232746a621d3c2429c3d5cc"
+
 fragment-cache@^0.2.1:
   version "0.2.1"
   resolved "https://registry.yarnpkg.com/fragment-cache/-/fragment-cache-0.2.1.tgz#4290fad27f13e89be7f33799c6bc5a0abfff0d19"
@@ -2822,7 +2828,7 @@ glob@^4.3.1:
     minimatch "^2.0.1"
     once "^1.3.0"
 
-glob@^7.0.3, glob@^7.0.5, glob@^7.1.1, glob@^7.1.2:
+glob@^7.0.3, glob@^7.0.5, glob@^7.1.1, glob@^7.1.2, glob@^7.1.3:
   version "7.1.3"
   resolved "https://registry.yarnpkg.com/glob/-/glob-7.1.3.tgz#3960832d3f1574108342dafd3a67b332c0969df1"
   dependencies:
@@ -2920,15 +2926,15 @@ gulp-git@^2.4.2:
     through2 "^2.0.3"
     vinyl "^2.0.1"
 
-gulp-json-editor@^2.4.1:
-  version "2.4.2"
-  resolved "https://registry.yarnpkg.com/gulp-json-editor/-/gulp-json-editor-2.4.2.tgz#6274e612e9f16a2d9d10aea50b64df7e113f87d7"
+gulp-json-editor@^2.5.0:
+  version "2.5.0"
+  resolved "https://registry.yarnpkg.com/gulp-json-editor/-/gulp-json-editor-2.5.0.tgz#23aaa7d30f8425cf60cf1aefae098c257da11ada"
   dependencies:
-    deepmerge "^2.1.1"
+    deepmerge "^3.0.0"
     detect-indent "^5.0.0"
-    js-beautify "^1.7.5"
+    js-beautify "^1.8.9"
     plugin-error "^1.0.1"
-    through2 "^2.0.3"
+    through2 "^3.0.0"
 
 gulp-rename@^1.2.2:
   version "1.4.0"
@@ -3391,9 +3397,15 @@ invert-kv@^1.0.0:
   version "1.0.0"
   resolved "https://registry.yarnpkg.com/invert-kv/-/invert-kv-1.0.0.tgz#104a8e4aaca6d3d8cd157a8ef8bfab2d7a3ffdb6"
 
-io-ts@^1.1.4, io-ts@^1.2.1:
+io-ts@^1.1.4:
   version "1.3.0"
   resolved "https://registry.yarnpkg.com/io-ts/-/io-ts-1.3.0.tgz#72a5e7dbbb650b9c26030bac0c22d9b18c321f54"
+  dependencies:
+    fp-ts "^1.0.0"
+
+io-ts@^1.4.2:
+  version "1.7.0"
+  resolved "https://registry.yarnpkg.com/io-ts/-/io-ts-1.7.0.tgz#7e291b058afdde72f30d54e12e10761bfd8edd7a"
   dependencies:
     fp-ts "^1.0.0"
 
@@ -3769,9 +3781,9 @@ istanbul-reports@^1.4.1:
   dependencies:
     handlebars "^4.0.11"
 
-italia-ts-commons@^2.9.0:
-  version "2.12.3"
-  resolved "https://registry.yarnpkg.com/italia-ts-commons/-/italia-ts-commons-2.12.3.tgz#25799fc10fdec5879d314175e8ecb5a4c43aff6d"
+italia-ts-commons@^2.14.0:
+  version "2.14.1"
+  resolved "https://registry.yarnpkg.com/italia-ts-commons/-/italia-ts-commons-2.14.1.tgz#4196a9c369181260c8f4eb65a3db10cd90c7f63b"
   dependencies:
     fp-ts "^1.6.0"
     io-ts "^1.1.4"
@@ -3779,15 +3791,26 @@ italia-ts-commons@^2.9.0:
     validator "^10.1.0"
     winston "^3.0.0"
 
-italia-utils@^3.12.0:
-  version "3.12.0"
-  resolved "https://registry.yarnpkg.com/italia-utils/-/italia-utils-3.12.0.tgz#78690531370d92e15233babb192b2bf1eedcd6b3"
+italia-ts-commons@^3.2.0:
+  version "3.2.0"
+  resolved "https://registry.yarnpkg.com/italia-ts-commons/-/italia-ts-commons-3.2.0.tgz#405a77c48f09c6c28f2c558b6af1626fead7c58d"
+  dependencies:
+    fp-ts "^1.6.2"
+    io-ts "^1.4.2"
+    json-set-map "^1.0.2"
+    validator "^10.1.0"
+
+italia-utils@^3.14.17:
+  version "3.15.0"
+  resolved "https://registry.yarnpkg.com/italia-utils/-/italia-utils-3.15.0.tgz#ccb2dc2319d6d4e1f13eec76e7abf9456ee9f0b1"
   dependencies:
     fs-extra "^6.0.0"
+    italia-ts-commons "^2.14.0"
     nunjucks "^3.1.2"
     prettier "^1.12.1"
     swagger-parser "^4.1.0"
     swagger-schema-official "^2.0.0-bab6bed"
+    yargs "^11.1.0"
 
 jest-changed-files@^17.0.2:
   version "17.0.2"
@@ -4271,12 +4294,13 @@ jest@^23.2.0:
     import-local "^1.0.0"
     jest-cli "^23.5.0"
 
-js-beautify@^1.6.14, js-beautify@^1.7.5:
-  version "1.8.1"
-  resolved "https://registry.yarnpkg.com/js-beautify/-/js-beautify-1.8.1.tgz#ba70dd46da48b13c36140253f9471b8bb76bd3ee"
+js-beautify@^1.6.14, js-beautify@^1.8.9:
+  version "1.8.9"
+  resolved "https://registry.yarnpkg.com/js-beautify/-/js-beautify-1.8.9.tgz#08e3c05ead3ecfbd4f512c3895b1cda76c87d523"
   dependencies:
-    config-chain "~1.1.5"
-    editorconfig "^0.15.0"
+    config-chain "^1.1.12"
+    editorconfig "^0.15.2"
+    glob "^7.1.3"
     mkdirp "~0.5.0"
     nopt "~4.0.1"
 
@@ -4960,9 +4984,16 @@ lru-cache@2:
   version "2.7.3"
   resolved "https://registry.yarnpkg.com/lru-cache/-/lru-cache-2.7.3.tgz#6d4524e8b955f95d4f5b58851ce21dd72fb4e952"
 
-lru-cache@^4.0.1, lru-cache@^4.1.1:
+lru-cache@^4.0.1:
   version "4.1.3"
   resolved "https://registry.yarnpkg.com/lru-cache/-/lru-cache-4.1.3.tgz#a1175cf3496dfc8436c156c334b4955992bce69c"
+  dependencies:
+    pseudomap "^1.0.2"
+    yallist "^2.1.2"
+
+lru-cache@^4.1.3:
+  version "4.1.5"
+  resolved "https://registry.yarnpkg.com/lru-cache/-/lru-cache-4.1.5.tgz#8bbe50ea85bed59bc9e33dcab8235ee9bcf443cd"
   dependencies:
     pseudomap "^1.0.2"
     yallist "^2.1.2"
@@ -6478,6 +6509,14 @@ readable-stream@1.1:
     isarray "0.0.1"
     string_decoder "~0.10.x"
 
+"readable-stream@2 || 3":
+  version "3.1.1"
+  resolved "https://registry.yarnpkg.com/readable-stream/-/readable-stream-3.1.1.tgz#ed6bbc6c5ba58b090039ff18ce670515795aeb06"
+  dependencies:
+    inherits "^2.0.3"
+    string_decoder "^1.1.1"
+    util-deprecate "^1.0.1"
+
 "readable-stream@>=1.0.33-1 <1.1.0-0":
   version "1.0.34"
   resolved "https://registry.yarnpkg.com/readable-stream/-/readable-stream-1.0.34.tgz#125820e34bc842d2f2aaafafe4c2916ee32c157c"
@@ -6844,6 +6883,10 @@ semaphore@1.0.5:
 semver@^4.1.0:
   version "4.3.6"
   resolved "https://registry.yarnpkg.com/semver/-/semver-4.3.6.tgz#300bc6e0e86374f7ba61068b5b1ecd57fc6532da"
+
+semver@^5.6.0:
+  version "5.6.0"
+  resolved "https://registry.yarnpkg.com/semver/-/semver-5.6.0.tgz#7e74256fbaa49c75aa7c7a205cc22799cac80004"
 
 send@0.16.2:
   version "0.16.2"
@@ -7212,6 +7255,12 @@ string_decoder@^1.0.0, string_decoder@~1.1.1:
   dependencies:
     safe-buffer "~5.1.0"
 
+string_decoder@^1.1.1:
+  version "1.2.0"
+  resolved "https://registry.yarnpkg.com/string_decoder/-/string_decoder-1.2.0.tgz#fe86e738b19544afe70469243b2a1ee9240eae8d"
+  dependencies:
+    safe-buffer "~5.1.0"
+
 string_decoder@~0.10.x:
   version "0.10.31"
   resolved "https://registry.yarnpkg.com/string_decoder/-/string_decoder-0.10.31.tgz#62e203bc41766c6c28c9fc84301dab1c5310fa94"
@@ -7419,6 +7468,13 @@ through2@^2.0.0, through2@^2.0.3:
   resolved "https://registry.yarnpkg.com/through2/-/through2-2.0.3.tgz#0004569b37c7c74ba39c43f3ced78d1ad94140be"
   dependencies:
     readable-stream "^2.1.5"
+    xtend "~4.0.1"
+
+through2@^3.0.0:
+  version "3.0.0"
+  resolved "https://registry.yarnpkg.com/through2/-/through2-3.0.0.tgz#468b461df9cd9fcc170f22ebf6852e467e578ff2"
+  dependencies:
+    readable-stream "2 || 3"
     xtend "~4.0.1"
 
 through@2, through@~2.3, through@~2.3.1:
@@ -7805,7 +7861,7 @@ user-home@^1.1.1:
   version "1.1.1"
   resolved "https://registry.yarnpkg.com/user-home/-/user-home-1.1.1.tgz#2b5be23a32b63a7c9deb8d0f28d485724a3df190"
 
-util-deprecate@~1.0.1:
+util-deprecate@^1.0.1, util-deprecate@~1.0.1:
   version "1.0.2"
   resolved "https://registry.yarnpkg.com/util-deprecate/-/util-deprecate-1.0.2.tgz#450d4dc9fa70de732762fbd2d4a28981419a0ccf"
 
@@ -8257,7 +8313,7 @@ yargs-parser@^9.0.2:
   dependencies:
     camelcase "^4.1.0"
 
-yargs@^11.0.0:
+yargs@^11.0.0, yargs@^11.1.0:
   version "11.1.0"
   resolved "https://registry.yarnpkg.com/yargs/-/yargs-11.1.0.tgz#90b869934ed6e871115ea2ff58b03f4724ed2d77"
   dependencies:
