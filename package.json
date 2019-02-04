@@ -99,7 +99,7 @@
     "tslint-sonarts": "^1.6.0",
     "typescript": "^3.2.4",
     "typestrict": "^1.0.0",
-    "yargs": "^12.0.1"
+    "yargs": "^12.0.5"
   },
   "jest": {
     "testEnvironment": "node",
