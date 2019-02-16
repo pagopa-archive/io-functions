@@ -1,20 +1,20 @@
 # Digital Citizenship APIs
 
-[![CircleCI](https://circleci.com/gh/teamdigitale/digital-citizenship-functions/tree/master.svg?style=svg)](https://circleci.com/gh/teamdigitale/digital-citizenship-functions/tree/master)
+[![CircleCI](https://circleci.com/gh/teamdigitale/io-functions/tree/master.svg?style=svg)](https://circleci.com/gh/teamdigitale/io-functions/tree/master)
 
-[![dependencies](https://david-dm.org/teamdigitale/digital-citizenship-functions/status.svg)](https://david-dm.org/teamdigitale/digital-citizenship-functions)
+[![dependencies](https://david-dm.org/teamdigitale/io-functions/status.svg)](https://david-dm.org/teamdigitale/io-functions)
 
-[![codecov](https://codecov.io/gh/teamdigitale/digital-citizenship-functions/branch/master/graph/badge.svg)](https://codecov.io/gh/teamdigitale/digital-citizenship-functions)
+[![codecov](https://codecov.io/gh/teamdigitale/io-functions/branch/master/graph/badge.svg)](https://codecov.io/gh/teamdigitale/io-functions)
 
-[![Code Climate](https://codeclimate.com/github/teamdigitale/digital-citizenship-functions/badges/gpa.svg)](https://codeclimate.com/github/teamdigitale/digital-citizenship-functions)
+[![Code Climate](https://codeclimate.com/github/teamdigitale/io-functions/badges/gpa.svg)](https://codeclimate.com/github/teamdigitale/io-functions)
 
-[![Test Coverage](https://codeclimate.com/github/teamdigitale/digital-citizenship-functions/badges/coverage.svg)](https://codeclimate.com/github/teamdigitale/digital-citizenship-functions/coverage)
+[![Test Coverage](https://codeclimate.com/github/teamdigitale/io-functions/badges/coverage.svg)](https://codeclimate.com/github/teamdigitale/io-functions/coverage)
 
-[![Issue Count](https://codeclimate.com/github/teamdigitale/digital-citizenship-functions/badges/issue_count.svg)](https://codeclimate.com/github/teamdigitale/digital-citizenship-functions)
+[![Issue Count](https://codeclimate.com/github/teamdigitale/io-functions/badges/issue_count.svg)](https://codeclimate.com/github/teamdigitale/io-functions)
 
-[![Known Vulnerabilities](https://snyk.io/test/github/teamdigitale/digital-citizenship-functions/badge.svg)](https://snyk.io/test/github/teamdigitale/digital-citizenship-functions)
+[![Known Vulnerabilities](https://snyk.io/test/github/teamdigitale/io-functions/badge.svg)](https://snyk.io/test/github/teamdigitale/io-functions)
 
-[![Codacy Badge](https://api.codacy.com/project/badge/Grade/58e9cc58362f43e1bfdb0a52435cf117)](https://www.codacy.com/app/cloudify/digital-citizenship-functions?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=teamdigitale/digital-citizenship-functions&amp;utm_campaign=Badge_Grade)
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/58e9cc58362f43e1bfdb0a52435cf117)](https://www.codacy.com/app/cloudify/digital-citizenship-functions?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=teamdigitale/io-functions&amp;utm_campaign=Badge_Grade)
 
 [![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fteamdigitale%2Fdigital-citizenship-functions.svg?type=shield)](https://app.fossa.io/projects/git%2Bgithub.com%2Fteamdigitale%2Fdigital-citizenship-functions?ref=badge_shield)
 
@@ -178,20 +178,20 @@ The presentation layer follows the
 [front controller pattern](https://martinfowler.com/eaaCatalog/frontController.html)
 and handles the HTTP requests for the API resources.
 
-The [main API controller](https://github.com/teamdigitale/digital-citizenship-functions/blob/master/lib/public_api_v1.ts)
+The [main API controller](https://github.com/teamdigitale/io-functions/blob/master/lib/public_api_v1.ts)
 is based on [Express.js](https://expressjs.com/) (that handles the routing and
 the request parsing phases).
 
-The controller relies on [shared middlewares](https://github.com/teamdigitale/digital-citizenship-functions/tree/master/lib/utils/middlewares)
+The controller relies on [shared middlewares](https://github.com/teamdigitale/io-functions/tree/master/lib/utils/middlewares)
 for implementing shared functionalities exposed to the domain layer:
 
 |Middleware|Responsibility|
 |-|-|
-|[Azure API Authentication](https://github.com/teamdigitale/digital-citizenship-functions/blob/master/lib/utils/middlewares/azure_api_auth.ts)|Extracts and validates authentication information from the request|
-|[Azure User Attributes](https://github.com/teamdigitale/digital-citizenship-functions/blob/master/lib/utils/middlewares/azure_user_attributes.ts)|Extracts and validates metadata related to the API user|
-|[Azure Context](https://github.com/teamdigitale/digital-citizenship-functions/blob/master/lib/utils/middlewares/context.ts)|Extracts the [Azure Functions context](https://docs.microsoft.com/en-us/azure/azure-functions/functions-reference-node#context-object) from the request|
-|[Fiscal Code](https://github.com/teamdigitale/digital-citizenship-functions/blob/master/lib/utils/middlewares/fiscalcode.ts)|Extracts and validates the Fiscal Code parameter of the request|
-|[Required Parameter](https://github.com/teamdigitale/digital-citizenship-functions/blob/master/lib/utils/middlewares/required_param.ts)|Checks the presence of a certain required parameter in the request and extracts its value|
+|[Azure API Authentication](https://github.com/teamdigitale/io-functions/blob/master/lib/utils/middlewares/azure_api_auth.ts)|Extracts and validates authentication information from the request|
+|[Azure User Attributes](https://github.com/teamdigitale/io-functions/blob/master/lib/utils/middlewares/azure_user_attributes.ts)|Extracts and validates metadata related to the API user|
+|[Azure Context](https://github.com/teamdigitale/io-functions/blob/master/lib/utils/middlewares/context.ts)|Extracts the [Azure Functions context](https://docs.microsoft.com/en-us/azure/azure-functions/functions-reference-node#context-object) from the request|
+|[Fiscal Code](https://github.com/teamdigitale/io-functions/blob/master/lib/utils/middlewares/fiscalcode.ts)|Extracts and validates the Fiscal Code parameter of the request|
+|[Required Parameter](https://github.com/teamdigitale/io-functions/blob/master/lib/utils/middlewares/required_param.ts)|Checks the presence of a certain required parameter in the request and extracts its value|
 
 The middlewares can be configured to be executed before each request and will
 either pass through the extracted information or stop the processing of the
@@ -208,10 +208,10 @@ operations for specific resources:
 
 |Controller|Responsibilities|
 |-|-|
-|[Messages](https://github.com/teamdigitale/digital-citizenship-functions/blob/master/lib/controllers/messages.ts)|Handles operations on the Message resource|
-|[Profiles](https://github.com/teamdigitale/digital-citizenship-functions/blob/master/lib/controllers/profiles.ts)|Handles operations on the Profile resource|
-|[Info](https://github.com/teamdigitale/digital-citizenship-functions/blob/master/lib/controllers/info.ts)|Provides system runtime information|
-|[OpenAPI](https://github.com/teamdigitale/digital-citizenship-functions/blob/master/lib/controllers/openapi.ts)|Provides the API specification in [OpenAPI](https://www.openapis.org/) format|
+|[Messages](https://github.com/teamdigitale/io-functions/blob/master/lib/controllers/messages.ts)|Handles operations on the Message resource|
+|[Profiles](https://github.com/teamdigitale/io-functions/blob/master/lib/controllers/profiles.ts)|Handles operations on the Profile resource|
+|[Info](https://github.com/teamdigitale/io-functions/blob/master/lib/controllers/info.ts)|Provides system runtime information|
+|[OpenAPI](https://github.com/teamdigitale/io-functions/blob/master/lib/controllers/openapi.ts)|Provides the API specification in [OpenAPI](https://www.openapis.org/) format|
 
 The specialized controllers are designed to follow the [Zalando RESTful API guidelines](https://zalando.github.io/restful-api-guidelines/index.html).
 
@@ -223,7 +223,7 @@ and handles the operations on the resources stored in the database.
 
 Operations specific to the database technology have been encapsulated in a
 [gateway object](https://martinfowler.com/eaaCatalog/gateway.html) that
-[abstracts the DocumentDb API](https://github.com/teamdigitale/digital-citizenship-functions/blob/master/lib/utils/documentdb_model.ts)
+[abstracts the DocumentDb API](https://github.com/teamdigitale/io-functions/blob/master/lib/utils/documentdb_model.ts)
 exposed by CosmosDB. This approach decouples the
 underlying data store semantic from the application, making possible to
 migrate the application to a different data store with little effort.
@@ -239,18 +239,18 @@ The data model is composed of the following core entities:
 
 |Entity|Description|
 |-|-|
-|[Profile](https://github.com/teamdigitale/digital-citizenship-functions/blob/master/lib/models/profile.ts)|Represents the profile of a citizen (i.e. his preferences)|
-|[Message](https://github.com/teamdigitale/digital-citizenship-functions/blob/master/lib/models/message.ts)|Represents a message sent to a citizen by a service owned by an Organization|
-|[Notification](https://github.com/teamdigitale/digital-citizenship-functions/blob/master/lib/models/notification.ts)|Represents a notification to the citizen, triggered by a Message|
-|[Service](https://github.com/teamdigitale/digital-citizenship-functions/blob/master/lib/models/service.ts)|Represents the Service, owned by an Organization, that sends the messages or access citizen's profiles|
+|[Profile](https://github.com/teamdigitale/io-functions/blob/master/lib/models/profile.ts)|Represents the profile of a citizen (i.e. his preferences)|
+|[Message](https://github.com/teamdigitale/io-functions/blob/master/lib/models/message.ts)|Represents a message sent to a citizen by a service owned by an Organization|
+|[Notification](https://github.com/teamdigitale/io-functions/blob/master/lib/models/notification.ts)|Represents a notification to the citizen, triggered by a Message|
+|[Service](https://github.com/teamdigitale/io-functions/blob/master/lib/models/service.ts)|Represents the Service, owned by an Organization, that sends the messages or access citizen's profiles|
 
 The data model defines also several non-core entities used to describe events
 happening inside the application:
 
 |Entity|Description|
 |-|-|
-|[Created Message Event](https://github.com/teamdigitale/digital-citizenship-functions/blob/master/lib/models/created_message_event.ts)|Gets triggered by the Messages controller when a new Message gets created|
-|[Notification Event](https://github.com/teamdigitale/digital-citizenship-functions/blob/master/lib/models/notification_event.ts)|Gets triggered for each notification channel when a new Notification gets created|
+|[Created Message Event](https://github.com/teamdigitale/io-functions/blob/master/lib/models/created_message_event.ts)|Gets triggered by the Messages controller when a new Message gets created|
+|[Notification Event](https://github.com/teamdigitale/io-functions/blob/master/lib/models/notification_event.ts)|Gets triggered for each notification channel when a new Notification gets created|
 
 The following diagram describes the relationship between the above entities:
 
@@ -278,9 +278,9 @@ Some components are provided by Azure services while other are custom.
 
 |Component|Responsibilities|
 |-|-|
-|[Public API controller](https://github.com/teamdigitale/digital-citizenship-functions/blob/master/lib/public_api_v1.ts)|Front controller for public APIs|
-|[CreatedMessage handler](https://github.com/teamdigitale/digital-citizenship-functions/blob/master/lib/created_message_queue_handler.ts)|Processor for `CreatedMessage` events|
-|[EmailNotification handler](https://github.com/teamdigitale/digital-citizenship-functions/blob/master/lib/emailnotifications_queue_handler.ts)|Processor for `EmailNotification` events|
+|[Public API controller](https://github.com/teamdigitale/io-functions/blob/master/lib/public_api_v1.ts)|Front controller for public APIs|
+|[CreatedMessage handler](https://github.com/teamdigitale/io-functions/blob/master/lib/created_message_queue_handler.ts)|Processor for `CreatedMessage` events|
+|[EmailNotification handler](https://github.com/teamdigitale/io-functions/blob/master/lib/emailnotifications_queue_handler.ts)|Processor for `EmailNotification` events|
 
 #### Request processing
 
@@ -345,7 +345,7 @@ group in the Azure API Management console (i.e., a client that is part of the
 the `profiles` resource).
 
 The currently supported scopes can be found in the
-[Azure API Authentication middleware](https://github.com/teamdigitale/digital-citizenship-functions/blob/master/lib/utils/middlewares/azure_api_auth.ts#L27).
+[Azure API Authentication middleware](https://github.com/teamdigitale/io-functions/blob/master/lib/utils/middlewares/azure_api_auth.ts#L27).
 
 #### Authorization by client IP
 
