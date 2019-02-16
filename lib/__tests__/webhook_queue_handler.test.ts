@@ -24,7 +24,7 @@ import { isLeft, isRight, left, right } from "fp-ts/lib/Either";
 import {
   NonEmptyString,
   OrganizationFiscalCode
-} from "italia-ts-commons/lib/strings";
+} from "io-ts-commons/lib/strings";
 
 import { FiscalCode } from "../api/definitions/FiscalCode";
 
@@ -49,8 +49,8 @@ import { NotificationChannelEnum } from "../api/definitions/NotificationChannel"
 import { NotificationChannelStatusValueEnum } from "../api/definitions/NotificationChannelStatusValue";
 import { TimeToLiveSeconds } from "../api/definitions/TimeToLiveSeconds";
 
-import { NonNegativeNumber } from "italia-ts-commons/lib/numbers";
-import { readableReport } from "italia-ts-commons/lib/reporters";
+import { NonNegativeNumber } from "io-ts-commons/lib/numbers";
+import { readableReport } from "io-ts-commons/lib/reporters";
 import {
   makeStatusId,
   NotificationStatusModel,

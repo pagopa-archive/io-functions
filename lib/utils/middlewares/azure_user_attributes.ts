@@ -7,18 +7,18 @@ import { isLeft, left, right } from "fp-ts/lib/Either";
 
 import { isNone } from "fp-ts/lib/Option";
 
-import { EmailString, NonEmptyString } from "italia-ts-commons/lib/strings";
+import { EmailString, NonEmptyString } from "io-ts-commons/lib/strings";
 
 import { Service, ServiceModel } from "../../models/service";
 import { IRequestMiddleware } from "../request_middleware";
 import { ResponseErrorQuery } from "../response";
 
-import { NonNegativeNumber } from "italia-ts-commons/lib/numbers";
+import { NonNegativeNumber } from "io-ts-commons/lib/numbers";
 import {
   IResponse,
   ResponseErrorForbiddenNotAuthorized,
   ResponseErrorInternal
-} from "italia-ts-commons/lib/responses";
+} from "io-ts-commons/lib/responses";
 
 // The user email will be passed in this header by the API Gateway
 const HEADER_USER_EMAIL = "x-user-email";

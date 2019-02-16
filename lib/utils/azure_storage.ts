@@ -6,7 +6,7 @@ import * as t from "io-ts";
 
 import { Either, fromOption, left, right, tryCatch } from "fp-ts/lib/Either";
 import { fromNullable, Option } from "fp-ts/lib/Option";
-import { readableReport } from "italia-ts-commons/lib/reporters";
+import { readableReport } from "io-ts-commons/lib/reporters";
 
 /**
  * Create a new blob (media) from plain text.

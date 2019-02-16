@@ -3,12 +3,12 @@
  * a Message. A notification can be sent on multiple channels, based on the
  * User's preference.
  */
-import { enumType, pick } from "italia-ts-commons/lib/types";
+import { enumType, pick } from "io-ts-commons/lib/types";
 
 import * as DocumentDb from "documentdb";
 import * as t from "io-ts";
 
-import { tag } from "italia-ts-commons/lib/types";
+import { tag } from "io-ts-commons/lib/types";
 
 import * as DocumentDbUtils from "../utils/documentdb";
 import { DocumentDbModel } from "../utils/documentdb_model";
@@ -18,7 +18,7 @@ import { FiscalCode } from "../api/definitions/FiscalCode";
 
 import { Either } from "fp-ts/lib/Either";
 import { Option } from "fp-ts/lib/Option";
-import { NonEmptyString } from "italia-ts-commons/lib/strings";
+import { NonEmptyString } from "io-ts-commons/lib/strings";
 import { HttpsUrl } from "../api/definitions/HttpsUrl";
 import { NotificationChannelEnum } from "../api/definitions/NotificationChannel";
 import { ObjectIdGenerator } from "../utils/strings";

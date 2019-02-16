@@ -1,6 +1,6 @@
 import * as t from "io-ts";
 
-import { NonEmptyString } from "italia-ts-commons/lib/strings";
+import { NonEmptyString } from "io-ts-commons/lib/strings";
 import { OrganizationFiscalCode } from "../api/definitions/OrganizationFiscalCode";
 
 /**

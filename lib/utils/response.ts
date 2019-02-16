@@ -4,7 +4,7 @@ import {
   HttpStatusCodeEnum,
   IResponse,
   ResponseErrorGeneric
-} from "italia-ts-commons/lib/responses";
+} from "io-ts-commons/lib/responses";
 import { IResultIterator, iteratorToArray } from "./documentdb";
 
 /**

@@ -16,12 +16,12 @@ import { Set } from "json-set-map";
 
 import { CIDR } from "../api/definitions/CIDR";
 
-import { NonNegativeNumber } from "italia-ts-commons/lib/numbers";
+import { NonNegativeNumber } from "io-ts-commons/lib/numbers";
 import {
   FiscalCode,
   NonEmptyString,
   OrganizationFiscalCode
-} from "italia-ts-commons/lib/strings";
+} from "io-ts-commons/lib/strings";
 import { nonEmptyStringToModelId } from "../utils/conversions";
 
 import {
@@ -29,7 +29,7 @@ import {
   readonlySetType,
   tag,
   withDefault
-} from "italia-ts-commons/lib/types";
+} from "io-ts-commons/lib/types";
 import { MaxAllowedPaymentAmount } from "../api/definitions/MaxAllowedPaymentAmount";
 
 export const SERVICE_COLLECTION_NAME = "services";

@@ -3,8 +3,8 @@ import {
   Data,
   EventData
 } from "applicationinsights/out/Declarations/Contracts";
-import { NonEmptyString } from "italia-ts-commons/lib/strings";
-import { Millisecond } from "italia-ts-commons/lib/units";
+import { NonEmptyString } from "io-ts-commons/lib/strings";
+import { Millisecond } from "io-ts-commons/lib/units";
 import { ServiceId } from "../api/definitions/ServiceId";
 
 export interface ITelemetryParams {

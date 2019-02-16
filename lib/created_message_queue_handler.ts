@@ -54,7 +54,7 @@ import {
 } from "./models/profile";
 
 import { Either, isLeft, left, right } from "fp-ts/lib/Either";
-import { readableReport } from "italia-ts-commons/lib/reporters";
+import { readableReport } from "io-ts-commons/lib/reporters";
 
 import { handleQueueProcessingFailure } from "./utils/azure_queues";
 import { RuntimeError, TransientError } from "./utils/errors";
@@ -62,8 +62,8 @@ import { RuntimeError, TransientError } from "./utils/errors";
 import { MessageStatusValueEnum } from "./api/definitions/MessageStatusValue";
 import { NotificationChannelEnum } from "./api/definitions/NotificationChannel";
 
-import { NonEmptyString } from "italia-ts-commons/lib/strings";
-import { withoutUndefinedValues } from "italia-ts-commons/lib/types";
+import { NonEmptyString } from "io-ts-commons/lib/strings";
+import { withoutUndefinedValues } from "io-ts-commons/lib/types";
 import { BlockedInboxOrChannelEnum } from "./api/definitions/BlockedInboxOrChannel";
 import { HttpsUrl } from "./api/definitions/HttpsUrl";
 import { CreatedMessageEventSenderMetadata } from "./models/created_message_sender_metadata";

@@ -13,7 +13,7 @@ import { Service, toAuthorizedCIDRs } from "../../../models/service";
 import {
   NonEmptyString,
   OrganizationFiscalCode
-} from "italia-ts-commons/lib/strings";
+} from "io-ts-commons/lib/strings";
 
 import { Set } from "json-set-map";
 import { MaxAllowedPaymentAmount } from "../../../api/definitions/MaxAllowedPaymentAmount";

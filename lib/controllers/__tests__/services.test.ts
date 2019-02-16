@@ -3,11 +3,11 @@
 import { none, some } from "fp-ts/lib/Option";
 
 import { left, right } from "fp-ts/lib/Either";
-import { NonNegativeNumber } from "italia-ts-commons/lib/numbers";
+import { NonNegativeNumber } from "io-ts-commons/lib/numbers";
 import {
   NonEmptyString,
   OrganizationFiscalCode
-} from "italia-ts-commons/lib/strings";
+} from "io-ts-commons/lib/strings";
 
 import { response as MockResponse } from "jest-mock-express";
 

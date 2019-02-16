@@ -6,8 +6,8 @@ import { IAzureUserAttributes } from "./middlewares/azure_user_attributes";
  */
 
 import CIDRMatcher = require("cidr-matcher");
-import { IPString } from "italia-ts-commons/lib/strings";
-import { ITuple2, Tuple2 } from "italia-ts-commons/lib/tuples";
+import { IPString } from "io-ts-commons/lib/strings";
+import { ITuple2, Tuple2 } from "io-ts-commons/lib/tuples";
 import { ClientIp } from "./middlewares/client_ip_middleware";
 
 import {
@@ -15,7 +15,7 @@ import {
   IResponseErrorInternal,
   ResponseErrorForbiddenNotAuthorized,
   ResponseErrorInternal
-} from "italia-ts-commons/lib/responses";
+} from "io-ts-commons/lib/responses";
 
 /**
  * Whether IP is contained in the provided CIDRs

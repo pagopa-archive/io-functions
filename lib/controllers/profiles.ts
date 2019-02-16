@@ -43,7 +43,7 @@ import {
   ResponseErrorInternal,
   ResponseErrorNotFound,
   ResponseSuccessJson
-} from "italia-ts-commons/lib/responses";
+} from "io-ts-commons/lib/responses";
 import { IResponseErrorQuery, ResponseErrorQuery } from "../utils/response";
 
 import {

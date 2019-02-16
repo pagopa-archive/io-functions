@@ -2,7 +2,7 @@
 
 jest.mock("applicationinsights");
 import * as applicationinsights from "applicationinsights";
-import { NonEmptyString } from "italia-ts-commons/lib/strings";
+import { NonEmptyString } from "io-ts-commons/lib/strings";
 import { wrapCustomTelemetryClient } from "../application_insights";
 
 const AiConfiguration = {

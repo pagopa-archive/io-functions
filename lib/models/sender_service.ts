@@ -2,21 +2,21 @@
  * A SenderService collection stores all the services that have
  * contacted a specific user (fiscalCode) using the notification APIs
  */
-import { pick } from "italia-ts-commons/lib/types";
+import { pick } from "io-ts-commons/lib/types";
 
 import * as DocumentDb from "documentdb";
 import * as t from "io-ts";
 
-import { tag } from "italia-ts-commons/lib/types";
+import { tag } from "io-ts-commons/lib/types";
 
 import * as DocumentDbUtils from "../utils/documentdb";
 import { DocumentDbModel } from "../utils/documentdb_model";
 
 import { FiscalCode } from "../api/definitions/FiscalCode";
 
-import { DateFromString } from "italia-ts-commons/lib/dates";
-import { NonNegativeNumber } from "italia-ts-commons/lib/numbers";
-import { NonEmptyString } from "italia-ts-commons/lib/strings";
+import { DateFromString } from "io-ts-commons/lib/dates";
+import { NonNegativeNumber } from "io-ts-commons/lib/numbers";
+import { NonEmptyString } from "io-ts-commons/lib/strings";
 import { ServiceId } from "../api/definitions/ServiceId";
 
 // partition the CosmosDB collection by this field

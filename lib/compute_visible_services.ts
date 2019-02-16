@@ -4,7 +4,7 @@ import * as documentDbUtils from "../lib/utils/documentdb";
 import { IContext } from "azure-function-express";
 import { DocumentClient } from "documentdb";
 
-import { pick } from "italia-ts-commons/lib/types";
+import { pick } from "io-ts-commons/lib/types";
 
 import { insert, lookup, remove, StrMap } from "fp-ts/lib/StrMap";
 

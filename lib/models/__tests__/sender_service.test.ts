@@ -8,9 +8,9 @@ import * as DocumentDbUtils from "../../utils/documentdb";
 
 import { FiscalCode } from "../../api/definitions/FiscalCode";
 
-import { NonEmptyString } from "italia-ts-commons/lib/strings";
+import { NonEmptyString } from "io-ts-commons/lib/strings";
 
-import { NonNegativeNumber } from "../../../node_modules/italia-ts-commons/lib/numbers";
+import { NonNegativeNumber } from "../../../node_modules/io-ts-commons/lib/numbers";
 import { ServiceId } from "../../api/definitions/ServiceId";
 import {
   NewSenderService,

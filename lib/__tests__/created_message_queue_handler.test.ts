@@ -33,12 +33,12 @@ import {
 import { ProfileModel, RetrievedProfile } from "../models/profile";
 
 import { isLeft, isRight, left, right } from "fp-ts/lib/Either";
-import { NonNegativeNumber } from "italia-ts-commons/lib/numbers";
+import { NonNegativeNumber } from "io-ts-commons/lib/numbers";
 import {
   EmailString,
   NonEmptyString,
   OrganizationFiscalCode
-} from "italia-ts-commons/lib/strings";
+} from "io-ts-commons/lib/strings";
 import * as winston from "winston";
 import { isTransient } from "../utils/errors";
 

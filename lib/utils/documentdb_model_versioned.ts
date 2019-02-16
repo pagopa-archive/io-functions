@@ -6,10 +6,10 @@ import * as t from "io-ts";
 
 import { isNone, none, Option, some } from "fp-ts/lib/Option";
 
-import { tag } from "italia-ts-commons/lib/types";
+import { tag } from "io-ts-commons/lib/types";
 
-import { NonNegativeNumber } from "italia-ts-commons/lib/numbers";
-import { NonEmptyString } from "italia-ts-commons/lib/strings";
+import { NonNegativeNumber } from "io-ts-commons/lib/numbers";
+import { NonEmptyString } from "io-ts-commons/lib/strings";
 
 import { Either, isLeft, left, right } from "fp-ts/lib/Either";
 

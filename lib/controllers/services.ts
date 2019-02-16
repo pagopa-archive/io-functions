@@ -34,7 +34,7 @@ import {
   ResponseErrorInternal,
   ResponseErrorNotFound,
   ResponseSuccessJson
-} from "italia-ts-commons/lib/responses";
+} from "io-ts-commons/lib/responses";
 import {
   IResponseErrorQuery,
   IResponseSuccessJsonIterator,
@@ -42,7 +42,7 @@ import {
   ResponseJsonIterator
 } from "../utils/response";
 
-import { NonEmptyString } from "italia-ts-commons/lib/strings";
+import { NonEmptyString } from "io-ts-commons/lib/strings";
 
 import {
   AzureUserAttributesMiddleware,

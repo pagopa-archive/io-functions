@@ -4,11 +4,11 @@
 import { none, some } from "fp-ts/lib/Option";
 
 import { isLeft, isRight, left, right } from "fp-ts/lib/Either";
-import { NonNegativeNumber } from "italia-ts-commons/lib/numbers";
+import { NonNegativeNumber } from "io-ts-commons/lib/numbers";
 import {
   NonEmptyString,
   OrganizationFiscalCode
-} from "italia-ts-commons/lib/strings";
+} from "io-ts-commons/lib/strings";
 
 import { Set } from "json-set-map";
 

@@ -8,8 +8,8 @@ import {
   ResponseErrorForbiddenAnonymousUser,
   ResponseErrorForbiddenNoAuthorizationGroups,
   ResponseErrorForbiddenNotAuthorized
-} from "italia-ts-commons/lib/responses";
-import { NonEmptyString } from "italia-ts-commons/lib/strings";
+} from "io-ts-commons/lib/responses";
+import { NonEmptyString } from "io-ts-commons/lib/strings";
 import { IRequestMiddleware } from "../request_middleware";
 
 /*
