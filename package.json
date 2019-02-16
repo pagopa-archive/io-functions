@@ -5,7 +5,7 @@
   "main": "index.js",
   "repository": {
     "type": "git",
-    "url": "git@github.com:teamdigitale/digital-citizenship-functions.git"
+    "url": "git@github.com:teamdigitale/io-functions.git"
   },
   "author": "Team per la Trasformazione Digitale, AgID",
   "license": "MIT",
