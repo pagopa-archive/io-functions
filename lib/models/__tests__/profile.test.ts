@@ -8,8 +8,8 @@ import * as DocumentDb from "documentdb";
 
 import * as DocumentDbUtils from "../../utils/documentdb";
 
-import { NonNegativeNumber } from "italia-ts-commons/lib/numbers";
-import { EmailString, NonEmptyString } from "italia-ts-commons/lib/strings";
+import { NonNegativeNumber } from "io-ts-commons/lib/numbers";
+import { EmailString, NonEmptyString } from "io-ts-commons/lib/strings";
 import { FiscalCode } from "../../api/definitions/FiscalCode";
 
 import {

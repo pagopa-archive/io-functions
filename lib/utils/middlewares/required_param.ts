@@ -1,6 +1,6 @@
 import * as t from "io-ts";
 
-import { ResponseErrorFromValidationErrors } from "italia-ts-commons/lib/responses";
+import { ResponseErrorFromValidationErrors } from "io-ts-commons/lib/responses";
 import { IRequestMiddleware } from "../request_middleware";
 
 /**

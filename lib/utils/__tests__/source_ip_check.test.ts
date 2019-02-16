@@ -1,8 +1,8 @@
 /* tslint:disable:no-identical-functions */
 
-import { ResponseSuccessJson } from "italia-ts-commons/lib/responses";
-import { IPString } from "italia-ts-commons/lib/strings";
-import { ITuple2, Tuple2 } from "italia-ts-commons/lib/tuples";
+import { ResponseSuccessJson } from "io-ts-commons/lib/responses";
+import { IPString } from "io-ts-commons/lib/strings";
+import { ITuple2, Tuple2 } from "io-ts-commons/lib/tuples";
 import { toAuthorizedCIDRs } from "../../models/service";
 import { ClientIp } from "../middlewares/client_ip_middleware";
 

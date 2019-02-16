@@ -6,7 +6,7 @@ import { Either, isLeft } from "fp-ts/lib/Either";
 import {
   IResponse,
   ResponseErrorInternal
-} from "italia-ts-commons/lib/responses";
+} from "io-ts-commons/lib/responses";
 
 export type RequestHandler<R> = (
   request: express.Request

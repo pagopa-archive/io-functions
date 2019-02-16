@@ -6,11 +6,11 @@ import { isSome } from "fp-ts/lib/Option";
 
 import * as DocumentDb from "documentdb";
 
-import { NonNegativeNumber } from "italia-ts-commons/lib/numbers";
+import { NonNegativeNumber } from "io-ts-commons/lib/numbers";
 import {
   NonEmptyString,
   OrganizationFiscalCode
-} from "italia-ts-commons/lib/strings";
+} from "io-ts-commons/lib/strings";
 import { MaxAllowedPaymentAmount } from "../../api/definitions/MaxAllowedPaymentAmount";
 import * as DocumentDbUtils from "../../utils/documentdb";
 import {

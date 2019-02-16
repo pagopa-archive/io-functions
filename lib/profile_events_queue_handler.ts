@@ -14,8 +14,8 @@ import {
 } from "./controllers/profiles";
 import { configureAzureContextTransport } from "./utils/logging";
 
-import { readableReport } from "italia-ts-commons/lib/reporters";
-import { FiscalCode } from "italia-ts-commons/lib/strings";
+import { readableReport } from "io-ts-commons/lib/reporters";
+import { FiscalCode } from "io-ts-commons/lib/strings";
 import { ExtendedProfile } from "./api/definitions/ExtendedProfile";
 import { NewMessage } from "./api/definitions/NewMessage";
 import { getRequiredStringEnv } from "./utils/env";

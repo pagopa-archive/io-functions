@@ -49,8 +49,8 @@ import {
   ResponseErrorValidation,
   ResponseSuccessJson,
   ResponseSuccessRedirectToResource
-} from "italia-ts-commons/lib/responses";
-import { NonEmptyString } from "italia-ts-commons/lib/strings";
+} from "io-ts-commons/lib/responses";
+import { NonEmptyString } from "io-ts-commons/lib/strings";
 import {
   AzureApiAuthMiddleware,
   IAzureApiAuthorization,
@@ -89,7 +89,7 @@ import {
   RetrievedMessage
 } from "../models/message";
 
-import { withoutUndefinedValues } from "italia-ts-commons/lib/types";
+import { withoutUndefinedValues } from "io-ts-commons/lib/types";
 
 import { Either, isLeft, isRight, left, right } from "fp-ts/lib/Either";
 import {

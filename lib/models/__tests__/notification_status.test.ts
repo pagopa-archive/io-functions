@@ -5,11 +5,11 @@ import { isSome } from "fp-ts/lib/Option";
 
 import * as DocumentDb from "documentdb";
 
-import { NonNegativeNumber } from "italia-ts-commons/lib/numbers";
-import { NonEmptyString } from "italia-ts-commons/lib/strings";
+import { NonNegativeNumber } from "io-ts-commons/lib/numbers";
+import { NonEmptyString } from "io-ts-commons/lib/strings";
 import * as DocumentDbUtils from "../../utils/documentdb";
 
-import { readableReport } from "italia-ts-commons/lib/reporters";
+import { readableReport } from "io-ts-commons/lib/reporters";
 import { NotificationChannelEnum } from "../../api/definitions/NotificationChannel";
 import { NotificationChannelStatusValueEnum } from "../../api/definitions/NotificationChannelStatusValue";
 import {

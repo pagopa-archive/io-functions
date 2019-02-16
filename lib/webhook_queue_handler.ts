@@ -20,7 +20,7 @@ import * as documentDbUtils from "./utils/documentdb";
 
 import { Either, isLeft, left, right } from "fp-ts/lib/Either";
 import { isNone } from "fp-ts/lib/Option";
-import { readableReport } from "italia-ts-commons/lib/reporters";
+import { readableReport } from "io-ts-commons/lib/reporters";
 import { getRequiredStringEnv } from "./utils/env";
 
 import { IContext } from "azure-functions-types";
@@ -47,8 +47,8 @@ import { NotificationChannelEnum } from "./api/definitions/NotificationChannel";
 import { NotificationChannelStatusValueEnum } from "./api/definitions/NotificationChannelStatusValue";
 
 import { TelemetryClient } from "applicationinsights";
-import { NonEmptyString } from "italia-ts-commons/lib/strings";
-import { UrlFromString } from "italia-ts-commons/lib/url";
+import { NonEmptyString } from "io-ts-commons/lib/strings";
+import { UrlFromString } from "io-ts-commons/lib/url";
 import { CreatedMessageWithContent } from "./api/definitions/CreatedMessageWithContent";
 import { HttpsUrl } from "./api/definitions/HttpsUrl";
 import { SenderMetadata } from "./api/definitions/SenderMetadata";

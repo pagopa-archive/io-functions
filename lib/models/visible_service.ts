@@ -5,7 +5,7 @@
 import * as t from "io-ts";
 
 import { collect, StrMap } from "fp-ts/lib/StrMap";
-import { NonEmptyString } from "italia-ts-commons/lib/strings";
+import { NonEmptyString } from "io-ts-commons/lib/strings";
 import { OrganizationFiscalCode } from "../api/definitions/OrganizationFiscalCode";
 import { ServiceId } from "../api/definitions/ServiceId";
 import { ServicePublic } from "../api/definitions/ServicePublic";

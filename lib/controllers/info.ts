@@ -33,7 +33,7 @@ import {
 import {
   IResponseSuccessJson,
   ResponseSuccessJson
-} from "italia-ts-commons/lib/responses";
+} from "io-ts-commons/lib/responses";
 
 import { ServiceModel } from "../models/service";
 

@@ -1,6 +1,6 @@
 import * as t from "io-ts";
 
-import { pick, tag } from "italia-ts-commons/lib/types";
+import { pick, tag } from "io-ts-commons/lib/types";
 
 import * as DocumentDb from "documentdb";
 import * as DocumentDbUtils from "../utils/documentdb";
@@ -12,8 +12,8 @@ import {
 
 import { Either } from "fp-ts/lib/Either";
 import { Option } from "fp-ts/lib/Option";
-import { NonNegativeNumber } from "italia-ts-commons/lib/numbers";
-import { NonEmptyString } from "italia-ts-commons/lib/strings";
+import { NonNegativeNumber } from "io-ts-commons/lib/numbers";
+import { NonEmptyString } from "io-ts-commons/lib/strings";
 import {
   NotificationChannel,
   NotificationChannelEnum

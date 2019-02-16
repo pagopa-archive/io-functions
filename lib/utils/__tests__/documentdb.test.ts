@@ -1,7 +1,7 @@
 /* tslint:disable:no-any */
 /* tslint:disable:no-duplicate-string */
 
-import { NonEmptyString } from "italia-ts-commons/lib/strings";
+import { NonEmptyString } from "io-ts-commons/lib/strings";
 
 import * as DocumentDb from "documentdb";
 

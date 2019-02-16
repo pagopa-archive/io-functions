@@ -234,13 +234,13 @@ FiscalCode:
   type: string
   description: User's fiscal code.
   format: FiscalCode
-  x-import: italia-ts-commons/lib/strings
+  x-import: io-ts-commons/lib/strings
   example: SPNDNL80R13C555X
 OrganizationFiscalCode:
   type: string
   description: Organization fiscal code.
   format: OrganizationFiscalCode
-  x-import: italia-ts-commons/lib/strings
+  x-import: io-ts-commons/lib/strings
   example: "12345678901"
 MessageSubject:
   type: string
@@ -507,7 +507,7 @@ Timestamp:
   type: string
   format: UTCISODateFromString
   description: A date-time field in ISO-8601 format and UTC timezone.
-  x-import: italia-ts-commons/lib/dates
+  x-import: io-ts-commons/lib/dates
   example: "2018-10-13T00:00:00.000Z"
 HttpsUrl:
   type: string

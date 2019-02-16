@@ -4,7 +4,7 @@ import {
   IResponse,
   IResponseErrorValidation,
   ResponseErrorValidation
-} from "italia-ts-commons/lib/responses";
+} from "io-ts-commons/lib/responses";
 import {
   IRequestMiddleware,
   withRequestMiddlewares
