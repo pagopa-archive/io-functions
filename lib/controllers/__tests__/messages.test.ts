@@ -1079,15 +1079,13 @@ describe("GetMessageHandler", () => {
 describe("GetMessagesHandler", () => {
   it("should respond with the messages for the recipient", async () => {
     const mockIterator = {
-      executeNext: jest.fn()
+      executeNext: jest
+        .fn()
+        .mockImplementationOnce(() =>
+          Promise.resolve(right(some([aRetrievedMessageWithoutContent])))
+        )
+        .mockImplementationOnce(() => Promise.resolve(right(none)))
     };
-
-    mockIterator.executeNext.mockImplementationOnce(() =>
-      Promise.resolve(right(some([{ data: "a" }])))
-    );
-    mockIterator.executeNext.mockImplementationOnce(() =>
-      Promise.resolve(right(none))
-    );
 
     const mockMessageModel = {
       findMessages: jest.fn(() => mockIterator)
@@ -1105,9 +1103,7 @@ describe("GetMessagesHandler", () => {
     expect(result.kind).toBe("IResponseSuccessJsonIterator");
 
     const mockResponse = MockResponse();
-    result.apply(mockResponse);
-
-    await Promise.resolve(); // needed to let the response promise complete
+    await result.apply(mockResponse);
 
     expect(mockIterator.executeNext).toHaveBeenCalledTimes(2);
   });

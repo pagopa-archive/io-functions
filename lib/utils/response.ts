@@ -1,4 +1,5 @@
 import * as DocumentDb from "documentdb";
+import * as express from "express";
 import { isLeft } from "fp-ts/lib/Either";
 import {
   HttpStatusCodeEnum,
@@ -13,6 +14,9 @@ import { IResultIterator, iteratorToArray } from "./documentdb";
 export interface IResponseSuccessJsonIterator<T>
   extends IResponse<"IResponseSuccessJsonIterator"> {
   readonly value: T; // needed to discriminate from other T subtypes
+  readonly apply: (
+    response: express.Response
+  ) => Promise<void | IResponseErrorQuery | express.Response>;
 }
 
 /**

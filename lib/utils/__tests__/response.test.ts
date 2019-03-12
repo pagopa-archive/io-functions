@@ -9,10 +9,6 @@ import { none, some } from "fp-ts/lib/Option";
 
 import { ResponseJsonIterator } from "../response";
 
-function flushPromises<T>(): Promise<T> {
-  return new Promise(resolve => setImmediate(resolve));
-}
-
 describe("ResponseSuccessJsonIterator", () => {
   it("should stream an empty iterator as json", async () => {
     const mockIteratorResult = {
@@ -30,9 +26,8 @@ describe("ResponseSuccessJsonIterator", () => {
 
     const mockResponse = MockResponse() as Express.Response;
 
-    streamingResponse.apply(mockResponse);
+    await streamingResponse.apply(mockResponse);
 
-    await flushPromises();
     expect(mockResponse.status).toHaveBeenCalledWith(200);
     expect(mockResponse.json).toHaveBeenCalledWith(mockIteratorResult);
   });
@@ -57,9 +52,8 @@ describe("ResponseSuccessJsonIterator", () => {
 
     const mockResponse = MockResponse() as Express.Response;
 
-    streamingResponse.apply(mockResponse);
+    await streamingResponse.apply(mockResponse);
 
-    await flushPromises();
     expect(mockIterator.executeNext).toHaveBeenCalledTimes(2);
     expect(mockResponse.status).toHaveBeenCalledWith(200);
     expect(mockResponse.json).toHaveBeenCalledWith(mockIteratorResult);
@@ -85,9 +79,8 @@ describe("ResponseSuccessJsonIterator", () => {
 
     const mockResponse = MockResponse() as Express.Response;
 
-    streamingResponse.apply(mockResponse);
+    await streamingResponse.apply(mockResponse);
 
-    await flushPromises();
     expect(mockResponse.json).toHaveBeenCalledWith(mockIteratorkindlessResult);
   });
 
@@ -104,9 +97,8 @@ describe("ResponseSuccessJsonIterator", () => {
 
     const mockResponse = MockResponse() as Express.Response;
 
-    streamingResponse.apply(mockResponse);
+    await streamingResponse.apply(mockResponse);
 
-    await flushPromises();
     expect(mockResponse.status).toHaveBeenCalledWith(500);
     expect(mockResponse.json).toHaveBeenCalledWith(
       expect.objectContaining({

@@ -202,9 +202,8 @@ describe("GetServicesByRecipientHandler", () => {
       undefined as any, // not used
       aFiscalCode
     );
-    response.apply(MockResponse());
+    await response.apply(MockResponse());
 
-    await Promise.resolve(); // needed to let the response promise complete
     expect(
       senderServiceModelMock.findSenderServicesForRecipient
     ).toHaveBeenCalledWith(aFiscalCode);
