@@ -113,6 +113,9 @@ PaymentData:
       $ref: "#/PaymentAmount"
     notice_number:
       $ref: "#/PaymentNoticeNumber"
+    invalid_after_due_date:
+      type: boolean
+      default: false
   required:
     - amount
     - notice_number

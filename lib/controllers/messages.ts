@@ -100,6 +100,7 @@ import {
   some
 } from "fp-ts/lib/Option";
 
+import { readableReport } from "italia-ts-commons/lib/reporters";
 import { CreatedMessageWithContent } from "../api/definitions/CreatedMessageWithContent";
 import { MessageResponseWithoutContent } from "../api/definitions/MessageResponseWithoutContent";
 import { MessageStatusValueEnum } from "../api/definitions/MessageStatusValue";
@@ -326,7 +327,7 @@ async function getMessageNotificationStatuses(
 /**
  * Returns a type safe CreateMessage handler.
  */
-// tslint:disable-next-line:cognitive-complexity
+// tslint:disable-next-line:cognitive-complexity no-big-function
 export function CreateMessageHandler(
   getCustomTelemetryClient: CustomTelemetryClientFactory,
   messageModel: MessageModel,
@@ -473,12 +474,20 @@ export function CreateMessageHandler(
     //
     // emit created message event to the output queue
     //
-
-    const newMessageWithContent: NewMessageWithContent = {
+    const errorOrNewMessageWithContent = NewMessageWithContent.decode({
       ...newMessageWithoutContent,
       content: messagePayload.content,
       kind: "INewMessageWithContent"
-    };
+    });
+
+    if (isLeft(errorOrNewMessageWithContent)) {
+      return ResponseErrorValidation(
+        "Error while decoding new message with content",
+        readableReport(errorOrNewMessageWithContent.value)
+      );
+    }
+
+    const newMessageWithContent = errorOrNewMessageWithContent.value;
 
     // prepare the created message event
     // we filter out undefined values as they are
