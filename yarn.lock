@@ -2658,6 +2658,11 @@ fp-ts@^1.0.0, fp-ts@^1.6.0, fp-ts@^1.7.1:
   version "1.8.0"
   resolved "https://registry.yarnpkg.com/fp-ts/-/fp-ts-1.8.0.tgz#305909ebb3f44b21f77e9e3313ee0ed5ee809daa"
 
+fp-ts@^1.6.2:
+  version "1.14.4"
+  resolved "https://registry.yarnpkg.com/fp-ts/-/fp-ts-1.14.4.tgz#df431e1bfe590f23ad418ca8c889880106a5008f"
+  integrity sha512-A20kqVBpV/VOpDmEDudb+FP/qOV+V/yEqHQQfHPHLHeX3alFM0JjX1cXNcU8+p8z5yeCkHFolKo7uJMRwUSMFA==
+
 fragment-cache@^0.2.1:
   version "0.2.1"
   resolved "https://registry.yarnpkg.com/fragment-cache/-/fragment-cache-0.2.1.tgz#4290fad27f13e89be7f33799c6bc5a0abfff0d19"
@@ -2929,6 +2934,16 @@ gulp-json-editor@^2.4.1:
     js-beautify "^1.7.5"
     plugin-error "^1.0.1"
     through2 "^2.0.3"
+
+gulp-prettier@^2.1.0:
+  version "2.1.0"
+  resolved "https://registry.yarnpkg.com/gulp-prettier/-/gulp-prettier-2.1.0.tgz#6e7b2a12395315fb9e1ebd4ea9ed9514410aec15"
+  integrity sha512-6PvGPX+x0d1+PbP7tHF42o6zWzxCXqouTnpwZV1GjF47/wAgWBfPU1E6/6d4uAGM+NhmwWdKvIVumL3wMZZxDg==
+  dependencies:
+    plugin-error "^1.0.1"
+    prettier "^1.5.3"
+    safe-buffer "^5.1.2"
+    through2 "^3.0.0"
 
 gulp-rename@^1.2.2:
   version "1.4.0"
@@ -3391,9 +3406,16 @@ invert-kv@^1.0.0:
   version "1.0.0"
   resolved "https://registry.yarnpkg.com/invert-kv/-/invert-kv-1.0.0.tgz#104a8e4aaca6d3d8cd157a8ef8bfab2d7a3ffdb6"
 
-io-ts@^1.1.4, io-ts@^1.2.1:
+io-ts@^1.1.4:
   version "1.3.0"
   resolved "https://registry.yarnpkg.com/io-ts/-/io-ts-1.3.0.tgz#72a5e7dbbb650b9c26030bac0c22d9b18c321f54"
+  dependencies:
+    fp-ts "^1.0.0"
+
+io-ts@^1.4.2:
+  version "1.8.2"
+  resolved "https://registry.yarnpkg.com/io-ts/-/io-ts-1.8.2.tgz#4fe3878c147c9851604d36982ee6f64d3e6a4a1e"
+  integrity sha512-BvP7iC4bgum5e3Fh82xCUrKWt739osKjmQBMORGij2AOMfTmevj8SEqBhN8EeI0GEwIMHb2bXe4fuikN0lsTWg==
   dependencies:
     fp-ts "^1.0.0"
 
@@ -3769,9 +3791,10 @@ istanbul-reports@^1.4.1:
   dependencies:
     handlebars "^4.0.11"
 
-italia-ts-commons@^2.9.0:
-  version "2.12.3"
-  resolved "https://registry.yarnpkg.com/italia-ts-commons/-/italia-ts-commons-2.12.3.tgz#25799fc10fdec5879d314175e8ecb5a4c43aff6d"
+italia-ts-commons@^2.14.0:
+  version "2.14.1"
+  resolved "https://registry.yarnpkg.com/italia-ts-commons/-/italia-ts-commons-2.14.1.tgz#4196a9c369181260c8f4eb65a3db10cd90c7f63b"
+  integrity sha512-g8QIuHp2KssfuDTKVS0DgXFv6j4s1oHfAqBX5rZ26nPAO9/87YyMQKzCs6Gb5hbTcEWR05P99zPMVaxX46lPZw==
   dependencies:
     fp-ts "^1.6.0"
     io-ts "^1.1.4"
@@ -3779,15 +3802,28 @@ italia-ts-commons@^2.9.0:
     validator "^10.1.0"
     winston "^3.0.0"
 
-italia-utils@^3.12.0:
-  version "3.12.0"
-  resolved "https://registry.yarnpkg.com/italia-utils/-/italia-utils-3.12.0.tgz#78690531370d92e15233babb192b2bf1eedcd6b3"
+italia-ts-commons@^3.2.0:
+  version "3.2.0"
+  resolved "https://registry.yarnpkg.com/italia-ts-commons/-/italia-ts-commons-3.2.0.tgz#405a77c48f09c6c28f2c558b6af1626fead7c58d"
+  integrity sha512-cce/gGPSyo2KQtM/SQyuWyvJrSvqZXOTx3kBB214boc5GhOVPzcyhdOMhecvYKWq9nS1roApIEC2eTHXMht3tQ==
+  dependencies:
+    fp-ts "^1.6.2"
+    io-ts "^1.4.2"
+    json-set-map "^1.0.2"
+    validator "^10.1.0"
+
+italia-utils@^3.14.17:
+  version "3.15.4"
+  resolved "https://registry.yarnpkg.com/italia-utils/-/italia-utils-3.15.4.tgz#b23a00fe86556593e44f37bdfdaed0594bcd0c21"
+  integrity sha512-CUq2mb/QZmrfw3IP0VRyKRjh5BgFvu4jzv1IlxqYk7v6jRBrnuGU//R9+E0mXeqHup20xLemXNsrS5xmLV7GMQ==
   dependencies:
     fs-extra "^6.0.0"
+    italia-ts-commons "^2.14.0"
     nunjucks "^3.1.2"
     prettier "^1.12.1"
     swagger-parser "^4.1.0"
     swagger-schema-official "^2.0.0-bab6bed"
+    yargs "^11.1.0"
 
 jest-changed-files@^17.0.2:
   version "17.0.2"
@@ -6266,6 +6302,11 @@ prettier@^1.12.1, prettier@^1.13.7:
   version "1.14.2"
   resolved "https://registry.yarnpkg.com/prettier/-/prettier-1.14.2.tgz#0ac1c6e1a90baa22a62925f41963c841983282f9"
 
+prettier@^1.5.3:
+  version "1.16.4"
+  resolved "https://registry.yarnpkg.com/prettier/-/prettier-1.16.4.tgz#73e37e73e018ad2db9c76742e2647e21790c9717"
+  integrity sha512-ZzWuos7TI5CKUeQAtFd6Zhm2s6EpAD/ZLApIhsF9pRvRtM1RFo61dM/4MSRUA0SuLugA/zgrZD8m0BaY46Og7g==
+
 pretty-format@^18.1.0:
   version "18.1.0"
   resolved "https://registry.yarnpkg.com/pretty-format/-/pretty-format-18.1.0.tgz#fb65a86f7a7f9194963eee91865c1bcf1039e284"
@@ -6477,6 +6518,15 @@ readable-stream@1.1:
     inherits "~2.0.1"
     isarray "0.0.1"
     string_decoder "~0.10.x"
+
+"readable-stream@2 || 3":
+  version "3.2.0"
+  resolved "https://registry.yarnpkg.com/readable-stream/-/readable-stream-3.2.0.tgz#de17f229864c120a9f56945756e4f32c4045245d"
+  integrity sha512-RV20kLjdmpZuTF1INEb9IA3L68Nmi+Ri7ppZqo78wj//Pn62fCoJyV9zalccNzDD/OuJpMG4f+pfMl8+L6QdGw==
+  dependencies:
+    inherits "^2.0.3"
+    string_decoder "^1.1.1"
+    util-deprecate "^1.0.1"
 
 "readable-stream@>=1.0.33-1 <1.1.0-0":
   version "1.0.34"
@@ -7212,6 +7262,13 @@ string_decoder@^1.0.0, string_decoder@~1.1.1:
   dependencies:
     safe-buffer "~5.1.0"
 
+string_decoder@^1.1.1:
+  version "1.2.0"
+  resolved "https://registry.yarnpkg.com/string_decoder/-/string_decoder-1.2.0.tgz#fe86e738b19544afe70469243b2a1ee9240eae8d"
+  integrity sha512-6YqyX6ZWEYguAxgZzHGL7SsCeGx3V2TtOTqZz1xSTSWnqsbWwbptafNyvf/ACquZUXV3DANr5BDIwNYe1mN42w==
+  dependencies:
+    safe-buffer "~5.1.0"
+
 string_decoder@~0.10.x:
   version "0.10.31"
   resolved "https://registry.yarnpkg.com/string_decoder/-/string_decoder-0.10.31.tgz#62e203bc41766c6c28c9fc84301dab1c5310fa94"
@@ -7420,6 +7477,13 @@ through2@^2.0.0, through2@^2.0.3:
   dependencies:
     readable-stream "^2.1.5"
     xtend "~4.0.1"
+
+through2@^3.0.0:
+  version "3.0.1"
+  resolved "https://registry.yarnpkg.com/through2/-/through2-3.0.1.tgz#39276e713c3302edf9e388dd9c812dd3b825bd5a"
+  integrity sha512-M96dvTalPT3YbYLaKaCuwu+j06D/8Jfib0o/PxbVt6Amhv3dUAtW6rTV1jPgJSBG83I/e04Y6xkVdVhSRhi0ww==
+  dependencies:
+    readable-stream "2 || 3"
 
 through@2, through@~2.3, through@~2.3.1:
   version "2.3.8"
@@ -7805,7 +7869,7 @@ user-home@^1.1.1:
   version "1.1.1"
   resolved "https://registry.yarnpkg.com/user-home/-/user-home-1.1.1.tgz#2b5be23a32b63a7c9deb8d0f28d485724a3df190"
 
-util-deprecate@~1.0.1:
+util-deprecate@^1.0.1, util-deprecate@~1.0.1:
   version "1.0.2"
   resolved "https://registry.yarnpkg.com/util-deprecate/-/util-deprecate-1.0.2.tgz#450d4dc9fa70de732762fbd2d4a28981419a0ccf"
 
@@ -8257,7 +8321,7 @@ yargs-parser@^9.0.2:
   dependencies:
     camelcase "^4.1.0"
 
-yargs@^11.0.0:
+yargs@^11.0.0, yargs@^11.1.0:
   version "11.1.0"
   resolved "https://registry.yarnpkg.com/yargs/-/yargs-11.1.0.tgz#90b869934ed6e871115ea2ff58b03f4724ed2d77"
   dependencies:

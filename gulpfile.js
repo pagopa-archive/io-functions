@@ -18,6 +18,7 @@ const jsonEditor = require("gulp-json-editor");
 
 const semver = require("semver");
 const mjml2html = require("mjml");
+const prettier = require('gulp-prettier');
 
 const TYPESCRIPT_SOURCE_DIR = "lib";
 
@@ -96,6 +97,7 @@ gulp.task("generate:templates", () => {
   return gulp
     .src(TEMPLATES_SOURCE)
     .pipe(textSimple(toMjml)())
+    .pipe(prettier())
     .pipe(rename(filepath => (filepath.extname = ".ts")))
     .pipe(gulp.dest(TEMPLATES_OUTPUT_DIR));
 });
