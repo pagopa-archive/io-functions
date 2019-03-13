@@ -782,6 +782,61 @@ describe("CreateMessageHandler", () => {
     expect(mockMessageModel.create).not.toHaveBeenCalled();
     expect(result.kind).toBe("IResponseErrorValidation");
   });
+
+  it("should set a default value for invalid_after_due_date", async () => {
+    const mockMessageModel = {
+      create: jest.fn(() => right(aNewMessageWithoutContent))
+    };
+
+    const createMessageHandler = CreateMessageHandler(
+      getCustomTelemetryClient as any,
+      mockMessageModel as any,
+      () => aMessageId
+    );
+
+    const mockContext = {
+      bindings: {},
+      log: jest.fn()
+    };
+
+    const result = await createMessageHandler(
+      mockContext as any,
+      {
+        ...aUserAuthenticationDeveloper,
+        groups: new Set([UserGroup.ApiMessageWrite])
+      },
+      undefined as any,
+      {
+        ...someUserAttributes,
+        service: {
+          ...someUserAttributes.service,
+          maxAllowedPaymentAmount: 1 as MaxAllowedPaymentAmount
+        }
+      },
+      aFiscalCode,
+      {
+        ...aMessagePayload,
+        content: {
+          ...aMessagePayload.content,
+          payment_data: {
+            amount: 1 as PaymentAmount,
+            notice_number: "000000000000000000" as PaymentNoticeNumber
+          }
+        }
+      }
+    );
+
+    expect(mockContext.bindings as any).toMatchObject({
+      createdMessage: {
+        message: {
+          content: { payment_data: { invalid_after_due_date: false } }
+        }
+      }
+    });
+
+    expect(mockMessageModel.create).toHaveBeenCalled();
+    expect(result.kind).toBe("IResponseSuccessRedirectToResource");
+  });
 });
 
 describe("GetMessageHandler", () => {
