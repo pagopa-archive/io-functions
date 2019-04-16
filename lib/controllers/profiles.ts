@@ -86,7 +86,7 @@ function toExtendedProfile(profile: RetrievedProfile): ExtendedProfile {
     blocked_inbox_or_channels: profile.blockedInboxOrChannels,
     email: profile.email,
     is_inbox_enabled: profile.isInboxEnabled === true,
-    is_tos_accepted: true, // TODO: #163190244 - implement retrive user info from db
+    is_tos_accepted: profile.isTosAccepted === true,
     is_webhook_enabled: profile.isWebhookEnabled === true,
     preferred_languages: profile.preferredLanguages,
     version: profile.version
