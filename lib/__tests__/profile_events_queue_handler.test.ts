@@ -41,15 +41,16 @@ const anOldProfile: ExtendedProfile = {
   blocked_inbox_or_channels: {},
   email: "xxx@example.com" as EmailAddress,
   is_inbox_enabled: false,
-  is_tos_accepted: false,
   is_webhook_enabled: true,
   preferred_languages: [],
+  tos_version: 1,
   version: 1
 };
 
 const aNewProfile: ExtendedProfile = {
   ...anOldProfile,
   is_inbox_enabled: true,
+  tos_version: 2,
   version: 2
 };
 

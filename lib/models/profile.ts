@@ -19,10 +19,10 @@ import { BlockedInboxOrChannel } from "../api/definitions/BlockedInboxOrChannel"
 import { EmailAddress } from "../api/definitions/EmailAddress";
 import { FiscalCode } from "../api/definitions/FiscalCode";
 import { IsInboxEnabled } from "../api/definitions/IsInboxEnabled";
-import { IsTosAccepted } from "../api/definitions/IsTosAccepted";
 import { IsWebhookEnabled } from "../api/definitions/IsWebhookEnabled";
 import { PreferredLanguages } from "../api/definitions/PreferredLanguages";
 import { ServiceId } from "../api/definitions/ServiceId";
+import { TosVersion } from "../api/definitions/TosVersion";
 import { fiscalCodeToModelId } from "../utils/conversions";
 
 export const PROFILE_COLLECTION_NAME = "profiles";
@@ -60,8 +60,8 @@ export const Profile = t.intersection([
     // whether to store the content of messages sent to this citizen
     isInboxEnabled: IsInboxEnabled,
 
-    // Terms of services accepted by citizen
-    isTosAccepted: IsTosAccepted,
+    // Version of terms of services accepted by citizen
+    tosVersion: TosVersion,
 
     // whether to push notifications to the default webhook
     isWebhookEnabled: IsWebhookEnabled,

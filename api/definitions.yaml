@@ -322,15 +322,14 @@ ExtendedProfile:
       $ref: "#/PreferredLanguages"
     is_inbox_enabled:
       $ref: "#/IsInboxEnabled"
-    is_tos_accepted:
-      $ref: "#/IsTosAccepted"
+    tos_version:
+      $ref: "#/TosVersion"
     is_webhook_enabled:
       $ref: "#/IsWebhookEnabled"
     version:
       type: integer
   required:
     - is_inbox_enabled
-    - is_tos_accepted
     - is_webhook_enabled
     - version
 IsInboxEnabled:
@@ -339,11 +338,11 @@ IsInboxEnabled:
   description: |-
     True if the recipient of a message wants to store its content for
     later retrieval.
-IsTosAccepted:
-  type: boolean
-  default: false
+TosVersion:
+  type: number
+  default: 0
   description: |-
-    True if the citizen accept the terms of service.
+    Version of terms of service.
 IsWebhookEnabled:
   type: boolean
   default: false

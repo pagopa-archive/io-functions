@@ -46,14 +46,15 @@ const aRetrievedProfile: RetrievedProfile = {
   fiscalCode: aFiscalCode,
   id: "123" as NonEmptyString,
   kind: "IRetrievedProfile",
+  tosVersion: 1 as NonNegativeNumber,
   version: 1 as NonNegativeNumber
 };
 
 const aPublicExtendedProfile: ExtendedProfile = {
   email: aRetrievedProfile.email,
   is_inbox_enabled: false,
-  is_tos_accepted: false,
   is_webhook_enabled: false,
+  tos_version: 1 as NonNegativeNumber,
   version: aRetrievedProfile.version
 };
 
@@ -256,8 +257,8 @@ describe("UpsertProfile", () => {
     const profilePayloadMock = {
       email: "y@example.com" as EmailString,
       is_inbox_enabled: false,
-      is_tos_accepted: false,
       is_webhook_enabled: false,
+      tos_version: 1,
       version: aRetrievedProfile.version
     };
 
@@ -299,8 +300,8 @@ describe("UpsertProfile", () => {
     const profilePayloadMock = {
       email: "y@example.com" as EmailString,
       is_inbox_enabled: false,
-      is_tos_accepted: false,
       is_webhook_enabled: false,
+      tos_version: 1,
       version: 0 as NonNegativeNumber
     };
 

@@ -86,9 +86,9 @@ function toExtendedProfile(profile: RetrievedProfile): ExtendedProfile {
     blocked_inbox_or_channels: profile.blockedInboxOrChannels,
     email: profile.email,
     is_inbox_enabled: profile.isInboxEnabled === true,
-    is_tos_accepted: profile.isTosAccepted === true,
     is_webhook_enabled: profile.isWebhookEnabled === true,
     preferred_languages: profile.preferredLanguages,
+    tos_version: profile.tosVersion,
     version: profile.version
   };
 }
