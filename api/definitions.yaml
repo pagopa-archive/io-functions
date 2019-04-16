@@ -472,6 +472,7 @@ ServicePublic:
     - organization_name
     - department_name
     - organization_fiscal_code
+    - version
 ServiceId:
   type: string
   description: |-
@@ -486,6 +487,9 @@ ServiceTuple:
       $ref: "#/ServiceId"
     version:
       type: integer
+  required:
+    - service_id
+    - version
 ServiceName:
   type: string
   description: The name of the service. Will be added to the content of sent messages.
