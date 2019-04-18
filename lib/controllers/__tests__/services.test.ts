@@ -65,7 +65,8 @@ const aServicePayload: ApiService = {
   organization_fiscal_code: anOrganizationFiscalCode,
   organization_name: "MyOrgName" as NonEmptyString,
   service_id: "MySubscriptionId" as NonEmptyString,
-  service_name: "MyServiceName" as NonEmptyString
+  service_name: "MyServiceName" as NonEmptyString,
+  version: 1
 };
 
 const aService: Service = {
