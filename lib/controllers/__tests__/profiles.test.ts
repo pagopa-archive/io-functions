@@ -255,10 +255,10 @@ describe("UpsertProfile", () => {
     const upsertProfileHandler = UpsertProfileHandler(profileModelMock as any);
 
     const profilePayloadMock = {
+      accepted_tos_version: 1,
       email: "y@example.com" as EmailString,
       is_inbox_enabled: false,
       is_webhook_enabled: false,
-      tos_version: 1,
       version: aRetrievedProfile.version
     };
 
@@ -298,10 +298,10 @@ describe("UpsertProfile", () => {
     const upsertProfileHandler = UpsertProfileHandler(profileModelMock as any);
 
     const profilePayloadMock = {
+      accepted_tos_version: 1,
       email: "y@example.com" as EmailString,
       is_inbox_enabled: false,
       is_webhook_enabled: false,
-      tos_version: 1,
       version: 0 as NonNegativeNumber
     };
 
