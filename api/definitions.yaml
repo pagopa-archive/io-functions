@@ -322,8 +322,8 @@ ExtendedProfile:
       $ref: "#/PreferredLanguages"
     is_inbox_enabled:
       $ref: "#/IsInboxEnabled"
-    tos_version:
-      $ref: "#/TosVersion"
+    accepted_tos_version:
+      $ref: "#/AcceptedTosVersion"
     is_webhook_enabled:
       $ref: "#/IsWebhookEnabled"
     version:
@@ -338,9 +338,8 @@ IsInboxEnabled:
   description: |-
     True if the recipient of a message wants to store its content for
     later retrieval.
-TosVersion:
+AcceptedTosVersion:
   type: number
-  default: 0
   description: |-
     Version of terms of service.
 IsWebhookEnabled:

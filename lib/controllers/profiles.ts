@@ -83,12 +83,12 @@ interface IBindings {
 
 function toExtendedProfile(profile: RetrievedProfile): ExtendedProfile {
   return {
+    accepted_tos_version: profile.acceptedTosVersion,
     blocked_inbox_or_channels: profile.blockedInboxOrChannels,
     email: profile.email,
     is_inbox_enabled: profile.isInboxEnabled === true,
     is_webhook_enabled: profile.isWebhookEnabled === true,
     preferred_languages: profile.preferredLanguages,
-    tos_version: profile.tosVersion,
     version: profile.version
   };
 }
@@ -250,6 +250,7 @@ async function createNewProfileFromPayload(
   profileModelPayload: ExtendedProfile
 ): Promise<IResponseSuccessJson<ExtendedProfile> | IResponseErrorQuery> {
   const profile: Profile = {
+    acceptedTosVersion: profileModelPayload.accepted_tos_version,
     blockedInboxOrChannels: profileModelPayload.blocked_inbox_or_channels,
     email: profileModelPayload.email,
     fiscalCode,

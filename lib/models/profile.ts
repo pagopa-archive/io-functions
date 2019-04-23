@@ -3,6 +3,7 @@ import * as t from "io-ts";
 import { readonlySetType, tag } from "italia-ts-commons/lib/types";
 
 import * as DocumentDb from "documentdb";
+import { AcceptedTosVersion } from "../api/definitions/AcceptedTosVersion";
 import * as DocumentDbUtils from "../utils/documentdb";
 import {
   DocumentDbModelVersioned,
@@ -22,7 +23,6 @@ import { IsInboxEnabled } from "../api/definitions/IsInboxEnabled";
 import { IsWebhookEnabled } from "../api/definitions/IsWebhookEnabled";
 import { PreferredLanguages } from "../api/definitions/PreferredLanguages";
 import { ServiceId } from "../api/definitions/ServiceId";
-import { TosVersion } from "../api/definitions/TosVersion";
 import { fiscalCodeToModelId } from "../utils/conversions";
 
 export const PROFILE_COLLECTION_NAME = "profiles";
@@ -61,7 +61,7 @@ export const Profile = t.intersection([
     isInboxEnabled: IsInboxEnabled,
 
     // Version of terms of services accepted by citizen
-    tosVersion: TosVersion,
+    acceptedTosVersion: AcceptedTosVersion,
 
     // whether to push notifications to the default webhook
     isWebhookEnabled: IsWebhookEnabled,

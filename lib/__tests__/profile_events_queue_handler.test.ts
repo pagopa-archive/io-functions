@@ -38,19 +38,19 @@ const mockSuperagentResponse = (response: any) => {
 const aFiscalCode = "SPNDNL80R13C555X" as FiscalCode;
 
 const anOldProfile: ExtendedProfile = {
+  accepted_tos_version: 1,
   blocked_inbox_or_channels: {},
   email: "xxx@example.com" as EmailAddress,
   is_inbox_enabled: false,
   is_webhook_enabled: true,
   preferred_languages: [],
-  tos_version: 1,
   version: 1
 };
 
 const aNewProfile: ExtendedProfile = {
   ...anOldProfile,
+  accepted_tos_version: 2,
   is_inbox_enabled: true,
-  tos_version: 2,
   version: 2
 };
 
