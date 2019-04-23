@@ -340,8 +340,9 @@ IsInboxEnabled:
     later retrieval.
 AcceptedTosVersion:
   type: number
+  minimum: 1
   description: |-
-    Version of terms of service.
+    Version of latest terms of service accepted by the user.
 IsWebhookEnabled:
   type: boolean
   default: false
