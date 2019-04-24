@@ -3,7 +3,6 @@ import * as t from "io-ts";
 import { readonlySetType, tag } from "italia-ts-commons/lib/types";
 
 import * as DocumentDb from "documentdb";
-import { AcceptedTosVersion } from "../api/definitions/AcceptedTosVersion";
 import * as DocumentDbUtils from "../utils/documentdb";
 import {
   DocumentDbModelVersioned,
@@ -16,6 +15,7 @@ import { Option } from "fp-ts/lib/Option";
 
 import { NonNegativeNumber } from "italia-ts-commons/lib/numbers";
 import { NonEmptyString } from "italia-ts-commons/lib/strings";
+import { AcceptedTosVersion } from "../api/definitions/AcceptedTosVersion";
 import { BlockedInboxOrChannel } from "../api/definitions/BlockedInboxOrChannel";
 import { EmailAddress } from "../api/definitions/EmailAddress";
 import { FiscalCode } from "../api/definitions/FiscalCode";

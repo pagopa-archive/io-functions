@@ -282,6 +282,7 @@ async function updateExistingProfileFromPayload(
   | IResponseErrorInternal
 > {
   const profile: Profile = {
+    acceptedTosVersion: profileModelPayload.accepted_tos_version,
     blockedInboxOrChannels: profileModelPayload.blocked_inbox_or_channels,
     email: profileModelPayload.email,
     fiscalCode: existingProfile.fiscalCode,
