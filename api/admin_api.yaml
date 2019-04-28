@@ -34,6 +34,8 @@ paths:
               service_name: service
               version: 1
               authorized_cidrs: []
+        '401':
+          description: Unauthorized
         '404':
           description: No service found for the provided ID.
       parameters: []
@@ -54,6 +56,8 @@ paths:
               service_name: service
               version: 1
               authorized_cidrs: []
+        '401':
+          description: Unauthorized
         '404':
           description: No service found for the provided ID.
       summary: Update Service
@@ -133,7 +137,7 @@ paths:
                   authorized_cidrs: []
                   kind: IRetrievedService
         '401':
-          description: Returns unauthorized when the API-key if empty or wrong.
+          description: Unauthorized
       description: An endpoint to debug GET requests to the API backend.
       operationId: getDebug
       summary: Debug GET
@@ -192,6 +196,8 @@ paths:
                   version: 0
                   authorized_cidrs: []
                   kind: IRetrievedService
+        '401':
+          description: Unauthorized
       description: An endpoint to debug POST requests to the API backend.
       operationId: postDebug
       summary: Debug POST
@@ -213,6 +219,8 @@ paths:
               service_name: service
               version: 1
               authorized_cidrs: []
+        '401':
+          description: Unauthorized
       summary: Create Service
       description:  |-
         Create a new Service with the attributes provided in the requst
