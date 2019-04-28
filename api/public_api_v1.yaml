@@ -8,16 +8,16 @@ info:
   x-logo:
     url: https://io.italia.it/assets/img/io-logo-blue.svg
   description: >
-  
+
     # Warning / Avvertenza
-  
+
       **Questa è una API sperimentale che (probabilmente)
       subirà dei cambiamenti mano a mano che il servizio di
       messaggistica IO si evolverà.**
 
-      **This is an experimental API that is (most probably) 
+      **This is an experimental API that is (most probably)
       going to change as we evolve the IO Messaging service.**
-      
+
     # Introduction
 
     This is the documentation of the Digital Citizenship API.
@@ -66,9 +66,9 @@ info:
         via [PagoPA](https://www.agid.gov.it/it/piattaforme/pagopa).
       * An optional `due_date`: a _due date_ that let the recipient
         add a reminder when receiving the message. The format for all
-        dates is [ISO8601](https://it.wikipedia.org/wiki/ISO_8601) with time 
+        dates is [ISO8601](https://it.wikipedia.org/wiki/ISO_8601) with time
         information and UTC timezone (ie. "2018-10-13T00:00:00.000Z").
-        
+
     ## Allowed Markdown formatting
 
     Not all Markdown formatting is currently available. Currently you can use
@@ -140,6 +140,8 @@ paths:
               service_id: 2b3e728c1a5d1efa035c
               service_name: service
               version: 1
+        '401':
+          description: Unauthorized
         '404':
           description: No service found for the provided ID.
       parameters: []
@@ -164,6 +166,8 @@ paths:
                   items:
                     $ref: "#/definitions/ServiceTuple"
             - $ref: "#/definitions/PaginationResponse"
+        '401':
+          description: Unauthorized
       parameters:
       - name: recipient
         in: path
@@ -190,6 +194,8 @@ paths:
                   items:
                     $ref: "#/definitions/ServiceTuple"
             - $ref: "#/definitions/PaginationResponse"
+        '401':
+          description: Unauthorized
   "/messages/{fiscal_code}/{id}":
     parameters:
     - $ref: "#/parameters/FiscalCode"
@@ -229,6 +235,8 @@ paths:
                 sender_service_id: 01BX9NSMKVXXS5PSP2FATZM6QX
               notification:
                 email: QUEUED
+        '401':
+          description: Unauthorized
         '404':
           description: No message found for the provided ID.
           schema:
@@ -285,6 +293,8 @@ paths:
                 sender_service_id: 01BX9NSMKVXXS5PSP2FATZMWWW
               page_size: 2
               next: https://example.com/next
+        '401':
+          description: Unauthorized
         '404':
           description: No message found.
           schema:
@@ -341,6 +351,8 @@ paths:
           schema:
             $ref: "#/definitions/ProblemJson"
           examples: {}
+        '401':
+          description: Unauthorized
         '500':
           description: The message cannot be delivered.
           schema:
@@ -366,6 +378,8 @@ paths:
             application/json:
               email: foobar@example.com
               version: 1
+        '401':
+          description: Unauthorized
         '404':
           description: No user found for the provided fiscal code.
           schema:
@@ -390,6 +404,8 @@ paths:
           description: Invalid payload.
           schema:
             $ref: "#/definitions/ProblemJson"
+        '401':
+          description: Unauthorized
         '500':
           description: Profile cannot be updated.
           schema:
@@ -419,7 +435,7 @@ paths:
             type: object
             properties: {}
         '401':
-          description: Returns unauthorized when the API-key if empty or wrong.
+          description: Unauthorized
       description: An endpoint to test authenticated access to the API backend.
       summary: API test endpoint
 definitions:
