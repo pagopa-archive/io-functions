@@ -284,6 +284,21 @@ PaginationResponse:
         retrieved collection of items.
       format: uri
       example: https://example.com/?p=0XXX2
+CreatedMessageWithoutContentCollection:
+  description: A collection of messages
+  type: object
+  properties:
+    items:
+      type: array
+      items:
+        $ref: "#/CreatedMessageWithoutContent"
+  required:
+    - items
+PaginatedCreatedMessageWithoutContentCollection:
+  description: A paginated collection of messages
+  allOf:
+  - $ref: "#/CreatedMessageWithoutContentCollection"
+  - $ref: "#/PaginationResponse"
 BlockedInboxOrChannels:
   type: object
   additionalProperties:
@@ -293,6 +308,14 @@ BlockedInboxOrChannels:
   description: |-
     All the notification channels blocked by the user.
     Each channel is related to a specific service (sender).
+Profile:
+  description: |-
+    Describes the citizen's profile, mostly interesting for preferences
+    attributes.
+  x-one-of: true
+  allOf:
+    - $ref: "#/LimitedProfile"
+    - $ref: "#/ExtendedProfile"
 LimitedProfile:
   description: |-
     Describes the citizen's profile, mostly interesting for preferences
@@ -302,7 +325,7 @@ LimitedProfile:
     sender_allowed:
       type: boolean
       description: |-
-        True in case the service that made the request can send 
+        True in case the service that made the request can send
         messages to the user identified by this profile (false otherwise).
     preferred_languages:
       $ref: "#/PreferredLanguages"
@@ -449,6 +472,21 @@ Service:
     - authorized_cidrs
     - authorized_recipients
     - organization_fiscal_code
+ServiceTupleCollection:
+  description: A collection of services tuples (service and version)
+  type: object
+  properties:
+    items:
+      type: array
+      items:
+        $ref: "#/ServiceTuple"
+  required:
+    - items
+PaginatedServiceTupleCollection:
+  description: A paginated collection of services tuples
+  allOf:
+  - $ref: "#/ServiceTupleCollection"
+  - $ref: "#/PaginationResponse"
 ServicePublic:
   title: Service (public)
   description: A Service associated to an user's subscription.

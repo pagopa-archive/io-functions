@@ -57,6 +57,7 @@ import { mapResultIterator } from "../utils/documentdb";
 import { BlobService } from "azure-storage";
 
 import { StrMap } from "fp-ts/lib/StrMap";
+import { PaginatedServiceTupleCollection } from "../api/definitions/PaginatedServiceTupleCollection";
 import { ServiceTuple } from "../api/definitions/ServiceTuple";
 import {
   toServicesTuple,
@@ -94,10 +95,7 @@ type IGetSenderServicesHandler = (
 ) => Promise<IGetSenderServicesHandlerRet>;
 
 type IGetVisibleServicesHandlerRet =
-  | IResponseSuccessJson<{
-      readonly items: ReadonlyArray<ServiceTuple>;
-      readonly page_size: number;
-    }>
+  | IResponseSuccessJson<PaginatedServiceTupleCollection>
   | IResponseErrorInternal;
 
 type IGetVisibleServicesHandler = (
