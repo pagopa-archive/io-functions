@@ -292,6 +292,8 @@ CreatedMessageWithoutContentCollection:
       type: array
       items:
         $ref: "#/CreatedMessageWithoutContent"
+  required:
+    - items
 PaginatedCreatedMessageWithoutContentCollection:
   description: A paginated collection of messages
   allOf:
@@ -310,7 +312,8 @@ Profile:
   description: |-
     Describes the citizen's profile, mostly interesting for preferences
     attributes.
-  oneOf:
+  x-one-of: true
+  allOf:
     - $ref: "#/LimitedProfile"
     - $ref: "#/ExtendedProfile"
 LimitedProfile:
@@ -477,6 +480,8 @@ ServiceTupleCollection:
       type: array
       items:
         $ref: "#/ServiceTuple"
+  required:
+    - items
 PaginatedServiceTupleCollection:
   description: A paginated collection of services tuples
   allOf:

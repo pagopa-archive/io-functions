@@ -8,6 +8,7 @@ import { isNone, isSome } from "fp-ts/lib/Option";
 import { ExtendedProfile } from "../api/definitions/ExtendedProfile";
 import { FiscalCode } from "../api/definitions/FiscalCode";
 import { LimitedProfile } from "../api/definitions/LimitedProfile";
+import { Profile as LimitedOrExtendedProfile } from "../api/definitions/Profile";
 
 import {
   AzureUserAttributesMiddleware,
@@ -130,8 +131,7 @@ type IGetProfileHandler = (
   attrs: IAzureUserAttributes,
   fiscalCode: FiscalCode
 ) => Promise<
-  | IResponseSuccessJson<LimitedProfile>
-  | IResponseSuccessJson<ExtendedProfile>
+  | IResponseSuccessJson<LimitedOrExtendedProfile>
   | IResponseErrorNotFound
   | IResponseErrorQuery
 >;
