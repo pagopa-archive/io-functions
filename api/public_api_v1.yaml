@@ -158,14 +158,7 @@ paths:
         '200':
           description: Found.
           schema:
-            allOf:
-            - type: object
-              properties:
-                items:
-                  type: array
-                  items:
-                    $ref: "#/definitions/ServiceTuple"
-            - $ref: "#/definitions/PaginationResponse"
+            $ref: "#/definitions/PaginatedServiceTupleCollection"
         '401':
           description: Unauthorized
       parameters:
@@ -174,6 +167,9 @@ paths:
         type: string
         required: true
         description: The recipient's fiscal code.
+        minLength: 16
+        maxLength: 16
+        pattern: "[A-Z]{6}[0-9LMNPQRSTUV]{2}[ABCDEHLMPRST][0-9LMNPQRSTUV]{2}[A-Z][0-9LMNPQRSTUV]{3}[A-Z]"
   "/services":
     get:
       tags:
@@ -186,24 +182,10 @@ paths:
         '200':
           description: Found.
           schema:
-            allOf:
-            - type: object
-              properties:
-                items:
-                  type: array
-                  items:
-                    $ref: "#/definitions/ServiceTuple"
-            - $ref: "#/definitions/PaginationResponse"
+            $ref: "#/definitions/PaginatedServiceTupleCollection"
         '401':
           description: Unauthorized
   "/messages/{fiscal_code}/{id}":
-    parameters:
-    - $ref: "#/parameters/FiscalCode"
-    - name: id
-      in: path
-      type: string
-      required: true
-      description: The ID of the message.
     get:
       tags:
         - public
@@ -213,6 +195,13 @@ paths:
       description: |-
         The previously created message with the provided message ID is
         returned.
+      parameters:
+      - $ref: "#/parameters/FiscalCode"
+      - name: id
+        in: path
+        type: string
+        required: true
+        description: The ID of the message.
       responses:
         '200':
           description: Message found.
@@ -242,8 +231,6 @@ paths:
           schema:
             $ref: "#/definitions/ProblemJson"
   "/messages/{fiscal_code}":
-    parameters:
-    - $ref: "#/parameters/FiscalCode"
     get:
       tags:
         - restricted
@@ -257,14 +244,7 @@ paths:
         '200':
           description: Found.
           schema:
-            allOf:
-            - type: object
-              properties:
-                items:
-                  type: array
-                  items:
-                    $ref: "#/definitions/CreatedMessageWithoutContent"
-            - $ref: "#/definitions/PaginationResponse"
+            $ref: "#/definitions/PaginatedCreatedMessageWithoutContentCollection"
           examples:
             application/json:
               items:
@@ -300,6 +280,7 @@ paths:
           schema:
             $ref: "#/definitions/ProblemJson"
       parameters:
+      - $ref: "#/parameters/FiscalCode"
       - $ref: "#/parameters/PaginationRequest"
     post:
       tags:
@@ -314,6 +295,7 @@ paths:
         (for the specified fiscal code) and that the `sender_allowed` field
         of the user's profile it set to `true`.
       parameters:
+      - $ref: "#/parameters/FiscalCode"
       - name: message
         in: body
         schema:
@@ -371,9 +353,7 @@ paths:
         '200':
           description: Found.
           schema:
-            allOf:
-            - $ref: "#/definitions/LimitedProfile"
-            - $ref: "#/definitions/ExtendedProfile"
+            $ref: "#/definitions/Profile"
           examples:
             application/json:
               email: foobar@example.com
@@ -384,8 +364,8 @@ paths:
           description: No user found for the provided fiscal code.
           schema:
             $ref: "#/definitions/ProblemJson"
-    parameters:
-    - $ref: "#/parameters/FiscalCode"
+      parameters:
+      - $ref: "#/parameters/FiscalCode"
     post:
       tags:
         - restricted
@@ -393,9 +373,7 @@ paths:
         '200':
           description: Profile updated.
           schema:
-            allOf:
-            - $ref: "#/definitions/LimitedProfile"
-            - $ref: "#/definitions/ExtendedProfile"
+            $ref: "#/definitions/ExtendedProfile"
           examples:
             application/json:
               email: foobar@example.com
@@ -406,6 +384,8 @@ paths:
             $ref: "#/definitions/ProblemJson"
         '401':
           description: Unauthorized
+        '404':
+          description: Not found
         '500':
           description: Profile cannot be updated.
           schema:
@@ -416,6 +396,7 @@ paths:
       operationId: upsertProfile
       summary: Updates a User Profile
       parameters:
+      - $ref: "#/parameters/FiscalCode"
       - in: body
         name: body
         schema:
