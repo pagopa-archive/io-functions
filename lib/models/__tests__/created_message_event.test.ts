@@ -11,6 +11,10 @@ describe("", () => {
   it("should validate valid events CreatedMessageEvents", () => {
     const payloads: ReadonlyArray<any> = [
       {
+        content: {
+          markdown: aMessageBodyMarkdown,
+          subject: "test".repeat(10)
+        },
         defaultAddresses: { email: "federico@teamdigitale.governo.it" },
         message: {
           _attachments: "attachments/",
@@ -19,10 +23,6 @@ describe("", () => {
           _self:
             "dbs/LgNRAA==/colls/LgNRANj9nwA=/docs/LgNRANj9nwBgAAAAAAAAAA==/",
           _ts: 1505754168,
-          content: {
-            markdown: aMessageBodyMarkdown,
-            subject: "test".repeat(10)
-          },
           createdAt: new Date().toISOString(),
           fiscalCode: "FRLFRC73E04B157I",
           id: "01BTAZ2HS1PWDJERA510FDXYV4",

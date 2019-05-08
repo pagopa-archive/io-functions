@@ -6,16 +6,18 @@
  */
 
 import * as t from "io-ts";
+import { NonNegativeNumber } from "italia-ts-commons/lib/numbers";
 
+import { MessageContent } from "../api/definitions/MessageContent";
 import { NewMessageDefaultAddresses } from "../api/definitions/NewMessageDefaultAddresses";
 
-import { NewMessageWithContent } from "./message";
+import { NewMessageWithoutContent } from "./message";
 
-import { NonNegativeNumber } from "italia-ts-commons/lib/numbers";
 import { CreatedMessageEventSenderMetadata } from "./created_message_sender_metadata";
 
 const CreatedMessageEventR = t.interface({
-  message: NewMessageWithContent,
+  content: MessageContent,
+  message: NewMessageWithoutContent,
   senderMetadata: CreatedMessageEventSenderMetadata,
   serviceVersion: NonNegativeNumber
 });

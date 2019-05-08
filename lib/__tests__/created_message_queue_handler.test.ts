@@ -15,7 +15,7 @@ process.env = {
 };
 
 import { CreatedMessageEvent } from "../models/created_message_event";
-import { NewMessageWithContent } from "../models/message";
+import { MessageModel, NewMessageWithoutContent } from "../models/message";
 
 import * as functionConfig from "../../CreatedMessageQueueHandler/function.json";
 
@@ -40,7 +40,7 @@ import {
   OrganizationFiscalCode
 } from "italia-ts-commons/lib/strings";
 import * as winston from "winston";
-import { isTransient } from "../utils/errors";
+import { isRecipientError, isTransientError } from "../utils/errors";
 
 import { NotificationChannelEnum } from "../api/definitions/NotificationChannel";
 import { TimeToLiveSeconds } from "../api/definitions/TimeToLiveSeconds";
@@ -58,6 +58,7 @@ import {
 } from "../created_message_queue_handler";
 
 import { HttpsUrl } from "../api/definitions/HttpsUrl";
+import { MessageContent } from "../api/definitions/MessageContent";
 import { MessageSubject } from "../api/definitions/MessageSubject";
 import { ServiceId } from "../api/definitions/ServiceId";
 import { MessageStatusModel } from "../models/message_status";
@@ -103,22 +104,24 @@ const aMessageId = "m123" as NonEmptyString;
 const aServiceId = "s123" as ServiceId;
 const anOrganizationFiscalCode = "00000000000" as OrganizationFiscalCode;
 
-const aMessage: NewMessageWithContent = {
-  content: {
-    markdown: aMessageBodyMarkdown,
-    subject: "test".repeat(10) as MessageSubject
-  },
+const aMessage: NewMessageWithoutContent = {
   createdAt: new Date(),
   fiscalCode: aCorrectFiscalCode,
   id: aMessageId,
   indexedId: aMessageId,
-  kind: "INewMessageWithContent",
+  kind: "INewMessageWithoutContent",
   senderServiceId: aServiceId,
   senderUserId: "u123" as NonEmptyString,
   timeToLiveSeconds: 3600 as TimeToLiveSeconds
 };
 
+const aMessageContent: MessageContent = {
+  markdown: aMessageBodyMarkdown,
+  subject: "test".repeat(10) as MessageSubject
+};
+
 const aMessageEvent: CreatedMessageEvent = {
+  content: aMessageContent,
   message: aMessage,
   senderMetadata: {
     departmentName: "IT" as NonEmptyString,
@@ -135,6 +138,7 @@ const aRetrievedProfileWithEmail: RetrievedProfile = {
   email: anEmail,
   fiscalCode: aCorrectFiscalCode,
   id: "123" as NonEmptyString,
+  isInboxEnabled: true,
   kind: "IRetrievedProfile",
   version: 1 as NonNegativeNumber
 };
@@ -144,6 +148,7 @@ const aRetrievedProfileWithoutEmail: RetrievedProfile = {
   _ts: 123,
   fiscalCode: aCorrectFiscalCode,
   id: "123" as NonEmptyString,
+  isInboxEnabled: true,
   kind: "IRetrievedProfile",
   version: 1 as NonNegativeNumber
 };
@@ -162,14 +167,11 @@ const aCreatedNotificationWithEmail: NewNotification = {
 };
 
 const anEmailNotificationEvent: NotificationEvent = {
-  message: {
-    ...aMessage,
-    content: {
-      markdown: aMessageBodyMarkdown,
-      subject: "test".repeat(10) as MessageSubject
-    },
-    kind: "INewMessageWithContent"
+  content: {
+    markdown: aMessageBodyMarkdown,
+    subject: "test".repeat(10) as MessageSubject
   },
+  message: aMessage,
   notificationId: aCreatedNotificationWithEmail.id,
   senderMetadata: aMessageEvent.senderMetadata
 };
@@ -297,6 +299,14 @@ describe("createdMessageQueueIndex", () => {
       .spyOn(MessageStatusModel.prototype, "upsert")
       .mockReturnValue(Promise.resolve(right(none)));
 
+    jest
+      .spyOn(MessageModel.prototype, "attachStoredContent")
+      .mockReturnValue(Promise.resolve(right(none)));
+
+    jest
+      .spyOn(MessageModel.prototype, "createOrUpdate")
+      .mockReturnValue(Promise.resolve(right(none)));
+
     const profileSpy = jest
       .spyOn(ProfileModel.prototype, "findOneProfileByFiscalCode")
       .mockImplementationOnce(() =>
@@ -368,11 +378,11 @@ describe("handleMessage", () => {
     );
     expect(isLeft(response)).toBeTruthy();
     if (isLeft(response)) {
-      expect(isTransient(response.value)).toBeTruthy();
+      expect(isTransientError(response.value)).toBeTruthy();
     }
   });
 
-  it("should exit with no output bindings if no channel can be resolved", async () => {
+  it("should exit with a RecipientError if recipient profile does not exist", async () => {
     const profileModelMock = {
       findOneProfileByFiscalCode: jest.fn(() => {
         return Promise.resolve(right(none));
@@ -393,9 +403,77 @@ describe("handleMessage", () => {
       aCorrectFiscalCode
     );
 
-    expect(isRight(response)).toBeTruthy();
-    if (isRight(response)) {
-      expect(response.value).toEqual({});
+    expect(isLeft(response)).toBeTruthy();
+    if (isLeft(response)) {
+      expect(isRecipientError(response.value)).toBeTruthy();
+    }
+  });
+
+  it("should exit with a RecipientError if inbox is not yet enabled in profile", async () => {
+    const profileModelMock = {
+      findOneProfileByFiscalCode: jest.fn(() =>
+        Promise.resolve(
+          right(
+            some({
+              ...aRetrievedProfileWithoutEmail,
+              isInboxEnabled: undefined
+            })
+          )
+        )
+      )
+    };
+
+    const response = await handleMessage(
+      profileModelMock as any,
+      {} as any,
+      {} as any,
+      {} as any,
+      {} as any,
+      aUrl,
+      aMessageEvent
+    );
+
+    expect(profileModelMock.findOneProfileByFiscalCode).toHaveBeenCalledWith(
+      aCorrectFiscalCode
+    );
+
+    expect(isLeft(response)).toBeTruthy();
+    if (isLeft(response)) {
+      expect(isRecipientError(response.value)).toBeTruthy();
+    }
+  });
+
+  it("should exit with a RecipientError if inbox is disabled in profile", async () => {
+    const profileModelMock = {
+      findOneProfileByFiscalCode: jest.fn(() =>
+        Promise.resolve(
+          right(
+            some({
+              ...aRetrievedProfileWithoutEmail,
+              isInboxEnabled: false
+            })
+          )
+        )
+      )
+    };
+
+    const response = await handleMessage(
+      profileModelMock as any,
+      {} as any,
+      {} as any,
+      {} as any,
+      {} as any,
+      aUrl,
+      aMessageEvent
+    );
+
+    expect(profileModelMock.findOneProfileByFiscalCode).toHaveBeenCalledWith(
+      aCorrectFiscalCode
+    );
+
+    expect(isLeft(response)).toBeTruthy();
+    if (isLeft(response)) {
+      expect(isRecipientError(response.value)).toBeTruthy();
     }
   });
 
@@ -409,6 +487,13 @@ describe("handleMessage", () => {
         })
       };
 
+      const messageModelMock = {
+        attachStoredContent: jest.fn(() => {
+          return Promise.resolve(right(some(anAttachmentMeta)));
+        }),
+        createOrUpdate: jest.fn((o: any) => Promise.resolve(right(some(o))))
+      };
+
       const notificationModelMock = {
         create: jest.fn(() => {
           return Promise.resolve(right(none));
@@ -417,7 +502,7 @@ describe("handleMessage", () => {
 
       const response = await handleMessage(
         profileModelMock as any,
-        {} as any,
+        messageModelMock as any,
         notificationModelMock as any,
         getSenderServicesModelMock() as any,
         {} as any,
@@ -455,6 +540,13 @@ describe("handleMessage", () => {
         })
       };
 
+      const messageModelMock = {
+        attachStoredContent: jest.fn(() => {
+          return Promise.resolve(right(some(anAttachmentMeta)));
+        }),
+        createOrUpdate: jest.fn((o: any) => Promise.resolve(right(some(o))))
+      };
+
       const notificationModelMock = {
         create: jest.fn(() => {
           return Promise.resolve(right(none));
@@ -463,7 +555,7 @@ describe("handleMessage", () => {
 
       const response = await handleMessage(
         profileModelMock as any,
-        {} as any,
+        messageModelMock as any,
         notificationModelMock as any,
         getSenderServicesModelMock() as any,
         {} as any,
@@ -502,6 +594,13 @@ describe("handleMessage", () => {
         })
       };
 
+      const messageModelMock = {
+        attachStoredContent: jest.fn(() => {
+          return Promise.resolve(right(some(anAttachmentMeta)));
+        }),
+        createOrUpdate: jest.fn((o: any) => Promise.resolve(right(some(o))))
+      };
+
       const notificationModelMock = {
         create: jest.fn(() => {
           return Promise.resolve(right(none));
@@ -510,7 +609,7 @@ describe("handleMessage", () => {
 
       const response = await handleMessage(
         profileModelMock as any,
-        {} as any,
+        messageModelMock as any,
         notificationModelMock as any,
         getSenderServicesModelMock() as any,
         {} as any,
@@ -547,6 +646,13 @@ describe("handleMessage", () => {
       })
     };
 
+    const messageModelMock = {
+      attachStoredContent: jest.fn(() => {
+        return Promise.resolve(right(some(anAttachmentMeta)));
+      }),
+      createOrUpdate: jest.fn((o: any) => Promise.resolve(right(some(o))))
+    };
+
     const notificationModelMock = {
       create: jest.fn(() => {
         return Promise.resolve(right(none));
@@ -555,7 +661,7 @@ describe("handleMessage", () => {
 
     const response = await handleMessage(
       profileModelMock as any,
-      {} as any,
+      messageModelMock as any,
       notificationModelMock as any,
       getSenderServicesModelMock() as any,
       {} as any,
@@ -567,9 +673,9 @@ describe("handleMessage", () => {
       aCorrectFiscalCode
     );
 
-    expect(isRight(response)).toBeTruthy();
-    if (isRight(response)) {
-      expect(response.value).toEqual({});
+    expect(isLeft(response)).toBeTruthy();
+    if (isLeft(response)) {
+      expect(isRecipientError(response.value)).toBeTruthy();
     }
   });
 
@@ -583,6 +689,13 @@ describe("handleMessage", () => {
         })
       };
 
+      const messageModelMock = {
+        attachStoredContent: jest.fn(() => {
+          return Promise.resolve(right(some(anAttachmentMeta)));
+        }),
+        createOrUpdate: jest.fn((o: any) => Promise.resolve(right(some(o))))
+      };
+
       const notificationModelMock = {
         create: jest.fn((document, _) => {
           return Promise.resolve(right(document));
@@ -591,7 +704,7 @@ describe("handleMessage", () => {
 
       const response = await handleMessage(
         profileModelMock as any,
-        {} as any,
+        messageModelMock as any,
         notificationModelMock as any,
         getSenderServicesModelMock() as any,
         {} as any,
@@ -637,6 +750,13 @@ describe("handleMessage", () => {
         })
       };
 
+      const messageModelMock = {
+        attachStoredContent: jest.fn(() => {
+          return Promise.resolve(right(some(anAttachmentMeta)));
+        }),
+        createOrUpdate: jest.fn((o: any) => Promise.resolve(right(some(o))))
+      };
+
       const notificationModelMock = {
         create: jest.fn((document, _) => {
           return Promise.resolve(right(document));
@@ -645,7 +765,7 @@ describe("handleMessage", () => {
 
       const response = await handleMessage(
         profileModelMock as any,
-        {} as any,
+        messageModelMock as any,
         notificationModelMock as any,
         getSenderServicesModelMock() as any,
         {} as any,
@@ -691,6 +811,13 @@ describe("handleMessage", () => {
         })
       };
 
+      const messageModelMock = {
+        attachStoredContent: jest.fn(() => {
+          return Promise.resolve(right(some(anAttachmentMeta)));
+        }),
+        createOrUpdate: jest.fn((o: any) => Promise.resolve(right(some(o))))
+      };
+
       const notificationModelMock = {
         create: jest.fn((document, _) => {
           return Promise.resolve(right(document));
@@ -699,7 +826,7 @@ describe("handleMessage", () => {
 
       const response = await handleMessage(
         profileModelMock as any,
-        {} as any,
+        messageModelMock as any,
         notificationModelMock as any,
         getSenderServicesModelMock() as any,
         {} as any,
@@ -737,72 +864,47 @@ describe("handleMessage", () => {
     }
   );
 
-  it(
-    "should create a notification with an email if a profile does not exists for " +
-      "fiscal code but a default email was provided",
-    async () => {
-      const profileModelMock = {
-        findOneProfileByFiscalCode: jest.fn(() => {
-          return Promise.resolve(right(none));
-        })
-      };
-
-      const notificationModelMock = {
-        create: jest.fn((document, _) => {
-          return Promise.resolve(right(document));
-        })
-      };
-
-      const response = await handleMessage(
-        profileModelMock as any,
-        {} as any,
-        notificationModelMock as any,
-        getSenderServicesModelMock() as any,
-        {} as any,
-        aUrl,
-        {
-          ...aMessageEvent,
-          defaultAddresses: { email: anEmail }
-        }
-      );
-
-      expect(profileModelMock.findOneProfileByFiscalCode).toHaveBeenCalledWith(
-        aCorrectFiscalCode
-      );
-      expect(notificationModelMock.create).toHaveBeenCalledWith(
-        {
-          ...anEmailNotification,
-          channels: {
-            [NotificationChannelEnum.EMAIL]: {
-              ...anEmailNotification.channels.EMAIL,
-              addressSource: NotificationAddressSourceEnum.DEFAULT_ADDRESS
-            }
-          },
-          id: expect.anything(),
-          kind: "INewNotification"
-        },
-        anEmailNotification.messageId
-      );
-
-      expect(isRight(response)).toBeTruthy();
-      if (isRight(response)) {
-        expect(response.value).not.toBeUndefined();
-        expect(response.value.emailNotification).not.toBeUndefined();
-      }
-    }
-  );
-
-  it("should save the message content if the user enabled the feature in its profile", async () => {
+  it("should not create a notification with an email if a profile does not exists", async () => {
     const profileModelMock = {
       findOneProfileByFiscalCode: jest.fn(() => {
-        return Promise.resolve(
-          right(
-            some({
-              ...aRetrievedProfileWithEmail,
-              isInboxEnabled: true
-            })
-          )
-        );
+        return Promise.resolve(right(none));
+      })
+    };
+
+    const notificationModelMock = {
+      create: jest.fn((document, _) => {
+        return Promise.resolve(right(document));
+      })
+    };
+
+    const response = await handleMessage(
+      profileModelMock as any,
+      {} as any,
+      notificationModelMock as any,
+      getSenderServicesModelMock() as any,
+      {} as any,
+      aUrl,
+      {
+        ...aMessageEvent,
+        defaultAddresses: { email: anEmail }
+      }
+    );
+
+    expect(profileModelMock.findOneProfileByFiscalCode).toHaveBeenCalledWith(
+      aCorrectFiscalCode
+    );
+    expect(notificationModelMock.create).not.toHaveBeenCalled();
+
+    expect(isLeft(response)).toBeTruthy();
+    if (isLeft(response)) {
+      expect(isRecipientError(response.value)).toBeTruthy();
+    }
+  });
+
+  it("should save the message content if the inbox is enabled globally", async () => {
+    const profileModelMock = {
+      findOneProfileByFiscalCode: jest.fn(() => {
+        return Promise.resolve(right(some(aRetrievedProfileWithEmail)));
       })
     };
 
@@ -814,7 +916,8 @@ describe("handleMessage", () => {
     const messageModelMock = {
       attachStoredContent: jest.fn(() => {
         return Promise.resolve(right(some(anAttachmentMeta)));
-      })
+      }),
+      createOrUpdate: jest.fn((o: any) => Promise.resolve(right(some(o))))
     };
 
     const notificationModelMock = {
@@ -863,6 +966,80 @@ describe("handleMessage", () => {
     if (isRight(response)) {
       expect(response.value).not.toBeUndefined();
       expect(response.value.emailNotification).not.toBeUndefined();
+    }
+  });
+
+  it("should update the message by changing the pending flag to false once the message content has been saved", async () => {
+    const profileModelMock = {
+      findOneProfileByFiscalCode: jest.fn(() => {
+        return Promise.resolve(right(some(aRetrievedProfileWithEmail)));
+      })
+    };
+
+    const messageModelMock = {
+      attachStoredContent: jest.fn(() => {
+        return Promise.resolve(right(some(anAttachmentMeta)));
+      }),
+      createOrUpdate: jest.fn((o: any) => Promise.resolve(right(some(o))))
+    };
+
+    const notificationModelMock = {
+      create: jest.fn((document, _) => {
+        return Promise.resolve(right(document));
+      })
+    };
+
+    await handleMessage(
+      profileModelMock as any,
+      messageModelMock as any,
+      notificationModelMock as any,
+      getSenderServicesModelMock() as any,
+      aBlobService as any,
+      aUrl,
+      {
+        ...aMessageEvent,
+        defaultAddresses: { email: anEmail }
+      }
+    );
+
+    expect(messageModelMock.createOrUpdate).toHaveBeenCalledWith(
+      { ...aMessageEvent.message, isPending: false },
+      aMessageEvent.message.fiscalCode
+    );
+  });
+
+  it("should return a TRANSIENT error if updating the message fails", async () => {
+    const profileModelMock = {
+      findOneProfileByFiscalCode: jest.fn(() => {
+        return Promise.resolve(right(some(aRetrievedProfileWithEmail)));
+      })
+    };
+
+    const messageModelMock = {
+      attachStoredContent: jest.fn(() => {
+        return Promise.resolve(right(some(anAttachmentMeta)));
+      }),
+      createOrUpdate: jest.fn(() => Promise.resolve(left("error")))
+    };
+
+    const response = await handleMessage(
+      profileModelMock as any,
+      messageModelMock as any,
+      {} as any,
+      {} as any,
+      aBlobService as any,
+      aUrl,
+      aMessageEvent
+    );
+
+    expect(messageModelMock.createOrUpdate).toHaveBeenCalledWith(
+      { ...aMessageEvent.message, isPending: false },
+      aMessageEvent.message.fiscalCode
+    );
+
+    expect(isLeft(response)).toBeTruthy();
+    if (isLeft(response)) {
+      expect(isTransientError(response.value)).toBeTruthy();
     }
   });
 
@@ -925,9 +1102,8 @@ describe("handleMessage", () => {
     );
 
     expect(isLeft(response)).toBeTruthy();
-    expect(isLeft(response)).toBeTruthy();
     if (isLeft(response)) {
-      expect(isTransient(response.value)).toBeTruthy();
+      expect(isTransientError(response.value)).toBeTruthy();
     }
   });
 
@@ -938,6 +1114,13 @@ describe("handleMessage", () => {
       })
     };
 
+    const messageModelMock = {
+      attachStoredContent: jest.fn(() => {
+        return Promise.resolve(right(some(anAttachmentMeta)));
+      }),
+      createOrUpdate: jest.fn((o: any) => Promise.resolve(right(some(o))))
+    };
+
     const notificationModelMock = {
       create: jest.fn((_, __) => {
         return Promise.resolve(left(none));
@@ -946,7 +1129,7 @@ describe("handleMessage", () => {
 
     const response = await handleMessage(
       profileModelMock as any,
-      {} as any,
+      messageModelMock as any,
       notificationModelMock as any,
       getSenderServicesModelMock() as any,
       {} as any,
@@ -959,7 +1142,7 @@ describe("handleMessage", () => {
     );
     expect(isLeft(response)).toBeTruthy();
     if (isLeft(response)) {
-      expect(isTransient(response.value)).toBeTruthy();
+      expect(isTransientError(response.value)).toBeTruthy();
     }
   });
 });

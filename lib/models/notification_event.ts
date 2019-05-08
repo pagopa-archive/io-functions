@@ -2,8 +2,10 @@ import * as t from "io-ts";
 
 import { NonEmptyString } from "italia-ts-commons/lib/strings";
 
+import { MessageContent } from "../api/definitions/MessageContent";
+
 import { CreatedMessageEventSenderMetadata } from "./created_message_sender_metadata";
-import { NewMessageWithContent } from "./message";
+import { NewMessageWithoutContent } from "./message";
 
 /**
  * Payload of a notification event.
@@ -12,7 +14,8 @@ import { NewMessageWithContent } from "./message";
  * have been configured for that notification.
  */
 export const NotificationEvent = t.interface({
-  message: NewMessageWithContent,
+  content: MessageContent,
+  message: NewMessageWithoutContent,
   notificationId: NonEmptyString,
   senderMetadata: CreatedMessageEventSenderMetadata
 });

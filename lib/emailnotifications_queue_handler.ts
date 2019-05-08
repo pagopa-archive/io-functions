@@ -43,7 +43,7 @@ import { MessageSubject } from "./api/definitions/MessageSubject";
 import defaultEmailTemplate from "./templates/html/default";
 import {
   ExpiredError,
-  isExpired,
+  isExpiredError,
   PermanentError,
   RuntimeError,
   TransientError
@@ -236,7 +236,12 @@ export async function handleNotification(
   emailNotificationEvent: NotificationEvent,
   notificationDefaultParams: INotificationDefaults
 ): Promise<Either<RuntimeError, NotificationEvent>> {
-  const { message, notificationId, senderMetadata } = emailNotificationEvent;
+  const {
+    message,
+    content,
+    notificationId,
+    senderMetadata
+  } = emailNotificationEvent;
 
   // Check if the message is not expired
   const errorOrActiveMessage = ActiveMessage.decode(message);
@@ -300,8 +305,8 @@ export async function handleNotification(
   const emailNotification = errorOrEmailNotification.value.channels.EMAIL;
 
   const documentHtml = await generateDocumentHtml(
-    message.content.subject,
-    message.content.markdown,
+    content.subject,
+    content.markdown,
     senderMetadata
   );
 
@@ -323,7 +328,7 @@ export async function handleNotification(
     },
     html: documentHtml,
     messageId: message.id,
-    subject: message.content.subject,
+    subject: content.subject,
     text: bodyText,
     to: emailNotification.toAddress
     // priority: "high", // TODO: set based on kind of notification
@@ -464,7 +469,7 @@ export async function index(
     .then(errorOrEmailNotificationEvt =>
       errorOrEmailNotificationEvt.fold(
         async error => {
-          if (isExpired(error)) {
+          if (isExpiredError(error)) {
             // message is expired. try to save the notification status into the database
             const errorOrUpdateNotificationStatus = await notificationStatusUpdater(
               NotificationChannelStatusValueEnum.EXPIRED

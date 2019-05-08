@@ -19,7 +19,7 @@ import * as documentDbUtils from "./utils/documentdb";
 
 import { Set } from "json-set-map";
 
-import { fromNullable, none, Option, some } from "fp-ts/lib/Option";
+import { fromNullable, isNone, none, Option, some } from "fp-ts/lib/Option";
 
 import {
   BlobService,
@@ -35,7 +35,7 @@ import { CreatedMessageEvent } from "./models/created_message_event";
 import {
   MESSAGE_COLLECTION_NAME,
   MessageModel,
-  NewMessageWithContent
+  NewMessageWithoutContent
 } from "./models/message";
 import {
   createNewNotification,
@@ -57,29 +57,36 @@ import { Either, isLeft, left, right } from "fp-ts/lib/Either";
 import { readableReport } from "italia-ts-commons/lib/reporters";
 
 import { handleQueueProcessingFailure } from "./utils/azure_queues";
-import { RuntimeError, TransientError } from "./utils/errors";
+import {
+  isRecipientError,
+  RecipientError,
+  RuntimeError,
+  TransientError
+} from "./utils/errors";
 
 import { MessageStatusValueEnum } from "./api/definitions/MessageStatusValue";
 import { NotificationChannelEnum } from "./api/definitions/NotificationChannel";
 
 import { NonEmptyString } from "italia-ts-commons/lib/strings";
 import { withoutUndefinedValues } from "italia-ts-commons/lib/types";
+
+import { TelemetryClient } from "applicationinsights";
 import { BlockedInboxOrChannelEnum } from "./api/definitions/BlockedInboxOrChannel";
 import { HttpsUrl } from "./api/definitions/HttpsUrl";
+import { MessageContent } from "./api/definitions/MessageContent";
+
 import { CreatedMessageEventSenderMetadata } from "./models/created_message_sender_metadata";
 import {
   getMessageStatusUpdater,
   MESSAGE_STATUS_COLLECTION_NAME,
   MessageStatusModel
 } from "./models/message_status";
-
 import {
   newSenderService,
   SENDER_SERVICE_COLLECTION_NAME,
   SenderServiceModel
 } from "./models/sender_service";
 
-import { TelemetryClient } from "applicationinsights";
 import { wrapCustomTelemetryClient } from "./utils/application_insights";
 
 import { ulidGenerator } from "./utils/strings";
@@ -224,7 +231,8 @@ function getEmailAddressFromProfile(
 async function createNotification(
   lNotificationModel: NotificationModel,
   senderMetadata: CreatedMessageEventSenderMetadata,
-  newMessageWithContent: NewMessageWithContent,
+  newMessageWithoutContent: NewMessageWithoutContent,
+  newMessageContent: MessageContent,
   newNotification: NewNotification
 ): Promise<Either<RuntimeError, NotificationEvent>> {
   const errorOrNotification = await lNotificationModel.create(
@@ -241,10 +249,8 @@ async function createNotification(
   const notification = errorOrNotification.value;
 
   const notificationEvent: NotificationEvent = {
-    message: {
-      ...newMessageWithContent,
-      kind: "INewMessageWithContent"
-    },
+    content: newMessageContent,
+    message: newMessageWithoutContent,
     notificationId: notification.id,
     senderMetadata
   };
@@ -259,6 +265,7 @@ async function createNotification(
  *          a TransientError in case of recoverable errors
  *          a PermanentError in case of unrecoverable error
  */
+// tslint:disable-next-line:no-big-function
 export async function handleMessage(
   lProfileModel: ProfileModel,
   lMessageModel: MessageModel,
@@ -268,14 +275,14 @@ export async function handleMessage(
   lDefaultWebhookUrl: HttpsUrl,
   createdMessageEvent: CreatedMessageEvent
 ): Promise<Either<RuntimeError, OutputBindings>> {
-  const newMessageWithContent = createdMessageEvent.message;
+  const newMessageWithoutContent = createdMessageEvent.message;
   const defaultAddresses = fromNullable(createdMessageEvent.defaultAddresses);
   const senderMetadata = createdMessageEvent.senderMetadata;
 
   // fetch user's profile associated to the fiscal code
   // of the recipient of the message
   const errorOrMaybeProfile = await lProfileModel.findOneProfileByFiscalCode(
-    newMessageWithContent.fiscalCode
+    newMessageWithoutContent.fiscalCode
   );
 
   if (isLeft(errorOrMaybeProfile)) {
@@ -289,17 +296,25 @@ export async function handleMessage(
 
   const maybeProfile = errorOrMaybeProfile.value;
 
+  if (isNone(maybeProfile)) {
+    // the recipient doesn't have any profile yet
+    return left<RuntimeError, OutputBindings>(
+      RecipientError("Recipient profile does not exist.")
+    );
+  }
+
+  const profile = maybeProfile.value;
+
   // channels ther user has blocked for this sender service
-  const blockedInboxOrChannels = maybeProfile
-    .chain(profile => fromNullable(profile.blockedInboxOrChannels))
+  const blockedInboxOrChannels = fromNullable(profile.blockedInboxOrChannels)
     .chain((bc: IProfileBlockedInboxOrChannels) =>
-      fromNullable(bc[newMessageWithContent.senderServiceId])
+      fromNullable(bc[newMessageWithoutContent.senderServiceId])
     )
     .getOrElse(new Set());
 
   winston.debug(
     "handleMessage|Blocked Channels(%s): %s",
-    newMessageWithContent.fiscalCode,
+    newMessageWithoutContent.fiscalCode,
     JSON.stringify(blockedInboxOrChannels)
   );
 
@@ -307,31 +322,56 @@ export async function handleMessage(
   //  Inbox storage
   //
 
-  // check if the user has blocked inbox message storage from this service
+  // a profile exists and the global inbox flag is enabled
+  const isInboxEnabled = profile.isInboxEnabled === true;
+
+  if (!isInboxEnabled) {
+    // the recipient's inbox is disabled
+    return left<RuntimeError, OutputBindings>(
+      RecipientError("Recipient inbox is disabled.")
+    );
+  }
+
+  // whether the user has blocked inbox storage for messages from this sender
   const isMessageStorageBlockedForService = blockedInboxOrChannels.has(
     BlockedInboxOrChannelEnum.INBOX
   );
 
-  // whether the recipient wants us to store the message content
-  const isMessageStorageEnabledAndAllowedForService =
-    !isMessageStorageBlockedForService &&
-    maybeProfile.exists(profile => profile.isInboxEnabled === true);
-
-  if (isMessageStorageEnabledAndAllowedForService) {
-    // Save the content of the message to the blob storage.
-    // In case of a retry this operation will overwrite the message content with itself
-    // (this is fine as we don't know if the operation succeeded at first)
-    const errorOrAttachment = await lMessageModel.attachStoredContent(
-      lBlobService,
-      newMessageWithContent.id,
-      newMessageWithContent.fiscalCode,
-      newMessageWithContent.content
+  if (isMessageStorageBlockedForService) {
+    // the recipient's inbox is disabled
+    return left<RuntimeError, OutputBindings>(
+      RecipientError("Sender is blocked by recipient.")
     );
-    if (isLeft(errorOrAttachment)) {
-      return left<RuntimeError, OutputBindings>(
-        TransientError("Cannot store message content")
-      );
-    }
+  }
+
+  // Save the content of the message to the blob storage.
+  // In case of a retry this operation will overwrite the message content with itself
+  // (this is fine as we don't know if the operation succeeded at first)
+  const errorOrAttachment = await lMessageModel.attachStoredContent(
+    lBlobService,
+    newMessageWithoutContent.id,
+    newMessageWithoutContent.fiscalCode,
+    createdMessageEvent.content
+  );
+  if (isLeft(errorOrAttachment)) {
+    return left<RuntimeError, OutputBindings>(
+      TransientError("Cannot store message content")
+    );
+  }
+
+  // Now that the message content has been stored, we can make the message
+  // visible to getMessages by changing the pending flag to false
+  const updatedMessageOrError = await lMessageModel.createOrUpdate(
+    {
+      ...newMessageWithoutContent,
+      isPending: false
+    },
+    createdMessageEvent.message.fiscalCode
+  );
+  if (isLeft(updatedMessageOrError)) {
+    return left<RuntimeError, OutputBindings>(
+      TransientError("Cannot update message pending status")
+    );
   }
 
   //
@@ -341,22 +381,20 @@ export async function handleMessage(
   // check if the user has blocked emails sent from this service
   // 'some(true)' in case we must send the notification by email
   // 'none' in case the user has blocked the email channel
-  const isEmailBlockedForService =
-    isMessageStorageBlockedForService ||
-    blockedInboxOrChannels.has(BlockedInboxOrChannelEnum.EMAIL);
+  const isEmailBlockedForService = blockedInboxOrChannels.has(
+    BlockedInboxOrChannelEnum.EMAIL
+  );
 
   const maybeAllowedEmailNotification = isEmailBlockedForService
     ? none
-    : maybeProfile
-        // try to get the destination email address from the user's profile
-        .chain(getEmailAddressFromProfile)
+    : getEmailAddressFromProfile(profile)
         // if it's not set, or we don't have a profile for this fiscal code,
         // try to get the default email address from the request payload
         .alt(defaultAddresses.chain(getEmailAddressFromDefaultAddresses))
         .orElse(() => {
           winston.debug(
             `handleMessage|User profile has no email address set and no default address was provided|${
-              newMessageWithContent.fiscalCode
+              newMessageWithoutContent.fiscalCode
             }`
           );
           return none;
@@ -367,14 +405,12 @@ export async function handleMessage(
   //
 
   // check if the user has blocked webhook notifications sent from this service
-  const isWebhookBlockedForService =
-    isMessageStorageBlockedForService ||
-    blockedInboxOrChannels.has(BlockedInboxOrChannelEnum.WEBHOOK);
+  const isWebhookBlockedForService = blockedInboxOrChannels.has(
+    BlockedInboxOrChannelEnum.WEBHOOK
+  );
 
   // whether the recipient wants us to send notifications to the app backend
-  const isWebhookBlockedInProfile = maybeProfile.exists(
-    profile => profile.isWebhookEnabled === true
-  );
+  const isWebhookBlockedInProfile = profile.isWebhookEnabled === true;
 
   const isWebhookEnabled =
     !isWebhookBlockedForService && isWebhookBlockedInProfile;
@@ -388,12 +424,12 @@ export async function handleMessage(
   // store fiscalCode -> serviceId
   const errorOrSenderService = await lSenderServiceModel.createOrUpdate(
     newSenderService(
-      newMessageWithContent.fiscalCode,
-      newMessageWithContent.senderServiceId,
+      newMessageWithoutContent.fiscalCode,
+      newMessageWithoutContent.senderServiceId,
       createdMessageEvent.serviceVersion
     ),
     // partition key
-    newMessageWithContent.fiscalCode
+    newMessageWithoutContent.fiscalCode
   );
 
   if (isLeft(errorOrSenderService)) {
@@ -412,7 +448,7 @@ export async function handleMessage(
   if (noChannelsConfigured) {
     winston.debug(
       `handleMessage|No channels configured for the user ${
-        newMessageWithContent.fiscalCode
+        newMessageWithoutContent.fiscalCode
       } and no default address provided`
     );
     // return no notifications
@@ -423,8 +459,8 @@ export async function handleMessage(
   const newNotification: NewNotification = {
     ...createNewNotification(
       ulidGenerator,
-      newMessageWithContent.fiscalCode,
-      newMessageWithContent.id
+      newMessageWithoutContent.fiscalCode,
+      newMessageWithoutContent.id
     ),
     channels: withoutUndefinedValues({
       [NotificationChannelEnum.EMAIL]: maybeAllowedEmailNotification.toUndefined(),
@@ -435,7 +471,8 @@ export async function handleMessage(
   const errorOrNotificationEvent = await createNotification(
     lNotificationModel,
     senderMetadata,
-    newMessageWithContent,
+    newMessageWithoutContent,
+    createdMessageEvent.content,
     newNotification
   );
 
@@ -581,7 +618,7 @@ export async function index(
           return messageStatusUpdater(MessageStatusValueEnum.THROTTLED);
         },
         // execute in case of permanent errors
-        () => {
+        runtimeError => {
           appInsightsClient.trackEvent({
             measurements: {
               elapsed: Date.now() - newMessageWithContent.createdAt.getTime()
@@ -593,7 +630,11 @@ export async function index(
               transient: "false"
             }
           });
-          return messageStatusUpdater(MessageStatusValueEnum.FAILED);
+          return messageStatusUpdater(
+            isRecipientError(runtimeError)
+              ? MessageStatusValueEnum.REJECTED
+              : MessageStatusValueEnum.FAILED
+          );
         },
         error
       )

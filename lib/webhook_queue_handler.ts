@@ -34,7 +34,7 @@ import { NotificationEvent } from "./models/notification_event";
 
 import {
   ExpiredError,
-  isExpired,
+  isExpiredError,
   PermanentError,
   RuntimeError,
   TransientError
@@ -51,9 +51,10 @@ import { NonEmptyString } from "italia-ts-commons/lib/strings";
 import { UrlFromString } from "italia-ts-commons/lib/url";
 import { CreatedMessageWithContent } from "./api/definitions/CreatedMessageWithContent";
 import { HttpsUrl } from "./api/definitions/HttpsUrl";
+import { MessageContent } from "./api/definitions/MessageContent";
 import { SenderMetadata } from "./api/definitions/SenderMetadata";
 import { CreatedMessageEventSenderMetadata } from "./models/created_message_sender_metadata";
-import { ActiveMessage, NewMessageWithContent } from "./models/message";
+import { ActiveMessage, NewMessageWithoutContent } from "./models/message";
 import {
   getNotificationStatusUpdater,
   NOTIFICATION_STATUS_COLLECTION_NAME,
@@ -137,10 +138,11 @@ const DEFAULT_REQUEST_TIMEOUT_MS = 10000;
  * to the one of the public API
  */
 function newMessageToPublic(
-  newMessage: NewMessageWithContent
+  newMessage: NewMessageWithoutContent,
+  content: MessageContent
 ): CreatedMessageWithContent {
   return {
-    content: newMessage.content,
+    content,
     created_at: newMessage.createdAt,
     fiscal_code: newMessage.fiscalCode,
     id: newMessage.id,
@@ -167,7 +169,8 @@ function senderMetadataToPublic(
  */
 export async function sendToWebhook(
   webhookEndpoint: HttpsUrl,
-  message: NewMessageWithContent,
+  message: NewMessageWithoutContent,
+  content: MessageContent,
   senderMetadata: CreatedMessageEventSenderMetadata
 ): Promise<Either<RuntimeError, request.Response>> {
   return request("POST", webhookEndpoint)
@@ -175,7 +178,7 @@ export async function sendToWebhook(
     .set("Content-Type", "application/json")
     .accept("application/json")
     .send({
-      message: newMessageToPublic(message),
+      message: newMessageToPublic(message, content),
       sender_metadata: senderMetadataToPublic(senderMetadata)
     })
     .then(
@@ -223,7 +226,12 @@ export async function handleNotification(
   lNotificationModel: NotificationModel,
   webhookNotificationEvent: NotificationEvent
 ): Promise<Either<RuntimeError, NotificationEvent>> {
-  const { message, notificationId, senderMetadata } = webhookNotificationEvent;
+  const {
+    content,
+    message,
+    notificationId,
+    senderMetadata
+  } = webhookNotificationEvent;
 
   // Check if the message is not expired
   const errorOrActiveMessage = ActiveMessage.decode(message);
@@ -291,6 +299,7 @@ export async function handleNotification(
   const sendResult = await sendToWebhook(
     webhookNotification.url,
     message,
+    content,
     senderMetadata
   );
 
@@ -399,7 +408,7 @@ export async function index(
     .then(errorOrWebhookNotificationEvt =>
       errorOrWebhookNotificationEvt.fold(
         async error => {
-          if (isExpired(error)) {
+          if (isExpiredError(error)) {
             // message is expired. try to save the notification status into the database
             const errorOrUpdateNotificationStatus = await notificationStatusUpdater(
               NotificationChannelStatusValueEnum.EXPIRED
