@@ -2,43 +2,64 @@
 #
 # Check https://circleci.com/docs/2.0/language-javascript/ for more details
 #
+
+node_cache_key: &node_cache_key v1.1-dependencies-{{ checksum "yarn.lock" }}
+
+restore_node_cache: &restore_node_cache
+  restore_cache:
+    keys:
+      - *node_cache_key
+
+save_node_cache: &save_node_cache
+  save_cache:
+    paths:
+      - node_modules
+    key: *node_cache_key
+
+install_node_modules: &install_node_modules
+  run: yarn install --frozen-lockfile --no-progress --non-interactive --network-concurrency 1
+
 version: 2
 jobs:
-  build:
+
+  lint-api:
+    docker:
+      - image: circleci/node:10
+    working_directory: ~/repo
+    steps:
+      - checkout
+      - run: npm install oval
+      - run: npx oval validate -p api/public_api_v1.yaml
+      - run: npx oval validate -p api/admin_api.yaml
+
+  danger:
+    docker:
+      - image: circleci/node:10
+    working_directory: ~/repo
+    steps:
+      - checkout
+      - *restore_node_cache
+      - *install_node_modules
+      - run: '[ -z "$DANGER_GITHUB_API_TOKEN" ] || yarn danger ci'
+
+  tests:
     docker:
       - image: circleci/node:6.11.2
-
-      # Specify service dependencies here if necessary
-      # CircleCI maintains a library of pre-built images
-      # documented at https://circleci.com/docs/2.0/circleci-images/
-      # - image: circleci/mongo:3.4.4
 
     working_directory: ~/repo
 
     steps:
       - checkout
 
-      # Download and cache dependencies
-      - restore_cache:
-          keys:
-          - v1-dependencies-{{ checksum "yarn.lock" }}
-          # fallback to using the latest cache if no exact match is found
-          - v1-dependencies-
-
-      - run: yarn install
-
-      - save_cache:
-          paths:
-            - node_modules
-          key: v1-dependencies-{{ checksum "yarn.lock" }}
-
+      - *restore_node_cache
+      - *install_node_modules
 
       # setup codeclimate
       - run: curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
       - run: chmod +x ./cc-test-reporter
 
-      # run build
-      - run: yarn build
+      # generate code
+      - run: yarn generate:all
 
       # run tests!
       - run: '[ -z "$CC_TEST_REPORTER_ID" ] || ./cc-test-reporter before-build'
@@ -46,5 +67,39 @@ jobs:
       - run: '[ -z "$CC_TEST_REPORTER_ID" ] || (./cc-test-reporter after-build -t lcov < ./coverage/lcov.info)'
       - run: 'bash <(curl -s https://codecov.io/bash)'
 
-      # Run DangerJS
-      - run: '[ -z "$DANGER_GITHUB_API_TOKEN" ] || yarn danger ci'
+  lint-typescript:
+    docker:
+      - image: circleci/node:6.11.2
+    working_directory: ~/repo
+    steps:
+      - checkout
+      - *restore_node_cache
+      - *install_node_modules
+      - run: yarn lint
+
+  build:
+    docker:
+      - image: circleci/node:6.11.2
+
+    working_directory: ~/repo
+
+    steps:
+      - checkout
+
+      - *restore_node_cache
+      - *install_node_modules
+      - *save_node_cache
+
+      # run build
+      - run: yarn build
+
+workflows:
+  version: 2
+  build:
+    jobs:
+      - lint-api
+      - lint-typescript
+      - danger
+      - tests
+      - build
+

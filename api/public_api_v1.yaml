@@ -8,16 +8,16 @@ info:
   x-logo:
     url: https://io.italia.it/assets/img/io-logo-blue.svg
   description: >
-  
+
     # Warning / Avvertenza
-  
+
       **Questa è una API sperimentale che (probabilmente)
       subirà dei cambiamenti mano a mano che il servizio di
       messaggistica IO si evolverà.**
 
-      **This is an experimental API that is (most probably) 
+      **This is an experimental API that is (most probably)
       going to change as we evolve the IO Messaging service.**
-      
+
     # Introduction
 
     This is the documentation of the Digital Citizenship API.
@@ -66,9 +66,9 @@ info:
         via [PagoPA](https://www.agid.gov.it/it/piattaforme/pagopa).
       * An optional `due_date`: a _due date_ that let the recipient
         add a reminder when receiving the message. The format for all
-        dates is [ISO8601](https://it.wikipedia.org/wiki/ISO_8601) with time 
+        dates is [ISO8601](https://it.wikipedia.org/wiki/ISO_8601) with time
         information and UTC timezone (ie. "2018-10-13T00:00:00.000Z").
-        
+
     ## Allowed Markdown formatting
 
     Not all Markdown formatting is currently available. Currently you can use
@@ -140,6 +140,8 @@ paths:
               service_id: 2b3e728c1a5d1efa035c
               service_name: service
               version: 1
+        '401':
+          description: Unauthorized
         '404':
           description: No service found for the provided ID.
       parameters: []
@@ -156,20 +158,18 @@ paths:
         '200':
           description: Found.
           schema:
-            allOf:
-            - type: object
-              properties:
-                items:
-                  type: array
-                  items:
-                    $ref: "#/definitions/ServiceTuple"
-            - $ref: "#/definitions/PaginationResponse"
+            $ref: "#/definitions/PaginatedServiceTupleCollection"
+        '401':
+          description: Unauthorized
       parameters:
       - name: recipient
         in: path
         type: string
         required: true
         description: The recipient's fiscal code.
+        minLength: 16
+        maxLength: 16
+        pattern: "[A-Z]{6}[0-9LMNPQRSTUV]{2}[ABCDEHLMPRST][0-9LMNPQRSTUV]{2}[A-Z][0-9LMNPQRSTUV]{3}[A-Z]"
   "/services":
     get:
       tags:
@@ -182,22 +182,10 @@ paths:
         '200':
           description: Found.
           schema:
-            allOf:
-            - type: object
-              properties:
-                items:
-                  type: array
-                  items:
-                    $ref: "#/definitions/ServiceTuple"
-            - $ref: "#/definitions/PaginationResponse"
+            $ref: "#/definitions/PaginatedServiceTupleCollection"
+        '401':
+          description: Unauthorized
   "/messages/{fiscal_code}/{id}":
-    parameters:
-    - $ref: "#/parameters/FiscalCode"
-    - name: id
-      in: path
-      type: string
-      required: true
-      description: The ID of the message.
     get:
       tags:
         - public
@@ -207,6 +195,13 @@ paths:
       description: |-
         The previously created message with the provided message ID is
         returned.
+      parameters:
+      - $ref: "#/parameters/FiscalCode"
+      - name: id
+        in: path
+        type: string
+        required: true
+        description: The ID of the message.
       responses:
         '200':
           description: Message found.
@@ -229,13 +224,13 @@ paths:
                 sender_service_id: 01BX9NSMKVXXS5PSP2FATZM6QX
               notification:
                 email: QUEUED
+        '401':
+          description: Unauthorized
         '404':
           description: No message found for the provided ID.
           schema:
             $ref: "#/definitions/ProblemJson"
   "/messages/{fiscal_code}":
-    parameters:
-    - $ref: "#/parameters/FiscalCode"
     get:
       tags:
         - restricted
@@ -249,14 +244,7 @@ paths:
         '200':
           description: Found.
           schema:
-            allOf:
-            - type: object
-              properties:
-                items:
-                  type: array
-                  items:
-                    $ref: "#/definitions/CreatedMessageWithoutContent"
-            - $ref: "#/definitions/PaginationResponse"
+            $ref: "#/definitions/PaginatedCreatedMessageWithoutContentCollection"
           examples:
             application/json:
               items:
@@ -285,11 +273,14 @@ paths:
                 sender_service_id: 01BX9NSMKVXXS5PSP2FATZMWWW
               page_size: 2
               next: https://example.com/next
+        '401':
+          description: Unauthorized
         '404':
           description: No message found.
           schema:
             $ref: "#/definitions/ProblemJson"
       parameters:
+      - $ref: "#/parameters/FiscalCode"
       - $ref: "#/parameters/PaginationRequest"
     post:
       tags:
@@ -304,6 +295,7 @@ paths:
         (for the specified fiscal code) and that the `sender_allowed` field
         of the user's profile it set to `true`.
       parameters:
+      - $ref: "#/parameters/FiscalCode"
       - name: message
         in: body
         schema:
@@ -341,6 +333,8 @@ paths:
           schema:
             $ref: "#/definitions/ProblemJson"
           examples: {}
+        '401':
+          description: Unauthorized
         '500':
           description: The message cannot be delivered.
           schema:
@@ -359,19 +353,19 @@ paths:
         '200':
           description: Found.
           schema:
-            allOf:
-            - $ref: "#/definitions/LimitedProfile"
-            - $ref: "#/definitions/ExtendedProfile"
+            $ref: "#/definitions/Profile"
           examples:
             application/json:
               email: foobar@example.com
               version: 1
+        '401':
+          description: Unauthorized
         '404':
           description: No user found for the provided fiscal code.
           schema:
             $ref: "#/definitions/ProblemJson"
-    parameters:
-    - $ref: "#/parameters/FiscalCode"
+      parameters:
+      - $ref: "#/parameters/FiscalCode"
     post:
       tags:
         - restricted
@@ -379,9 +373,7 @@ paths:
         '200':
           description: Profile updated.
           schema:
-            allOf:
-            - $ref: "#/definitions/LimitedProfile"
-            - $ref: "#/definitions/ExtendedProfile"
+            $ref: "#/definitions/ExtendedProfile"
           examples:
             application/json:
               email: foobar@example.com
@@ -390,6 +382,10 @@ paths:
           description: Invalid payload.
           schema:
             $ref: "#/definitions/ProblemJson"
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
         '500':
           description: Profile cannot be updated.
           schema:
@@ -400,6 +396,7 @@ paths:
       operationId: upsertProfile
       summary: Updates a User Profile
       parameters:
+      - $ref: "#/parameters/FiscalCode"
       - in: body
         name: body
         schema:
@@ -419,7 +416,7 @@ paths:
             type: object
             properties: {}
         '401':
-          description: Returns unauthorized when the API-key if empty or wrong.
+          description: Unauthorized
       description: An endpoint to test authenticated access to the API backend.
       summary: API test endpoint
 definitions:
