@@ -1,20 +1,22 @@
 {
-  "scriptFile": "../lib/index.js",
-  "disabled": false,
-  "bindings": [
-    {
-      "schedule": "0 */15 * * * *",
-      "name": "ComputeVisibleServiceTimerTrigger",
-      "type": "timerTrigger",
-      "direction": "in"
-    },
-    {
-      "name": "visibleServicesBlob",
-      "type": "blob",
-      "path": "cached/visible-services.json",
-      "connection": "QueueStorageConnection",
-      "direction": "out"
-    }  
-  ],
-  "entryPoint": "ComputeVisibleServices"
+ "scriptFile": "../.funcpack/index.js",
+ "disabled": false,
+ "bindings": [
+  {
+   "schedule": "0 */15 * * * *",
+   "name": "ComputeVisibleServiceTimerTrigger",
+   "type": "timerTrigger",
+   "direction": "in"
+  },
+  {
+   "name": "visibleServicesBlob",
+   "type": "blob",
+   "path": "cached/visible-services.json",
+   "connection": "QueueStorageConnection",
+   "direction": "out"
+  }
+ ],
+ "entryPoint": "ComputeVisibleServices",
+ "_originalEntryPoint": "ComputeVisibleServices",
+ "_originalScriptFile": "../lib/index.js"
 }
