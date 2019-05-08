@@ -15,6 +15,7 @@ import { Option } from "fp-ts/lib/Option";
 
 import { NonNegativeNumber } from "italia-ts-commons/lib/numbers";
 import { NonEmptyString } from "italia-ts-commons/lib/strings";
+import { AcceptedTosVersion } from "../api/definitions/AcceptedTosVersion";
 import { BlockedInboxOrChannel } from "../api/definitions/BlockedInboxOrChannel";
 import { EmailAddress } from "../api/definitions/EmailAddress";
 import { FiscalCode } from "../api/definitions/FiscalCode";
@@ -58,6 +59,9 @@ export const Profile = t.intersection([
 
     // whether to store the content of messages sent to this citizen
     isInboxEnabled: IsInboxEnabled,
+
+    // Version of terms of services accepted by citizen
+    acceptedTosVersion: AcceptedTosVersion,
 
     // whether to push notifications to the default webhook
     isWebhookEnabled: IsWebhookEnabled,
