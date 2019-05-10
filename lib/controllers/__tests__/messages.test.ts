@@ -146,6 +146,7 @@ const aNewMessageWithoutContent: NewMessageWithoutContent = {
   fiscalCode: aFiscalCode,
   id: "A_MESSAGE_ID" as NonEmptyString,
   indexedId: "A_MESSAGE_ID" as NonEmptyString,
+  isPending: true,
   kind: "INewMessageWithoutContent",
   senderServiceId: "test" as ServiceId,
   senderUserId: "u123" as NonEmptyString,
@@ -297,14 +298,13 @@ describe("CreateMessageHandler", () => {
 
     expect<any>(mockContext.bindings).toEqual({
       createdMessage: {
+        content: {
+          markdown: aMessagePayload.content.markdown,
+          subject: aMessageSubject
+        },
         message: {
           ...aNewMessageWithoutContent,
-          content: {
-            markdown: aMessagePayload.content.markdown,
-            subject: aMessageSubject
-          },
-          createdAt: expect.any(Date),
-          kind: "INewMessageWithContent"
+          createdAt: expect.any(Date)
         },
         senderMetadata: {
           departmentName: "IT",
@@ -340,7 +340,7 @@ describe("CreateMessageHandler", () => {
     }
   });
 
-  it("should create a new message for a limited auhorization recipient", async () => {
+  it("should create a new message for a limited authorization recipient", async () => {
     const mockMessageModel = {
       create: jest.fn(() => right(aRetrievedMessageWithoutContent))
     };
@@ -388,14 +388,13 @@ describe("CreateMessageHandler", () => {
 
     expect<any>(mockContext.bindings).toEqual({
       createdMessage: {
+        content: {
+          markdown: aMessagePayload.content.markdown,
+          subject: aMessagePayload.content.subject
+        },
         message: {
           ...aNewMessageWithoutContent,
-          content: {
-            markdown: aMessagePayload.content.markdown,
-            subject: aMessagePayload.content.subject
-          },
-          createdAt: expect.any(Date),
-          kind: "INewMessageWithContent"
+          createdAt: expect.any(Date)
         },
         senderMetadata: {
           departmentName: "IT",
@@ -475,14 +474,13 @@ describe("CreateMessageHandler", () => {
 
     expect<any>(mockContext.bindings).toEqual({
       createdMessage: {
+        content: {
+          markdown: aMessagePayload.content.markdown,
+          subject: aCustomSubject
+        },
         message: {
           ...aNewMessageWithoutContent,
-          content: {
-            markdown: aMessagePayload.content.markdown,
-            subject: aCustomSubject
-          },
-          createdAt: expect.any(Date),
-          kind: "INewMessageWithContent"
+          createdAt: expect.any(Date)
         },
         senderMetadata: {
           departmentName: "IT",
@@ -569,17 +567,16 @@ describe("CreateMessageHandler", () => {
 
     expect<any>(mockContext.bindings).toEqual({
       createdMessage: {
+        content: {
+          markdown: messagePayload.content.markdown,
+          subject: messagePayload.content.subject
+        },
         defaultAddresses: {
           email: "test@example.com" as EmailAddress
         },
         message: {
           ...aNewMessageWithoutContent,
-          content: {
-            markdown: messagePayload.content.markdown,
-            subject: messagePayload.content.subject
-          },
-          createdAt: expect.any(Date),
-          kind: "INewMessageWithContent"
+          createdAt: expect.any(Date)
         },
         senderMetadata: {
           departmentName: "IT",
@@ -828,9 +825,7 @@ describe("CreateMessageHandler", () => {
 
     expect(mockContext.bindings as any).toMatchObject({
       createdMessage: {
-        message: {
-          content: { payment_data: { invalid_after_due_date: false } }
-        }
+        content: { payment_data: { invalid_after_due_date: false } }
       }
     });
 

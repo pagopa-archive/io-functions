@@ -8,7 +8,7 @@ import { QueueService } from "azure-storage";
 import { Either, left, right } from "fp-ts/lib/Either";
 import { Option, some } from "fp-ts/lib/Option";
 import {
-  isTransient,
+  isTransientError,
   RuntimeError,
   toRuntimeError,
   TransientError
@@ -153,12 +153,12 @@ export async function handleQueueProcessingFailure(
   queueService: QueueService,
   queueMessage: IQueueMessage,
   queueName: string,
-  onTransientError: () => Promise<Either<RuntimeError, {}>>,
-  onPermanentError: () => Promise<Either<RuntimeError, {}>>,
+  onTransientError: (error: RuntimeError) => Promise<Either<RuntimeError, {}>>,
+  onPermanentError: (error: RuntimeError) => Promise<Either<RuntimeError, {}>>,
   error: Error | RuntimeError
 ): Promise<void> {
   const runtimeError = toRuntimeError(error);
-  if (isTransient(runtimeError)) {
+  if (isTransientError(runtimeError)) {
     winston.warn(`Transient error|${queueName}|${runtimeError.message}`);
     const shouldTriggerARetry = await updateMessageVisibilityTimeout(
       queueService,
@@ -166,7 +166,7 @@ export async function handleQueueProcessingFailure(
       queueMessage
     );
     // execute the callback for transient errors
-    await onTransientError()
+    await onTransientError(runtimeError)
       .then(errorOrResult =>
         errorOrResult.mapLeft(err =>
           winston.warn(
@@ -190,7 +190,7 @@ export async function handleQueueProcessingFailure(
   } else {
     winston.error(`Permanent error|${queueName}|${runtimeError.message}`);
     // execute the callback for permanent errors
-    await onPermanentError().then(
+    await onPermanentError(runtimeError).then(
       errorOrResult =>
         errorOrResult.fold(
           // try to trigger a retry in case any error

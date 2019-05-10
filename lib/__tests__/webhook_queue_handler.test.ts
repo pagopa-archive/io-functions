@@ -39,7 +39,7 @@ import { MessageBodyMarkdown } from "../api/definitions/MessageBodyMarkdown";
 import { MessageSubject } from "../api/definitions/MessageSubject";
 import { CreatedMessageEventSenderMetadata } from "../models/created_message_sender_metadata";
 import { Notification, NotificationModel } from "../models/notification";
-import { isTransient } from "../utils/errors";
+import { isTransientError } from "../utils/errors";
 
 import { NotificationEvent } from "../models/notification_event";
 
@@ -120,14 +120,11 @@ const aSenderMetadata: CreatedMessageEventSenderMetadata = {
 };
 
 const aNotificationEvent = {
-  message: {
-    ...aMessage,
-    content: {
-      markdown: aMessageBodyMarkdown,
-      subject: aMessageBodySubject
-    },
-    kind: "INewMessageWithContent"
+  content: {
+    markdown: aMessageBodyMarkdown,
+    subject: aMessageBodySubject
   },
+  message: aMessage,
   notificationId: aNotificationId,
   senderMetadata: aSenderMetadata
 };
@@ -140,10 +137,8 @@ const getMockNotificationEvent = (
 ) => {
   return NotificationEvent.decode(
     Object.assign({}, aNotificationEvent, {
-      message: {
-        ...aNotificationEvent.message,
-        content: messageContent
-      }
+      content: messageContent,
+      message: aNotificationEvent.message
     })
   ).getOrElseL(errs => {
     throw new Error(
@@ -184,11 +179,11 @@ describe("sendToWebhook", () => {
     });
     // tslint:disable-next-line:no-object-mutation
     (superagent as any).Request.prototype.send = sendMock;
-    const ret = await sendToWebhook({} as any, {} as any, {} as any);
+    const ret = await sendToWebhook({} as any, {} as any, {} as any, {} as any);
     expect(sendMock).toHaveBeenCalledTimes(1);
     expect(isLeft(ret)).toBeTruthy();
     if (isLeft(ret)) {
-      expect(isTransient(ret.value)).toBeTruthy();
+      expect(isTransientError(ret.value)).toBeTruthy();
     }
   });
   it("should return a transient error in case the webhook returns HTTP status 5xx", async () => {
@@ -198,11 +193,11 @@ describe("sendToWebhook", () => {
     });
     // tslint:disable-next-line:no-object-mutation
     (superagent as any).Request.prototype.send = sendMock;
-    const ret = await sendToWebhook({} as any, {} as any, {} as any);
+    const ret = await sendToWebhook({} as any, {} as any, {} as any, {} as any);
     expect(sendMock).toHaveBeenCalledTimes(1);
     expect(isLeft(ret)).toBeTruthy();
     if (isLeft(ret)) {
-      expect(isTransient(ret.value)).toBeTruthy();
+      expect(isTransientError(ret.value)).toBeTruthy();
     }
   });
   it("should return a permanent error in case the webhook returns HTTP status 4xx", async () => {
@@ -212,11 +207,11 @@ describe("sendToWebhook", () => {
     });
     // tslint:disable-next-line:no-object-mutation
     (superagent as any).Request.prototype.send = sendMock;
-    const ret = await sendToWebhook({} as any, {} as any, {} as any);
+    const ret = await sendToWebhook({} as any, {} as any, {} as any, {} as any);
     expect(sendMock).toHaveBeenCalledTimes(1);
     expect(isLeft(ret)).toBeTruthy();
     if (isLeft(ret)) {
-      expect(isTransient(ret.value)).toBeFalsy();
+      expect(isTransientError(ret.value)).toBeFalsy();
     }
   });
 });
@@ -239,7 +234,7 @@ describe("handleNotification", () => {
     );
     expect(isLeft(result)).toBeTruthy();
     if (isLeft(result)) {
-      expect(isTransient(result.value)).toBeTruthy();
+      expect(isTransientError(result.value)).toBeTruthy();
     }
   });
 
@@ -256,7 +251,7 @@ describe("handleNotification", () => {
 
     expect(isLeft(result)).toBeTruthy();
     if (isLeft(result)) {
-      expect(isTransient(result.value)).toBeTruthy();
+      expect(isTransientError(result.value)).toBeTruthy();
     }
   });
 
@@ -273,7 +268,7 @@ describe("handleNotification", () => {
 
     expect(isLeft(result)).toBeTruthy();
     if (isLeft(result)) {
-      expect(isTransient(result.value)).toBeFalsy();
+      expect(isTransientError(result.value)).toBeFalsy();
     }
   });
 
@@ -366,7 +361,7 @@ describe("handleNotification", () => {
 
     expect(isLeft(result)).toBeTruthy();
     if (isLeft(result)) {
-      expect(isTransient(result.value)).toBeFalsy();
+      expect(isTransientError(result.value)).toBeFalsy();
     }
   });
 });

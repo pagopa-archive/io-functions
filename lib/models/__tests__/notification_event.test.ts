@@ -27,7 +27,6 @@ const aMessageContent: MessageContent = {
 };
 
 const aMessage = {
-  content: aMessageContent,
   createdAt: new Date().toISOString(),
   fiscalCode: "FRLFRC74E04B157I",
   id: aMessageId,
@@ -49,6 +48,7 @@ describe("isNotificationEvent", () => {
   it("should return true for valid payloads", () => {
     const fixtures: ReadonlyArray<any> = [
       {
+        content: aMessageContent,
         message: aMessage,
         notificationId: aNotificationId,
         senderMetadata: aSenderMetadata

@@ -52,7 +52,7 @@ import {
   NotificationAddressSourceEnum,
   NotificationModel
 } from "../models/notification";
-import { isTransient } from "../utils/errors";
+import { isTransientError } from "../utils/errors";
 
 import { NotificationEvent } from "../models/notification_event";
 
@@ -112,14 +112,11 @@ const aSenderMetadata: CreatedMessageEventSenderMetadata = {
 };
 
 const aNotificationEvent = {
-  message: {
-    ...aMessage,
-    content: {
-      markdown: aMessageBodyMarkdown,
-      subject: aMessageBodySubject
-    },
-    kind: "INewMessageWithContent"
+  content: {
+    markdown: aMessageBodyMarkdown,
+    subject: aMessageBodySubject
   },
+  message: aMessage,
   notificationId: aNotificationId,
   senderMetadata: aSenderMetadata
 };
@@ -132,10 +129,8 @@ const getMockNotificationEvent = (
 ) => {
   return NotificationEvent.decode(
     Object.assign({}, aNotificationEvent, {
-      message: {
-        ...aNotificationEvent.message,
-        content: messageContent
-      }
+      content: messageContent,
+      message: aNotificationEvent.message
     })
   ).getOrElseL(errs => {
     throw new Error(
@@ -232,7 +227,7 @@ describe("handleNotification", () => {
     );
     expect(isLeft(result)).toBeTruthy();
     if (isLeft(result)) {
-      expect(isTransient(result.value)).toBeTruthy();
+      expect(isTransientError(result.value)).toBeTruthy();
     }
   });
 
@@ -251,7 +246,7 @@ describe("handleNotification", () => {
 
     expect(isLeft(result)).toBeTruthy();
     if (isLeft(result)) {
-      expect(isTransient(result.value)).toBeTruthy();
+      expect(isTransientError(result.value)).toBeTruthy();
     }
   });
 
@@ -270,7 +265,7 @@ describe("handleNotification", () => {
 
     expect(isLeft(result)).toBeTruthy();
     if (isLeft(result)) {
-      expect(isTransient(result.value)).toBeFalsy();
+      expect(isTransientError(result.value)).toBeFalsy();
     }
   });
 
@@ -456,7 +451,7 @@ This is a message from the future!`.replace(/[ \n]+/g, "|")
 
     expect(isLeft(result)).toBeTruthy();
     if (isLeft(result)) {
-      expect(isTransient(result.value)).toBeTruthy();
+      expect(isTransientError(result.value)).toBeTruthy();
     }
   });
 });

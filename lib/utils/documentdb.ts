@@ -493,6 +493,51 @@ export function mapResultIterator<A, B>(
 }
 
 /**
+ * Maps a result iterator
+ */
+export function filterResultIterator<A>(
+  i: IResultIterator<A>,
+  f: (a: A) => boolean
+): IResultIterator<A> {
+  return {
+    executeNext: () =>
+      new Promise((resolve, reject) =>
+        i.executeNext().then(errorOrMaybeDocuments => {
+          errorOrMaybeDocuments
+            .map(maybeDocuments => {
+              maybeDocuments
+                .map(documents => {
+                  if (documents && documents.length > 0) {
+                    resolve(
+                      right<DocumentDb.QueryError, Option<ReadonlyArray<A>>>(
+                        some(documents.filter(f))
+                      )
+                    );
+                  } else {
+                    resolve(
+                      right<DocumentDb.QueryError, Option<ReadonlyArray<A>>>(
+                        some([])
+                      )
+                    );
+                  }
+                })
+                .getOrElseL(() =>
+                  resolve(
+                    right<DocumentDb.QueryError, Option<ReadonlyArray<A>>>(none)
+                  )
+                );
+            })
+            .mapLeft(error =>
+              resolve(
+                left<DocumentDb.QueryError, Option<ReadonlyArray<A>>>(error)
+              )
+            );
+        }, reject)
+      )
+  };
+}
+
+/**
  * Reduce a result iterator
  */
 export function reduceResultIterator<A, B>(

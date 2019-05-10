@@ -5,10 +5,21 @@
  */
 
 export enum ErrorTypes {
+  // a temporary error while processing the message (operation can be retried)
   TransientError = "TransientError",
+
+  // a permanent error while processing the message (operation cannot be retried)
   PermanentError = "PermanentError",
+
+  // triggered when an unknown error gets catched
   UnknownError = "UnknownError",
-  ExpiredError = "ExpiredError"
+
+  // message is expired, it couldn't be delivered withing the TTL
+  ExpiredError = "ExpiredError",
+
+  // a recipient error, either the profile is non existent or the sender isn't
+  // allowed by the recipient
+  RecipientError = "RecipientError"
 }
 
 interface IRuntimeError<T extends ErrorTypes> {
@@ -39,6 +50,9 @@ export const UnknownError = RuntimeError(ErrorTypes.UnknownError);
 export type ExpiredError = IRuntimeError<ErrorTypes.ExpiredError>;
 export const ExpiredError = RuntimeError(ErrorTypes.ExpiredError);
 
+export type RecipientError = IRuntimeError<ErrorTypes.RecipientError>;
+export const RecipientError = RuntimeError(ErrorTypes.RecipientError);
+
 /**
  * Construct a RuntimeError from an object.
  * Useful in try / catch blocks where the object caught is untyped.
@@ -58,10 +72,16 @@ export type RuntimeError =
   | TransientError
   | PermanentError
   | UnknownError
-  | ExpiredError;
+  | ExpiredError
+  | RecipientError;
 
-export const isTransient = (error: RuntimeError): error is TransientError =>
+export const isTransientError = (
+  error: RuntimeError
+): error is TransientError =>
   error.kind && error.kind === ErrorTypes.TransientError;
 
-export const isExpired = (error: RuntimeError): error is ExpiredError =>
+export const isExpiredError = (error: RuntimeError): error is ExpiredError =>
   error.kind && error.kind === ErrorTypes.ExpiredError;
+
+export const isRecipientError = (error: RuntimeError): error is ExpiredError =>
+  error.kind && error.kind === ErrorTypes.RecipientError;

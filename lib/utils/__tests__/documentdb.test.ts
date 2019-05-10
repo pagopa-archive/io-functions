@@ -428,6 +428,40 @@ describe("mapResultIterator", () => {
   });
 });
 
+describe("filterResultIterator", () => {
+  it("should filter the documents of the wrapped iterator", async () => {
+    const iteratorMock = {
+      executeNext: jest.fn()
+    };
+
+    iteratorMock.executeNext.mockImplementationOnce(() =>
+      Promise.resolve(right(some([1, 2, 3, 4, 5])))
+    );
+    iteratorMock.executeNext.mockImplementationOnce(() =>
+      Promise.resolve(right(none))
+    );
+
+    const filteredIterator = DocumentDbUtils.filterResultIterator(
+      iteratorMock as any,
+      (n: number) => n % 2 === 1
+    );
+
+    const result1 = await filteredIterator.executeNext();
+    await filteredIterator.executeNext();
+
+    expect(iteratorMock.executeNext).toHaveBeenCalledTimes(2);
+    expect(isRight(result1)).toBeTruthy();
+    if (isRight(result1)) {
+      expect(result1.value.isSome());
+      expect(result1.value.toUndefined()).toEqual([1, 3, 5]);
+    }
+    expect(isRight(result1)).toBeTruthy();
+    if (isRight(result1)) {
+      expect(result1.value.isNone());
+    }
+  });
+});
+
 describe("iteratorToArray", () => {
   it("should consume an iterator", async () => {
     const iteratorMock = {

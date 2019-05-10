@@ -29,6 +29,7 @@ import {
   ResponseJsonIterator
 } from "../utils/response";
 
+import { readableReport } from "italia-ts-commons/lib/reporters";
 import {
   IResponseErrorForbiddenNotAuthorized,
   IResponseErrorForbiddenNotAuthorizedForDefaultAddresses,
@@ -74,7 +75,7 @@ import {
   clientIPAndCidrTuple as ipTuple
 } from "../utils/source_ip_check";
 
-import { mapResultIterator } from "../utils/documentdb";
+import { filterResultIterator, mapResultIterator } from "../utils/documentdb";
 
 import { NotificationModel } from "../models/notification";
 import { ServiceModel } from "../models/service";
@@ -84,7 +85,6 @@ import { BlobService } from "azure-storage";
 import {
   Message,
   MessageModel,
-  NewMessageWithContent,
   NewMessageWithoutContent,
   RetrievedMessage
 } from "../models/message";
@@ -100,7 +100,6 @@ import {
   some
 } from "fp-ts/lib/Option";
 
-import { readableReport } from "italia-ts-commons/lib/reporters";
 import { CreatedMessageWithContent } from "../api/definitions/CreatedMessageWithContent";
 import { MessageResponseWithoutContent } from "../api/definitions/MessageResponseWithoutContent";
 import { MessageStatusValueEnum } from "../api/definitions/MessageStatusValue";
@@ -268,10 +267,10 @@ async function getChannelStatus(
 async function getMessageNotificationStatuses(
   notificationModel: NotificationModel,
   notificationStatusModel: NotificationStatusModel,
-  retrievedMessage: RetrievedMessage
+  messageId: NonEmptyString
 ): Promise<Either<Error, Option<NotificationStatusHolder>>> {
   const errorOrMaybeNotification = await notificationModel.findNotificationForMessage(
-    retrievedMessage.id
+    messageId
   );
   if (isRight(errorOrMaybeNotification)) {
     // It may happen that the notification object is not yet created in the database
@@ -279,9 +278,7 @@ async function getMessageNotificationStatuses(
     const maybeNotification = errorOrMaybeNotification.value;
     if (isNone(maybeNotification)) {
       winston.debug(
-        `getMessageNotificationStatuses|Notification not found|messageId=${
-          retrievedMessage.id
-        }`
+        `getMessageNotificationStatuses|Notification not found|messageId=${messageId}`
       );
       return right<Error, Option<NotificationStatusHolder>>(none);
     }
@@ -412,6 +409,7 @@ export function CreateMessageHandler(
       fiscalCode,
       id,
       indexedId: id,
+      isPending: true,
       kind: "INewMessageWithoutContent",
       senderServiceId: userService.serviceId,
       senderUserId: auth.userId,
@@ -474,40 +472,44 @@ export function CreateMessageHandler(
     //
     // emit created message event to the output queue
     //
-    const errorOrNewMessageWithContent = NewMessageWithContent.decode({
-      ...newMessageWithoutContent,
-      content: messagePayload.content,
-      kind: "INewMessageWithContent"
-    });
-
-    if (isLeft(errorOrNewMessageWithContent)) {
-      return ResponseErrorValidation(
-        "Error while decoding new message with content",
-        readableReport(errorOrNewMessageWithContent.value)
-      );
-    }
-
-    const newMessageWithContent = errorOrNewMessageWithContent.value;
 
     // prepare the created message event
     // we filter out undefined values as they are
     // deserialized to null(s) when enqueued
-    const createdMessageEvent: CreatedMessageEvent = withoutUndefinedValues({
-      defaultAddresses: messagePayload.default_addresses,
-      message: newMessageWithContent,
-      senderMetadata: {
-        departmentName: userAttributes.service.departmentName,
-        organizationFiscalCode: userAttributes.service.organizationFiscalCode,
-        organizationName: userAttributes.service.organizationName,
-        serviceName: userAttributes.service.serviceName
-      },
-      serviceVersion: userAttributes.service.version
-    });
+    const createdMessageEventOrError = CreatedMessageEvent.decode(
+      withoutUndefinedValues({
+        content: messagePayload.content,
+        defaultAddresses: messagePayload.default_addresses,
+        message: newMessageWithoutContent,
+        senderMetadata: {
+          departmentName: userAttributes.service.departmentName,
+          organizationFiscalCode: userAttributes.service.organizationFiscalCode,
+          organizationName: userAttributes.service.organizationName,
+          serviceName: userAttributes.service.serviceName
+        },
+        serviceVersion: userAttributes.service.version
+      })
+    );
+
+    if (isLeft(createdMessageEventOrError)) {
+      winston.error(
+        `CreateMessageHandler|Unable to decode CreatedMessageEvent|${
+          userService.serviceId
+        }|${retrievedMessage.id}|${readableReport(
+          createdMessageEventOrError.value
+        ).replace(/\n/g, " / ")}`
+      );
+
+      return ResponseErrorValidation(
+        "Unable to decode CreatedMessageEvent",
+        readableReport(createdMessageEventOrError.value)
+      );
+    }
 
     // queue the message to the created messages queue by setting
     // the message to the output binding of this function
     // tslint:disable-next-line:no-object-mutation
-    context.bindings.createdMessage = createdMessageEvent;
+    context.bindings.createdMessage = createdMessageEventOrError.value;
 
     //
     // generate appinsights event
@@ -625,6 +627,7 @@ export function GetMessageHandler(
       return ResponseErrorForbiddenNotAuthorized;
     }
 
+    // fetch the content of the message from the blob storage
     const errorOrMaybeContent = await messageModel.getStoredContent(
       blobService,
       retrievedMessage.id,
@@ -652,7 +655,7 @@ export function GetMessageHandler(
     const errorOrNotificationStatuses = await getMessageNotificationStatuses(
       notificationModel,
       notificationStatusModel,
-      retrievedMessage
+      retrievedMessage.id
     );
 
     if (isLeft(errorOrNotificationStatuses)) {
@@ -737,8 +740,14 @@ export function GetMessagesHandler(
 ): IGetMessagesHandler {
   return async (_, __, ___, fiscalCode) => {
     const retrievedMessagesIterator = messageModel.findMessages(fiscalCode);
-    const publicExtendedMessagesIterator = mapResultIterator(
+    const validMessagesIterator = filterResultIterator(
       retrievedMessagesIterator,
+      // isPending is true when the message has been received from the sender
+      // but it's still being processed
+      message => message.isPending !== true
+    );
+    const publicExtendedMessagesIterator = mapResultIterator(
+      validMessagesIterator,
       retrievedMessageToPublic
     );
     return ResponseJsonIterator(publicExtendedMessagesIterator);

@@ -149,11 +149,13 @@ MessageStatusValue:
     "FAILED": a permanent failure caused the process to exit with an error, no notification will be sent for this message
     "PROCESSED": the message was succesfully processed and is now stored in the user's inbox;
       we'll try to send a notification for each of the selected channels
+    "REJECTED": either the recipient does not exist, or the sender has been blocked
   x-extensible-enum:
     - ACCEPTED
     - THROTTLED
     - FAILED
     - PROCESSED
+    - REJECTED
   example: ACCEPTED
 MessageStatus:
   type: object
