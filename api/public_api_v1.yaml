@@ -144,6 +144,8 @@ paths:
           description: Unauthorized
         '404':
           description: No service found for the provided ID.
+        '429':
+          description: Too many mequests
       parameters: []
   "/profiles/{recipient}/sender-services":
     get:
@@ -161,6 +163,8 @@ paths:
             $ref: "#/definitions/PaginatedServiceTupleCollection"
         '401':
           description: Unauthorized
+        '429':
+          description: Too many mequests
       parameters:
       - name: recipient
         in: path
@@ -185,6 +189,8 @@ paths:
             $ref: "#/definitions/PaginatedServiceTupleCollection"
         '401':
           description: Unauthorized
+        '429':
+          description: Too many mequests
   "/messages/{fiscal_code}/{id}":
     get:
       tags:
@@ -228,6 +234,8 @@ paths:
           description: Unauthorized
         '404':
           description: No message found for the provided ID.
+        '429':
+          description: Too many mequests
           schema:
             $ref: "#/definitions/ProblemJson"
   "/messages/{fiscal_code}":
@@ -277,6 +285,8 @@ paths:
           description: Unauthorized
         '404':
           description: No message found.
+        '429':
+          description: Too many mequests
           schema:
             $ref: "#/definitions/ProblemJson"
       parameters:
@@ -335,6 +345,8 @@ paths:
           examples: {}
         '401':
           description: Unauthorized
+        '429':
+          description: Too many mequests
         '500':
           description: The message cannot be delivered.
           schema:
@@ -362,6 +374,8 @@ paths:
           description: Unauthorized
         '404':
           description: No user found for the provided fiscal code.
+        '429':
+          description: Too many mequests
           schema:
             $ref: "#/definitions/ProblemJson"
       parameters:
@@ -386,6 +400,8 @@ paths:
           description: Unauthorized
         '404':
           description: Not found
+        '429':
+          description: Too many mequests
         '500':
           description: Profile cannot be updated.
           schema:
@@ -417,6 +433,8 @@ paths:
             properties: {}
         '401':
           description: Unauthorized
+        '429':
+          description: Too many mequests
       description: An endpoint to test authenticated access to the API backend.
       summary: API test endpoint
 definitions:
