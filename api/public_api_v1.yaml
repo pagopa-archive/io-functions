@@ -145,7 +145,7 @@ paths:
         '404':
           description: No service found for the provided ID.
         '429':
-          description: Too many mequests
+          description: Too many requests
       parameters: []
   "/profiles/{recipient}/sender-services":
     get:
@@ -164,7 +164,7 @@ paths:
         '401':
           description: Unauthorized
         '429':
-          description: Too many mequests
+          description: Too many requests
       parameters:
       - name: recipient
         in: path
@@ -190,7 +190,7 @@ paths:
         '401':
           description: Unauthorized
         '429':
-          description: Too many mequests
+          description: Too many requests
   "/messages/{fiscal_code}/{id}":
     get:
       tags:
@@ -237,7 +237,7 @@ paths:
           schema:
             $ref: "#/definitions/ProblemJson"
         '429':
-          description: Too many mequests
+          description: Too many requests
   "/messages/{fiscal_code}":
     get:
       tags:
@@ -288,7 +288,7 @@ paths:
           schema:
             $ref: "#/definitions/ProblemJson"
         '429':
-          description: Too many mequests
+          description: Too many requests
       parameters:
       - $ref: "#/parameters/FiscalCode"
       - $ref: "#/parameters/PaginationRequest"
@@ -346,7 +346,7 @@ paths:
         '401':
           description: Unauthorized
         '429':
-          description: Too many mequests
+          description: Too many requests
         '500':
           description: The message cannot be delivered.
           schema:
@@ -377,7 +377,7 @@ paths:
           schema:
             $ref: "#/definitions/ProblemJson"
         '429':
-          description: Too many mequests
+          description: Too many requests
       parameters:
       - $ref: "#/parameters/FiscalCode"
     post:
@@ -401,7 +401,7 @@ paths:
         '404':
           description: Not found
         '429':
-          description: Too many mequests
+          description: Too many requests
         '500':
           description: Profile cannot be updated.
           schema:
@@ -434,7 +434,7 @@ paths:
         '401':
           description: Unauthorized
         '429':
-          description: Too many mequests
+          description: Too many requests
       description: An endpoint to test authenticated access to the API backend.
       summary: API test endpoint
 definitions:
