@@ -234,10 +234,10 @@ paths:
           description: Unauthorized
         '404':
           description: No message found for the provided ID.
-        '429':
-          description: Too many mequests
           schema:
             $ref: "#/definitions/ProblemJson"
+        '429':
+          description: Too many mequests
   "/messages/{fiscal_code}":
     get:
       tags:
@@ -285,10 +285,10 @@ paths:
           description: Unauthorized
         '404':
           description: No message found.
-        '429':
-          description: Too many mequests
           schema:
             $ref: "#/definitions/ProblemJson"
+        '429':
+          description: Too many mequests
       parameters:
       - $ref: "#/parameters/FiscalCode"
       - $ref: "#/parameters/PaginationRequest"
@@ -374,10 +374,10 @@ paths:
           description: Unauthorized
         '404':
           description: No user found for the provided fiscal code.
-        '429':
-          description: Too many mequests
           schema:
             $ref: "#/definitions/ProblemJson"
+        '429':
+          description: Too many mequests
       parameters:
       - $ref: "#/parameters/FiscalCode"
     post:
