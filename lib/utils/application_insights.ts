@@ -1,8 +1,4 @@
 import * as ApplicationInsights from "applicationinsights";
-import {
-  Data,
-  EventData
-} from "applicationinsights/out/Declarations/Contracts";
 import { NonEmptyString } from "italia-ts-commons/lib/strings";
 import { Millisecond } from "italia-ts-commons/lib/units";
 import { ServiceId } from "../api/definitions/ServiceId";
@@ -50,7 +46,9 @@ export function wrapCustomTelemetryClient(
         [client.context.keys.userAccountId]: params.serviceId
       };
       // cast needed due to https://github.com/Microsoft/ApplicationInsights-node.js/issues/392
-      const data = env.data as Data<EventData>;
+      const data = env.data as ApplicationInsights.Contracts.Data<
+        ApplicationInsights.Contracts.EventData
+      >;
       // tslint:disable-next-line:no-object-mutation
       data.baseData.properties = {
         ...data.baseData.properties,
@@ -75,6 +73,7 @@ const MILLISEC_PER_SEC = 1e3;
  * from an initial time obtained calling process.hrtime().
  * Used when profiling code.
  */
+// tslint:disable-next-line:readonly-array
 export function diffInMilliseconds(startHrtime: [number, number]): Millisecond {
   const diff = process.hrtime(startHrtime);
   return (diff[0] * MILLISEC_PER_SEC +

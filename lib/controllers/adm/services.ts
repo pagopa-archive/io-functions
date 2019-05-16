@@ -91,6 +91,7 @@ type IUpdateServiceHandler = (
   serviceId: NonEmptyString,
   service: ApiService
 ) => Promise<
+  // tslint:disable-next-line:max-union-size
   | IResponseSuccessJson<ApiService>
   | IResponseErrorValidation
   | IResponseErrorQuery
