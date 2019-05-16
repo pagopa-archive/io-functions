@@ -175,6 +175,7 @@ type ICreateMessageHandler = (
   fiscalCode: FiscalCode,
   messagePayload: ApiNewMessageWithDefaults
 ) => Promise<
+  // tslint:disable-next-line:max-union-size
   | IResponseSuccessRedirectToResource<Message, {}>
   | IResponseErrorQuery
   | IResponseErrorValidation
@@ -198,6 +199,7 @@ type IGetMessageHandler = (
   fiscalCode: FiscalCode,
   messageId: string
 ) => Promise<
+  // tslint:disable-next-line:max-union-size
   | IResponseSuccessJson<
       MessageResponseWithContent | MessageResponseWithoutContent
     >

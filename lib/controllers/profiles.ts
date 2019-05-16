@@ -151,6 +151,7 @@ type IUpsertProfileHandler = (
   fiscalCode: FiscalCode,
   profileModelPayload: ExtendedProfile
 ) => Promise<
+  // tslint:disable-next-line:max-union-size
   | IResponseSuccessJson<ExtendedProfile>
   | IResponseErrorValidation
   | IResponseErrorQuery

@@ -13,6 +13,7 @@ import { EmailString, NonEmptyString } from "italia-ts-commons/lib/strings";
 
 import * as nodemailer from "nodemailer";
 
+// tslint:disable-next-line:no-submodule-imports
 import { Address as NodemailerAddress } from "nodemailer/lib/addressparser";
 
 import * as winston from "winston";

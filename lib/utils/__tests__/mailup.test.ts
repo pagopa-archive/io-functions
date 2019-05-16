@@ -2,6 +2,7 @@
 
 jest.mock("winston");
 
+// tslint:disable-next-line:no-submodule-imports
 import Mail = require("nodemailer/lib/mailer");
 
 import * as nodemailer from "nodemailer";
