@@ -49,10 +49,11 @@ import {
   IAzureUserAttributes
 } from "../utils/middlewares/azure_user_attributes";
 
+import * as documentdbutils from "io-documentdb-utils";
+
 import { FiscalCode } from "../api/definitions/FiscalCode";
 import { ServiceId } from "../api/definitions/ServiceId";
 import { SenderServiceModel } from "../models/sender_service";
-import { mapResultIterator } from "../utils/documentdb";
 
 import { BlobService } from "azure-storage";
 
@@ -184,7 +185,7 @@ export function GetServicesByRecipientHandler(
     const retrievedServicesIterator = senderServiceModel.findSenderServicesForRecipient(
       fiscalCode
     );
-    const senderServicesIterator = mapResultIterator(
+    const senderServicesIterator = documentdbutils.DocumentDb.mapResultIterator(
       retrievedServicesIterator,
       service => ({
         service_id: service.serviceId,

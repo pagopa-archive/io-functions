@@ -3,12 +3,7 @@ import * as t from "io-ts";
 import { readonlySetType, tag } from "italia-ts-commons/lib/types";
 
 import * as DocumentDb from "documentdb";
-import * as DocumentDbUtils from "../utils/documentdb";
-import {
-  DocumentDbModelVersioned,
-  ModelId,
-  VersionedModel
-} from "../utils/documentdb_model_versioned";
+import * as DocumentDbUtils from "io-documentdb-utils";
 
 import { Either } from "fp-ts/lib/Either";
 import { Option } from "fp-ts/lib/Option";
@@ -83,7 +78,11 @@ interface INewProfileTag {
 }
 
 export const NewProfile = tag<INewProfileTag>()(
-  t.intersection([Profile, DocumentDbUtils.NewDocument, VersionedModel])
+  t.intersection([
+    Profile,
+    DocumentDbUtils.DocumentDb.NewDocument,
+    DocumentDbUtils.DocumentDbModelVersioned.VersionedModel
+  ])
 );
 
 export type NewProfile = t.TypeOf<typeof NewProfile>;
@@ -98,7 +97,11 @@ interface IRetrievedProfileTag {
 }
 
 export const RetrievedProfile = tag<IRetrievedProfileTag>()(
-  t.intersection([Profile, DocumentDbUtils.RetrievedDocument, VersionedModel])
+  t.intersection([
+    Profile,
+    DocumentDbUtils.DocumentDb.RetrievedDocument,
+    DocumentDbUtils.DocumentDbModelVersioned.VersionedModel
+  ])
 );
 
 export type RetrievedProfile = t.TypeOf<typeof RetrievedProfile>;
@@ -109,7 +112,9 @@ function toRetrieved(result: DocumentDb.RetrievedDocument): RetrievedProfile {
   });
 }
 
-function getModelId(o: Profile): ModelId {
+function getModelId(
+  o: Profile
+): DocumentDbUtils.DocumentDbModelVersioned.ModelId {
   return fiscalCodeToModelId(o.fiscalCode);
 }
 
@@ -136,11 +141,8 @@ function toBaseType(o: RetrievedProfile): Profile {
 /**
  * A model for handling Profiles
  */
-export class ProfileModel extends DocumentDbModelVersioned<
-  Profile,
-  NewProfile,
-  RetrievedProfile
-> {
+export class ProfileModel extends DocumentDbUtils.DocumentDbModelVersioned
+  .DocumentDbModelVersioned<Profile, NewProfile, RetrievedProfile> {
   /**
    * Creates a new Profile model
    *
@@ -149,7 +151,7 @@ export class ProfileModel extends DocumentDbModelVersioned<
    */
   constructor(
     dbClient: DocumentDb.DocumentClient,
-    collectionUrl: DocumentDbUtils.IDocumentDbCollectionUri
+    collectionUrl: DocumentDbUtils.DocumentDb.IDocumentDbCollectionUri
   ) {
     super(
       dbClient,

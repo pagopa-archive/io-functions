@@ -1,7 +1,8 @@
+import * as DocumentDbUtils from "io-documentdb-utils";
 import { NonEmptyString } from "italia-ts-commons/lib/strings";
+
 import { FiscalCode } from "../api/definitions/FiscalCode";
 import { NotificationStatusId } from "../models/notification_status";
-import { ModelId } from "./documentdb_model_versioned";
 
 /**
  * Converts a FiscalCode to a ModelId.
@@ -9,8 +10,10 @@ import { ModelId } from "./documentdb_model_versioned";
  * Note that this is always possible since a valid FiscalCode is
  * also a valid ModelId.
  */
-export function fiscalCodeToModelId(o: FiscalCode): ModelId {
-  return (o as string) as ModelId;
+export function fiscalCodeToModelId(
+  o: FiscalCode
+): DocumentDbUtils.DocumentDbModelVersioned.ModelId {
+  return (o as string) as DocumentDbUtils.DocumentDbModelVersioned.ModelId;
 }
 
 /**
@@ -19,8 +22,10 @@ export function fiscalCodeToModelId(o: FiscalCode): ModelId {
  * Note that this is always possible since a valid NonEmptyString is
  * also a valid ModelId.
  */
-export function nonEmptyStringToModelId(o: NonEmptyString): ModelId {
-  return (o as string) as ModelId;
+export function nonEmptyStringToModelId(
+  o: NonEmptyString
+): DocumentDbUtils.DocumentDbModelVersioned.ModelId {
+  return (o as string) as DocumentDbUtils.DocumentDbModelVersioned.ModelId;
 }
 
 /**
@@ -31,6 +36,6 @@ export function nonEmptyStringToModelId(o: NonEmptyString): ModelId {
  */
 export function notificationStatusIdToModelId(
   o: NotificationStatusId
-): ModelId {
-  return (o as string) as ModelId;
+): DocumentDbUtils.DocumentDbModelVersioned.ModelId {
+  return (o as string) as DocumentDbUtils.DocumentDbModelVersioned.ModelId;
 }

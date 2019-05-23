@@ -9,8 +9,7 @@ import * as t from "io-ts";
 
 import { tag } from "italia-ts-commons/lib/types";
 
-import * as DocumentDbUtils from "../utils/documentdb";
-import { DocumentDbModel } from "../utils/documentdb_model";
+import * as DocumentDbUtils from "io-documentdb-utils";
 
 import { FiscalCode } from "../api/definitions/FiscalCode";
 
@@ -42,7 +41,7 @@ interface INewSenderServiceTag {
 }
 
 export const NewSenderService = tag<INewSenderServiceTag>()(
-  t.intersection([SenderService, DocumentDbUtils.NewDocument])
+  t.intersection([SenderService, DocumentDbUtils.DocumentDb.NewDocument])
 );
 
 export type NewSenderService = t.TypeOf<typeof NewSenderService>;
@@ -56,7 +55,7 @@ interface IRetrievedSenderServiceTag {
 }
 
 export const RetrievedSenderService = tag<IRetrievedSenderServiceTag>()(
-  t.intersection([SenderService, DocumentDbUtils.RetrievedDocument])
+  t.intersection([SenderService, DocumentDbUtils.DocumentDb.RetrievedDocument])
 );
 
 export type RetrievedSenderService = t.TypeOf<typeof RetrievedSenderService>;
@@ -114,11 +113,8 @@ export function newSenderService(
 /**
  * A model for handling SenderServices
  */
-export class SenderServiceModel extends DocumentDbModel<
-  SenderService,
-  NewSenderService,
-  RetrievedSenderService
-> {
+export class SenderServiceModel extends DocumentDbUtils.DocumentDbModel
+  .DocumentDbModel<SenderService, NewSenderService, RetrievedSenderService> {
   /**
    * Creates a new SenderService model
    *
@@ -127,7 +123,7 @@ export class SenderServiceModel extends DocumentDbModel<
    */
   constructor(
     dbClient: DocumentDb.DocumentClient,
-    collectionUrl: DocumentDbUtils.IDocumentDbCollectionUri
+    collectionUrl: DocumentDbUtils.DocumentDb.IDocumentDbCollectionUri
   ) {
     super(dbClient, collectionUrl, toBaseType, toRetrieved);
   }
@@ -140,8 +136,8 @@ export class SenderServiceModel extends DocumentDbModel<
   /* istanbul ignore next */
   public findSenderServicesForRecipient(
     recipient: FiscalCode
-  ): DocumentDbUtils.IResultIterator<RetrievedSenderService> {
-    return DocumentDbUtils.queryDocuments(
+  ): DocumentDbUtils.DocumentDb.IResultIterator<RetrievedSenderService> {
+    return DocumentDbUtils.DocumentDb.queryDocuments(
       this.dbClient,
       this.collectionUri,
       {

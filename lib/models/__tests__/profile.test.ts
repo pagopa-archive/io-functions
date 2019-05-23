@@ -1,12 +1,11 @@
-/* tslint:disable:no-any */
-/* tslint:disable:no-identical-functions */
+// tslint:disable:no-any no-identical-functions no-inferred-empty-object-type
 
 import { isLeft, isRight } from "fp-ts/lib/Either";
 import { isSome } from "fp-ts/lib/Option";
 
 import * as DocumentDb from "documentdb";
 
-import * as DocumentDbUtils from "../../utils/documentdb";
+import * as DocumentDbUtils from "io-documentdb-utils";
 
 import { NonNegativeNumber } from "italia-ts-commons/lib/numbers";
 import { EmailString, NonEmptyString } from "italia-ts-commons/lib/strings";
@@ -19,8 +18,10 @@ import {
   RetrievedProfile
 } from "../profile";
 
-const aDatabaseUri = DocumentDbUtils.getDatabaseUri("mockdb" as NonEmptyString);
-const profilesCollectionUrl = DocumentDbUtils.getCollectionUri(
+const aDatabaseUri = DocumentDbUtils.DocumentDb.getDatabaseUri(
+  "mockdb" as NonEmptyString
+);
+const profilesCollectionUrl = DocumentDbUtils.DocumentDb.getCollectionUri(
   aDatabaseUri,
   PROFILE_COLLECTION_NAME
 );

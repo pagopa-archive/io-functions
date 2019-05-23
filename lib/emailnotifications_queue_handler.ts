@@ -13,7 +13,7 @@ import { configureAzureContextTransport } from "./utils/logging";
 
 import { DocumentClient as DocumentDBClient } from "documentdb";
 
-import * as documentDbUtils from "./utils/documentdb";
+import * as documentDbUtils from "io-documentdb-utils";
 
 import { Either, isLeft, left, right } from "fp-ts/lib/Either";
 import { isNone } from "fp-ts/lib/Option";
@@ -84,14 +84,16 @@ const cosmosDbUri = getRequiredStringEnv("CUSTOMCONNSTR_COSMOSDB_URI");
 const cosmosDbKey = getRequiredStringEnv("CUSTOMCONNSTR_COSMOSDB_KEY");
 const cosmosDbName = getRequiredStringEnv("COSMOSDB_NAME");
 
-const documentDbDatabaseUrl = documentDbUtils.getDatabaseUri(cosmosDbName);
+const documentDbDatabaseUrl = documentDbUtils.DocumentDb.getDatabaseUri(
+  cosmosDbName
+);
 
-const notificationsCollectionUrl = documentDbUtils.getCollectionUri(
+const notificationsCollectionUrl = documentDbUtils.DocumentDb.getCollectionUri(
   documentDbDatabaseUrl,
   NOTIFICATION_COLLECTION_NAME
 );
 
-const notificationStatusCollectionUrl = documentDbUtils.getCollectionUri(
+const notificationStatusCollectionUrl = documentDbUtils.DocumentDb.getCollectionUri(
   documentDbDatabaseUrl,
   NOTIFICATION_STATUS_COLLECTION_NAME
 );

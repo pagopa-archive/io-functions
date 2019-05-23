@@ -13,7 +13,7 @@ import { configureAzureContextTransport } from "./utils/logging";
 
 import { DocumentClient as DocumentDBClient } from "documentdb";
 
-import * as documentDbUtils from "./utils/documentdb";
+import * as documentDbUtils from "io-documentdb-utils";
 
 import { createAzureFunctionHandler } from "azure-function-express";
 
@@ -43,9 +43,11 @@ const cosmosDbUri = getRequiredStringEnv("CUSTOMCONNSTR_COSMOSDB_URI");
 const cosmosDbKey = getRequiredStringEnv("CUSTOMCONNSTR_COSMOSDB_KEY");
 const cosmosDbName = getRequiredStringEnv("COSMOSDB_NAME");
 
-const documentDbDatabaseUrl = documentDbUtils.getDatabaseUri(cosmosDbName);
+const documentDbDatabaseUrl = documentDbUtils.DocumentDb.getDatabaseUri(
+  cosmosDbName
+);
 
-const servicesCollectionUrl = documentDbUtils.getCollectionUri(
+const servicesCollectionUrl = documentDbUtils.DocumentDb.getCollectionUri(
   documentDbDatabaseUrl,
   "services"
 );

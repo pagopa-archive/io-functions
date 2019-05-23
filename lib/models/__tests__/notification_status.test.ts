@@ -1,13 +1,13 @@
-// tslint:disable:no-any
+// tslint:disable:no-any no-inferred-empty-object-type
 
 import { isLeft, isRight } from "fp-ts/lib/Either";
 import { isSome } from "fp-ts/lib/Option";
 
 import * as DocumentDb from "documentdb";
 
+import * as DocumentDbUtils from "io-documentdb-utils";
 import { NonNegativeNumber } from "italia-ts-commons/lib/numbers";
 import { NonEmptyString } from "italia-ts-commons/lib/strings";
-import * as DocumentDbUtils from "../../utils/documentdb";
 
 import { readableReport } from "italia-ts-commons/lib/reporters";
 import { NotificationChannelEnum } from "../../api/definitions/NotificationChannel";
@@ -24,8 +24,10 @@ afterEach(() => {
   jest.resetAllMocks();
 });
 
-const aDatabaseUri = DocumentDbUtils.getDatabaseUri("mockdb" as NonEmptyString);
-const collectionUrl = DocumentDbUtils.getCollectionUri(
+const aDatabaseUri = DocumentDbUtils.DocumentDb.getDatabaseUri(
+  "mockdb" as NonEmptyString
+);
+const collectionUrl = DocumentDbUtils.DocumentDb.getCollectionUri(
   aDatabaseUri,
   "notification-status"
 );

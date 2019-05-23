@@ -1,6 +1,6 @@
 /*
-* Implements the API handlers for the Message resource.
-*/
+ * Implements the API handlers for the Message resource.
+ */
 import * as express from "express";
 import * as t from "io-ts";
 import * as winston from "winston";
@@ -75,7 +75,7 @@ import {
   clientIPAndCidrTuple as ipTuple
 } from "../utils/source_ip_check";
 
-import { filterResultIterator, mapResultIterator } from "../utils/documentdb";
+import * as documentdbutils from "io-documentdb-utils";
 
 import { NotificationModel } from "../models/notification";
 import { ServiceModel } from "../models/service";
@@ -742,13 +742,13 @@ export function GetMessagesHandler(
 ): IGetMessagesHandler {
   return async (_, __, ___, fiscalCode) => {
     const retrievedMessagesIterator = messageModel.findMessages(fiscalCode);
-    const validMessagesIterator = filterResultIterator(
+    const validMessagesIterator = documentdbutils.DocumentDb.filterResultIterator(
       retrievedMessagesIterator,
       // isPending is true when the message has been received from the sender
       // but it's still being processed
       message => message.isPending !== true
     );
-    const publicExtendedMessagesIterator = mapResultIterator(
+    const publicExtendedMessagesIterator = documentdbutils.DocumentDb.mapResultIterator(
       validMessagesIterator,
       retrievedMessageToPublic
     );

@@ -3,12 +3,7 @@ import * as t from "io-ts";
 import { pick, tag } from "italia-ts-commons/lib/types";
 
 import * as DocumentDb from "documentdb";
-import * as DocumentDbUtils from "../utils/documentdb";
-import {
-  DocumentDbModelVersioned,
-  ModelId,
-  VersionedModel
-} from "../utils/documentdb_model_versioned";
+import * as DocumentDbUtils from "io-documentdb-utils";
 
 import { Either } from "fp-ts/lib/Either";
 import { Option } from "fp-ts/lib/Option";
@@ -63,8 +58,8 @@ interface INewNotificationStatusTag {
 export const NewNotificationStatus = tag<INewNotificationStatusTag>()(
   t.intersection([
     NotificationStatus,
-    DocumentDbUtils.NewDocument,
-    VersionedModel
+    DocumentDbUtils.DocumentDb.NewDocument,
+    DocumentDbUtils.DocumentDbModelVersioned.VersionedModel
   ])
 );
 
@@ -84,8 +79,8 @@ export const RetrievedNotificationStatus = tag<
 >()(
   t.intersection([
     NotificationStatus,
-    DocumentDbUtils.RetrievedDocument,
-    VersionedModel
+    DocumentDbUtils.DocumentDb.RetrievedDocument,
+    DocumentDbUtils.DocumentDbModelVersioned.VersionedModel
   ])
 );
 
@@ -112,7 +107,9 @@ export function makeStatusId(
   );
 }
 
-function getModelId(o: NotificationStatus): ModelId {
+function getModelId(
+  o: NotificationStatus
+): DocumentDbUtils.DocumentDbModelVersioned.ModelId {
   return notificationStatusIdToModelId(
     makeStatusId(o.notificationId, o.channel)
   );
@@ -145,9 +142,9 @@ function toBaseType(o: RetrievedNotificationStatus): NotificationStatus {
   );
 }
 
-export type NotificationStatusUpdater = ((
+export type NotificationStatusUpdater = (
   status: NotificationChannelStatusValueEnum
-) => Promise<Either<RuntimeError, RetrievedNotificationStatus>>);
+) => Promise<Either<RuntimeError, RetrievedNotificationStatus>>;
 
 /**
  * Convenience method that returns a function to update the notification status
@@ -185,7 +182,8 @@ export const getNotificationStatusUpdater = (
 /**
  * A model for handling NotificationStatus
  */
-export class NotificationStatusModel extends DocumentDbModelVersioned<
+export class NotificationStatusModel extends DocumentDbUtils
+  .DocumentDbModelVersioned.DocumentDbModelVersioned<
   NotificationStatus,
   NewNotificationStatus,
   RetrievedNotificationStatus
@@ -198,7 +196,7 @@ export class NotificationStatusModel extends DocumentDbModelVersioned<
    */
   constructor(
     dbClient: DocumentDb.DocumentClient,
-    collectionUrl: DocumentDbUtils.IDocumentDbCollectionUri
+    collectionUrl: DocumentDbUtils.DocumentDb.IDocumentDbCollectionUri
   ) {
     super(
       dbClient,

@@ -1,10 +1,10 @@
-// tslint:disable:no-any
+// tslint:disable:no-any no-inferred-empty-object-type
 
 import { isLeft, isRight } from "fp-ts/lib/Either";
 
 import * as DocumentDb from "documentdb";
 
-import * as DocumentDbUtils from "../../utils/documentdb";
+import * as DocumentDbUtils from "io-documentdb-utils";
 
 import { FiscalCode } from "../../api/definitions/FiscalCode";
 
@@ -20,8 +20,10 @@ import {
   RetrievedNotification
 } from "../notification";
 
-const aDatabaseUri = DocumentDbUtils.getDatabaseUri("mockdb" as NonEmptyString);
-const aNotificationsCollectionUri = DocumentDbUtils.getCollectionUri(
+const aDatabaseUri = DocumentDbUtils.DocumentDb.getDatabaseUri(
+  "mockdb" as NonEmptyString
+);
+const aNotificationsCollectionUri = DocumentDbUtils.DocumentDb.getCollectionUri(
   aDatabaseUri,
   NOTIFICATION_COLLECTION_NAME
 );

@@ -1,5 +1,5 @@
+import * as documentDbUtils from "io-documentdb-utils";
 import * as winston from "winston";
-import * as documentDbUtils from "../lib/utils/documentdb";
 
 import { IContext } from "azure-function-express";
 import { DocumentClient } from "documentdb";
@@ -32,9 +32,11 @@ const cosmosDbUri = getRequiredStringEnv("CUSTOMCONNSTR_COSMOSDB_URI");
 const cosmosDbKey = getRequiredStringEnv("CUSTOMCONNSTR_COSMOSDB_KEY");
 const cosmosDbName = getRequiredStringEnv("COSMOSDB_NAME");
 
-const documentDbDatabaseUrl = documentDbUtils.getDatabaseUri(cosmosDbName);
+const documentDbDatabaseUrl = documentDbUtils.DocumentDb.getDatabaseUri(
+  cosmosDbName
+);
 
-const servicesCollectionUrl = documentDbUtils.getCollectionUri(
+const servicesCollectionUrl = documentDbUtils.DocumentDb.getCollectionUri(
   documentDbDatabaseUrl,
   SERVICE_COLLECTION_NAME
 );
@@ -103,11 +105,11 @@ export async function index(
   try {
     // iterate over the whole services collection and collect visible services
     const servicesCollectionIterator = await serviceModel.getCollectionIterator();
-    const servicesIterator = documentDbUtils.reduceResultIterator(
+    const servicesIterator = documentDbUtils.DocumentDb.reduceResultIterator(
       servicesCollectionIterator,
       reduceServicesToVisibleServices
     );
-    const errorOrVisibleServices = await documentDbUtils.iteratorToValue(
+    const errorOrVisibleServices = await documentDbUtils.DocumentDb.iteratorToValue(
       servicesIterator,
       new StrMap<VisibleService>({})
     );

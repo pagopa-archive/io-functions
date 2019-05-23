@@ -1,9 +1,9 @@
 /*
-* This function will process events triggered by newly created messages.
-* For each new input message, the delivery preferences associated to the
-* recipient of the message gets retrieved and a notification gets delivered
-* to each configured channel.
-*/
+ * This function will process events triggered by newly created messages.
+ * For each new input message, the delivery preferences associated to the
+ * recipient of the message gets retrieved and a notification gets delivered
+ * to each configured channel.
+ */
 
 import * as t from "io-ts";
 
@@ -15,7 +15,7 @@ import { DocumentClient as DocumentDBClient } from "documentdb";
 
 import { configureAzureContextTransport } from "./utils/logging";
 
-import * as documentDbUtils from "./utils/documentdb";
+import * as documentDbUtils from "io-documentdb-utils";
 
 import { Set } from "json-set-map";
 
@@ -104,24 +104,26 @@ const cosmosDbUri = getRequiredStringEnv("CUSTOMCONNSTR_COSMOSDB_URI");
 const cosmosDbKey = getRequiredStringEnv("CUSTOMCONNSTR_COSMOSDB_KEY");
 const cosmosDbName = getRequiredStringEnv("COSMOSDB_NAME");
 
-const documentDbDatabaseUrl = documentDbUtils.getDatabaseUri(cosmosDbName);
-const profilesCollectionUrl = documentDbUtils.getCollectionUri(
+const documentDbDatabaseUrl = documentDbUtils.DocumentDb.getDatabaseUri(
+  cosmosDbName
+);
+const profilesCollectionUrl = documentDbUtils.DocumentDb.getCollectionUri(
   documentDbDatabaseUrl,
   PROFILE_COLLECTION_NAME
 );
-const messagesCollectionUrl = documentDbUtils.getCollectionUri(
+const messagesCollectionUrl = documentDbUtils.DocumentDb.getCollectionUri(
   documentDbDatabaseUrl,
   MESSAGE_COLLECTION_NAME
 );
-const notificationsCollectionUrl = documentDbUtils.getCollectionUri(
+const notificationsCollectionUrl = documentDbUtils.DocumentDb.getCollectionUri(
   documentDbDatabaseUrl,
   NOTIFICATION_COLLECTION_NAME
 );
-const messageStatusCollectionUrl = documentDbUtils.getCollectionUri(
+const messageStatusCollectionUrl = documentDbUtils.DocumentDb.getCollectionUri(
   documentDbDatabaseUrl,
   MESSAGE_STATUS_COLLECTION_NAME
 );
-const senderServicesCollectionUrl = documentDbUtils.getCollectionUri(
+const senderServicesCollectionUrl = documentDbUtils.DocumentDb.getCollectionUri(
   documentDbDatabaseUrl,
   SENDER_SERVICE_COLLECTION_NAME
 );

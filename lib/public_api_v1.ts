@@ -14,7 +14,7 @@ import { configureAzureContextTransport } from "./utils/logging";
 
 import { DocumentClient as DocumentDBClient } from "documentdb";
 
-import * as documentDbUtils from "./utils/documentdb";
+import * as documentDbUtils from "io-documentdb-utils";
 
 import { createAzureFunctionHandler } from "azure-function-express";
 
@@ -79,32 +79,34 @@ const cosmosDbKey = getRequiredStringEnv("CUSTOMCONNSTR_COSMOSDB_KEY");
 const cosmosDbName = getRequiredStringEnv("COSMOSDB_NAME");
 const messageContainerName = getRequiredStringEnv("MESSAGE_CONTAINER_NAME");
 
-const documentDbDatabaseUrl = documentDbUtils.getDatabaseUri(cosmosDbName);
-const messagesCollectionUrl = documentDbUtils.getCollectionUri(
+const documentDbDatabaseUrl = documentDbUtils.DocumentDb.getDatabaseUri(
+  cosmosDbName
+);
+const messagesCollectionUrl = documentDbUtils.DocumentDb.getCollectionUri(
   documentDbDatabaseUrl,
   MESSAGE_COLLECTION_NAME
 );
-const messageStatusCollectionUrl = documentDbUtils.getCollectionUri(
+const messageStatusCollectionUrl = documentDbUtils.DocumentDb.getCollectionUri(
   documentDbDatabaseUrl,
   MESSAGE_STATUS_COLLECTION_NAME
 );
-const profilesCollectionUrl = documentDbUtils.getCollectionUri(
+const profilesCollectionUrl = documentDbUtils.DocumentDb.getCollectionUri(
   documentDbDatabaseUrl,
   PROFILE_COLLECTION_NAME
 );
-const servicesCollectionUrl = documentDbUtils.getCollectionUri(
+const servicesCollectionUrl = documentDbUtils.DocumentDb.getCollectionUri(
   documentDbDatabaseUrl,
   SERVICE_COLLECTION_NAME
 );
-const senderServicesCollectionUrl = documentDbUtils.getCollectionUri(
+const senderServicesCollectionUrl = documentDbUtils.DocumentDb.getCollectionUri(
   documentDbDatabaseUrl,
   SENDER_SERVICE_COLLECTION_NAME
 );
-const notificationsCollectionUrl = documentDbUtils.getCollectionUri(
+const notificationsCollectionUrl = documentDbUtils.DocumentDb.getCollectionUri(
   documentDbDatabaseUrl,
   NOTIFICATION_COLLECTION_NAME
 );
-const notificationsStatusCollectionUrl = documentDbUtils.getCollectionUri(
+const notificationsStatusCollectionUrl = documentDbUtils.DocumentDb.getCollectionUri(
   documentDbDatabaseUrl,
   NOTIFICATION_STATUS_COLLECTION_NAME
 );

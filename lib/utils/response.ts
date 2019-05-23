@@ -1,12 +1,12 @@
 import * as DocumentDb from "documentdb";
 import * as express from "express";
 import { isLeft } from "fp-ts/lib/Either";
+import * as DocumentDbUtils from "io-documentdb-utils";
 import {
   HttpStatusCodeEnum,
   IResponse,
   ResponseErrorGeneric
 } from "italia-ts-commons/lib/responses";
-import { IResultIterator, iteratorToArray } from "./documentdb";
 
 /**
  * Interface for a successful response returning a json object.
@@ -26,11 +26,11 @@ export interface IResponseSuccessJsonIterator<T>
  * @TODO: pagination
  */
 export function ResponseJsonIterator<T>(
-  i: IResultIterator<T>
+  i: DocumentDbUtils.DocumentDb.IResultIterator<T>
 ): IResponseSuccessJsonIterator<T> {
   return {
     apply: res =>
-      iteratorToArray(i).then(errorOrDocuments => {
+      DocumentDbUtils.DocumentDb.iteratorToArray(i).then(errorOrDocuments => {
         if (isLeft(errorOrDocuments)) {
           const queryError = errorOrDocuments.value;
           return ResponseErrorQuery(queryError.body, queryError).apply(res);

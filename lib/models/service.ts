@@ -2,12 +2,7 @@ import * as t from "io-ts";
 import { PathReporter } from "io-ts/lib/PathReporter";
 
 import * as DocumentDb from "documentdb";
-import * as DocumentDbUtils from "../utils/documentdb";
-import {
-  DocumentDbModelVersioned,
-  ModelId,
-  VersionedModel
-} from "../utils/documentdb_model_versioned";
+import * as DocumentDbUtils from "io-documentdb-utils";
 
 import { Either } from "fp-ts/lib/Either";
 import { Option } from "fp-ts/lib/Option";
@@ -71,7 +66,11 @@ interface INewServiceTag {
 }
 
 export const NewService = tag<INewServiceTag>()(
-  t.intersection([Service, DocumentDbUtils.NewDocument, VersionedModel])
+  t.intersection([
+    Service,
+    DocumentDbUtils.DocumentDb.NewDocument,
+    DocumentDbUtils.DocumentDbModelVersioned.VersionedModel
+  ])
 );
 
 export type NewService = t.TypeOf<typeof NewService>;
@@ -86,7 +85,11 @@ interface IRetrievedServiceTag {
 }
 
 export const RetrievedService = tag<IRetrievedServiceTag>()(
-  t.intersection([Service, DocumentDbUtils.RetrievedDocument, VersionedModel])
+  t.intersection([
+    Service,
+    DocumentDbUtils.DocumentDb.RetrievedDocument,
+    DocumentDbUtils.DocumentDbModelVersioned.VersionedModel
+  ])
 );
 
 export type RetrievedService = t.TypeOf<typeof RetrievedService>;
@@ -130,7 +133,9 @@ function toRetrieved(result: DocumentDb.RetrievedDocument): RetrievedService {
   });
 }
 
-function getModelId(o: Service): ModelId {
+function getModelId(
+  o: Service
+): DocumentDbUtils.DocumentDbModelVersioned.ModelId {
   return nonEmptyStringToModelId(o.serviceId);
 }
 
@@ -167,11 +172,8 @@ function toBaseType(o: RetrievedService): Service {
 /**
  * A model for handling Services
  */
-export class ServiceModel extends DocumentDbModelVersioned<
-  Service,
-  NewService,
-  RetrievedService
-> {
+export class ServiceModel extends DocumentDbUtils.DocumentDbModelVersioned
+  .DocumentDbModelVersioned<Service, NewService, RetrievedService> {
   /**
    * Creates a new Service model
    *
@@ -180,7 +182,7 @@ export class ServiceModel extends DocumentDbModelVersioned<
    */
   constructor(
     dbClient: DocumentDb.DocumentClient,
-    collectionUrl: DocumentDbUtils.IDocumentDbCollectionUri
+    collectionUrl: DocumentDbUtils.DocumentDb.IDocumentDbCollectionUri
   ) {
     super(
       dbClient,

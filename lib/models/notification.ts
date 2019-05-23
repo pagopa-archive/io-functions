@@ -10,8 +10,7 @@ import * as t from "io-ts";
 
 import { tag } from "italia-ts-commons/lib/types";
 
-import * as DocumentDbUtils from "../utils/documentdb";
-import { DocumentDbModel } from "../utils/documentdb_model";
+import * as DocumentDbUtils from "io-documentdb-utils";
 
 import { EmailAddress } from "../api/definitions/EmailAddress";
 import { FiscalCode } from "../api/definitions/FiscalCode";
@@ -113,7 +112,7 @@ interface INewNotificationTag {
 }
 
 export const NewNotification = tag<INewNotificationTag>()(
-  t.intersection([Notification, DocumentDbUtils.NewDocument])
+  t.intersection([Notification, DocumentDbUtils.DocumentDb.NewDocument])
 );
 
 export type NewNotification = t.TypeOf<typeof NewNotification>;
@@ -144,7 +143,7 @@ interface IRetrievedNotificationTag {
 }
 
 export const RetrievedNotification = tag<IRetrievedNotificationTag>()(
-  t.intersection([Notification, DocumentDbUtils.RetrievedDocument])
+  t.intersection([Notification, DocumentDbUtils.DocumentDb.RetrievedDocument])
 );
 
 export type RetrievedNotification = t.TypeOf<typeof RetrievedNotification>;
@@ -166,11 +165,8 @@ function toRetrieved(
 /**
  * A model for handling Notifications
  */
-export class NotificationModel extends DocumentDbModel<
-  Notification,
-  NewNotification,
-  RetrievedNotification
-> {
+export class NotificationModel extends DocumentDbUtils.DocumentDbModel
+  .DocumentDbModel<Notification, NewNotification, RetrievedNotification> {
   /**
    * Creates a new Notification model
    *
@@ -179,7 +175,7 @@ export class NotificationModel extends DocumentDbModel<
    */
   constructor(
     dbClient: DocumentDb.DocumentClient,
-    collectionUrl: DocumentDbUtils.IDocumentDbCollectionUri
+    collectionUrl: DocumentDbUtils.DocumentDb.IDocumentDbCollectionUri
   ) {
     super(dbClient, collectionUrl, toBaseType, toRetrieved);
   }
@@ -193,7 +189,7 @@ export class NotificationModel extends DocumentDbModel<
   public findNotificationForMessage(
     messageId: string
   ): Promise<Either<DocumentDb.QueryError, Option<RetrievedNotification>>> {
-    return DocumentDbUtils.queryOneDocument(
+    return DocumentDbUtils.DocumentDb.queryOneDocument(
       this.dbClient,
       this.collectionUri,
       {

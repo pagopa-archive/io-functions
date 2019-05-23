@@ -4,8 +4,7 @@ import * as DocumentDb from "documentdb";
 
 import { pick, tag } from "italia-ts-commons/lib/types";
 
-import * as DocumentDbUtils from "../utils/documentdb";
-import { DocumentDbModel } from "../utils/documentdb_model";
+import * as DocumentDbUtils from "io-documentdb-utils";
 
 import { Either, isLeft, left, right } from "fp-ts/lib/Either";
 import { isNone, none, Option, some } from "fp-ts/lib/Option";
@@ -22,7 +21,6 @@ import { ServiceId } from "../api/definitions/ServiceId";
 import { Timestamp } from "../api/definitions/Timestamp";
 import { TimeToLiveSeconds } from "../api/definitions/TimeToLiveSeconds";
 import { getBlobAsText, upsertBlobFromObject } from "../utils/azure_storage";
-import { iteratorToArray } from "../utils/documentdb";
 
 export const MESSAGE_COLLECTION_NAME = "messages";
 export const MESSAGE_MODEL_PK_FIELD = "fiscalCode";
@@ -107,7 +105,7 @@ interface INewMessageWithContentTag {
 }
 
 export const NewMessageWithContent = tag<INewMessageWithContentTag>()(
-  t.intersection([MessageWithContent, DocumentDbUtils.NewDocument])
+  t.intersection([MessageWithContent, DocumentDbUtils.DocumentDb.NewDocument])
 );
 
 export type NewMessageWithContent = t.TypeOf<typeof NewMessageWithContent>;
@@ -120,7 +118,10 @@ interface INewMessageWithoutContentTag {
 }
 
 export const NewMessageWithoutContent = tag<INewMessageWithoutContentTag>()(
-  t.intersection([MessageWithoutContent, DocumentDbUtils.NewDocument])
+  t.intersection([
+    MessageWithoutContent,
+    DocumentDbUtils.DocumentDb.NewDocument
+  ])
 );
 
 export type NewMessageWithoutContent = t.TypeOf<
@@ -147,7 +148,12 @@ interface IRetrievedMessageWithContentTag {
 
 export const RetrievedMessageWithContent = tag<
   IRetrievedMessageWithContentTag
->()(t.intersection([MessageWithContent, DocumentDbUtils.RetrievedDocument]));
+>()(
+  t.intersection([
+    MessageWithContent,
+    DocumentDbUtils.DocumentDb.RetrievedDocument
+  ])
+);
 
 export type RetrievedMessageWithContent = t.TypeOf<
   typeof RetrievedMessageWithContent
@@ -163,7 +169,12 @@ interface IRetrievedMessageWithoutContentTag {
 
 export const RetrievedMessageWithoutContent = tag<
   IRetrievedMessageWithoutContentTag
->()(t.intersection([MessageWithoutContent, DocumentDbUtils.RetrievedDocument]));
+>()(
+  t.intersection([
+    MessageWithoutContent,
+    DocumentDbUtils.DocumentDb.RetrievedDocument
+  ])
+);
 
 export type RetrievedMessageWithoutContent = t.TypeOf<
   typeof RetrievedMessageWithoutContent
@@ -218,11 +229,8 @@ function blobIdFromMessageId(messageId: string): string {
 /**
  * A model for handling Messages
  */
-export class MessageModel extends DocumentDbModel<
-  Message,
-  NewMessage,
-  RetrievedMessage
-> {
+export class MessageModel extends DocumentDbUtils.DocumentDbModel
+  .DocumentDbModel<Message, NewMessage, RetrievedMessage> {
   /**
    * Creates a new Message model
    *
@@ -232,7 +240,7 @@ export class MessageModel extends DocumentDbModel<
    */
   constructor(
     dbClient: DocumentDb.DocumentClient,
-    collectionUrl: DocumentDbUtils.IDocumentDbCollectionUri,
+    collectionUrl: DocumentDbUtils.DocumentDb.IDocumentDbCollectionUri,
     protected readonly containerName: NonEmptyString
   ) {
     super(dbClient, collectionUrl, toBaseType, toRetrieved);
@@ -262,8 +270,8 @@ export class MessageModel extends DocumentDbModel<
    */
   public findMessages(
     fiscalCode: FiscalCode
-  ): DocumentDbUtils.IResultIterator<RetrievedMessageWithContent> {
-    return DocumentDbUtils.queryDocuments(
+  ): DocumentDbUtils.DocumentDb.IResultIterator<RetrievedMessageWithContent> {
+    return DocumentDbUtils.DocumentDb.queryDocuments(
       this.dbClient,
       this.collectionUri,
       {
@@ -344,7 +352,7 @@ export class MessageModel extends DocumentDbModel<
     fiscalCode: FiscalCode
   ): Promise<Either<Error, Option<MessageContent>>> {
     // get link to attached blob(s)
-    const errorOrMedia = await iteratorToArray(
+    const errorOrMedia = await DocumentDbUtils.DocumentDb.iteratorToArray(
       await this.getAttachments(messageId, {
         partitionKey: fiscalCode
       })

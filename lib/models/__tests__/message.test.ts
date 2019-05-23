@@ -1,10 +1,10 @@
-/* tslint:disable:no-any */
+// tslint:disable:no-any no-inferred-empty-object-type
 
 import { isLeft, isRight, left, right } from "fp-ts/lib/Either";
 
 import * as DocumentDb from "documentdb";
 
-import * as DocumentDbUtils from "../../utils/documentdb";
+import * as DocumentDbUtils from "io-documentdb-utils";
 
 import { FiscalCode } from "../../api/definitions/FiscalCode";
 import { MessageBodyMarkdown } from "../../api/definitions/MessageBodyMarkdown";
@@ -29,8 +29,10 @@ import * as azureStorageUtils from "../../utils/azure_storage";
 
 const MESSAGE_CONTAINER_NAME = "message-content" as NonEmptyString;
 
-const aDatabaseUri = DocumentDbUtils.getDatabaseUri("mockdb" as NonEmptyString);
-const aMessagesCollectionUrl = DocumentDbUtils.getCollectionUri(
+const aDatabaseUri = DocumentDbUtils.DocumentDb.getDatabaseUri(
+  "mockdb" as NonEmptyString
+);
+const aMessagesCollectionUrl = DocumentDbUtils.DocumentDb.getCollectionUri(
   aDatabaseUri,
   MESSAGE_COLLECTION_NAME
 );

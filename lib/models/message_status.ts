@@ -3,12 +3,7 @@ import * as t from "io-ts";
 import { pick, tag } from "italia-ts-commons/lib/types";
 
 import * as DocumentDb from "documentdb";
-import * as DocumentDbUtils from "../utils/documentdb";
-import {
-  DocumentDbModelVersioned,
-  ModelId,
-  VersionedModel
-} from "../utils/documentdb_model_versioned";
+import * as DocumentDbUtils from "io-documentdb-utils";
 
 import { Either } from "fp-ts/lib/Either";
 
@@ -47,7 +42,11 @@ interface INewMessageStatusTag {
 }
 
 export const NewMessageStatus = tag<INewMessageStatusTag>()(
-  t.intersection([MessageStatus, DocumentDbUtils.NewDocument, VersionedModel])
+  t.intersection([
+    MessageStatus,
+    DocumentDbUtils.DocumentDb.NewDocument,
+    DocumentDbUtils.DocumentDbModelVersioned.VersionedModel
+  ])
 );
 
 export type NewMessageStatus = t.TypeOf<typeof NewMessageStatus>;
@@ -64,8 +63,8 @@ interface IRetrievedMessageStatusTag {
 export const RetrievedMessageStatus = tag<IRetrievedMessageStatusTag>()(
   t.intersection([
     MessageStatus,
-    DocumentDbUtils.RetrievedDocument,
-    VersionedModel
+    DocumentDbUtils.DocumentDb.RetrievedDocument,
+    DocumentDbUtils.DocumentDbModelVersioned.VersionedModel
   ])
 );
 
@@ -79,7 +78,9 @@ function toRetrieved(
   });
 }
 
-function getModelId(o: MessageStatus): ModelId {
+function getModelId(
+  o: MessageStatus
+): DocumentDbUtils.DocumentDbModelVersioned.ModelId {
   return nonEmptyStringToModelId(o.messageId);
 }
 
@@ -100,9 +101,9 @@ function toBaseType(o: RetrievedMessageStatus): MessageStatus {
   return pick(["messageId", "status", "updatedAt"], o);
 }
 
-export type MessageStatusUpdater = ((
+export type MessageStatusUpdater = (
   status: MessageStatusValueEnum
-) => Promise<Either<RuntimeError, RetrievedMessageStatus>>);
+) => Promise<Either<RuntimeError, RetrievedMessageStatus>>;
 
 /**
  * Convenience method that returns a function
@@ -134,7 +135,8 @@ export const getMessageStatusUpdater = (
 /**
  * A model for handling MessageStatus
  */
-export class MessageStatusModel extends DocumentDbModelVersioned<
+export class MessageStatusModel extends DocumentDbUtils.DocumentDbModelVersioned
+  .DocumentDbModelVersioned<
   MessageStatus,
   NewMessageStatus,
   RetrievedMessageStatus
@@ -147,7 +149,7 @@ export class MessageStatusModel extends DocumentDbModelVersioned<
    */
   constructor(
     dbClient: DocumentDb.DocumentClient,
-    collectionUrl: DocumentDbUtils.IDocumentDbCollectionUri
+    collectionUrl: DocumentDbUtils.DocumentDb.IDocumentDbCollectionUri
   ) {
     super(
       dbClient,
