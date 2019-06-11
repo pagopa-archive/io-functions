@@ -14,7 +14,7 @@ import {
   ServiceModel,
   toAuthorizedCIDRs,
   toAuthorizedRecipients
-} from "../../models/service";
+} from "io-functions-commons/dist/src/models/service";
 
 import { CIDR } from "../../api/definitions/CIDR";
 import { FiscalCode } from "../../api/definitions/FiscalCode";

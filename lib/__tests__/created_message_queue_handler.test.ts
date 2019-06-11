@@ -14,8 +14,11 @@ process.env = {
   WEBHOOK_CHANNEL_URL: "https://example.com"
 };
 
-import { CreatedMessageEvent } from "../models/created_message_event";
-import { MessageModel, NewMessageWithoutContent } from "../models/message";
+import { CreatedMessageEvent } from "io-functions-commons/dist/src/models/created_message_event";
+import {
+  MessageModel,
+  NewMessageWithoutContent
+} from "io-functions-commons/dist/src/models/message";
 
 import * as functionConfig from "../../CreatedMessageQueueHandler/function.json";
 
@@ -29,10 +32,17 @@ import {
   NotificationAddressSourceEnum,
   NotificationModel,
   WebhookNotification
-} from "../models/notification";
-import { ProfileModel, RetrievedProfile } from "../models/profile";
+} from "io-functions-commons/dist/src/models/notification";
+import {
+  ProfileModel,
+  RetrievedProfile
+} from "io-functions-commons/dist/src/models/profile";
 
 import { isLeft, isRight, left, right } from "fp-ts/lib/Either";
+import {
+  isRecipientError,
+  isTransientError
+} from "io-functions-commons/dist/src/utils/errors";
 import { NonNegativeNumber } from "italia-ts-commons/lib/numbers";
 import {
   EmailString,
@@ -40,11 +50,10 @@ import {
   OrganizationFiscalCode
 } from "italia-ts-commons/lib/strings";
 import * as winston from "winston";
-import { isRecipientError, isTransientError } from "../utils/errors";
 
+import { NotificationEvent } from "io-functions-commons/dist/src/models/notification_event";
 import { NotificationChannelEnum } from "../api/definitions/NotificationChannel";
 import { TimeToLiveSeconds } from "../api/definitions/TimeToLiveSeconds";
-import { NotificationEvent } from "../models/notification_event";
 
 jest.mock("azure-storage");
 jest.mock("applicationinsights");
@@ -57,15 +66,15 @@ import {
   MESSAGE_QUEUE_NAME
 } from "../created_message_queue_handler";
 
+import { MessageStatusModel } from "io-functions-commons/dist/src/models/message_status";
+import {
+  RetrievedSenderService,
+  SenderServiceModel
+} from "io-functions-commons/dist/src/models/sender_service";
 import { HttpsUrl } from "../api/definitions/HttpsUrl";
 import { MessageContent } from "../api/definitions/MessageContent";
 import { MessageSubject } from "../api/definitions/MessageSubject";
 import { ServiceId } from "../api/definitions/ServiceId";
-import { MessageStatusModel } from "../models/message_status";
-import {
-  RetrievedSenderService,
-  SenderServiceModel
-} from "../models/sender_service";
 
 afterEach(() => {
   jest.resetAllMocks();

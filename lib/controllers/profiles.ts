@@ -53,15 +53,15 @@ import {
 } from "../utils/source_ip_check";
 
 import { IContext } from "azure-function-express";
-import { BlockedInboxOrChannelEnum } from "../api/definitions/BlockedInboxOrChannel";
-import { ServiceId } from "../api/definitions/ServiceId";
 import {
   IProfileBlockedInboxOrChannels,
   Profile,
   ProfileModel,
   RetrievedProfile
-} from "../models/profile";
-import { ServiceModel } from "../models/service";
+} from "io-functions-commons/dist/src/models/profile";
+import { ServiceModel } from "io-functions-commons/dist/src/models/service";
+import { BlockedInboxOrChannelEnum } from "../api/definitions/BlockedInboxOrChannel";
+import { ServiceId } from "../api/definitions/ServiceId";
 import { ContextMiddleware } from "../utils/middlewares/context_middleware";
 
 export interface IProfileCreatedEvent {

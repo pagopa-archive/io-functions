@@ -8,9 +8,13 @@ import { none, some } from "fp-ts/lib/Option";
 
 import { isLeft, isRight, left, right } from "fp-ts/lib/Either";
 
-import { Service, toAuthorizedCIDRs } from "../../../models/service";
+import {
+  Service,
+  toAuthorizedCIDRs
+} from "io-functions-commons/dist/src/models/service";
 
 import {
+  FiscalCode,
   NonEmptyString,
   OrganizationFiscalCode
 } from "italia-ts-commons/lib/strings";
@@ -166,7 +170,7 @@ describe("AzureUserAttributesMiddleware", () => {
       const attributes = result.value;
       expect(attributes.service).toEqual({
         ...aService,
-        authorizedRecipients: new Set()
+        authorizedRecipients: new Set<FiscalCode>()
       });
     }
   });

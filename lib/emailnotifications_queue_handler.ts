@@ -13,7 +13,7 @@ import { configureAzureContextTransport } from "./utils/logging";
 
 import { DocumentClient as DocumentDBClient } from "documentdb";
 
-import * as documentDbUtils from "./utils/documentdb";
+import * as documentDbUtils from "io-functions-commons/dist/src/utils/documentdb";
 
 import { Either, isLeft, left, right } from "fp-ts/lib/Either";
 import { isNone } from "fp-ts/lib/Option";
@@ -29,25 +29,25 @@ import * as HtmlToText from "html-to-text";
 
 import { MessageBodyMarkdown } from "./api/definitions/MessageBodyMarkdown";
 
-import { CreatedMessageEventSenderMetadata } from "./models/created_message_sender_metadata";
+import { CreatedMessageEventSenderMetadata } from "io-functions-commons/dist/src/models/created_message_sender_metadata";
 import {
   EmailNotification,
   NOTIFICATION_COLLECTION_NAME,
   NotificationModel
-} from "./models/notification";
-import { NotificationEvent } from "./models/notification_event";
+} from "io-functions-commons/dist/src/models/notification";
+import { NotificationEvent } from "io-functions-commons/dist/src/models/notification_event";
 
 import { markdownToHtml } from "./utils/markdown";
 
-import { MessageSubject } from "./api/definitions/MessageSubject";
-import defaultEmailTemplate from "./templates/html/default";
 import {
   ExpiredError,
   isExpiredError,
   PermanentError,
   RuntimeError,
   TransientError
-} from "./utils/errors";
+} from "io-functions-commons/dist/src/utils/errors";
+import { MessageSubject } from "./api/definitions/MessageSubject";
+import defaultEmailTemplate from "./templates/html/default";
 
 import { handleQueueProcessingFailure } from "./utils/azure_queues";
 
@@ -56,13 +56,13 @@ import { NotificationChannelEnum } from "./api/definitions/NotificationChannel";
 import { NotificationChannelStatusValueEnum } from "./api/definitions/NotificationChannelStatusValue";
 
 import { TelemetryClient } from "applicationinsights";
-import { NonEmptyString } from "italia-ts-commons/lib/strings";
-import { ActiveMessage } from "./models/message";
+import { ActiveMessage } from "io-functions-commons/dist/src/models/message";
 import {
   getNotificationStatusUpdater,
   NOTIFICATION_STATUS_COLLECTION_NAME,
   NotificationStatusModel
-} from "./models/notification_status";
+} from "io-functions-commons/dist/src/models/notification_status";
+import { NonEmptyString } from "italia-ts-commons/lib/strings";
 import {
   diffInMilliseconds,
   wrapCustomTelemetryClient

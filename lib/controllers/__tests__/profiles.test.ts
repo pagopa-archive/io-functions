@@ -5,7 +5,7 @@ import { right } from "fp-ts/lib/Either";
 import { none, some } from "fp-ts/lib/Option";
 import { EmailString, NonEmptyString } from "italia-ts-commons/lib/strings";
 
-import { RetrievedProfile } from "../../models/profile";
+import { RetrievedProfile } from "io-functions-commons/dist/src/models/profile";
 import {
   IAzureApiAuthorization,
   UserGroup

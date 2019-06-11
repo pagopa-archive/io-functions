@@ -2,11 +2,14 @@ import * as DocumentDb from "documentdb";
 import * as express from "express";
 import { isLeft } from "fp-ts/lib/Either";
 import {
+  IResultIterator,
+  iteratorToArray
+} from "io-functions-commons/dist/src/utils/documentdb";
+import {
   HttpStatusCodeEnum,
   IResponse,
   ResponseErrorGeneric
 } from "italia-ts-commons/lib/responses";
-import { IResultIterator, iteratorToArray } from "./documentdb";
 
 /**
  * Interface for a successful response returning a json object.

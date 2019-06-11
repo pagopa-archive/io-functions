@@ -25,17 +25,17 @@ import {
   Service,
   toAuthorizedCIDRs,
   toAuthorizedRecipients
-} from "../../models/service";
+} from "io-functions-commons/dist/src/models/service";
 
 import { ServicePublic as ApiService } from "../../api/definitions/ServicePublic";
 
-import { FiscalCode } from "../../api/definitions/FiscalCode";
-import { MaxAllowedPaymentAmount } from "../../api/definitions/MaxAllowedPaymentAmount";
 import {
   VISIBLE_SERVICE_BLOB_ID,
   VISIBLE_SERVICE_CONTAINER,
   VisibleService
-} from "../../models/visible_service";
+} from "io-functions-commons/dist/src/models/visible_service";
+import { FiscalCode } from "../../api/definitions/FiscalCode";
+import { MaxAllowedPaymentAmount } from "../../api/definitions/MaxAllowedPaymentAmount";
 import {
   GetService,
   GetServiceHandler,

@@ -10,7 +10,10 @@ import {
   ClientIpMiddleware
 } from "../utils/middlewares/client_ip_middleware";
 
-import { RetrievedService, ServiceModel } from "../models/service";
+import {
+  RetrievedService,
+  ServiceModel
+} from "io-functions-commons/dist/src/models/service";
 
 import { ServicePublic as ApiService } from "../api/definitions/ServicePublic";
 
@@ -49,23 +52,23 @@ import {
   IAzureUserAttributes
 } from "../utils/middlewares/azure_user_attributes";
 
+import { SenderServiceModel } from "io-functions-commons/dist/src/models/sender_service";
+import { mapResultIterator } from "io-functions-commons/dist/src/utils/documentdb";
 import { FiscalCode } from "../api/definitions/FiscalCode";
 import { ServiceId } from "../api/definitions/ServiceId";
-import { SenderServiceModel } from "../models/sender_service";
-import { mapResultIterator } from "../utils/documentdb";
 
 import { BlobService } from "azure-storage";
 
 import { StrMap } from "fp-ts/lib/StrMap";
-import { PaginatedServiceTupleCollection } from "../api/definitions/PaginatedServiceTupleCollection";
-import { ServiceTuple } from "../api/definitions/ServiceTuple";
 import {
   toServicesTuple,
   VISIBLE_SERVICE_BLOB_ID,
   VISIBLE_SERVICE_CONTAINER,
   VisibleService
-} from "../models/visible_service";
-import { getBlobAsObject } from "../utils/azure_storage";
+} from "io-functions-commons/dist/src/models/visible_service";
+import { getBlobAsObject } from "io-functions-commons/dist/src/utils/azure_storage";
+import { PaginatedServiceTupleCollection } from "../api/definitions/PaginatedServiceTupleCollection";
+import { ServiceTuple } from "../api/definitions/ServiceTuple";
 import {
   checkSourceIpForHandler,
   clientIPAndCidrTuple as ipTuple

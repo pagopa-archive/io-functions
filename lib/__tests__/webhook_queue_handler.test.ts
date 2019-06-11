@@ -35,13 +35,16 @@ import {
   WEBHOOK_NOTIFICATION_QUEUE_NAME
 } from "../webhook_queue_handler";
 
+import { CreatedMessageEventSenderMetadata } from "io-functions-commons/dist/src/models/created_message_sender_metadata";
+import {
+  Notification,
+  NotificationModel
+} from "io-functions-commons/dist/src/models/notification";
+import { isTransientError } from "io-functions-commons/dist/src/utils/errors";
 import { MessageBodyMarkdown } from "../api/definitions/MessageBodyMarkdown";
 import { MessageSubject } from "../api/definitions/MessageSubject";
-import { CreatedMessageEventSenderMetadata } from "../models/created_message_sender_metadata";
-import { Notification, NotificationModel } from "../models/notification";
-import { isTransientError } from "../utils/errors";
 
-import { NotificationEvent } from "../models/notification_event";
+import { NotificationEvent } from "io-functions-commons/dist/src/models/notification_event";
 
 import * as functionConfig from "../../WebhookNotificationsQueueHandler/function.json";
 import { MessageContent } from "../api/definitions/MessageContent";
@@ -49,13 +52,13 @@ import { NotificationChannelEnum } from "../api/definitions/NotificationChannel"
 import { NotificationChannelStatusValueEnum } from "../api/definitions/NotificationChannelStatusValue";
 import { TimeToLiveSeconds } from "../api/definitions/TimeToLiveSeconds";
 
-import { NonNegativeNumber } from "italia-ts-commons/lib/numbers";
-import { readableReport } from "italia-ts-commons/lib/reporters";
 import {
   makeStatusId,
   NotificationStatusModel,
   RetrievedNotificationStatus
-} from "../models/notification_status";
+} from "io-functions-commons/dist/src/models/notification_status";
+import { NonNegativeNumber } from "italia-ts-commons/lib/numbers";
+import { readableReport } from "italia-ts-commons/lib/reporters";
 
 jest.mock("../utils/azure_queues");
 import { handleQueueProcessingFailure } from "../utils/azure_queues";

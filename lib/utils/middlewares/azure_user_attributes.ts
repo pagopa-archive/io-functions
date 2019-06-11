@@ -9,7 +9,10 @@ import { isNone } from "fp-ts/lib/Option";
 
 import { EmailString, NonEmptyString } from "italia-ts-commons/lib/strings";
 
-import { Service, ServiceModel } from "../../models/service";
+import {
+  Service,
+  ServiceModel
+} from "io-functions-commons/dist/src/models/service";
 import { IRequestMiddleware } from "../request_middleware";
 import { ResponseErrorQuery } from "../response";
 

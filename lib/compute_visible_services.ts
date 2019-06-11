@@ -1,5 +1,5 @@
+import * as documentDbUtils from "io-functions-commons/dist/src/utils/documentdb";
 import * as winston from "winston";
-import * as documentDbUtils from "../lib/utils/documentdb";
 
 import { IContext } from "azure-function-express";
 import { DocumentClient } from "documentdb";
@@ -12,12 +12,12 @@ import {
   RetrievedService,
   SERVICE_COLLECTION_NAME,
   ServiceModel
-} from "./models/service";
+} from "io-functions-commons/dist/src/models/service";
 import { getRequiredStringEnv } from "./utils/env";
 
 import { isLeft } from "fp-ts/lib/Either";
 import { isNone, isSome } from "fp-ts/lib/Option";
-import { VisibleService } from "./models/visible_service";
+import { VisibleService } from "io-functions-commons/dist/src/models/visible_service";
 
 import { configureAzureContextTransport } from "./utils/logging";
 

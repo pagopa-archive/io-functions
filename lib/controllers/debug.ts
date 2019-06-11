@@ -33,7 +33,7 @@ import {
   IAzureUserAttributes
 } from "../utils/middlewares/azure_user_attributes";
 
-import { ServiceModel } from "../models/service";
+import { ServiceModel } from "io-functions-commons/dist/src/models/service";
 
 import {
   IResponseSuccessJson,

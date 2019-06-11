@@ -1,6 +1,6 @@
 /*
-* Implements the API handlers for the Message resource.
-*/
+ * Implements the API handlers for the Message resource.
+ */
 import * as express from "express";
 import * as t from "io-ts";
 import * as winston from "winston";
@@ -18,7 +18,7 @@ import { FiscalCode } from "../api/definitions/FiscalCode";
 import { MessageResponseWithContent } from "../api/definitions/MessageResponseWithContent";
 import { NewMessage as ApiNewMessage } from "../api/definitions/NewMessage";
 
-import { CreatedMessageEvent } from "./../models/created_message_event";
+import { CreatedMessageEvent } from "io-functions-commons/dist/src/models/created_message_event";
 
 import { RequiredParamMiddleware } from "../utils/middlewares/required_param";
 
@@ -29,6 +29,10 @@ import {
   ResponseJsonIterator
 } from "../utils/response";
 
+import {
+  ObjectIdGenerator,
+  ulidGenerator
+} from "io-functions-commons/dist/src/utils/strings";
 import { readableReport } from "italia-ts-commons/lib/reporters";
 import {
   IResponseErrorForbiddenNotAuthorized,
@@ -68,17 +72,19 @@ import {
   withRequestMiddlewares,
   wrapRequestHandler
 } from "../utils/request_middleware";
-import { ObjectIdGenerator, ulidGenerator } from "../utils/strings";
 
 import {
   checkSourceIpForHandler,
   clientIPAndCidrTuple as ipTuple
 } from "../utils/source_ip_check";
 
-import { filterResultIterator, mapResultIterator } from "../utils/documentdb";
+import {
+  filterResultIterator,
+  mapResultIterator
+} from "io-functions-commons/dist/src/utils/documentdb";
 
-import { NotificationModel } from "../models/notification";
-import { ServiceModel } from "../models/service";
+import { NotificationModel } from "io-functions-commons/dist/src/models/notification";
+import { ServiceModel } from "io-functions-commons/dist/src/models/service";
 
 import { BlobService } from "azure-storage";
 
@@ -87,7 +93,7 @@ import {
   MessageModel,
   NewMessageWithoutContent,
   RetrievedMessage
-} from "../models/message";
+} from "io-functions-commons/dist/src/models/message";
 
 import { withoutUndefinedValues } from "italia-ts-commons/lib/types";
 
@@ -100,14 +106,14 @@ import {
   some
 } from "fp-ts/lib/Option";
 
+import { MessageStatusModel } from "io-functions-commons/dist/src/models/message_status";
+import { NotificationStatusModel } from "io-functions-commons/dist/src/models/notification_status";
 import { CreatedMessageWithContent } from "../api/definitions/CreatedMessageWithContent";
 import { MessageResponseWithoutContent } from "../api/definitions/MessageResponseWithoutContent";
 import { MessageStatusValueEnum } from "../api/definitions/MessageStatusValue";
 import { NotificationChannelEnum } from "../api/definitions/NotificationChannel";
 import { NotificationChannelStatusValueEnum } from "../api/definitions/NotificationChannelStatusValue";
 import { TimeToLiveSeconds } from "../api/definitions/TimeToLiveSeconds";
-import { MessageStatusModel } from "../models/message_status";
-import { NotificationStatusModel } from "../models/notification_status";
 import {
   CustomTelemetryClientFactory,
   diffInMilliseconds

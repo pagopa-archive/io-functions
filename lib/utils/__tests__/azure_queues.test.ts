@@ -3,13 +3,16 @@
 jest.mock("winston");
 
 import { left, right } from "fp-ts/lib/Either";
+import {
+  PermanentError,
+  TransientError
+} from "io-functions-commons/dist/src/utils/errors";
 import * as config from "../../../host.json";
 import {
   handleQueueProcessingFailure,
   MAX_RETRIES,
   updateMessageVisibilityTimeout
 } from "../azure_queues";
-import { PermanentError, TransientError } from "../errors";
 
 const aQueueName = "aQueueName";
 
