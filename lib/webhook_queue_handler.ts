@@ -16,7 +16,7 @@ import { configureAzureContextTransport } from "./utils/logging";
 
 import { DocumentClient as DocumentDBClient } from "documentdb";
 
-import * as documentDbUtils from "./utils/documentdb";
+import * as documentDbUtils from "io-functions-commons/dist/src/utils/documentdb";
 
 import { Either, isLeft, left, right } from "fp-ts/lib/Either";
 import { isNone } from "fp-ts/lib/Option";
@@ -29,8 +29,8 @@ import {
   NOTIFICATION_COLLECTION_NAME,
   NotificationModel,
   WebhookNotification
-} from "./models/notification";
-import { NotificationEvent } from "./models/notification_event";
+} from "io-functions-commons/dist/src/models/notification";
+import { NotificationEvent } from "io-functions-commons/dist/src/models/notification_event";
 
 import {
   ExpiredError,
@@ -38,7 +38,7 @@ import {
   PermanentError,
   RuntimeError,
   TransientError
-} from "./utils/errors";
+} from "io-functions-commons/dist/src/utils/errors";
 
 import { handleQueueProcessingFailure } from "./utils/azure_queues";
 
@@ -47,19 +47,22 @@ import { NotificationChannelEnum } from "./api/definitions/NotificationChannel";
 import { NotificationChannelStatusValueEnum } from "./api/definitions/NotificationChannelStatusValue";
 
 import { TelemetryClient } from "applicationinsights";
+import { CreatedMessageEventSenderMetadata } from "io-functions-commons/dist/src/models/created_message_sender_metadata";
+import {
+  ActiveMessage,
+  NewMessageWithoutContent
+} from "io-functions-commons/dist/src/models/message";
+import {
+  getNotificationStatusUpdater,
+  NOTIFICATION_STATUS_COLLECTION_NAME,
+  NotificationStatusModel
+} from "io-functions-commons/dist/src/models/notification_status";
 import { NonEmptyString } from "italia-ts-commons/lib/strings";
 import { UrlFromString } from "italia-ts-commons/lib/url";
 import { CreatedMessageWithContent } from "./api/definitions/CreatedMessageWithContent";
 import { HttpsUrl } from "./api/definitions/HttpsUrl";
 import { MessageContent } from "./api/definitions/MessageContent";
 import { SenderMetadata } from "./api/definitions/SenderMetadata";
-import { CreatedMessageEventSenderMetadata } from "./models/created_message_sender_metadata";
-import { ActiveMessage, NewMessageWithoutContent } from "./models/message";
-import {
-  getNotificationStatusUpdater,
-  NOTIFICATION_STATUS_COLLECTION_NAME,
-  NotificationStatusModel
-} from "./models/notification_status";
 import {
   diffInMilliseconds,
   wrapCustomTelemetryClient
@@ -206,10 +209,10 @@ export async function sendToWebhook(
           err.timeout
             ? TransientError(`Timeout calling API Proxy`)
             : // when the server returns an HTTP 5xx error
-              err.status && err.status % 500 < 100
-              ? TransientError(`Transient error calling API proxy: ${errorMsg}`)
-              : // when the server returns some other type of HTTP error
-                PermanentError(`Permanent error calling API Proxy: ${errorMsg}`)
+            err.status && err.status % 500 < 100
+            ? TransientError(`Transient error calling API proxy: ${errorMsg}`)
+            : // when the server returns some other type of HTTP error
+              PermanentError(`Permanent error calling API Proxy: ${errorMsg}`)
         );
       }
     );

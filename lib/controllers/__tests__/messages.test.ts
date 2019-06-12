@@ -4,7 +4,7 @@
 
 jest.mock("winston");
 
-import { toAuthorizedCIDRs } from "../../models/service";
+import { toAuthorizedCIDRs } from "io-functions-commons/dist/src/models/service";
 
 import { response as MockResponse } from "jest-mock-express";
 
@@ -29,6 +29,21 @@ import {
 import { IAzureUserAttributes } from "../../utils/middlewares/azure_user_attributes";
 
 import { QueryError } from "documentdb";
+import {
+  NewMessage,
+  NewMessageWithContent,
+  NewMessageWithoutContent,
+  RetrievedMessageWithoutContent
+} from "io-functions-commons/dist/src/models/message";
+import { MessageStatus } from "io-functions-commons/dist/src/models/message_status";
+import {
+  NotificationAddressSourceEnum,
+  RetrievedNotification
+} from "io-functions-commons/dist/src/models/notification";
+import {
+  makeStatusId,
+  RetrievedNotificationStatus
+} from "io-functions-commons/dist/src/models/notification_status";
 import { NonNegativeNumber } from "italia-ts-commons/lib/numbers";
 import { MessageContent } from "../../api/definitions/MessageContent";
 import { MessageResponseWithoutContent } from "../../api/definitions/MessageResponseWithoutContent";
@@ -36,21 +51,6 @@ import { MessageStatusValueEnum } from "../../api/definitions/MessageStatusValue
 import { NotificationChannelEnum } from "../../api/definitions/NotificationChannel";
 import { NotificationChannelStatusValueEnum } from "../../api/definitions/NotificationChannelStatusValue";
 import { TimeToLiveSeconds } from "../../api/definitions/TimeToLiveSeconds";
-import {
-  NewMessage,
-  NewMessageWithContent,
-  NewMessageWithoutContent,
-  RetrievedMessageWithoutContent
-} from "../../models/message";
-import { MessageStatus } from "../../models/message_status";
-import {
-  NotificationAddressSourceEnum,
-  RetrievedNotification
-} from "../../models/notification";
-import {
-  makeStatusId,
-  RetrievedNotificationStatus
-} from "../../models/notification_status";
 import {
   ApiNewMessageWithDefaults,
   CreateMessage,

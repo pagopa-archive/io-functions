@@ -242,7 +242,7 @@ paths:
             service_name: service
             authorized_cidrs: []
 definitions:
-  $ref: definitions.yaml
+  $ref: "https://raw.githubusercontent.com/teamdigitale/io-functions-commons/master/openapi/definitions.yaml"
 responses: {}
 parameters: {}
 consumes:

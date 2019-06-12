@@ -14,17 +14,26 @@ import { configureAzureContextTransport } from "./utils/logging";
 
 import { DocumentClient as DocumentDBClient } from "documentdb";
 
-import * as documentDbUtils from "./utils/documentdb";
+import * as documentDbUtils from "io-functions-commons/dist/src/utils/documentdb";
 
 import { createAzureFunctionHandler } from "azure-function-express";
 
-import { MESSAGE_COLLECTION_NAME, MessageModel } from "./models/message";
+import {
+  MESSAGE_COLLECTION_NAME,
+  MessageModel
+} from "io-functions-commons/dist/src/models/message";
 import {
   NOTIFICATION_COLLECTION_NAME,
   NotificationModel
-} from "./models/notification";
-import { PROFILE_COLLECTION_NAME, ProfileModel } from "./models/profile";
-import { SERVICE_COLLECTION_NAME, ServiceModel } from "./models/service";
+} from "io-functions-commons/dist/src/models/notification";
+import {
+  PROFILE_COLLECTION_NAME,
+  ProfileModel
+} from "io-functions-commons/dist/src/models/profile";
+import {
+  SERVICE_COLLECTION_NAME,
+  ServiceModel
+} from "io-functions-commons/dist/src/models/service";
 
 import { GetDebug } from "./controllers/debug";
 import { GetInfo } from "./controllers/info";
@@ -37,22 +46,22 @@ import { secureExpressApp } from "./utils/express";
 import { createBlobService } from "azure-storage";
 
 import {
+  MESSAGE_STATUS_COLLECTION_NAME,
+  MessageStatusModel
+} from "io-functions-commons/dist/src/models/message_status";
+import {
+  NOTIFICATION_STATUS_COLLECTION_NAME,
+  NotificationStatusModel
+} from "io-functions-commons/dist/src/models/notification_status";
+import {
+  SENDER_SERVICE_COLLECTION_NAME,
+  SenderServiceModel
+} from "io-functions-commons/dist/src/models/sender_service";
+import {
   GetService,
   GetServicesByRecipient,
   GetVisibleServices
 } from "./controllers/services";
-import {
-  MESSAGE_STATUS_COLLECTION_NAME,
-  MessageStatusModel
-} from "./models/message_status";
-import {
-  NOTIFICATION_STATUS_COLLECTION_NAME,
-  NotificationStatusModel
-} from "./models/notification_status";
-import {
-  SENDER_SERVICE_COLLECTION_NAME,
-  SenderServiceModel
-} from "./models/sender_service";
 
 import { TelemetryClient } from "applicationinsights";
 import { wrapCustomTelemetryClient } from "./utils/application_insights";

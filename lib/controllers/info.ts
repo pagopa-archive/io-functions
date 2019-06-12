@@ -35,7 +35,7 @@ import {
   ResponseSuccessJson
 } from "italia-ts-commons/lib/responses";
 
-import { ServiceModel } from "../models/service";
+import { ServiceModel } from "io-functions-commons/dist/src/models/service";
 
 interface IResponseInfo {
   readonly status: "OK";

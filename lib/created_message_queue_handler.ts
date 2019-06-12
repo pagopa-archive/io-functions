@@ -1,9 +1,9 @@
 /*
-* This function will process events triggered by newly created messages.
-* For each new input message, the delivery preferences associated to the
-* recipient of the message gets retrieved and a notification gets delivered
-* to each configured channel.
-*/
+ * This function will process events triggered by newly created messages.
+ * For each new input message, the delivery preferences associated to the
+ * recipient of the message gets retrieved and a notification gets delivered
+ * to each configured channel.
+ */
 
 import * as t from "io-ts";
 
@@ -15,7 +15,7 @@ import { DocumentClient as DocumentDBClient } from "documentdb";
 
 import { configureAzureContextTransport } from "./utils/logging";
 
-import * as documentDbUtils from "./utils/documentdb";
+import * as documentDbUtils from "io-functions-commons/dist/src/utils/documentdb";
 
 import { Set } from "json-set-map";
 
@@ -31,12 +31,12 @@ import { NewMessageDefaultAddresses } from "./api/definitions/NewMessageDefaultA
 
 import { getRequiredStringEnv } from "./utils/env";
 
-import { CreatedMessageEvent } from "./models/created_message_event";
+import { CreatedMessageEvent } from "io-functions-commons/dist/src/models/created_message_event";
 import {
   MESSAGE_COLLECTION_NAME,
   MessageModel,
   NewMessageWithoutContent
-} from "./models/message";
+} from "io-functions-commons/dist/src/models/message";
 import {
   createNewNotification,
   NewNotification,
@@ -44,25 +44,25 @@ import {
   NotificationAddressSourceEnum,
   NotificationChannelEmail,
   NotificationModel
-} from "./models/notification";
-import { NotificationEvent } from "./models/notification_event";
+} from "io-functions-commons/dist/src/models/notification";
+import { NotificationEvent } from "io-functions-commons/dist/src/models/notification_event";
 import {
   IProfileBlockedInboxOrChannels,
   PROFILE_COLLECTION_NAME,
   ProfileModel,
   RetrievedProfile
-} from "./models/profile";
+} from "io-functions-commons/dist/src/models/profile";
 
 import { Either, isLeft, left, right } from "fp-ts/lib/Either";
 import { readableReport } from "italia-ts-commons/lib/reporters";
 
-import { handleQueueProcessingFailure } from "./utils/azure_queues";
 import {
   isRecipientError,
   RecipientError,
   RuntimeError,
   TransientError
-} from "./utils/errors";
+} from "io-functions-commons/dist/src/utils/errors";
+import { handleQueueProcessingFailure } from "./utils/azure_queues";
 
 import { MessageStatusValueEnum } from "./api/definitions/MessageStatusValue";
 import { NotificationChannelEnum } from "./api/definitions/NotificationChannel";
@@ -75,21 +75,21 @@ import { BlockedInboxOrChannelEnum } from "./api/definitions/BlockedInboxOrChann
 import { HttpsUrl } from "./api/definitions/HttpsUrl";
 import { MessageContent } from "./api/definitions/MessageContent";
 
-import { CreatedMessageEventSenderMetadata } from "./models/created_message_sender_metadata";
+import { CreatedMessageEventSenderMetadata } from "io-functions-commons/dist/src/models/created_message_sender_metadata";
 import {
   getMessageStatusUpdater,
   MESSAGE_STATUS_COLLECTION_NAME,
   MessageStatusModel
-} from "./models/message_status";
+} from "io-functions-commons/dist/src/models/message_status";
 import {
   newSenderService,
   SENDER_SERVICE_COLLECTION_NAME,
   SenderServiceModel
-} from "./models/sender_service";
+} from "io-functions-commons/dist/src/models/sender_service";
 
 import { wrapCustomTelemetryClient } from "./utils/application_insights";
 
-import { ulidGenerator } from "./utils/strings";
+import { ulidGenerator } from "io-functions-commons/dist/src/utils/strings";
 
 // Whether we're in a production environment
 const isProduction = process.env.NODE_ENV === "production";

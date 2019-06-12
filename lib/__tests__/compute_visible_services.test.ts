@@ -12,20 +12,21 @@ jest.mock("../utils/logging");
 
 import { left, right } from "fp-ts/lib/Either";
 import { none, some } from "fp-ts/lib/Option";
-import { NonNegativeNumber } from "italia-ts-commons/lib/numbers";
-import {
-  NonEmptyString,
-  OrganizationFiscalCode
-} from "italia-ts-commons/lib/strings";
 import {
   RetrievedService,
   ServiceModel,
   toAuthorizedCIDRs,
   toAuthorizedRecipients
-} from "../../lib/models/service";
+} from "io-functions-commons/dist/src/models/service";
+import { VisibleService } from "io-functions-commons/dist/src/models/visible_service";
+import { NonNegativeNumber } from "italia-ts-commons/lib/numbers";
+import {
+  NonEmptyString,
+  OrganizationFiscalCode
+} from "italia-ts-commons/lib/strings";
+
 import { MaxAllowedPaymentAmount } from "../api/definitions/MaxAllowedPaymentAmount";
 import { index } from "../compute_visible_services";
-import { VisibleService } from "../models/visible_service";
 
 afterEach(() => {
   jest.resetAllMocks();

@@ -4,6 +4,8 @@
     "italia-tslint-rules/strong"
   ],
   "jsRules": {},
-  "rules": {},
+  "rules": {
+    "no-submodule-imports": false
+  },
   "rulesDirectory": []
 }

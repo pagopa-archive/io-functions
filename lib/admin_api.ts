@@ -13,11 +13,11 @@ import { configureAzureContextTransport } from "./utils/logging";
 
 import { DocumentClient as DocumentDBClient } from "documentdb";
 
-import * as documentDbUtils from "./utils/documentdb";
+import * as documentDbUtils from "io-functions-commons/dist/src/utils/documentdb";
 
 import { createAzureFunctionHandler } from "azure-function-express";
 
-import { ServiceModel } from "./models/service";
+import { ServiceModel } from "io-functions-commons/dist/src/models/service";
 
 import {
   CreateService,

@@ -12,7 +12,7 @@ import {
   RuntimeError,
   toRuntimeError,
   TransientError
-} from "./errors";
+} from "io-functions-commons/dist/src/utils/errors";
 
 export interface IQueueMessage extends QueueService.QueueMessageResult {
   readonly id: string;

@@ -438,7 +438,7 @@ paths:
       description: An endpoint to test authenticated access to the API backend.
       summary: API test endpoint
 definitions:
-  $ref: definitions.yaml
+  $ref: "https://raw.githubusercontent.com/teamdigitale/io-functions-commons/master/openapi/definitions.yaml"
 responses: {}
 parameters:
   PaginationRequest:

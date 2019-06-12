@@ -25,7 +25,7 @@ import {
   Service,
   toAuthorizedCIDRs,
   toAuthorizedRecipients
-} from "../../../models/service";
+} from "io-functions-commons/dist/src/models/service";
 
 import { Service as ApiService } from "../../../api/definitions/Service";
 
