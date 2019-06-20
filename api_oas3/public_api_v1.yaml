@@ -526,4 +526,22 @@ components:
       $ref: definitions.yaml#/Profile
     ExtendedProfile:
       $ref: definitions.yaml#/ExtendedProfile
+    time_to_live:
+      $ref: definitions.yaml#/TimeToLiveSeconds
+    due_date:
+      $ref: definitions.yaml#/Timestamp
+    content:
+      $ref: definitions.yaml#/MessageContent
+    ServiceTupleCollection:
+      $ref: definitions.yaml#/ServiceTupleCollection
+    PaginationResponse:
+      $ref: definitions.yaml#/PaginationResponse
+    CreatedMessageWithoutContentCollection:  
+      $ref: definitions.yaml#/CreatedMessageWithoutContentCollection
+    LimitedProfile:  
+      $ref: definitions.yaml#/LimitedProfile
+    email:
+      $ref: definitions.yaml#/EmailAddress
+    preferred_languages:
+      $ref: definitions.yaml#/PreferredLanguages
 
