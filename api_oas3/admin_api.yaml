@@ -245,8 +245,94 @@ paths:
           content: {}
 components:
   schemas:
+    OrganizationName:
+      minLength: 1
+      type: string
+      description: |-
+        The organization that runs the service. Will be added to the content
+        of sent messages to identify the sender.
+    MaxAllowedPaymentAmount:
+      maximum: 9999999999
+      minimum: 0
+      type: integer
+      description: Maximum amount in euro cents that a service is allowed to charge
+        to a user.
+      default: 0
+    ServiceName:
+      minLength: 1
+      type: string
+      description: The name of the service. Will be added to the content of sent messages.
+    FiscalCode:
+      type: string
+      description: User's fiscal code.
+      format: FiscalCode
+      example: SPNDNL80R13C555X
+      x-import: italia-ts-commons/lib/strings
     Service:
-      $ref: '#/components/schemas/Service'
+      required:
+      - authorized_cidrs
+      - authorized_recipients
+      - department_name
+      - organization_fiscal_code
+      - organization_name
+      - service_id
+      - service_name
+      type: object
+      properties:
+        service_id:
+          $ref: '#/components/schemas/ServiceId'
+        service_name:
+          $ref: '#/components/schemas/ServiceName'
+        organization_name:
+          $ref: '#/components/schemas/OrganizationName'
+        department_name:
+          $ref: '#/components/schemas/DepartmentName'
+        authorized_cidrs:
+          type: array
+          description: Allowed source IPs or CIDRs for this service.
+          items:
+            $ref: '#/components/schemas/CIDR'
+        authorized_recipients:
+          type: array
+          description: |-
+            If non empty, the service will be able
+            to send messages only to these fiscal codes.
+          items:
+            $ref: '#/components/schemas/FiscalCode'
+        is_visible:
+          type: boolean
+          default: false
+        max_allowed_payment_amount:
+          $ref: '#/components/schemas/MaxAllowedPaymentAmount'
+        organization_fiscal_code:
+          $ref: '#/components/schemas/OrganizationFiscalCode'
+        version:
+          type: integer
+        id:
+          type: string
+      description: A Service tied to an user's subscription.
+    DepartmentName:
+      minLength: 1
+      type: string
+      description: |-
+        The department inside the organization that runs the service. Will
+        be added to the content of sent messages.
+    OrganizationFiscalCode:
+      type: string
+      description: Organization fiscal code.
+      format: OrganizationFiscalCode
+      example: "12345678901"
+      x-import: italia-ts-commons/lib/strings
+    CIDR:
+      pattern: ^([0-9]{1,3}[.]){3}[0-9]{1,3}(/([0-9]|[1-2][0-9]|3[0-2]))?$
+      type: string
+      description: Describes a single IP or a range of IPs.
+    ServiceId:
+      minLength: 1
+      type: string
+      description: |-
+        The ID of the Service. Equals the subscriptionId of a registered
+        API user.
   securitySchemes:
     SubscriptionKey:
       type: apiKey
