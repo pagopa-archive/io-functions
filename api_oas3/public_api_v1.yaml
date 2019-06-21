@@ -509,8 +509,8 @@ components:
     PaginatedCreatedMessageWithoutContentCollection:
       description: A paginated collection of messages
       allOf:
-      - $ref: 'https://raw.githubusercontent.com/teamdigitale/io-functions-commons/master/openapi/definitions.yaml#/CreatedMessageWithoutContentCollection'
-      - $ref: 'https://raw.githubusercontent.com/teamdigitale/io-functions-commons/master/openapi/definitions.yaml#/PaginationResponse'
+      - $ref: '#/components/schemas/CreatedMessageWithoutContentCollection'
+      - $ref: '#/components/schemas/PaginationResponse'
     PaymentAmount:
       maximum: 9999999999
       minimum: 1
@@ -814,8 +814,8 @@ components:
     PaginatedServiceTupleCollection:
       description: A paginated collection of services tuples
       allOf:
-      - $ref: 'https://raw.githubusercontent.com/teamdigitale/io-functions-commons/master/openapi/definitions.yaml#/ServiceTupleCollection'
-      - $ref: 'https://raw.githubusercontent.com/teamdigitale/io-functions-commons/master/openapi/definitions.yaml#/PaginationResponse'
+      - $ref: '#/components/schemas/ServiceTupleCollection'
+      - $ref: '#/components/schemas/PaginationResponse'
     MessageSubject:
       maxLength: 120
       minLength: 10
@@ -867,8 +867,8 @@ components:
         Describes the citizen's profile, mostly interesting for preferences
         attributes.
       allOf:
-      - $ref: 'https://raw.githubusercontent.com/teamdigitale/io-functions-commons/master/openapi/definitions.yaml#/LimitedProfile'
-      - $ref: 'https://raw.githubusercontent.com/teamdigitale/io-functions-commons/master/openapi/definitions.yaml#/ExtendedProfile'
+      - $ref: '#/components/schemas/LimitedProfile'
+      - $ref: '#/components/schemas/ExtendedProfile'
       x-one-of: true
     ServiceId:
       minLength: 1
