@@ -7,7 +7,7 @@ import * as t from "io-ts";
 import * as request from "superagent";
 import * as winston from "winston";
 
-import { IContext } from "azure-functions-types";
+import { Context } from "@azure/functions";
 import {
   IProfileCreatedEvent,
   IProfileUpdatedEvent
@@ -30,7 +30,7 @@ const ContextWithBindings = t.exact(
   })
 );
 
-type ContextWithBindings = t.TypeOf<typeof ContextWithBindings> & IContext;
+type ContextWithBindings = t.TypeOf<typeof ContextWithBindings> & Context;
 
 // HTTP external requests timeout in milliseconds
 const DEFAULT_REQUEST_TIMEOUT_MS = 10000;

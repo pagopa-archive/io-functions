@@ -2,16 +2,16 @@
  * Entrypoint for the Openapi handler
  */
 
-import { IContext } from "azure-function-express";
+import { Context } from "@azure/functions";
 
 import * as express from "express";
 import * as winston from "winston";
 
-import { setAppContext } from "./utils/middlewares/context_middleware";
+import { setAppContext } from "io-functions-commons/dist/src/utils/middlewares/context_middleware";
 
 import { configureAzureContextTransport } from "./utils/logging";
 
-import { createAzureFunctionHandler } from "azure-function-express";
+import createAzureFunctionHandler from "io-functions-express/dist/src/createAzureFunctionsHandler";
 
 import { GetOpenapi } from "./controllers/openapi";
 
@@ -31,7 +31,7 @@ app.get("/specs/adm/swagger.json", GetOpenapi(adminApiSpecs));
 const azureFunctionHandler = createAzureFunctionHandler(app);
 
 // Binds the express app to an Azure Function handler
-export function index(context: IContext<{}>): void {
+export function index(context: Context): void {
   const logLevel = isProduction ? "info" : "debug";
   configureAzureContextTransport(context, winston, logLevel);
   setAppContext(app, context);

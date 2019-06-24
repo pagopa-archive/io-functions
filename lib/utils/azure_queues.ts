@@ -3,7 +3,10 @@
  */
 import * as winston from "winston";
 
+import { Context } from "@azure/functions";
 import { QueueService } from "azure-storage";
+
+import * as t from "io-ts";
 
 import { Either, left, right } from "fp-ts/lib/Either";
 import { Option, some } from "fp-ts/lib/Option";
@@ -13,13 +16,29 @@ import {
   toRuntimeError,
   TransientError
 } from "io-functions-commons/dist/src/utils/errors";
+import { ReadableReporter } from "italia-ts-commons/lib/reporters";
 
-export interface IQueueMessage extends QueueService.QueueMessageResult {
-  readonly id: string;
-  readonly nextVisibleTime: string;
-  readonly popReceipt: string;
-  readonly queueTrigger: string;
-}
+// see https://docs.microsoft.com/en-us/rest/api/storageservices/get-messages#response-body
+export const QueueMessage = t.intersection([
+  t.interface({
+    dequeueCount: t.number,
+    id: t.string,
+    popReceipt: t.string
+  }),
+  t.partial({
+    expirationTime: t.string,
+    insertionTime: t.string,
+    messageId: t.string,
+    messageText: t.string,
+    nextVisibleTime: t.string,
+    queue: t.string,
+    queueTrigger: t.string,
+    timeNextVisible: t.string
+  })
+]);
+
+// see https://github.com/Azure/azure-storage-node/blob/master/lib/services/queue/models/queuemessageresult.js
+export type QueueMessage = t.TypeOf<typeof QueueMessage>;
 
 // Any delay must be less than 7 days (< 604800 seconds).
 // See the maximum value of the TimeToLiveSeconds field
@@ -51,7 +70,7 @@ export const getDelaySecForRetries = (
     .map(nr => Math.ceil((minBackoff * Math.pow(2, nr)) / 1000));
 
 /* istanbul ignore next */
-export function queueMessageToString(queueMessage: IQueueMessage): string {
+export function queueMessageToString(queueMessage: QueueMessage): string {
   return [
     "queueTrigger = ",
     queueMessage.queueTrigger,
@@ -85,23 +104,27 @@ export function queueMessageToString(queueMessage: IQueueMessage): string {
  *
  * @return              False if message is expired.
  */
-export function updateMessageVisibilityTimeout<T extends IQueueMessage>(
+export function updateMessageVisibilityTimeout(
   queueService: QueueService,
   queueName: string,
-  queueMessage: T
+  queueMessageBindings: Context["bindings"]
 ): Promise<boolean> {
+  const queueMessageValidation = QueueMessage.decode(queueMessageBindings);
+  if (queueMessageValidation.isLeft()) {
+    winston.error(
+      `Unable to decode queue message from bindings: ${ReadableReporter.report(
+        queueMessageValidation
+      )}`
+    );
+    return Promise.reject(new Error("INVALID_QUEUE_MESSAGE_IN_BINDINGS"));
+  }
+  const queueMessage = queueMessageValidation.value;
   return new Promise(resolve => {
     winston.debug(
       `updateMessageVisibilityTimeout|Retry to handle message ${queueName}:${queueMessageToString(
         queueMessage
       )}`
     );
-
-    if (!queueMessage.dequeueCount) {
-      throw new Error(
-        "Fatal ! System error: message enqueued without dequeueCount"
-      );
-    }
 
     // dequeueCount starts with one (not zero)
     const numberOfRetries = queueMessage.dequeueCount;
@@ -151,7 +174,7 @@ export function updateMessageVisibilityTimeout<T extends IQueueMessage>(
  */
 export async function handleQueueProcessingFailure(
   queueService: QueueService,
-  queueMessage: IQueueMessage,
+  queueMessageBindings: Context["bindings"],
   queueName: string,
   onTransientError: (error: RuntimeError) => Promise<Either<RuntimeError, {}>>,
   onPermanentError: (error: RuntimeError) => Promise<Either<RuntimeError, {}>>,
@@ -163,7 +186,7 @@ export async function handleQueueProcessingFailure(
     const shouldTriggerARetry = await updateMessageVisibilityTimeout(
       queueService,
       queueName,
-      queueMessage
+      queueMessageBindings
     );
     // execute the callback for transient errors
     await onTransientError(runtimeError)
@@ -198,7 +221,7 @@ export async function handleQueueProcessingFailure(
           callbackError =>
             handleQueueProcessingFailure(
               queueService,
-              queueMessage,
+              queueMessageBindings,
               queueName,
               onTransientError,
               onPermanentError,

@@ -5,7 +5,7 @@
 
 import * as express from "express";
 
-import { wrapRequestHandler } from "../utils/request_middleware";
+import { wrapRequestHandler } from "io-functions-commons/dist/src/utils/request_middleware";
 
 import { ResponseSuccessJson } from "italia-ts-commons/lib/responses";
 

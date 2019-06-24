@@ -1,6 +1,6 @@
 // tslint:disable:no-object-mutation
 
-import { IContext } from "azure-function-express";
+import { Context } from "@azure/functions";
 import * as logform from "logform";
 import * as winston from "winston";
 import * as Transport from "winston-transport";
@@ -12,10 +12,10 @@ const { timestamp, printf } = logform.format;
  */
 class AzureContextTransport extends Transport {
   // tslint:disable-next-line:readonly-keyword
-  private azureContext: IContext<{}>;
+  private azureContext: Context;
 
   constructor(
-    azureContext: IContext<{}>,
+    azureContext: Context,
     options: Transport.TransportStreamOptions
   ) {
     super(options);
@@ -39,7 +39,7 @@ class AzureContextTransport extends Transport {
  * Configures Winston to log through the Azure Context log function
  */
 export function configureAzureContextTransport(
-  context: IContext<{}>,
+  context: Context,
   w: typeof winston,
   level: string
 ): void {

@@ -2,6 +2,11 @@
 # yarn lockfile v1
 
 
+"@azure/functions@^1.0.3":
+  version "1.0.3"
+  resolved "https://registry.yarnpkg.com/@azure/functions/-/functions-1.0.3.tgz#1b51d58f188903f59f39bd093fe6f7b8d88deb11"
+  integrity sha512-/D+sz6LgWT+A6RRW2zhwlwhKqqDSxL6HCF1Q1lN0iXolD2FfNFZpzrOxGyGYEEXp/5Dtjp12bcRTBhMH1cBi2Q==
+
 "@babel/code-frame@7.0.0-beta.51", "@babel/code-frame@^7.0.0-beta.35":
   version "7.0.0-beta.51"
   resolved "https://registry.yarnpkg.com/@babel/code-frame/-/code-frame-7.0.0-beta.51.tgz#bd71d9b192af978df915829d39d4094456439a0c"
@@ -604,10 +609,6 @@ aws4@^1.8.0:
   version "1.8.0"
   resolved "https://registry.yarnpkg.com/aws4/-/aws4-1.8.0.tgz#f0e003d9ca9e7f59c7a508945d7b2ef9a04a542f"
 
-azure-function-express@^2.0.0:
-  version "2.0.0"
-  resolved "https://registry.yarnpkg.com/azure-function-express/-/azure-function-express-2.0.0.tgz#11da654fb90c0b3a5bd01ecbddc19fc616231ec8"
-
 azure-functions-pack@^1.0.0:
   version "1.0.0"
   resolved "https://registry.yarnpkg.com/azure-functions-pack/-/azure-functions-pack-1.0.0.tgz#0a14ee49340db63748bef973b934d45f2834fc2b"
@@ -619,10 +620,6 @@ azure-functions-pack@^1.0.0:
     rimraf "~2.5.4"
     webpack "~3.5.6"
     winston "~2.3.1"
-
-azure-functions-types@^0.1.1:
-  version "0.1.1"
-  resolved "https://registry.yarnpkg.com/azure-functions-types/-/azure-functions-types-0.1.1.tgz#a244ad28192be94258e4cad9dfe73f50e412470b"
 
 azure-storage@^2.10.3, azure-storage@^2.8.2:
   version "2.10.3"
@@ -2638,15 +2635,10 @@ forwarded@~0.1.2:
   version "0.1.2"
   resolved "https://registry.yarnpkg.com/forwarded/-/forwarded-0.1.2.tgz#98c23dab1175657b8c0573e8ceccd91b0ff18c84"
 
-fp-ts@1.12.0:
+fp-ts@1.12.0, fp-ts@^1.0.0:
   version "1.12.0"
   resolved "https://registry.yarnpkg.com/fp-ts/-/fp-ts-1.12.0.tgz#d333310e4ac104cdcb6bea47908e381bb09978e7"
   integrity sha512-fWwnAgVlTsV26Ruo9nx+fxNHIm6l1puE1VJ/C0XJ3nRQJJJIgRHYw6sigB3MuNFZL1o4fpGlhwFhcbxHK0RsOA==
-
-fp-ts@^1.0.0, fp-ts@^1.18.2, fp-ts@^1.7.1:
-  version "1.18.2"
-  resolved "https://registry.yarnpkg.com/fp-ts/-/fp-ts-1.18.2.tgz#b9a7025174e1a59bc43b485b3a0ca6f78e371d01"
-  integrity sha512-kznerusCuG5dUt0bH6eiQHVp2fstPiSlyzGb//rYgMMxCuromWEoVS0riH++86vyJm9Nv1B+pbe6udDx1tqjfA==
 
 fragment-cache@^0.2.1:
   version "0.2.1"
@@ -3375,17 +3367,22 @@ invert-kv@^1.0.0:
   version "1.0.0"
   resolved "https://registry.yarnpkg.com/invert-kv/-/invert-kv-1.0.0.tgz#104a8e4aaca6d3d8cd157a8ef8bfab2d7a3ffdb6"
 
-io-functions-commons@^0.2.0:
-  version "0.2.0"
-  resolved "https://registry.yarnpkg.com/io-functions-commons/-/io-functions-commons-0.2.0.tgz#2e01ccbf9106d69dd374b3a914fce6bdd842da45"
-  integrity sha512-XUbizUK1cWdQtCREFwpg0pCls28ZT3eMcNzCuUNPTtqTLQNMznTX2exAocIJr250tj3tn0YCyDvjQfIBNCwmBQ==
+io-functions-commons@^0.3.2:
+  version "0.3.2"
+  resolved "https://registry.yarnpkg.com/io-functions-commons/-/io-functions-commons-0.3.2.tgz#d99303f30e8701ed74fbd06623222d6fedeb45ff"
+  integrity sha512-dDNlOGUCO2pyLo30BO31rk1+r8oLmY4AATQzIeUls41pq4vVNot4JigP/N6XWShmVfeLUs5Bg0DNNP0mFNr6WA==
   dependencies:
     azure-storage "^2.10.3"
     documentdb "^1.15.3"
-    fp-ts "^1.18.2"
-    io-ts "1.8.5"
-    italia-ts-commons "^5.1.4"
+    io-functions-express "^0.1.1"
+    request-ip "^2.1.3"
     ulid "^2.3.0"
+    winston "^3.1.0"
+
+io-functions-express@^0.1.1:
+  version "0.1.1"
+  resolved "https://registry.yarnpkg.com/io-functions-express/-/io-functions-express-0.1.1.tgz#6ae954fe89ec1d797c5e5d10eca5e77f08ff4a4d"
+  integrity sha512-Co7sovRyB0lxgU6NFh5v72Apude3XbgKQtqA7slryvKoEqLAvlnLU7DtsYVoF62O3ZJdtSHYf9JWuhDc/di1mg==
 
 io-ts@1.8.5, io-ts@^1.8.5:
   version "1.8.5"
@@ -3765,7 +3762,7 @@ istanbul-reports@^1.4.1:
   dependencies:
     handlebars "^4.0.11"
 
-italia-ts-commons@^5.0.0, italia-ts-commons@^5.0.1, italia-ts-commons@^5.1.4:
+italia-ts-commons@^5.0.0, italia-ts-commons@^5.0.1:
   version "5.1.4"
   resolved "https://registry.yarnpkg.com/italia-ts-commons/-/italia-ts-commons-5.1.4.tgz#f31fc55dc7133553b73d36dfbae0f393936ecd55"
   integrity sha512-VxLTNuivUdIyLiHeJBdPxn7Fui2uE1X7LCzj1ye6QMnR3G2y3688f86tlJrbnzcl/sTM9vfDxgacnJrsf8NTcQ==
@@ -6640,9 +6637,10 @@ replace-ext@1.0.0, replace-ext@^1.0.0:
   version "1.0.0"
   resolved "https://registry.yarnpkg.com/replace-ext/-/replace-ext-1.0.0.tgz#de63128373fcbf7c3ccfa4de5a480c45a67958eb"
 
-request-ip@^2.1.1:
-  version "2.1.1"
-  resolved "https://registry.yarnpkg.com/request-ip/-/request-ip-2.1.1.tgz#99be3b1595c574d7a3fe1eb4eb83a6b59a76edae"
+request-ip@^2.1.3:
+  version "2.1.3"
+  resolved "https://registry.yarnpkg.com/request-ip/-/request-ip-2.1.3.tgz#99ab2bafdeaf2002626e28083cb10597511d9e14"
+  integrity sha512-J3qdE/IhVM3BXkwMIVO4yFrvhJlU3H7JH16+6yHucadT4fePnR8dyh+vEs6FIx0S2x5TCt2ptiPfHcn0sqhbYQ==
   dependencies:
     is_js "^0.9.0"
 

@@ -18,15 +18,15 @@ import { MessageBodyMarkdown } from "../../api/definitions/MessageBodyMarkdown";
 import { MessageSubject } from "../../api/definitions/MessageSubject";
 
 import {
+  IAzureApiAuthorization,
+  UserGroup
+} from "io-functions-commons/dist/src/utils/middlewares/azure_api_auth";
+import { IAzureUserAttributes } from "io-functions-commons/dist/src/utils/middlewares/azure_user_attributes";
+import {
   EmailString,
   NonEmptyString,
   OrganizationFiscalCode
 } from "italia-ts-commons/lib/strings";
-import {
-  IAzureApiAuthorization,
-  UserGroup
-} from "../../utils/middlewares/azure_api_auth";
-import { IAzureUserAttributes } from "../../utils/middlewares/azure_user_attributes";
 
 import { QueryError } from "documentdb";
 import {

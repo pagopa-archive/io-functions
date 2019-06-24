@@ -8,7 +8,7 @@ import * as t from "io-ts";
 import {
   ClientIp,
   ClientIpMiddleware
-} from "../utils/middlewares/client_ip_middleware";
+} from "io-functions-commons/dist/src/utils/middlewares/client_ip_middleware";
 
 import {
   RetrievedService,
@@ -21,15 +21,21 @@ import {
   AzureApiAuthMiddleware,
   IAzureApiAuthorization,
   UserGroup
-} from "../utils/middlewares/azure_api_auth";
+} from "io-functions-commons/dist/src/utils/middlewares/azure_api_auth";
 
-import { RequiredParamMiddleware } from "../utils/middlewares/required_param";
+import { RequiredParamMiddleware } from "io-functions-commons/dist/src/utils/middlewares/required_param";
 
 import {
   withRequestMiddlewares,
   wrapRequestHandler
-} from "../utils/request_middleware";
+} from "io-functions-commons/dist/src/utils/request_middleware";
 
+import {
+  IResponseErrorQuery,
+  IResponseSuccessJsonIterator,
+  ResponseErrorQuery,
+  ResponseJsonIterator
+} from "io-functions-commons/dist/src/utils/response";
 import {
   IResponseErrorInternal,
   IResponseErrorNotFound,
@@ -38,19 +44,13 @@ import {
   ResponseErrorNotFound,
   ResponseSuccessJson
 } from "italia-ts-commons/lib/responses";
-import {
-  IResponseErrorQuery,
-  IResponseSuccessJsonIterator,
-  ResponseErrorQuery,
-  ResponseJsonIterator
-} from "../utils/response";
 
 import { NonEmptyString } from "italia-ts-commons/lib/strings";
 
 import {
   AzureUserAttributesMiddleware,
   IAzureUserAttributes
-} from "../utils/middlewares/azure_user_attributes";
+} from "io-functions-commons/dist/src/utils/middlewares/azure_user_attributes";
 
 import { SenderServiceModel } from "io-functions-commons/dist/src/models/sender_service";
 import { mapResultIterator } from "io-functions-commons/dist/src/utils/documentdb";

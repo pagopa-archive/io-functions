@@ -1,7 +1,8 @@
 import * as documentDbUtils from "io-functions-commons/dist/src/utils/documentdb";
 import * as winston from "winston";
 
-import { IContext } from "azure-function-express";
+import { Context } from "@azure/functions";
+
 import { DocumentClient } from "documentdb";
 
 import { pick } from "italia-ts-commons/lib/types";
@@ -95,9 +96,7 @@ function reduceServicesToVisibleServices(
  * Scheduled using a timer trigger, see
  * https://github.com/MicrosoftDocs/azure-docs/blob/master/articles/azure-functions/functions-bindings-timer.md
  */
-export async function index(
-  context: IContext<{}>
-): Promise<void | IOutputBindings> {
+export async function index(context: Context): Promise<void | IOutputBindings> {
   const logLevel = isProduction ? "info" : "debug";
   configureAzureContextTransport(context, winston, logLevel);
   try {

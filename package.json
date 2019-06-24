@@ -24,20 +24,19 @@
     "generate:templates": "gulp generate:templates"
   },
   "dependencies": {
+    "@azure/functions": "^1.0.3",
     "applicationinsights": "^1.0.3",
-    "azure-function-express": "^2.0.0",
-    "azure-functions-types": "^0.1.1",
     "azure-storage": "^2.8.2",
     "cidr-matcher": "^1.0.5",
     "cors": "^2.8.4",
     "documentdb": "^1.12.2",
     "dotenv": "^6.0.0",
     "express": "^4.15.3",
-    "fp-ts": "^1.7.1",
+    "fp-ts": "1.12.0",
     "helmet": "^3.13.0",
     "helmet-csp": "^2.5.1",
     "html-to-text": "^4.0.0",
-    "io-functions-commons": "^0.2.0",
+    "io-functions-commons": "^0.3.2",
     "io-ts": "^1.8.5",
     "italia-ts-commons": "^5.0.0",
     "json-set-map": "^1.0.2",
@@ -47,7 +46,6 @@
     "rehype-stringify": "^3.0.0",
     "remark-parse": "^5.0.0",
     "remark-rehype": "^3.0.0",
-    "request-ip": "^2.1.1",
     "superagent": "^3.8.3",
     "ulid": "^2.2.2",
     "unified": "^7.0.0",
@@ -102,11 +100,18 @@
   },
   "jest": {
     "testEnvironment": "node",
-    "moduleFileExtensions": ["ts", "js"],
+    "moduleFileExtensions": [
+      "ts",
+      "js"
+    ],
     "transform": {
       "^.+\\.(ts|tsx)$": "ts-jest"
     },
-    "transformIgnorePatterns": ["<rootDir>/node_modules/(?!azure-functions-types)"],
-    "testMatch": ["**/__tests__/*.ts"]
+    "transformIgnorePatterns": [
+      "<rootDir>/node_modules/(?!azure-functions-types)"
+    ],
+    "testMatch": [
+      "**/__tests__/*.ts"
+    ]
   }
 }
