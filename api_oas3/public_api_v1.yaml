@@ -1,8 +1,14 @@
 openapi: 3.0.0
 info:
+  version: 1.0.0
   title: Digital Citizenship API
-  description: |2
-
+  contact:
+    name: Digital Transformation Team and AgID
+    url: https://forum.italia.it/c/progetto-io
+  x-logo:
+    url: https://io.italia.it/assets/img/io-logo-blue.svg
+  description: >
+    
     # Warning / Avvertenza
 
       **Questa è una API sperimentale che (probabilmente)
@@ -13,16 +19,27 @@ info:
       going to change as we evolve the IO Messaging service.**
 
     # Introduction
+
     This is the documentation of the Digital Citizenship API. This API enables Public Administration services to integrate with the Digital Citizenship platform of the Italian Government. The platform enables services to communicate with Italian Citizens via the [IO app](https://io.italia.it/).
+
     # How to get an API key
+
     To get access to this API, you'll need to register on the [Digital Citizenship Developer Portal](https://developer.cd.italia.it/).
+
     After the registration step, you have to click on the button that says `subscribe to the digital citizenship api` to receive the API key that you will use to authenticate the API calls.
+
     You will also receive an email with further instructions, including a fake Fiscal Code that you will be able to use to send test messages. Messages sent to the fake Fiscal Code will be notified to the email address used during the registration process on the developer portal.
+
     # Messages
+
     ## What is a message
+
     Messages are the primary form of communication enabled by the Digital Citizenship APIs. Messages are **personal** communications directed to a **specific citizen**. You will not be able to use this API to broadcast a message to a group of citizens, you will have to compose e specific, personalized message to each citizen you want to communicate to.
+
     The recipient of the message (i.e. a citizen) is identified trough his [Fiscal Code](https://it.wikipedia.org/wiki/Codice_fiscale).
+
     ## Message format
+
     A message is conceptually very similar to an email and, in its simplest form, is composed of the following attributes:
 
       * A required `subject`: a short description of the topic.
@@ -37,6 +54,7 @@ info:
         information and UTC timezone (ie. "2018-10-13T00:00:00.000Z").
 
     ## Allowed Markdown formatting
+
     Not all Markdown formatting is currently available. Currently you can use the following formatting:
 
       * Headings
@@ -44,7 +62,9 @@ info:
       * Lists (bullet and numbered)
 
     ## Process for sending a message to a citizen
+
     Not every citizen will be interested in what you have to say and not every citizen you want to communicate to will be registered on the Digital Citizenship platform. For this reason, before sending a message you will have to check whether the recipient is registered on the platform and that he has not yet opted out from receiving messages from you.
+
     The process for sending a message is made of 3 steps:
 
       1. Call [getProfile](#operation/getProfile): if the profile does not exist
@@ -54,247 +74,242 @@ info:
          a new message.
       1. (optional) Call [getMessage](#operation/getMessage) to check whether
          the message has been notified to the recipient.
-  contact:
-    name: Digital Transformation Team and AgID
-    url: https://forum.italia.it/c/progetto-io
-  version: 1.0.0
-  x-logo:
-    url: https://io.italia.it/assets/img/io-logo-blue.svg
-servers:
-- url: https://api.cd.italia.it/api/v1
-security:
-- SubscriptionKey: []
 tags:
-- name: public
-  description: Public APIs
-- name: restricted
-  description: Restricted APIs
-paths:
-  /services/{service_id}:
-    get:
-      tags:
+  - name: public
+    description: Public APIs
+  - name: restricted
+    description: Restricted APIs
+x-tagGroups:
+  - name: For Public Administrations and services
+    tags:
+      - public
+  - name: For the IO app
+    tags:
       - restricted
-      summary: Get Service
-      description: A previously created service with the provided service ID is returned.
-      operationId: getService
-      parameters:
+security:
+  - SubscriptionKey: []
+paths:
+  "/services/{service_id}":
+    parameters:
       - name: service_id
         in: path
-        description: The ID of an existing Service.
         required: true
+        description: The ID of an existing Service.
         schema:
           type: string
+    get:
+      tags:
+        - restricted
+      operationId: getService
+      summary: Get Service
+      description: A previously created service with the provided service ID is returned.
       responses:
-        200:
+        "200":
           description: Service found.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ServicePublic'
-              example:
-                department_name: dept
-                organization_name: org
-                service_id: 2b3e728c1a5d1efa035c
-                service_name: service
-                version: 1
-        401:
+                $ref: "#/components/schemas/ServicePublic"
+              examples:
+                response:
+                  value:
+                    department_name: dept
+                    organization_name: org
+                    service_id: 2b3e728c1a5d1efa035c
+                    service_name: service
+                    version: 1
+        "401":
           description: Unauthorized
-          content: {}
-        404:
+        "404":
           description: No service found for the provided ID.
-          content: {}
-        429:
+        "429":
           description: Too many requests
-          content: {}
-  /profiles/{recipient}/sender-services:
+  "/profiles/{recipient}/sender-services":
     get:
       tags:
-      - restricted
-      summary: Get Services by recipient
-      description: |-
-        Returns the service IDs of all the services that have contacted the recipient,
-        identified by the provided fiscal code, at least once.
+        - restricted
       operationId: getServicesByRecipient
-      parameters:
-      - name: recipient
-        in: path
-        description: The recipient's fiscal code.
-        required: true
-        schema:
-          maxLength: 16
-          minLength: 16
-          pattern: '[A-Z]{6}[0-9LMNPQRSTUV]{2}[ABCDEHLMPRST][0-9LMNPQRSTUV]{2}[A-Z][0-9LMNPQRSTUV]{3}[A-Z]'
-          type: string
+      summary: Get Services by recipient
+      description: >-
+        Returns the service IDs of all the services that have contacted the
+        recipient,
+
+        identified by the provided fiscal code, at least once.
       responses:
-        200:
+        "200":
           description: Found.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PaginatedServiceTupleCollection'
-        401:
+                $ref: "#/components/schemas/PaginatedServiceTupleCollection"
+        "401":
           description: Unauthorized
-          content: {}
-        429:
+        "429":
           description: Too many requests
-          content: {}
+      parameters:
+        - name: recipient
+          in: path
+          required: true
+          description: The recipient's fiscal code.
+          schema:
+            type: string
+            minLength: 16
+            maxLength: 16
+            pattern: "[A-Z]{6}[0-9LMNPQRSTUV]{2}[ABCDEHLMPRST][0-9LMNPQRSTUV]{2}[A-Z][\
+              0-9LMNPQRSTUV]{3}[A-Z]"
   /services:
     get:
       tags:
-      - restricted
-      summary: Get all visibile services.
-      description: Returns all the services that have the 'is_visibile' field value
-        set to true.
+        - restricted
       operationId: getVisibleServices
+      summary: Get all visibile services.
+      description: Returns all the services that have the 'is_visibile' field value set to
+        true.
       responses:
-        200:
+        "200":
           description: Found.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PaginatedServiceTupleCollection'
-        401:
+                $ref: "#/components/schemas/PaginatedServiceTupleCollection"
+        "401":
           description: Unauthorized
-          content: {}
-        429:
+        "429":
           description: Too many requests
-          content: {}
-  /messages/{fiscal_code}/{id}:
+  "/messages/{fiscal_code}/{id}":
     get:
       tags:
-      - public
-      - restricted
+        - public
+        - restricted
+      operationId: getMessage
       summary: Get Message
       description: |-
         The previously created message with the provided message ID is
         returned.
-      operationId: getMessage
       parameters:
-      - name: fiscal_code
-        in: path
-        description: The fiscal code of the user, all upper case.
-        required: true
-        schema:
-          maxLength: 16
-          minLength: 16
-          pattern: '[A-Z]{6}[0-9LMNPQRSTUV]{2}[ABCDEHLMPRST][0-9LMNPQRSTUV]{2}[A-Z][0-9LMNPQRSTUV]{3}[A-Z]'
-          type: string
-      - name: id
-        in: path
-        description: The ID of the message.
-        required: true
-        schema:
-          type: string
+        - $ref: "#/components/parameters/FiscalCode"
+        - name: id
+          in: path
+          required: true
+          description: The ID of the message.
+          schema:
+            type: string
       responses:
-        200:
+        "200":
           description: Message found.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/MessageResponseWithContent'
-              example:
-                message:
-                  id: 01BX9NSMKAAAS5PSP2FATZM6BQ
-                  fiscal_code: QXJNTX9RCRVD6V4O
-                  time_to_live: 3600
-                  content:
-                    subject: message subject, aliquip sint nulla in estinut
-                    markdown: |-
-                      Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas et mollis felis.
-                      Vivamus orci nisl, commodo ut sodales ut, eleifend a libero. Donec dapibus, turpis in mattis tempor,
-                      risus nunc malesuada ex, non aliquet metus nunc a lacus. Aenean in arcu vitae nisl porta
-                      fermentum nec non nibh. Phasellus tortor tellus, semper in metus eget, eleifend
-                      laoreet nibh. Aenean feugiat lectus ut nisl eleifend gravida.
-                  sender_service_id: 01BX9NSMKVXXS5PSP2FATZM6QX
-                notification:
-                  email: QUEUED
-        401:
+                $ref: "#/components/schemas/MessageResponseWithContent"
+              examples:
+                response:
+                  value:
+                    message:
+                      id: 01BX9NSMKAAAS5PSP2FATZM6BQ
+                      fiscal_code: QXJNTX9RCRVD6V4O
+                      time_to_live: 3600
+                      content:
+                        subject: message subject, aliquip sint nulla in estinut
+                        markdown: >-
+                          Lorem ipsum dolor sit amet, consectetur adipiscing
+                          elit. Maecenas et mollis felis.
+
+                          Vivamus orci nisl, commodo ut sodales ut, eleifend a libero. Donec dapibus, turpis in mattis tempor,
+
+                          risus nunc malesuada ex, non aliquet metus nunc a lacus. Aenean in arcu vitae nisl porta
+
+                          fermentum nec non nibh. Phasellus tortor tellus, semper in metus eget, eleifend
+
+                          laoreet nibh. Aenean feugiat lectus ut nisl eleifend gravida.
+                      sender_service_id: 01BX9NSMKVXXS5PSP2FATZM6QX
+                    notification:
+                      email: QUEUED
+        "401":
           description: Unauthorized
-          content: {}
-        404:
+        "404":
           description: No message found for the provided ID.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ProblemJson'
-        429:
+                $ref: "#/components/schemas/ProblemJson"
+        "429":
           description: Too many requests
-          content: {}
-  /messages/{fiscal_code}:
+  "/messages/{fiscal_code}":
     get:
       tags:
-      - restricted
-      summary: Get messages by user
-      description: |-
-        Returns the messages for the user identified by the provided fiscal code.
-        Messages will be returned in inverse acceptance order (from last to first).
-        The "next" field, when present, contains an URL pointing to the next page of results.
+        - restricted
       operationId: getMessagesByUser
-      parameters:
-      - name: fiscal_code
-        in: path
-        description: The fiscal code of the user, all upper case.
-        required: true
-        schema:
-          maxLength: 16
-          minLength: 16
-          pattern: '[A-Z]{6}[0-9LMNPQRSTUV]{2}[ABCDEHLMPRST][0-9LMNPQRSTUV]{2}[A-Z][0-9LMNPQRSTUV]{3}[A-Z]'
-          type: string
-      - name: cursor
-        in: query
-        description: An opaque identifier that points to the next item in the collection.
-        schema:
-          minimum: 1
-          type: string
+      summary: Get messages by user
+      description: >-
+        Returns the messages for the user identified by the provided fiscal
+        code.
+
+        Messages will be returned in inverse acceptance order (from last to first).
+
+        The "next" field, when present, contains an URL pointing to the next page of results.
       responses:
-        200:
+        "200":
           description: Found.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PaginatedCreatedMessageWithoutContentCollection'
-              example:
-                items:
-                - id: 01BX9NSMKVXXS5PSP2FATZMYYY
-                  fiscal_code: PUPFHK4TD3MWL20W
-                  time_to_live: 3600
-                  content:
-                    subject: amet sunt dolor nulla esseesseanim
-                    markdown: |-
-                      Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas et mollis felis.
-                      Vivamus orci nisl, commodo ut sodales ut, eleifend a libero. Donec dapibus, turpis in mattis tempor,
-                      risus nunc malesuada ex, non aliquet metus nunc a lacus. Aenean in arcu vitae nisl porta
-                      fermentum nec non nibh. Phasellus tortor tellus, semper in metus eget, eleifend
-                      laoreet nibh. Aenean feugiat lectus ut nisl eleifend gravida.
-                  sender_service_id: 01BX9NSMKVXXS5PSP2FATZMZZZ
-                - id: 01BX9NSMKVXXS5PSP2FATZM123
-                  fiscal_code: PKTINH4QDQUV696L
-                  time_to_live: 3600
-                  content:
-                    subject: idUt quis tempor esseesseanim
-                    markdown: |-
-                      Nullam dapibus metus sed elementum efficitur. Curabitur facilisis sagittis risus nec sodales.
-                      Vestibulum in eros sapien. Donec ac odio sit amet dui semper ornare eget nec odio. Pellentesque habitant
-                      morbi tristique senectus et netus et malesuada fames ac turpis egestas. Praesent nibh ex, mattis sit amet
-                      felis id, sodales euismod velit. Lorem ipsum dolor sit amet, consectetur adipiscing elit.
-                  sender_service_id: 01BX9NSMKVXXS5PSP2FATZMWWW
-                page_size: 2
-                next: https://example.com/next
-        401:
+                $ref: "#/components/schemas/PaginatedCreatedMessageWithoutContentCo\
+                  llection"
+              examples:
+                response:
+                  value:
+                    items:
+                      - id: 01BX9NSMKVXXS5PSP2FATZMYYY
+                        fiscal_code: PUPFHK4TD3MWL20W
+                        time_to_live: 3600
+                        content:
+                          subject: amet sunt dolor nulla esseesseanim
+                          markdown: >-
+                            Lorem ipsum dolor sit amet, consectetur adipiscing
+                            elit. Maecenas et mollis felis.
+
+                            Vivamus orci nisl, commodo ut sodales ut, eleifend a libero. Donec dapibus, turpis in mattis tempor,
+
+                            risus nunc malesuada ex, non aliquet metus nunc a lacus. Aenean in arcu vitae nisl porta
+
+                            fermentum nec non nibh. Phasellus tortor tellus, semper in metus eget, eleifend
+
+                            laoreet nibh. Aenean feugiat lectus ut nisl eleifend gravida.
+                        sender_service_id: 01BX9NSMKVXXS5PSP2FATZMZZZ
+                      - id: 01BX9NSMKVXXS5PSP2FATZM123
+                        fiscal_code: PKTINH4QDQUV696L
+                        time_to_live: 3600
+                        content:
+                          subject: idUt quis tempor esseesseanim
+                          markdown: >-
+                            Nullam dapibus metus sed elementum efficitur.
+                            Curabitur facilisis sagittis risus nec sodales.
+
+                            Vestibulum in eros sapien. Donec ac odio sit amet dui semper ornare eget nec odio. Pellentesque habitant
+
+                            morbi tristique senectus et netus et malesuada fames ac turpis egestas. Praesent nibh ex, mattis sit amet
+
+                            felis id, sodales euismod velit. Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+                        sender_service_id: 01BX9NSMKVXXS5PSP2FATZMWWW
+                    page_size: 2
+                    next: https://example.com/next
+        "401":
           description: Unauthorized
-          content: {}
-        404:
+        "404":
           description: No message found.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ProblemJson'
-        429:
+                $ref: "#/components/schemas/ProblemJson"
+        "429":
           description: Too many requests
-          content: {}
+      parameters:
+        - $ref: "#/components/parameters/FiscalCode"
+        - $ref: "#/components/parameters/PaginationRequest"
     post:
       tags:
-      - public
+        - public
+      operationId: submitMessageforUser
       summary: Submit a message
       description: |-
         Submits a message to a user.
@@ -303,30 +318,35 @@ paths:
         the sender MUST call `getProfile` and check that the profile exists
         (for the specified fiscal code) and that the `sender_allowed` field
         of the user's profile it set to `true`.
-      operationId: submitMessageforUser
       parameters:
-      - name: fiscal_code
-        in: path
-        description: The fiscal code of the user, all upper case.
-        required: true
-        schema:
-          maxLength: 16
-          minLength: 16
-          pattern: '[A-Z]{6}[0-9LMNPQRSTUV]{2}[ABCDEHLMPRST][0-9LMNPQRSTUV]{2}[A-Z][0-9LMNPQRSTUV]{3}[A-Z]'
-          type: string
+        - $ref: "#/components/parameters/FiscalCode"
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/NewMessage'
-        required: false
+              $ref: "#/components/schemas/NewMessage"
+        x-examples:
+          application/json:
+            time_to_live: 3600
+            content:
+              subject: ipsum labore deserunt fugiat
+              markdown: >-
+                Nullam dapibus metus sed elementum efficitur. Curabitur
+                facilisis sagittis risus nec sodales.
+
+                Vestibulum in eros sapien. Donec ac odio sit amet dui semper ornare eget nec odio. Pellentesque habitant
+
+                morbi tristique senectus et netus et malesuada fames ac turpis egestas. Praesent nibh ex, mattis sit amet
+
+                felis id, sodales euismod velit. Lorem ipsum dolor sit amet, consectetur adipiscing elit.
       responses:
-        201:
+        "201":
           description: Message created.
           headers:
             Location:
-              description: |-
+              description: >-
                 Location (URL) of created message resource.
+
                 A GET request to this URL returns the message status and details.
               schema:
                 type: string
@@ -338,743 +358,258 @@ paths:
                   id:
                     type: string
                     description: The identifier of the created message.
-              example:
-                id: 01BX9NSMKVXXS5PSP2FATZMYYY
-        400:
+              examples:
+                response:
+                  value:
+                    id: 01BX9NSMKVXXS5PSP2FATZMYYY
+        "400":
           description: Invalid payload.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ProblemJson'
-        401:
+                $ref: "#/components/schemas/ProblemJson"
+        "401":
           description: Unauthorized
-          content: {}
-        429:
+        "429":
           description: Too many requests
-          content: {}
-        500:
+        "500":
           description: The message cannot be delivered.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ProblemJson'
-  /profiles/{fiscal_code}:
+                $ref: "#/components/schemas/ProblemJson"
+  "/profiles/{fiscal_code}":
     get:
       tags:
-      - public
+        - public
+      operationId: getProfile
       summary: Get a User Profile
       description: |-
         Returns the preferences for the user identified by the provided
         fiscal code. The field `sender_allowed` is set fo `false` in case
         the service which is calling the API is blacklisted by the user.
-      operationId: getProfile
-      parameters:
-      - name: fiscal_code
-        in: path
-        description: The fiscal code of the user, all upper case.
-        required: true
-        schema:
-          maxLength: 16
-          minLength: 16
-          pattern: '[A-Z]{6}[0-9LMNPQRSTUV]{2}[ABCDEHLMPRST][0-9LMNPQRSTUV]{2}[A-Z][0-9LMNPQRSTUV]{3}[A-Z]'
-          type: string
       responses:
-        200:
+        "200":
           description: Found.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Profile'
-              example:
-                email: foobar@example.com
-                version: 1
-        401:
+                $ref: "#/components/schemas/Profile"
+              examples:
+                response:
+                  value:
+                    email: foobar@example.com
+                    version: 1
+        "401":
           description: Unauthorized
-          content: {}
-        404:
+        "404":
           description: No user found for the provided fiscal code.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ProblemJson'
-        429:
+                $ref: "#/components/schemas/ProblemJson"
+        "429":
           description: Too many requests
-          content: {}
+      parameters:
+        - $ref: "#/components/parameters/FiscalCode"
     post:
       tags:
-      - restricted
-      summary: Updates a User Profile
-      description: |-
-        Create or update the preferences for the user identified by the
-        provided fiscal code.
-      operationId: upsertProfile
-      parameters:
-      - name: fiscal_code
-        in: path
-        description: The fiscal code of the user, all upper case.
-        required: true
-        schema:
-          maxLength: 16
-          minLength: 16
-          pattern: '[A-Z]{6}[0-9LMNPQRSTUV]{2}[ABCDEHLMPRST][0-9LMNPQRSTUV]{2}[A-Z][0-9LMNPQRSTUV]{3}[A-Z]'
-          type: string
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ExtendedProfile'
-        required: false
+        - restricted
       responses:
-        200:
+        "200":
           description: Profile updated.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ExtendedProfile'
-              example:
-                email: foobar@example.com
-                version: 0
-        400:
+                $ref: "#/components/schemas/ExtendedProfile"
+              examples:
+                response:
+                  value:
+                    email: foobar@example.com
+                    version: 0
+        "400":
           description: Invalid payload.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ProblemJson'
-        401:
+                $ref: "#/components/schemas/ProblemJson"
+        "401":
           description: Unauthorized
-          content: {}
-        404:
+        "404":
           description: Not found
-          content: {}
-        429:
+        "429":
           description: Too many requests
-          content: {}
-        500:
+        "500":
           description: Profile cannot be updated.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ProblemJson'
+                $ref: "#/components/schemas/ProblemJson"
+      description: |-
+        Create or update the preferences for the user identified by the
+        provided fiscal code.
+      operationId: upsertProfile
+      summary: Updates a User Profile
+      parameters:
+        - $ref: "#/components/parameters/FiscalCode"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ExtendedProfile"
+        x-examples:
+          application/json:
+            email: foobar@example.com
   /info:
     get:
       tags:
-      - restricted
-      summary: API test endpoint
-      description: An endpoint to test authenticated access to the API backend.
+        - restricted
       operationId: getInfo
       responses:
-        200:
+        "200":
           description: Returns success if the API-Key is right.
           content:
             application/json:
               schema:
                 type: object
-        401:
+                properties: {}
+        "401":
           description: Unauthorized
-          content: {}
-        429:
+        "429":
           description: Too many requests
-          content: {}
+      description: An endpoint to test authenticated access to the API backend.
+      summary: API test endpoint
+servers:
+  - url: https://api.cd.italia.it/api/v1
 components:
-  schemas:
-    MessageContent:
-      required:
-      - markdown
-      - subject
-      type: object
-      properties:
-        subject:
-          $ref: '#/components/schemas/MessageSubject'
-        markdown:
-          $ref: '#/components/schemas/MessageBodyMarkdown'
-        payment_data:
-          $ref: '#/components/schemas/PaymentData'
-        due_date:
-          $ref: '#/components/schemas/Timestamp'
-    FiscalCode:
-      type: string
-      description: User's fiscal code.
-      format: FiscalCode
-      example: SPNDNL80R13C555X
-      x-import: italia-ts-commons/lib/strings
-    TimeToLiveSeconds:
-      maximum: 6.048E+5
-      minimum: 3.6E+3
-      type: integer
-      description: |-
-        This parameter specifies for how long (in seconds) the system will
-        try to deliver the message to the channels configured by the user.
-      example: 3600
-      default: 3600
-    PaginatedCreatedMessageWithoutContentCollection:
-      description: A paginated collection of messages
-      allOf:
-      - $ref: '#/components/schemas/CreatedMessageWithoutContentCollection'
-      - $ref: '#/components/schemas/PaginationResponse'
-    PaymentAmount:
-      maximum: 9999999999
-      minimum: 1
-      type: integer
-      description: Amount of payment in euro cent. PagoPA accepts up to 999999999
-        euro cents.
-    MessageResponseWithoutContent:
-      required:
-      - message
-      type: object
-      properties:
-        message:
-          $ref: '#/components/schemas/CreatedMessageWithoutContent'
-        notification:
-          $ref: '#/components/schemas/MessageResponseNotificationStatus'
-        status:
-          $ref: '#/components/schemas/MessageStatusValue'
-    CreatedMessageWithoutContent:
-      required:
-      - created_at
-      - fiscal_code
-      - id
-      - sender_service_id
-      type: object
-      properties:
-        id:
-          type: string
-        fiscal_code:
-          $ref: '#/components/schemas/FiscalCode'
-        time_to_live:
-          $ref: '#/components/schemas/TimeToLiveSeconds'
-        created_at:
-          $ref: '#/components/schemas/Timestamp'
-        sender_service_id:
-          type: string
-    ServiceTuple:
-      required:
-      - service_id
-      - version
-      type: object
-      properties:
-        service_id:
-          $ref: '#/components/schemas/ServiceId'
-        version:
-          type: integer
-      description: Service identifier and version used to return list of services.
-    HttpStatusCode:
-      maximum: 6E+2
-      exclusiveMaximum: true
-      minimum: 1E+2
-      type: integer
-      description: |-
-        The HTTP status code generated by the origin server for this occurrence
-        of the problem.
-      format: int32
-      example: 200
-    CreatedMessageWithoutContentCollection:
-      required:
-      - items
-      type: object
-      properties:
-        items:
-          type: array
-          items:
-            $ref: '#/components/schemas/CreatedMessageWithoutContent'
-      description: A collection of messages
-    SenderMetadata:
-      title: Sender metadata
-      required:
-      - department_name
-      - organization_name
-      - service_name
-      type: object
-      properties:
-        service_name:
-          $ref: '#/components/schemas/ServiceName'
-        organization_name:
-          $ref: '#/components/schemas/OrganizationName'
-        department_name:
-          $ref: '#/components/schemas/DepartmentName'
-      description: Metadata associated to a sender (service).
-    PaymentData:
-      required:
-      - amount
-      - notice_number
-      type: object
-      properties:
-        amount:
-          $ref: '#/components/schemas/PaymentAmount'
-        notice_number:
-          $ref: '#/components/schemas/PaymentNoticeNumber'
-        invalid_after_due_date:
-          type: boolean
-          default: false
-      description: Metadata needed to process pagoPA payments.
-    BlockedInboxOrChannels:
-      type: object
-      additionalProperties:
-        type: array
-        items:
-          $ref: '#/components/schemas/BlockedInboxOrChannel'
-      description: |-
-        All the notification channels blocked by the user.
-        Each channel is related to a specific service (sender).
-    NotificationChannelStatus:
-      required:
-      - channel
-      - status
-      - updated_at
-      type: object
-      properties:
-        channel:
-          $ref: '#/components/schemas/NotificationChannel'
-        status:
-          $ref: '#/components/schemas/NotificationChannelStatusValue'
-        updated_at:
-          $ref: '#/components/schemas/Timestamp'
-        version:
-          type: integer
-    AcceptedTosVersion:
-      minimum: 1
-      type: number
-      description: Version of latest terms of service accepted by the user.
-    PaginationResponse:
-      type: object
-      properties:
-        page_size:
-          minimum: 1
-          type: integer
-          description: Number of items returned for each page.
-          example: 2
-        next:
-          type: string
-          description: |-
-            Contains an URL to GET the next results page in the
-            retrieved collection of items.
-          format: uri
-          example: https://example.com/?p=0XXX2
-      description: Pagination response parameters.
-    BlockedInboxOrChannel:
-      type: string
-      description: |-
-        All notification channels plus the message inbox.
-        These represent all the possible channels a user could block.
-      example: INBOX
-      x-extensible-enum:
-      - EMAIL
-      - INBOX
-      - WEBHOOK
-    NotificationChannelStatusValue:
-      type: string
-      description: |-
-        The status of a notification (one for each channel).
-        "SENT": the notification was succesfully sent to the channel (ie. email or push notification)
-        "THROTTLED": a temporary failure caused a retry during the notification processing;
-          the notification associated with this channel will be delayed for a maximum of 7 days or until the message expires
-        "EXPIRED": the message expired before the notification could be sent;
-          this means that the maximum message time to live was reached; no notification will be sent to this channel
-        "FAILED": a permanent failure caused the process to exit with an error, no notification will be sent to this channel
-      example: SENT
-      x-extensible-enum:
-      - SENT
-      - THROTTLED
-      - EXPIRED
-      - FAILED
-    ProblemJson:
-      type: object
-      properties:
-        type:
-          type: string
-          description: |-
-            An absolute URI that identifies the problem type. When dereferenced,
-            it SHOULD provide human-readable documentation for the problem type
-            (e.g., using HTML).
-          format: uri
-          example: https://example.com/problem/constraint-violation
-          default: about:blank
-        title:
-          type: string
-          description: |-
-            A short, summary of the problem type. Written in english and readable
-            for engineers (usually not suited for non technical stakeholders and
-            not localized); example: Service Unavailable
-        status:
-          $ref: '#/components/schemas/HttpStatusCode'
-        detail:
-          type: string
-          description: |-
-            A human readable explanation specific to this occurrence of the
-            problem.
-          example: There was an error processing the request
-        instance:
-          type: string
-          description: |-
-            An absolute URI that identifies the specific occurrence of the problem.
-            It may or may not yield further information if dereferenced.
-          format: uri
-    EmailAddress:
-      type: string
-      format: email
-      example: foobar@example.com
-    MessageStatusValue:
-      type: string
-      description: |-
-        The processing status of a message.
-        "ACCEPTED": the message has been accepted and will be processed for delivery;
-          we'll try to store its content in the user's inbox and notify him on his preferred channels
-        "THROTTLED": a temporary failure caused a retry during the message processing;
-          any notification associated with this message will be delayed for a maximum of 7 days
-        "FAILED": a permanent failure caused the process to exit with an error, no notification will be sent for this message
-        "PROCESSED": the message was succesfully processed and is now stored in the user's inbox;
-          we'll try to send a notification for each of the selected channels
-        "REJECTED": either the recipient does not exist, or the sender has been blocked
-      example: ACCEPTED
-      x-extensible-enum:
-      - ACCEPTED
-      - THROTTLED
-      - FAILED
-      - PROCESSED
-      - REJECTED
-    NotificationChannel:
-      type: string
-      description: All notification channels.
-      example: EMAIL
-      x-extensible-enum:
-      - EMAIL
-      - WEBHOOK
-    MessageResponseWithContent:
-      required:
-      - message
-      type: object
-      properties:
-        message:
-          $ref: '#/components/schemas/CreatedMessageWithContent'
-        notification:
-          $ref: '#/components/schemas/MessageResponseNotificationStatus'
-        status:
-          $ref: '#/components/schemas/MessageStatusValue'
-    ServiceName:
-      minLength: 1
-      type: string
-      description: The name of the service. Will be added to the content of sent messages.
-    PaymentNoticeNumber:
-      pattern: ^[0123][0-9]{17}$
-      type: string
-      description: The field ["Numero Avviso"](https://pagopa-specifichepagamenti.readthedocs.io/it/latest/_docs/Capitolo7.html#il-numero-avviso-e-larchivio-dei-pagamenti-in-attesa)
-        of pagoPa, needed to identify the payment. Format is `<aux digit (1n)>[<application
-        code> (2n)]<codice IUV (15|17n)>`. See [pagoPa specs](https://www.agid.gov.it/sites/default/files/repository_files/specifiche_attuative_pagamenti_1_3_1_0.pdf)
-        for more info on this field and the IUV.
-    DepartmentName:
-      minLength: 1
-      type: string
-      description: |-
-        The department inside the organization that runs the service. Will
-        be added to the content of sent messages.
-    IsWebhookEnabled:
-      type: boolean
-      description: True if the recipient of a message wants to forward the notifications
-        to the default webhook.
-      default: false
-    PreferredLanguages:
-      type: array
-      description: |-
-        Indicates the User's preferred written or spoken languages in order
-        of preference. Generally used for selecting a localized User interface. Valid
-        values are concatenation of the ISO 639-1 two letter language code, an underscore,
-        and the ISO 3166-1 2 letter country code; e.g., 'en_US' specifies the language
-        English and country US.
-      items:
-        $ref: '#/components/schemas/PreferredLanguage'
-    ServicePublic:
-      title: Service (public)
-      required:
-      - department_name
-      - organization_fiscal_code
-      - organization_name
-      - service_id
-      - service_name
-      - version
-      type: object
-      properties:
-        service_id:
-          $ref: '#/components/schemas/ServiceId'
-        service_name:
-          $ref: '#/components/schemas/ServiceName'
-        organization_name:
-          $ref: '#/components/schemas/OrganizationName'
-        department_name:
-          $ref: '#/components/schemas/DepartmentName'
-        organization_fiscal_code:
-          $ref: '#/components/schemas/OrganizationFiscalCode'
-        version:
-          type: integer
-      description: A Service associated to an user's subscription.
-    OrganizationName:
-      minLength: 1
-      type: string
-      description: |-
-        The organization that runs the service. Will be added to the content
-        of sent messages to identify the sender.
-    PaginatedServiceTupleCollection:
-      description: A paginated collection of services tuples
-      allOf:
-      - $ref: '#/components/schemas/ServiceTupleCollection'
-      - $ref: '#/components/schemas/PaginationResponse'
-    MessageSubject:
-      maxLength: 120
-      minLength: 10
-      type: string
-      description: |-
-        The (optional) subject of the message - note that only some notification
-        channels support the display of a subject. When a subject is not provided,
-        one gets generated from the client attributes.
-      example: Welcome new user !
-    MessageResponseNotificationStatus:
-      type: object
-      properties:
-        email:
-          $ref: '#/components/schemas/NotificationChannelStatusValue'
-    LimitedProfile:
-      required:
-      - sender_allowed
-      type: object
-      properties:
-        sender_allowed:
-          type: boolean
-          description: |-
-            True in case the service that made the request can send
-            messages to the user identified by this profile (false otherwise).
-        preferred_languages:
-          $ref: '#/components/schemas/PreferredLanguages'
-      description: |-
-        Describes the citizen's profile, mostly interesting for preferences
-        attributes.
-    NewMessage:
-      required:
-      - content
-      type: object
-      properties:
-        time_to_live:
-          $ref: '#/components/schemas/TimeToLiveSeconds'
-        content:
-          $ref: '#/components/schemas/MessageContent'
-        default_addresses:
-          $ref: '#/components/schemas/NewMessageDefaultAddresses'
-    Timestamp:
-      type: string
-      description: A date-time field in ISO-8601 format and UTC timezone.
-      format: UTCISODateFromString
-      example: 2018-10-13T00:00:00.000Z
-      x-import: italia-ts-commons/lib/dates
-    Profile:
-      description: |-
-        Describes the citizen's profile, mostly interesting for preferences
-        attributes.
-      allOf:
-      - $ref: '#/components/schemas/LimitedProfile'
-      - $ref: '#/components/schemas/ExtendedProfile'
-      x-one-of: true
-    ServiceId:
-      minLength: 1
-      type: string
-      description: |-
-        The ID of the Service. Equals the subscriptionId of a registered
-        API user.
-    ExtendedProfile:
-      required:
-      - is_inbox_enabled
-      - is_webhook_enabled
-      - version
-      type: object
-      properties:
-        email:
-          $ref: '#/components/schemas/EmailAddress'
-        blocked_inbox_or_channels:
-          $ref: '#/components/schemas/BlockedInboxOrChannels'
-        preferred_languages:
-          $ref: '#/components/schemas/PreferredLanguages'
-        is_inbox_enabled:
-          $ref: '#/components/schemas/IsInboxEnabled'
-        accepted_tos_version:
-          $ref: '#/components/schemas/AcceptedTosVersion'
-        is_webhook_enabled:
-          $ref: '#/components/schemas/IsWebhookEnabled'
-        version:
-          type: integer
-      description: |-
-        Describes the citizen's profile, mostly interesting for preferences
-        attributes.
-    MaxAllowedPaymentAmount:
-      maximum: 9999999999
-      minimum: 0
-      type: integer
-      description: Maximum amount in euro cents that a service is allowed to charge
-        to a user.
-      default: 0
-    CreatedMessageWithContent:
-      required:
-      - content
-      - created_at
-      - fiscal_code
-      - id
-      - sender_service_id
-      type: object
-      properties:
-        id:
-          type: string
-        fiscal_code:
-          $ref: '#/components/schemas/FiscalCode'
-        time_to_live:
-          $ref: '#/components/schemas/TimeToLiveSeconds'
-        created_at:
-          $ref: '#/components/schemas/Timestamp'
-        content:
-          $ref: '#/components/schemas/MessageContent'
-        sender_service_id:
-          type: string
-    PreferredLanguage:
-      type: string
-      example: it_IT
-      x-extensible-enum:
-      - it_IT
-      - en_GB
-      - es_ES
-      - de_DE
-      - fr_FR
-    NewMessageDefaultAddresses:
-      type: object
-      properties:
-        email:
-          $ref: '#/components/schemas/EmailAddress'
-      description: |-
-        Default addresses for notifying the recipient of the message in case
-        no address for the related channel is set in his profile.
-    HttpsUrl:
-      pattern: ^https://[-a-zA-Z0-9@:%._+~#=]{2,256}[.][a-z]{2,6}\\b([-a-zA-Z0-9@:%_+.~#?&/=]*)$
-      type: string
-      description: An http(s) url.
-      format: uri
-    IsInboxEnabled:
-      type: boolean
-      description: |-
-        True if the recipient of a message wants to store its content for
-        later retrieval.
-      default: false
-    Service:
-      required:
-      - authorized_cidrs
-      - authorized_recipients
-      - department_name
-      - organization_fiscal_code
-      - organization_name
-      - service_id
-      - service_name
-      type: object
-      properties:
-        service_id:
-          $ref: '#/components/schemas/ServiceId'
-        service_name:
-          $ref: '#/components/schemas/ServiceName'
-        organization_name:
-          $ref: '#/components/schemas/OrganizationName'
-        department_name:
-          $ref: '#/components/schemas/DepartmentName'
-        authorized_cidrs:
-          type: array
-          description: Allowed source IPs or CIDRs for this service.
-          items:
-            $ref: '#/components/schemas/CIDR'
-        authorized_recipients:
-          type: array
-          description: |-
-            If non empty, the service will be able
-            to send messages only to these fiscal codes.
-          items:
-            $ref: '#/components/schemas/FiscalCode'
-        is_visible:
-          type: boolean
-          default: false
-        max_allowed_payment_amount:
-          $ref: '#/components/schemas/MaxAllowedPaymentAmount'
-        organization_fiscal_code:
-          $ref: '#/components/schemas/OrganizationFiscalCode'
-        version:
-          type: integer
-        id:
-          type: string
-      description: A Service tied to an user's subscription.
-    CIDR:
-      pattern: ^([0-9]{1,3}[.]){3}[0-9]{1,3}(/([0-9]|[1-2][0-9]|3[0-2]))?$
-      type: string
-      description: Describes a single IP or a range of IPs.
-    MessageStatus:
-      required:
-      - status
-      - updated_at
-      type: object
-      properties:
-        status:
-          $ref: '#/components/schemas/MessageStatusValue'
-        updated_at:
-          $ref: '#/components/schemas/Timestamp'
-        version:
-          type: integer
-    ServiceTupleCollection:
-      required:
-      - items
-      type: object
-      properties:
-        items:
-          type: array
-          items:
-            $ref: '#/components/schemas/ServiceTuple'
-      description: A collection of services tuples (service and version)
-    OrganizationFiscalCode:
-      type: string
-      description: Organization fiscal code.
-      format: OrganizationFiscalCode
-      example: "12345678901"
-      x-import: italia-ts-commons/lib/strings
-    MessageBodyMarkdown:
-      maxLength: 10000
-      minLength: 80
-      type: string
-      description: |-
-        The full version of the message, in plain text or Markdown format. The
-        content of this field will be delivered to channels that don't have any
-        limit in terms of content size (e.g. email, etc...).
-      example: |-
-        # This is a markdown header
-
-        to show how easily markdown can be converted to **HTML**
-
-        Remember: this has to be a long text.
   parameters:
-    FiscalCode:
-      name: fiscal_code
-      in: path
-      description: The fiscal code of the user, all upper case.
-      required: true
-      schema:
-        maxLength: 16
-        minLength: 16
-        pattern: '[A-Z]{6}[0-9LMNPQRSTUV]{2}[ABCDEHLMPRST][0-9LMNPQRSTUV]{2}[A-Z][0-9LMNPQRSTUV]{3}[A-Z]'
-        type: string
-      example: SPNDNL80R13C555X
     PaginationRequest:
       name: cursor
       in: query
       description: An opaque identifier that points to the next item in the collection.
-      schema:
-        minimum: 1
-        type: string
       example: 01BX9NSMKVXXS5PSP2FATZM123
+      schema:
+        type: string
+        minimum: 1
+    FiscalCode:
+      name: fiscal_code
+      in: path
+      required: true
+      description: The fiscal code of the user, all upper case.
+      example: SPNDNL80R13C555X
+      schema:
+        type: string
+        minLength: 16
+        maxLength: 16
+        pattern: "[A-Z]{6}[0-9LMNPQRSTUV]{2}[ABCDEHLMPRST][0-9LMNPQRSTUV]{2}[A-Z][0-9L\
+          MNPQRSTUV]{3}[A-Z]"
   securitySchemes:
     SubscriptionKey:
       type: apiKey
-      description: The API key obtained through the developer portal.
       name: Ocp-Apim-Subscription-Key
       in: header
-x-tagGroups:
-- name: For Public Administrations and services
-  tags:
-  - public
-- name: For the IO app
-  tags:
-  - restricted
+      description: The API key obtained through the developer portal.
+  schemas:
+    ProblemJson:
+      $ref: definitions.yaml#/ProblemJson
+    NotificationChannel:
+      $ref: definitions.yaml#/NotificationChannel
+    BlockedInboxOrChannel:
+      $ref: definitions.yaml#/BlockedInboxOrChannel
+    NotificationChannelStatusValue:
+      $ref: definitions.yaml#/NotificationChannelStatusValue
+    NotificationChannelStatus:
+      $ref: definitions.yaml#/NotificationChannelStatus
+    PaymentData:
+      $ref: definitions.yaml#/PaymentData
+    PaymentNoticeNumber:
+      $ref: definitions.yaml#/PaymentNoticeNumber
+    PaymentAmount:
+      $ref: definitions.yaml#/PaymentAmount
+    MaxAllowedPaymentAmount:
+      $ref: definitions.yaml#/MaxAllowedPaymentAmount
+    CreatedMessageWithContent:
+      $ref: definitions.yaml#/CreatedMessageWithContent
+    CreatedMessageWithoutContent:
+      $ref: definitions.yaml#/CreatedMessageWithoutContent
+    MessageResponseNotificationStatus:
+      $ref: definitions.yaml#/MessageResponseNotificationStatus
+    MessageResponseWithContent:
+      $ref: definitions.yaml#/MessageResponseWithContent
+    MessageResponseWithoutContent:
+      $ref: definitions.yaml#/MessageResponseWithoutContent
+    FiscalCode:
+      $ref: definitions.yaml#/FiscalCode
+    OrganizationFiscalCode:
+      $ref: definitions.yaml#/OrganizationFiscalCode
+    MessageSubject:
+      $ref: definitions.yaml#/MessageSubject
+    MessageBodyMarkdown:
+      $ref: definitions.yaml#/MessageBodyMarkdown
+    PaginationResponse:
+      $ref: definitions.yaml#/PaginationResponse
+    CreatedMessageWithoutContentCollection:
+      $ref: definitions.yaml#/CreatedMessageWithoutContentCollection
+    PaginatedCreatedMessageWithoutContentCollection:
+      $ref: definitions.yaml#/PaginatedCreatedMessageWithoutContentCollection
+    BlockedInboxOrChannels:
+      $ref: definitions.yaml#/BlockedInboxOrChannels
+    Profile:
+      $ref: definitions.yaml#/Profile
+    LimitedProfile:
+      $ref: definitions.yaml#/LimitedProfile
+    ExtendedProfile:
+      $ref: definitions.yaml#/ExtendedProfile
+    IsInboxEnabled:
+      $ref: definitions.yaml#/IsInboxEnabled
+    AcceptedTosVersion:
+      $ref: definitions.yaml#/AcceptedTosVersion
+    IsWebhookEnabled:
+      $ref: definitions.yaml#/IsWebhookEnabled
+    HttpStatusCode:
+      $ref: definitions.yaml#/HttpStatusCode
+    NewMessageDefaultAddresses:
+      $ref: definitions.yaml#/NewMessageDefaultAddresses
+    EmailAddress:
+      $ref: definitions.yaml#/EmailAddress
+    PreferredLanguages:
+      $ref: definitions.yaml#/PreferredLanguages
+    SenderMetadata:
+      $ref: definitions.yaml#/SenderMetadata
+    Service:
+      $ref: definitions.yaml#/Service
+    ServiceTupleCollection:
+      $ref: definitions.yaml#/ServiceTupleCollection
+    PaginatedServiceTupleCollection:
+      $ref: definitions.yaml#/PaginatedServiceTupleCollection
+    ServicePublic:
+      $ref: definitions.yaml#/ServicePublic
+    ServiceId:
+      $ref: definitions.yaml#/ServiceId
+    ServiceTuple:
+      $ref: definitions.yaml#/ServiceTuple
+    ServiceName:
+      $ref: definitions.yaml#/ServiceName
+    OrganizationName:
+      $ref: definitions.yaml#/OrganizationName
+    DepartmentName:
+      $ref: definitions.yaml#/DepartmentName
+    CIDR:
+      $ref: definitions.yaml#/CIDR
+    Timestamp:
+      $ref: definitions.yaml#/Timestamp
+    HttpsUrl:
+      $ref: definitions.yaml#/HttpsUrl
+    TimeToLiveSeconds:
+      $ref: definitions.yaml#/TimeToLiveSeconds
+    NewMessage:
+      $ref: definitions.yaml#/NewMessage
+    MessageContent:
+      $ref: definitions.yaml#/MessageContent
+    MessageStatusValue:
+      $ref: definitions.yaml#/MessageStatusValue
+    MessageStatus:
+      $ref: definitions.yaml#/MessageStatus
+    PreferredLanguage:
+      $ref: definitions.yaml#/PreferredLanguage
+
