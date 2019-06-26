@@ -438,7 +438,108 @@ paths:
       description: An endpoint to test authenticated access to the API backend.
       summary: API test endpoint
 definitions:
-  $ref: "https://raw.githubusercontent.com/teamdigitale/io-functions-commons/master/openapi/definitions.yaml"
+  ProblemJson:
+    $ref: "https://raw.githubusercontent.com/teamdigitale/io-functions-commons/master/openapi/definitions.yaml#/ProblemJson"
+  NotificationChannel:
+    $ref: "https://raw.githubusercontent.com/teamdigitale/io-functions-commons/master/openapi/definitions.yaml#/NotificationChannel"
+  BlockedInboxOrChannel:
+    $ref: "https://raw.githubusercontent.com/teamdigitale/io-functions-commons/master/openapi/definitions.yaml#/BlockedInboxOrChannel"
+  NotificationChannelStatusValue:
+    $ref: "https://raw.githubusercontent.com/teamdigitale/io-functions-commons/master/openapi/definitions.yaml#/NotificationChannelStatusValue"
+  NotificationChannelStatus:
+    $ref: "https://raw.githubusercontent.com/teamdigitale/io-functions-commons/master/openapi/definitions.yaml#/NotificationChannelStatus"
+  PaymentData:
+    $ref: "https://raw.githubusercontent.com/teamdigitale/io-functions-commons/master/openapi/definitions.yaml#/PaymentData"
+  PaymentNoticeNumber:
+    $ref: "https://raw.githubusercontent.com/teamdigitale/io-functions-commons/master/openapi/definitions.yaml#/PaymentNoticeNumber"
+  PaymentAmount:
+    $ref: "https://raw.githubusercontent.com/teamdigitale/io-functions-commons/master/openapi/definitions.yaml#/PaymentAmount"
+  MaxAllowedPaymentAmount:
+    $ref: "https://raw.githubusercontent.com/teamdigitale/io-functions-commons/master/openapi/definitions.yaml#/MaxAllowedPaymentAmount"
+  CreatedMessageWithContent:
+    $ref: "https://raw.githubusercontent.com/teamdigitale/io-functions-commons/master/openapi/definitions.yaml#/CreatedMessageWithContent"
+  CreatedMessageWithoutContent:
+    $ref: "https://raw.githubusercontent.com/teamdigitale/io-functions-commons/master/openapi/definitions.yaml#/CreatedMessageWithoutContent"
+  MessageResponseNotificationStatus:
+    $ref: "https://raw.githubusercontent.com/teamdigitale/io-functions-commons/master/openapi/definitions.yaml#/MessageResponseNotificationStatus"
+  MessageResponseWithContent:
+    $ref: "https://raw.githubusercontent.com/teamdigitale/io-functions-commons/master/openapi/definitions.yaml#/MessageResponseWithContent"
+  MessageResponseWithoutContent:
+    $ref: "https://raw.githubusercontent.com/teamdigitale/io-functions-commons/master/openapi/definitions.yaml#/MessageResponseWithoutContent"
+  FiscalCode:
+    $ref: "https://raw.githubusercontent.com/teamdigitale/io-functions-commons/master/openapi/definitions.yaml#/FiscalCode"
+  OrganizationFiscalCode:
+    $ref: "https://raw.githubusercontent.com/teamdigitale/io-functions-commons/master/openapi/definitions.yaml#/OrganizationFiscalCode"
+  MessageSubject:
+    $ref: "https://raw.githubusercontent.com/teamdigitale/io-functions-commons/master/openapi/definitions.yaml#/MessageSubject"
+  MessageBodyMarkdown:
+    $ref: "https://raw.githubusercontent.com/teamdigitale/io-functions-commons/master/openapi/definitions.yaml#/MessageBodyMarkdown"
+  PaginationResponse:
+    $ref: "https://raw.githubusercontent.com/teamdigitale/io-functions-commons/master/openapi/definitions.yaml#/PaginationResponse"
+  CreatedMessageWithoutContentCollection:
+    $ref: "https://raw.githubusercontent.com/teamdigitale/io-functions-commons/master/openapi/definitions.yaml#/CreatedMessageWithoutContentCollection"
+  PaginatedCreatedMessageWithoutContentCollection:
+    $ref: "https://raw.githubusercontent.com/teamdigitale/io-functions-commons/master/openapi/definitions.yaml#/PaginatedCreatedMessageWithoutContentCollection"
+  BlockedInboxOrChannels:
+    $ref: "https://raw.githubusercontent.com/teamdigitale/io-functions-commons/master/openapi/definitions.yaml#/BlockedInboxOrChannels"
+  Profile:
+    $ref: "https://raw.githubusercontent.com/teamdigitale/io-functions-commons/master/openapi/definitions.yaml#/Profile"
+  LimitedProfile:
+    $ref: "https://raw.githubusercontent.com/teamdigitale/io-functions-commons/master/openapi/definitions.yaml#/LimitedProfile"
+  ExtendedProfile:
+    $ref: "https://raw.githubusercontent.com/teamdigitale/io-functions-commons/master/openapi/definitions.yaml#/ExtendedProfile"
+  IsInboxEnabled:
+    $ref: "https://raw.githubusercontent.com/teamdigitale/io-functions-commons/master/openapi/definitions.yaml#/IsInboxEnabled"
+  AcceptedTosVersion:
+    $ref: "https://raw.githubusercontent.com/teamdigitale/io-functions-commons/master/openapi/definitions.yaml#/AcceptedTosVersion"
+  IsWebhookEnabled:
+    $ref: "https://raw.githubusercontent.com/teamdigitale/io-functions-commons/master/openapi/definitions.yaml#/IsWebhookEnabled"
+  HttpStatusCode:
+    $ref: "https://raw.githubusercontent.com/teamdigitale/io-functions-commons/master/openapi/definitions.yaml#/HttpStatusCode"
+  NewMessageDefaultAddresses:
+    $ref: "https://raw.githubusercontent.com/teamdigitale/io-functions-commons/master/openapi/definitions.yaml#/NewMessageDefaultAddresses"
+  EmailAddress:
+    $ref: "https://raw.githubusercontent.com/teamdigitale/io-functions-commons/master/openapi/definitions.yaml#/EmailAddress"
+  PreferredLanguages:
+    $ref: "https://raw.githubusercontent.com/teamdigitale/io-functions-commons/master/openapi/definitions.yaml#/PreferredLanguages"
+  SenderMetadata:
+    $ref: "https://raw.githubusercontent.com/teamdigitale/io-functions-commons/master/openapi/definitions.yaml#/SenderMetadata"
+  Service:
+    $ref: "https://raw.githubusercontent.com/teamdigitale/io-functions-commons/master/openapi/definitions.yaml#/Service"
+  ServiceTupleCollection:
+    $ref: "https://raw.githubusercontent.com/teamdigitale/io-functions-commons/master/openapi/definitions.yaml#/ServiceTupleCollection"
+  PaginatedServiceTupleCollection:
+    $ref: "https://raw.githubusercontent.com/teamdigitale/io-functions-commons/master/openapi/definitions.yaml#/PaginatedServiceTupleCollection"
+  ServicePublic:
+    $ref: "https://raw.githubusercontent.com/teamdigitale/io-functions-commons/master/openapi/definitions.yaml#/ServicePublic"
+  ServiceId:
+    $ref: "https://raw.githubusercontent.com/teamdigitale/io-functions-commons/master/openapi/definitions.yaml#/ServiceId"
+  ServiceTuple:
+    $ref: "https://raw.githubusercontent.com/teamdigitale/io-functions-commons/master/openapi/definitions.yaml#/ServiceTuple"
+  ServiceName:
+    $ref: "https://raw.githubusercontent.com/teamdigitale/io-functions-commons/master/openapi/definitions.yaml#/ServiceName"
+  OrganizationName:
+    $ref: "https://raw.githubusercontent.com/teamdigitale/io-functions-commons/master/openapi/definitions.yaml#/OrganizationName"
+  DepartmentName:
+    $ref: "https://raw.githubusercontent.com/teamdigitale/io-functions-commons/master/openapi/definitions.yaml#/DepartmentName"
+  CIDR:
+    $ref: "https://raw.githubusercontent.com/teamdigitale/io-functions-commons/master/openapi/definitions.yaml#/CIDR"
+  Timestamp:
+    $ref: "https://raw.githubusercontent.com/teamdigitale/io-functions-commons/master/openapi/definitions.yaml#/Timestamp"
+  HttpsUrl:
+    $ref: "https://raw.githubusercontent.com/teamdigitale/io-functions-commons/master/openapi/definitions.yaml#/HttpsUrl"
+  TimeToLiveSeconds:
+    $ref: "https://raw.githubusercontent.com/teamdigitale/io-functions-commons/master/openapi/definitions.yaml#/TimeToLiveSeconds"
+  NewMessage:
+    $ref: "https://raw.githubusercontent.com/teamdigitale/io-functions-commons/master/openapi/definitions.yaml#/NewMessage"
+  MessageContent:
+    $ref: "https://raw.githubusercontent.com/teamdigitale/io-functions-commons/master/openapi/definitions.yaml#/MessageContent"
+  MessageStatusValue:
+    $ref: "https://raw.githubusercontent.com/teamdigitale/io-functions-commons/master/openapi/definitions.yaml#/MessageStatusValue"
+  MessageStatus:
+    $ref: "https://raw.githubusercontent.com/teamdigitale/io-functions-commons/master/openapi/definitions.yaml#/MessageStatus"
+  PreferredLanguage:
+    $ref: "https://raw.githubusercontent.com/teamdigitale/io-functions-commons/master/openapi/definitions.yaml#/PreferredLanguage"
 responses: {}
 parameters:
   PaginationRequest:
