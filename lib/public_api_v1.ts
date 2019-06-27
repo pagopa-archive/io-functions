@@ -63,7 +63,7 @@ import {
   GetVisibleServices
 } from "./controllers/services";
 
-import { TelemetryClient } from "applicationinsights";
+import { TelemetryClient } from "io-functions-commons/dist/src/utils/application_insights";
 import { wrapCustomTelemetryClient } from "io-functions-commons/dist/src/utils/application_insights";
 
 // Whether we're in a production environment

@@ -46,7 +46,6 @@ import { createQueueService } from "azure-storage";
 import { NotificationChannelEnum } from "./api/definitions/NotificationChannel";
 import { NotificationChannelStatusValueEnum } from "./api/definitions/NotificationChannelStatusValue";
 
-import { TelemetryClient } from "applicationinsights";
 import { CreatedMessageEventSenderMetadata } from "io-functions-commons/dist/src/models/created_message_sender_metadata";
 import {
   ActiveMessage,
@@ -57,6 +56,7 @@ import {
   NOTIFICATION_STATUS_COLLECTION_NAME,
   NotificationStatusModel
 } from "io-functions-commons/dist/src/models/notification_status";
+import { TelemetryClient } from "io-functions-commons/dist/src/utils/application_insights";
 import {
   diffInMilliseconds,
   wrapCustomTelemetryClient

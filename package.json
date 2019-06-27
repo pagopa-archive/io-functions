@@ -25,7 +25,6 @@
   },
   "dependencies": {
     "@azure/functions": "^1.0.3",
-    "applicationinsights": "^1.0.3",
     "azure-storage": "^2.8.2",
     "cors": "^2.8.4",
     "documentdb": "^1.12.2",
@@ -33,7 +32,7 @@
     "express": "^4.15.3",
     "fp-ts": "1.12.0",
     "html-to-text": "^4.0.0",
-    "io-functions-commons": "^0.3.4",
+    "io-functions-commons": "^0.3.5",
     "io-ts": "^1.8.5",
     "italia-ts-commons": "^5.0.0",
     "json-set-map": "^1.0.2",

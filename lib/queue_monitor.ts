@@ -1,8 +1,8 @@
 import * as winston from "winston";
 
 import { Context } from "@azure/functions";
-import { TelemetryClient } from "applicationinsights";
 import { createQueueService } from "azure-storage";
+import { TelemetryClient } from "io-functions-commons/dist/src/utils/application_insights";
 import { getRequiredStringEnv } from "io-functions-commons/dist/src/utils/env";
 import { configureAzureContextTransport } from "io-functions-commons/dist/src/utils/logging";
 import { MESSAGE_QUEUE_NAME } from "./created_message_queue_handler";

@@ -70,7 +70,7 @@ import { NotificationChannelEnum } from "./api/definitions/NotificationChannel";
 import { NonEmptyString } from "italia-ts-commons/lib/strings";
 import { withoutUndefinedValues } from "italia-ts-commons/lib/types";
 
-import { TelemetryClient } from "applicationinsights";
+import { TelemetryClient } from "io-functions-commons/dist/src/utils/application_insights";
 import { BlockedInboxOrChannelEnum } from "./api/definitions/BlockedInboxOrChannel";
 import { HttpsUrl } from "./api/definitions/HttpsUrl";
 import { MessageContent } from "./api/definitions/MessageContent";
