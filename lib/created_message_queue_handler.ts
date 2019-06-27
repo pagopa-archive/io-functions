@@ -29,7 +29,7 @@ import {
 
 import { NewMessageDefaultAddresses } from "./api/definitions/NewMessageDefaultAddresses";
 
-import { getRequiredStringEnv } from "./utils/env";
+import { getRequiredStringEnv } from "io-functions-commons/dist/src/utils/env";
 
 import { CreatedMessageEvent } from "io-functions-commons/dist/src/models/created_message_event";
 import {
@@ -87,7 +87,7 @@ import {
   SenderServiceModel
 } from "io-functions-commons/dist/src/models/sender_service";
 
-import { wrapCustomTelemetryClient } from "./utils/application_insights";
+import { wrapCustomTelemetryClient } from "io-functions-commons/dist/src/utils/application_insights";
 
 import { ulidGenerator } from "io-functions-commons/dist/src/utils/strings";
 

@@ -108,16 +108,16 @@ import {
 
 import { MessageStatusModel } from "io-functions-commons/dist/src/models/message_status";
 import { NotificationStatusModel } from "io-functions-commons/dist/src/models/notification_status";
+import {
+  CustomTelemetryClientFactory,
+  diffInMilliseconds
+} from "io-functions-commons/dist/src/utils/application_insights";
 import { CreatedMessageWithContent } from "../api/definitions/CreatedMessageWithContent";
 import { MessageResponseWithoutContent } from "../api/definitions/MessageResponseWithoutContent";
 import { MessageStatusValueEnum } from "../api/definitions/MessageStatusValue";
 import { NotificationChannelEnum } from "../api/definitions/NotificationChannel";
 import { NotificationChannelStatusValueEnum } from "../api/definitions/NotificationChannelStatusValue";
 import { TimeToLiveSeconds } from "../api/definitions/TimeToLiveSeconds";
-import {
-  CustomTelemetryClientFactory,
-  diffInMilliseconds
-} from "../utils/application_insights";
 
 const ApiNewMessageWithDefaults = t.intersection([
   ApiNewMessage,

@@ -1,7 +1,7 @@
 /**
  * Main entrypoint for the Administration APIs handlers
  */
-import { getRequiredStringEnv } from "./utils/env";
+import { getRequiredStringEnv } from "io-functions-commons/dist/src/utils/env";
 
 import { Context } from "@azure/functions";
 
