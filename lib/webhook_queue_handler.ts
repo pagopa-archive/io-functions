@@ -23,7 +23,7 @@ import { isNone } from "fp-ts/lib/Option";
 import { readableReport } from "italia-ts-commons/lib/reporters";
 import { getRequiredStringEnv } from "./utils/env";
 
-import { IContext } from "azure-functions-types";
+import { Context } from "@azure/functions";
 
 import {
   NOTIFICATION_COLLECTION_NAME,
@@ -129,7 +129,7 @@ const ContextWithBindings = t.interface({
   })
 });
 
-type ContextWithBindings = t.TypeOf<typeof ContextWithBindings> & IContext;
+type ContextWithBindings = t.TypeOf<typeof ContextWithBindings> & Context;
 
 type OutputBindings = never;
 

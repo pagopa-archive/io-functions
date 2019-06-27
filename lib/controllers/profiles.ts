@@ -13,26 +13,30 @@ import { Profile as LimitedOrExtendedProfile } from "../api/definitions/Profile"
 import {
   AzureUserAttributesMiddleware,
   IAzureUserAttributes
-} from "../utils/middlewares/azure_user_attributes";
+} from "io-functions-commons/dist/src/utils/middlewares/azure_user_attributes";
 
 import {
   ClientIp,
   ClientIpMiddleware
-} from "../utils/middlewares/client_ip_middleware";
+} from "io-functions-commons/dist/src/utils/middlewares/client_ip_middleware";
 
 import {
   AzureApiAuthMiddleware,
   IAzureApiAuthorization,
   UserGroup
-} from "../utils/middlewares/azure_api_auth";
-import { FiscalCodeMiddleware } from "../utils/middlewares/fiscalcode";
+} from "io-functions-commons/dist/src/utils/middlewares/azure_api_auth";
+import { FiscalCodeMiddleware } from "io-functions-commons/dist/src/utils/middlewares/fiscalcode";
 
 import {
   IRequestMiddleware,
   withRequestMiddlewares,
   wrapRequestHandler
-} from "../utils/request_middleware";
+} from "io-functions-commons/dist/src/utils/request_middleware";
 
+import {
+  IResponseErrorQuery,
+  ResponseErrorQuery
+} from "io-functions-commons/dist/src/utils/response";
 import {
   IResponseErrorConflict,
   IResponseErrorInternal,
@@ -45,14 +49,14 @@ import {
   ResponseErrorNotFound,
   ResponseSuccessJson
 } from "italia-ts-commons/lib/responses";
-import { IResponseErrorQuery, ResponseErrorQuery } from "../utils/response";
 
 import {
   checkSourceIpForHandler,
   clientIPAndCidrTuple as ipTuple
 } from "../utils/source_ip_check";
 
-import { IContext } from "azure-function-express";
+import { Context } from "@azure/functions";
+
 import {
   IProfileBlockedInboxOrChannels,
   Profile,
@@ -60,9 +64,9 @@ import {
   RetrievedProfile
 } from "io-functions-commons/dist/src/models/profile";
 import { ServiceModel } from "io-functions-commons/dist/src/models/service";
+import { ContextMiddleware } from "io-functions-commons/dist/src/utils/middlewares/context_middleware";
 import { BlockedInboxOrChannelEnum } from "../api/definitions/BlockedInboxOrChannel";
 import { ServiceId } from "../api/definitions/ServiceId";
-import { ContextMiddleware } from "../utils/middlewares/context_middleware";
 
 export interface IProfileCreatedEvent {
   readonly kind: "ProfileCreatedEvent";
@@ -75,11 +79,6 @@ export interface IProfileUpdatedEvent {
   readonly fiscalCode: FiscalCode;
   readonly oldProfile: ExtendedProfile;
   readonly newProfile: ExtendedProfile;
-}
-
-interface IBindings {
-  // tslint:disable-next-line:readonly-keyword
-  profileEvent?: IProfileCreatedEvent | IProfileUpdatedEvent;
 }
 
 function toExtendedProfile(profile: RetrievedProfile): ExtendedProfile {
@@ -144,7 +143,7 @@ type IGetProfileHandler = (
  * returns a Profile or a Validation or a Generic error.
  */
 type IUpsertProfileHandler = (
-  context: IContext<IBindings>,
+  context: Context,
   auth: IAzureApiAuthorization,
   clientIp: ClientIp,
   attrs: IAzureUserAttributes,
@@ -402,7 +401,7 @@ export function UpsertProfile(
     serviceModel
   );
   const middlewaresWrap = withRequestMiddlewares(
-    ContextMiddleware<IBindings>(),
+    ContextMiddleware(),
     AzureApiAuthMiddleware(new Set([UserGroup.ApiProfileWrite])),
     ClientIpMiddleware,
     azureUserAttributesMiddleware,

@@ -1,14 +1,14 @@
 import { isNone } from "fp-ts/lib/Option";
-import { IAzureUserAttributes } from "./middlewares/azure_user_attributes";
+import { IAzureUserAttributes } from "io-functions-commons/dist/src/utils/middlewares/azure_user_attributes";
 /*
  * A request wrapper that checks whether the source IP is contained in the
  * CIDRs allowed to make requests.
  */
 
 import CIDRMatcher = require("cidr-matcher");
+import { ClientIp } from "io-functions-commons/dist/src/utils/middlewares/client_ip_middleware";
 import { IPString } from "italia-ts-commons/lib/strings";
 import { ITuple2, Tuple2 } from "italia-ts-commons/lib/tuples";
-import { ClientIp } from "./middlewares/client_ip_middleware";
 
 import {
   IResponseErrorForbiddenNotAuthorized,

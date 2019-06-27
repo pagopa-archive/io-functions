@@ -9,7 +9,7 @@ import * as t from "io-ts";
 
 import * as winston from "winston";
 
-import { IContext } from "azure-functions-types";
+import { Context } from "@azure/functions";
 
 import { DocumentClient as DocumentDBClient } from "documentdb";
 
@@ -197,7 +197,7 @@ const ContextWithBindings = t.interface({
   bindings: t.intersection([InputBindings, OutputBindings])
 });
 
-type ContextWithBindings = t.TypeOf<typeof ContextWithBindings> & IContext;
+type ContextWithBindings = t.TypeOf<typeof ContextWithBindings> & Context;
 
 /**
  * Attempt to resolve an email address from

@@ -1,10 +1,10 @@
 /* tslint:disable:no-identical-functions */
 
 import { toAuthorizedCIDRs } from "io-functions-commons/dist/src/models/service";
+import { ClientIp } from "io-functions-commons/dist/src/utils/middlewares/client_ip_middleware";
 import { ResponseSuccessJson } from "italia-ts-commons/lib/responses";
 import { IPString } from "italia-ts-commons/lib/strings";
 import { ITuple2, Tuple2 } from "italia-ts-commons/lib/tuples";
-import { ClientIp } from "../middlewares/client_ip_middleware";
 
 import { fromEither as OptionFromEither } from "fp-ts/lib/Option";
 import { checkSourceIpForHandler } from "../source_ip_check";

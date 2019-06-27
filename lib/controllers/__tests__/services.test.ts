@@ -11,13 +11,13 @@ import {
 
 import { response as MockResponse } from "jest-mock-express";
 
-import * as middlewares from "../../utils/request_middleware";
+import * as middlewares from "io-functions-commons/dist/src/utils/request_middleware";
 
 import {
   IAzureApiAuthorization,
   UserGroup
-} from "../../utils/middlewares/azure_api_auth";
-import * as authMiddleware from "../../utils/middlewares/azure_api_auth";
+} from "io-functions-commons/dist/src/utils/middlewares/azure_api_auth";
+import * as authMiddleware from "io-functions-commons/dist/src/utils/middlewares/azure_api_auth";
 
 import {
   NewService,

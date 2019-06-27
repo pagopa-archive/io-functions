@@ -9,7 +9,7 @@ import { RetrievedProfile } from "io-functions-commons/dist/src/models/profile";
 import {
   IAzureApiAuthorization,
   UserGroup
-} from "../../utils/middlewares/azure_api_auth";
+} from "io-functions-commons/dist/src/utils/middlewares/azure_api_auth";
 import {
   GetProfileHandler,
   isSenderAllowed,

@@ -1,7 +1,7 @@
 import * as winston from "winston";
 
+import { Context } from "@azure/functions";
 import { TelemetryClient } from "applicationinsights";
-import { IContext } from "azure-functions-types";
 import { createQueueService } from "azure-storage";
 import { MESSAGE_QUEUE_NAME } from "./created_message_queue_handler";
 import { EMAIL_NOTIFICATION_QUEUE_NAME } from "./emailnotifications_queue_handler";
@@ -34,7 +34,7 @@ appInsightsClient.config.maxBatchSize = 1;
  *   | order by timestamp desc
  */
 /* istanbul ignore next */
-export function index(context: IContext): Promise<ReadonlyArray<void>> {
+export function index(context: Context): Promise<ReadonlyArray<void>> {
   const logLevel = isProduction ? "info" : "debug";
   configureAzureContextTransport(context, winston, logLevel);
   return Promise.all(
