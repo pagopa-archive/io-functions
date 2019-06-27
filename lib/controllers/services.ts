@@ -67,12 +67,12 @@ import {
   VisibleService
 } from "io-functions-commons/dist/src/models/visible_service";
 import { getBlobAsObject } from "io-functions-commons/dist/src/utils/azure_storage";
-import { PaginatedServiceTupleCollection } from "../api/definitions/PaginatedServiceTupleCollection";
-import { ServiceTuple } from "../api/definitions/ServiceTuple";
 import {
   checkSourceIpForHandler,
   clientIPAndCidrTuple as ipTuple
-} from "../utils/source_ip_check";
+} from "io-functions-commons/dist/src/utils/source_ip_check";
+import { PaginatedServiceTupleCollection } from "../api/definitions/PaginatedServiceTupleCollection";
+import { ServiceTuple } from "../api/definitions/ServiceTuple";
 
 type IGetServiceHandlerRet =
   | IResponseSuccessJson<ApiService>

@@ -10,7 +10,7 @@ import * as winston from "winston";
 
 import { setAppContext } from "io-functions-commons/dist/src/utils/middlewares/context_middleware";
 
-import { configureAzureContextTransport } from "./utils/logging";
+import { configureAzureContextTransport } from "io-functions-commons/dist/src/utils/logging";
 
 import { DocumentClient as DocumentDBClient } from "documentdb";
 
@@ -41,7 +41,7 @@ import { CreateMessage, GetMessage, GetMessages } from "./controllers/messages";
 import { GetProfile, UpsertProfile } from "./controllers/profiles";
 
 import * as express from "express";
-import { secureExpressApp } from "./utils/express";
+import { secureExpressApp } from "io-functions-commons/dist/src/utils/express";
 
 import { createBlobService } from "azure-storage";
 

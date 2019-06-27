@@ -17,7 +17,7 @@ process.env = {
 
 jest.mock("applicationinsights");
 jest.mock("azure-storage");
-jest.mock("../utils/mailup");
+jest.mock("io-functions-commons/dist/src/utils/mailup");
 
 import * as NodeMailer from "nodemailer";
 import * as winston from "winston";

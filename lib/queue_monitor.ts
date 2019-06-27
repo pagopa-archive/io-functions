@@ -3,11 +3,11 @@ import * as winston from "winston";
 import { Context } from "@azure/functions";
 import { TelemetryClient } from "applicationinsights";
 import { createQueueService } from "azure-storage";
+import { configureAzureContextTransport } from "io-functions-commons/dist/src/utils/logging";
 import { MESSAGE_QUEUE_NAME } from "./created_message_queue_handler";
 import { EMAIL_NOTIFICATION_QUEUE_NAME } from "./emailnotifications_queue_handler";
 import { getQueueMetadata } from "./utils/azure_queues";
 import { getRequiredStringEnv } from "./utils/env";
-import { configureAzureContextTransport } from "./utils/logging";
 import { WEBHOOK_NOTIFICATION_QUEUE_NAME } from "./webhook_queue_handler";
 
 const queueConnectionString = getRequiredStringEnv("QueueStorageConnection");

@@ -12,7 +12,7 @@ import * as request from "superagent";
 
 import * as winston from "winston";
 
-import { configureAzureContextTransport } from "./utils/logging";
+import { configureAzureContextTransport } from "io-functions-commons/dist/src/utils/logging";
 
 import { DocumentClient as DocumentDBClient } from "documentdb";
 

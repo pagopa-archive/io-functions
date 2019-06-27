@@ -20,7 +20,7 @@ import { isLeft } from "fp-ts/lib/Either";
 import { isNone, isSome } from "fp-ts/lib/Option";
 import { VisibleService } from "io-functions-commons/dist/src/models/visible_service";
 
-import { configureAzureContextTransport } from "./utils/logging";
+import { configureAzureContextTransport } from "io-functions-commons/dist/src/utils/logging";
 
 interface IOutputBindings {
   readonly visibleServicesBlob: Record<string, VisibleService>;
