@@ -13,7 +13,7 @@ import { Context } from "@azure/functions";
 
 import { DocumentClient as DocumentDBClient } from "documentdb";
 
-import { configureAzureContextTransport } from "./utils/logging";
+import { configureAzureContextTransport } from "io-functions-commons/dist/src/utils/logging";
 
 import * as documentDbUtils from "io-functions-commons/dist/src/utils/documentdb";
 

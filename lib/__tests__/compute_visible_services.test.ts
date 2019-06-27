@@ -8,7 +8,7 @@ process.env = {
 };
 
 jest.mock("winston");
-jest.mock("../utils/logging");
+jest.mock("io-functions-commons/dist/src/utils/logging");
 
 import { left, right } from "fp-ts/lib/Either";
 import { none, some } from "fp-ts/lib/Option";

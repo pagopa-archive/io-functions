@@ -28,7 +28,7 @@ import {
 import {
   checkSourceIpForHandler,
   clientIPAndCidrTuple as ipTuple
-} from "../utils/source_ip_check";
+} from "io-functions-commons/dist/src/utils/source_ip_check";
 
 import {
   IResponseSuccessJson,

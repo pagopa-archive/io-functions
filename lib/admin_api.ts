@@ -9,7 +9,7 @@ import * as winston from "winston";
 
 import { setAppContext } from "io-functions-commons/dist/src/utils/middlewares/context_middleware";
 
-import { configureAzureContextTransport } from "./utils/logging";
+import { configureAzureContextTransport } from "io-functions-commons/dist/src/utils/logging";
 
 import { DocumentClient as DocumentDBClient } from "documentdb";
 
@@ -28,7 +28,7 @@ import {
 import { GetDebug } from "./controllers/debug";
 
 import * as express from "express";
-import { secureExpressApp } from "./utils/express";
+import { secureExpressApp } from "io-functions-commons/dist/src/utils/express";
 
 // Whether we're in a production environment
 const isProduction = process.env.NODE_ENV === "production";

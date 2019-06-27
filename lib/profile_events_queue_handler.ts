@@ -8,11 +8,11 @@ import * as request from "superagent";
 import * as winston from "winston";
 
 import { Context } from "@azure/functions";
+import { configureAzureContextTransport } from "io-functions-commons/dist/src/utils/logging";
 import {
   IProfileCreatedEvent,
   IProfileUpdatedEvent
 } from "./controllers/profiles";
-import { configureAzureContextTransport } from "./utils/logging";
 
 import { readableReport } from "italia-ts-commons/lib/reporters";
 import { FiscalCode } from "italia-ts-commons/lib/strings";

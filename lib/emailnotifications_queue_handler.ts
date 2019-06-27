@@ -9,7 +9,7 @@ import * as t from "io-ts";
 
 import * as winston from "winston";
 
-import { configureAzureContextTransport } from "./utils/logging";
+import { configureAzureContextTransport } from "io-functions-commons/dist/src/utils/logging";
 
 import { DocumentClient as DocumentDBClient } from "documentdb";
 
@@ -22,8 +22,8 @@ import { getRequiredStringEnv } from "./utils/env";
 
 import { Context } from "@azure/functions";
 
+import { MailUpTransport } from "io-functions-commons/dist/src/utils/mailup";
 import * as NodeMailer from "nodemailer";
-import { MailUpTransport } from "./utils/mailup";
 
 import * as HtmlToText from "html-to-text";
 

@@ -9,7 +9,7 @@ import * as winston from "winston";
 
 import { setAppContext } from "io-functions-commons/dist/src/utils/middlewares/context_middleware";
 
-import { configureAzureContextTransport } from "./utils/logging";
+import { configureAzureContextTransport } from "io-functions-commons/dist/src/utils/logging";
 
 import createAzureFunctionHandler from "io-functions-express/dist/src/createAzureFunctionsHandler";
 

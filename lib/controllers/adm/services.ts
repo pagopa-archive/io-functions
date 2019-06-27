@@ -59,11 +59,11 @@ import {
   IAzureUserAttributes
 } from "io-functions-commons/dist/src/utils/middlewares/azure_user_attributes";
 
-import { Validation } from "io-ts";
 import {
   checkSourceIpForHandler,
   clientIPAndCidrTuple as ipTuple
-} from "../../utils/source_ip_check";
+} from "io-functions-commons/dist/src/utils/source_ip_check";
+import { Validation } from "io-ts";
 
 type ICreateServiceHandler = (
   auth: IAzureApiAuthorization,
