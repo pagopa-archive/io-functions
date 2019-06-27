@@ -1,7 +1,7 @@
 /**
  * Main entrypoint for the public APIs handlers
  */
-import { getRequiredStringEnv } from "./utils/env";
+import { getRequiredStringEnv } from "io-functions-commons/dist/src/utils/env";
 
 import { Context } from "@azure/functions";
 
@@ -64,7 +64,7 @@ import {
 } from "./controllers/services";
 
 import { TelemetryClient } from "applicationinsights";
-import { wrapCustomTelemetryClient } from "./utils/application_insights";
+import { wrapCustomTelemetryClient } from "io-functions-commons/dist/src/utils/application_insights";
 
 // Whether we're in a production environment
 const isProduction = process.env.NODE_ENV === "production";

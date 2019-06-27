@@ -14,15 +14,15 @@ import {
   IProfileUpdatedEvent
 } from "./controllers/profiles";
 
+import { getRequiredStringEnv } from "io-functions-commons/dist/src/utils/env";
 import { readableReport } from "italia-ts-commons/lib/reporters";
 import { FiscalCode } from "italia-ts-commons/lib/strings";
 import { ExtendedProfile } from "./api/definitions/ExtendedProfile";
 import { NewMessage } from "./api/definitions/NewMessage";
-import { getRequiredStringEnv } from "./utils/env";
 
 import { TelemetryClient } from "applicationinsights";
+import { wrapCustomTelemetryClient } from "io-functions-commons/dist/src/utils/application_insights";
 import { ulidGenerator } from "io-functions-commons/dist/src/utils/strings";
-import { wrapCustomTelemetryClient } from "./utils/application_insights";
 
 const ContextWithBindings = t.exact(
   t.interface({

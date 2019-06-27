@@ -163,12 +163,6 @@
     "@types/express-serve-static-core" "*"
     "@types/serve-static" "*"
 
-"@types/helmet@^0.0.40":
-  version "0.0.40"
-  resolved "https://registry.yarnpkg.com/@types/helmet/-/helmet-0.0.40.tgz#133e1e3f0d7142d7244bf0ddaad4678798e9b4cf"
-  dependencies:
-    "@types/express" "*"
-
 "@types/html-to-text@^1.4.31":
   version "1.4.31"
   resolved "https://registry.yarnpkg.com/@types/html-to-text/-/html-to-text-1.4.31.tgz#3b73aa59f127551cc0ce615346caa730e7622f9f"
@@ -236,16 +230,31 @@
   version "1.0.0"
   resolved "https://registry.yarnpkg.com/@types/unist/-/unist-1.0.0.tgz#a05df966d9b4b8191f04bf5109056a1848fcb9dd"
 
+"@types/unist@^2.0.0":
+  version "2.0.3"
+  resolved "https://registry.yarnpkg.com/@types/unist/-/unist-2.0.3.tgz#9c088679876f374eb5983f150d4787aa6fb32d7e"
+  integrity sha512-FvUupuM3rlRsRtCN+fDudtmytGO6iHJuuRKS1Ss0pG5z8oX0diNEw94UEL7hgDbpN94rgaK5R7sWm6RrSkZuAQ==
+
 "@types/validator@^9.4.1":
   version "9.4.1"
   resolved "https://registry.yarnpkg.com/@types/validator/-/validator-9.4.1.tgz#bea5a290e61f1cbf12af3fd878706aeec2ba0087"
 
-"@types/vfile@^2.2.1":
-  version "2.2.2"
-  resolved "https://registry.yarnpkg.com/@types/vfile/-/vfile-2.2.2.tgz#9bd85b5910128e03c20a3b9af45869926bc77593"
+"@types/vfile-message@*":
+  version "1.0.1"
+  resolved "https://registry.yarnpkg.com/@types/vfile-message/-/vfile-message-1.0.1.tgz#e1e9895cc6b36c462d4244e64e6d0b6eaf65355a"
+  integrity sha512-mlGER3Aqmq7bqR1tTTIVHq8KSAFFRyGbrxuM8C/H82g6k7r2fS+IMEkIu3D7JHzG10NvPdR8DNx0jr0pwpp4dA==
   dependencies:
     "@types/node" "*"
     "@types/unist" "*"
+
+"@types/vfile@^3.0.0":
+  version "3.0.2"
+  resolved "https://registry.yarnpkg.com/@types/vfile/-/vfile-3.0.2.tgz#19c18cd232df11ce6fa6ad80259bc86c366b09b9"
+  integrity sha512-b3nLFGaGkJ9rzOcuXRfHkZMdjsawuDD0ENL9fzTophtBg8FJHSGbH7daXkEpcwy3v7Xol3pAvsmlYyFhR4pqJw==
+  dependencies:
+    "@types/node" "*"
+    "@types/unist" "*"
+    "@types/vfile-message" "*"
 
 "@types/winston@^2.3.9":
   version "2.4.4"
@@ -1262,12 +1271,6 @@ chownr@^1.0.1:
 ci-info@^1.3.0:
   version "1.4.0"
   resolved "https://registry.yarnpkg.com/ci-info/-/ci-info-1.4.0.tgz#4841d53cad49f11b827b648ebde27a6e189b412f"
-
-cidr-matcher@^1.0.5:
-  version "1.0.5"
-  resolved "https://registry.yarnpkg.com/cidr-matcher/-/cidr-matcher-1.0.5.tgz#1805e49751be8fc8279a73355574e31c9f49666b"
-  dependencies:
-    ip "^1.0.2"
 
 cidr-matcher@^2.1.0:
   version "2.1.0"
@@ -3374,11 +3377,12 @@ invert-kv@^1.0.0:
   version "1.0.0"
   resolved "https://registry.yarnpkg.com/invert-kv/-/invert-kv-1.0.0.tgz#104a8e4aaca6d3d8cd157a8ef8bfab2d7a3ffdb6"
 
-io-functions-commons@^0.3.3:
-  version "0.3.3"
-  resolved "https://registry.yarnpkg.com/io-functions-commons/-/io-functions-commons-0.3.3.tgz#2a2c02fccb090979a784826f29bec4b0865938a2"
-  integrity sha512-4ENhxPZSUeLrTNsp+TTicNrPq/uKRjNLxwzhC3qMM9+3OUbj+p9lP3LlVNH1dt4Oppe+VUd0KuUusNBID60X4w==
+io-functions-commons@^0.3.4:
+  version "0.3.4"
+  resolved "https://registry.yarnpkg.com/io-functions-commons/-/io-functions-commons-0.3.4.tgz#70ad53909b838015f178d17982b735d251716da5"
+  integrity sha512-bvDIuzyA1wwC8OCVl4Oqdq3bw21f1bL1KM2bHStQ3LWdACfpUPDJaMZnhfQUBLMeoD2yt6AcT1VxiyqWcGhfZg==
   dependencies:
+    applicationinsights "^1.0.3"
     azure-storage "^2.10.3"
     cidr-matcher "^2.1.0"
     documentdb "^1.15.3"
@@ -3387,9 +3391,13 @@ io-functions-commons@^0.3.3:
     io-functions-express "^0.1.1"
     nodemailer "^4.6.7"
     referrer-policy "^1.1.0"
+    rehype-stringify "^3.0.0"
+    remark-parse "^5.0.0"
+    remark-rehype "^3.0.0"
     request-ip "^2.1.3"
     superagent "^3.8.3"
     ulid "^2.3.0"
+    unified "^7.1.0"
     winston "^3.1.0"
 
 io-functions-express@^0.1.1:
@@ -3409,10 +3417,6 @@ ip6addr@^0.2.2:
   integrity sha1-ZS7iYBcDku68sqmSMkdiQdzVAAE=
   dependencies:
     assert-plus "^1.0.0"
-
-ip@^1.0.2:
-  version "1.1.5"
-  resolved "https://registry.yarnpkg.com/ip/-/ip-1.1.5.tgz#bdded70114290828c0a039e72ef25f5aaec4354a"
 
 ipaddr.js@1.8.0:
   version "1.8.0"
@@ -7737,10 +7741,13 @@ unherit@^1.0.4:
     inherits "^2.0.1"
     xtend "^4.0.1"
 
-unified@^7.0.0:
-  version "7.0.0"
-  resolved "https://registry.yarnpkg.com/unified/-/unified-7.0.0.tgz#9c8f4fcee78f8e7e895f0e3d6adb53bd015e1a53"
+unified@^7.1.0:
+  version "7.1.0"
+  resolved "https://registry.yarnpkg.com/unified/-/unified-7.1.0.tgz#5032f1c1ee3364bd09da12e27fdd4a7553c7be13"
+  integrity sha512-lbk82UOIGuCEsZhPj8rNAkXSDXd6p0QLzIuSsCdxrqnqU56St4eyOB+AlXsVgVeRmetPTYydIuvFfpDIed8mqw==
   dependencies:
+    "@types/unist" "^2.0.0"
+    "@types/vfile" "^3.0.0"
     bail "^1.0.0"
     extend "^3.0.0"
     is-plain-obj "^1.1.0"

@@ -14,7 +14,7 @@ import {
   SERVICE_COLLECTION_NAME,
   ServiceModel
 } from "io-functions-commons/dist/src/models/service";
-import { getRequiredStringEnv } from "./utils/env";
+import { getRequiredStringEnv } from "io-functions-commons/dist/src/utils/env";
 
 import { isLeft } from "fp-ts/lib/Either";
 import { isNone, isSome } from "fp-ts/lib/Option";
