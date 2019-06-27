@@ -1,5 +1,5 @@
 {
- "scriptFile": "../lib/index.js",
+ "scriptFile": "../.funcpack/index.js",
  "disabled": false,
  "bindings": [
   {
@@ -17,12 +17,14 @@
    "connection": "QueueStorageConnection"
   },
   {
-    "type": "queue",
-    "direction": "out",
-    "name": "webhookNotification",
-    "queueName": "webhooknotifications",
-    "connection": "QueueStorageConnection"
-   }
-  ],
- "entryPoint": "CreatedMessageQueueHandler"
+   "type": "queue",
+   "direction": "out",
+   "name": "webhookNotification",
+   "queueName": "webhooknotifications",
+   "connection": "QueueStorageConnection"
+  }
+ ],
+ "entryPoint": "CreatedMessageQueueHandler",
+ "_originalEntryPoint": "CreatedMessageQueueHandler",
+ "_originalScriptFile": "../lib/index.js"
 }
