@@ -20,7 +20,7 @@ import { FiscalCode } from "italia-ts-commons/lib/strings";
 import { ExtendedProfile } from "./api/definitions/ExtendedProfile";
 import { NewMessage } from "./api/definitions/NewMessage";
 
-import { TelemetryClient } from "applicationinsights";
+import { TelemetryClient } from "io-functions-commons/dist/src/utils/application_insights";
 import { wrapCustomTelemetryClient } from "io-functions-commons/dist/src/utils/application_insights";
 import { ulidGenerator } from "io-functions-commons/dist/src/utils/strings";
 

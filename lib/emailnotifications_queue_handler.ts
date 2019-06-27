@@ -55,13 +55,13 @@ import { createQueueService } from "azure-storage";
 import { NotificationChannelEnum } from "./api/definitions/NotificationChannel";
 import { NotificationChannelStatusValueEnum } from "./api/definitions/NotificationChannelStatusValue";
 
-import { TelemetryClient } from "applicationinsights";
 import { ActiveMessage } from "io-functions-commons/dist/src/models/message";
 import {
   getNotificationStatusUpdater,
   NOTIFICATION_STATUS_COLLECTION_NAME,
   NotificationStatusModel
 } from "io-functions-commons/dist/src/models/notification_status";
+import { TelemetryClient } from "io-functions-commons/dist/src/utils/application_insights";
 import {
   diffInMilliseconds,
   wrapCustomTelemetryClient
