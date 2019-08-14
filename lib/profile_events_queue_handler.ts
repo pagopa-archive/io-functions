@@ -61,7 +61,7 @@ Scopri le funzioni e impara a usare l'app del cittadino.
 
 ### I messaggi
 IO ti consente di ricevere messaggi dalle Pubbliche Amministrazioni italiane, sia locali che nazionali, e all'occorrenza effettuare pagamenti.
-Puoi decidere da chi e come essere contattato, dalla sezione [servizi](ioit://PREFERENCES_SERVICES) di questa applicazione, e scegliere se inoltrare il messaggio anche al tuo indirizo email associato a SPID.
+Puoi decidere da chi e come essere contattato, dalla sezione [servizi](ioit://PREFERENCES_SERVICES) di questa applicazione, e scegliere se inoltrare il messaggio anche al tuo indirizzo email associato a SPID.
 
 ### I pagamenti
 
