@@ -1,0 +1,274 @@
+openapi: 3.0.0
+info:
+  version: 0.1.0
+  title: Digital Citizenship Admin API.
+  description: Digital Citizenship Admin API.
+paths:
+  "/services/{service_id}":
+    parameters:
+      - name: service_id
+        in: path
+        required: true
+        description: The ID of an existing Service.
+        schema:
+          type: string
+    get:
+      operationId: getService
+      summary: Get Service
+      description: A previously created service with the provided service ID is returned.
+      responses:
+        "200":
+          description: Service found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Service"
+              examples:
+                response:
+                  value:
+                    id: 2b3e728c1a5d1efa035c-0000000000000001
+                    authorized_recipients:
+                      - XXXYYY79A95Y000X
+                    department_name: dept
+                    organization_name: org
+                    service_id: 2b3e728c1a5d1efa035c
+                    service_name: service
+                    version: 1
+                    authorized_cidrs: []
+        "401":
+          description: Unauthorized
+        "404":
+          description: No service found for the provided ID.
+    put:
+      responses:
+        "200":
+          description: Service updated.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Service"
+              examples:
+                response:
+                  value:
+                    id: 2b3e728c1a5d1efa035c-0000000000000001
+                    authorized_recipients:
+                      - XXXYYY79A95Y000X
+                    department_name: dept
+                    organization_name: org
+                    service_id: 2b3e728c1a5d1efa035c
+                    service_name: service
+                    version: 1
+                    authorized_cidrs: []
+        "401":
+          description: Unauthorized
+        "404":
+          description: No service found for the provided ID.
+      summary: Update Service
+      operationId: updateService
+      description: |-
+        Update an existing service with the attributes provided in the
+        request payload.
+      requestBody:
+        $ref: "#/components/requestBodies/Service"
+  /debug:
+    get:
+      responses:
+        "200":
+          description: |-
+            Returns a JSON object with HTTP request parameters, headers
+            and payload.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties: {}
+              examples:
+                response:
+                  value:
+                    auth:
+                      groups:
+                        - ApiInfoRead
+                        - ApiMessageRead
+                        - ApiLimitedMessageWrite
+                        - ApiDebugRead
+                      kind: IAzureApiAuthorization
+                      subscriptionId: 9d39a48a64370b1b326dfb70307008
+                      userId: 9d39a48a64370b1b326dfb70307008
+                    headers:
+                      cache-control: no-cache
+                      connection: Keep-Alive
+                      accept: application/json
+                      accept-encoding: gzip, deflate
+                      max-forwards: "10"
+                      user-agent: PostmanRuntime/6.4.1
+                      ocp-apim-subscription-key: d5310672bc1d8cf383ca98
+                      x-user-id: 9d39a48a64370b1b326dfb70307008
+                      x-user-groups: Developers,ApiInfoRead,ApiMessageRead,ApiLimitedMessageWrite,ApiDebugRead
+                      x-subscription-id: 9d39a48a64370b1b326dfb70307008
+                      x-user-email: example@example.com
+                      x-functions-key: 9d39a48a64370b1b326dfb70307008
+                      x-forwarded-for: 111.97.111.36, 111.40.111.45:1088
+                      x-waws-unencoded-url: /adm/debug
+                      x-original-url: /adm/debug
+                      x-arr-log-id: 9d39a48-a64370b-1b326dfb703-07008
+                      x-forwarded-proto: https
+                      content-type: application/json
+                      content-length: "0"
+                    params: {}
+                    user:
+                      email: example@example.com
+                      kind: IAzureUserAttributes
+                      service:
+                        authorized_recipients:
+                          - XXXBEN86A11Y755X
+                        department_name: dept
+                        organization_name: org
+                        service_id: 9d39a48a64370b1b326dfb70307008
+                        service_name: service
+                        id: 9d39a48a64370b1b326dfb70307008-0000000000000000
+                        version: 0
+                        authorized_cidrs: []
+                        kind: IRetrievedService
+        "401":
+          description: Unauthorized
+      description: An endpoint to debug GET requests to the API backend.
+      operationId: getDebug
+      summary: Debug GET
+    post:
+      responses:
+        "200":
+          description: |-
+            Returns a JSON object with HTTP request parameters, headers
+            and payload.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties: {}
+              examples:
+                response:
+                  value:
+                    auth:
+                      groups:
+                        - ApiInfoRead
+                        - ApiMessageRead
+                        - ApiLimitedMessageWrite
+                        - ApiDebugRead
+                      kind: IAzureApiAuthorization
+                      subscriptionId: 9d39a48a64370b1b326dfb70307008
+                      userId: 9d39a48a64370b1b326dfb70307008
+                    headers:
+                      cache-control: no-cache
+                      connection: Keep-Alive
+                      accept: application/json
+                      accept-encoding: gzip, deflate
+                      max-forwards: "10"
+                      user-agent: PostmanRuntime/6.4.1
+                      ocp-apim-subscription-key: d5310672bc1d8cf383ca98
+                      x-user-id: 9d39a48a64370b1b326dfb70307008
+                      x-user-groups: Developers,ApiInfoRead,ApiMessageRead,ApiLimitedMessageWrite,ApiDebugRead
+                      x-subscription-id: 9d39a48a64370b1b326dfb70307008
+                      x-user-email: example@example.com
+                      x-functions-key: 9d39a48a64370b1b326dfb70307008
+                      x-forwarded-for: 111.97.111.36, 111.40.111.45:1088
+                      x-waws-unencoded-url: /adm/debug
+                      x-original-url: /adm/debug
+                      x-arr-log-id: 9d39a48-a64370b-1b326dfb703-07008
+                      x-forwarded-proto: https
+                      content-type: application/json
+                      content-length: "0"
+                    params: {}
+                    user:
+                      email: example@example.com
+                      kind: IAzureUserAttributes
+                      service:
+                        authorized_recipients:
+                          - XXXBEN86A11Y755X
+                        department_name: dept
+                        organization_name: org
+                        service_id: 9d39a48a64370b1b326dfb70307008
+                        service_name: service
+                        id: 9d39a48a64370b1b326dfb70307008-0000000000000000
+                        version: 0
+                        authorized_cidrs: []
+                        kind: IRetrievedService
+        "401":
+          description: Unauthorized
+      description: An endpoint to debug POST requests to the API backend.
+      operationId: postDebug
+      summary: Debug POST
+  /services:
+    post:
+      responses:
+        "200":
+          description: Service created.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Service"
+              examples:
+                response:
+                  value:
+                    id: 2b3e728c1a5d1efa035c-0000000000000001
+                    authorized_recipients:
+                      - XXXYYY79A95Y000X
+                    department_name: dept
+                    organization_name: org
+                    service_id: 2b3e728c1a5d1efa035c
+                    service_name: service
+                    version: 1
+                    authorized_cidrs: []
+        "401":
+          description: Unauthorized
+      summary: Create Service
+      description: |-
+        Create a new Service with the attributes provided in the requst
+        payload.
+      operationId: createService
+      requestBody:
+        $ref: "#/components/requestBodies/Service"
+security:
+  - SubscriptionKey: []
+servers:
+  - url: /adm
+components:
+  requestBodies:
+    Service:
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Service"
+      description: The Service payload.
+      x-examples:
+        application/json:
+          authorized_recipients:
+            - XXXYYY79A95Y000X
+          department_name: dept
+          organization_name: org
+          service_id: 2b3e728c1a5d1efa035c
+          service_name: service
+          authorized_cidrs: []
+  securitySchemes:
+    SubscriptionKey:
+      type: apiKey
+      name: Ocp-Apim-Subscription-Key
+      in: header
+      description: The API key obtained through the developer portal.
+  schemas:
+    Service:
+      $ref: definitions.yaml#/Service
+    ServiceId:
+      $ref: definitions.yaml#/ServiceId
+    ServiceName:
+      $ref: definitions.yaml#/ServiceName
+    OrganizationName:
+      $ref: definitions.yaml#/OrganizationName
+    DepartmentName:
+      $ref: definitions.yaml#/DepartmentName
+    CIDR:
+      $ref: definitions.yaml#/CIDR
+    MaxAllowedPaymentAmount:
+      $ref: definitions.yaml#/MaxAllowedPaymentAmount
+    OrganizationFiscalCode:
+      $ref: definitions.yaml#/OrganizationFiscalCode
+
